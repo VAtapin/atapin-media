@@ -11,6 +11,16 @@ Der Domainname `mannavomhimmel.de` ist die **kanonische Hauptdomain** des Projek
 
 Für SEO, Sitemap, OpenGraph, interne Links, öffentliche Share-Links, QR-Codes und automatisch erzeugte absolute URLs wird ausschließlich `mannavomhimmel.de` verwendet.
 
+## Verbindlicher visueller Referenzstand
+
+Für Manna Vom Himmel ist die UI-Konzeptreihe **Frontend Gold Editorial B** als visuelle Grundlage bestätigt.
+
+Die verbindlichen Referenzbilder und der Master UI Kit befinden sich im Repository unter:
+
+`UI/approved/`
+
+Diese Referenzen sollen bei der Umsetzung der Website und des Media Desktop verwendet werden. Frühere UI-Entwürfe dienen nur noch als historische Varianten und sollen nicht mit dem freigegebenen Design vermischt werden.
+
 Die Plattform soll nicht nur eine Website sein, sondern ein vollständiges digitales Medienzentrum für christliche Inhalte – mit einer öffentlichen Seite für Leser, Zuschauer und Hörer sowie einem eigenen Arbeitsbereich für Redaktion, Medienproduktion, Live-Streaming, Community und Veröffentlichung.
 
 Manna Vom Himmel verbindet dabei mehrere heute oft getrennte Aufgaben in einer einzigen Umgebung:
@@ -424,41 +434,7 @@ Beispiele:
 
 ---
 
-# 12. Kanonische Domain und öffentliche URLs
-
-Die öffentliche Hauptdomain von Manna Vom Himmel ist:
-
-> **https://mannavomhimmel.de**
-
-Zusätzlich existiert:
-
-> **https://manna-vom-himmel.de**
-
-Diese zweite Domain ist ausschließlich ein **Alias**. Jeder Aufruf der Alias-Domain wird dauerhaft mit HTTP **301** auf denselben Pfad unter `mannavomhimmel.de` weitergeleitet.
-
-Beispiel:
-
-```text
-https://manna-vom-himmel.de/videos/hoffnung
-        ↓ 301
-https://mannavomhimmel.de/videos/hoffnung
-```
-
-Für die technische und redaktionelle Veröffentlichung gelten folgende Regeln:
-
-- alle Canonical-Tags verwenden `mannavomhimmel.de`;
-- die XML-Sitemap und ein eventueller Sitemap-Index enthalten ausschließlich URLs von `mannavomhimmel.de`;
-- OpenGraph `og:url` verwendet immer die kanonische Hauptdomain;
-- interne Links der Website verwenden die Hauptdomain beziehungsweise relative Links innerhalb dieser Domain;
-- automatisch erzeugte absolute Links, Share-URLs, QR-Codes und Links in PDFs verwenden `mannavomhimmel.de`;
-- die Alias-Domain darf nicht als zweite eigenständige Website indexiert werden;
-- Inhalte sollen niemals parallel unter beiden Domains als gleichwertige Seiten ausgeliefert werden.
-
-So bleibt für Besucher, Suchmaschinen und Social-Media-Plattformen eindeutig, dass **mannavomhimmel.de** die offizielle Adresse von Manna Vom Himmel ist.
-
----
-
-# 13. Der Media Desktop im Überblick
+# 12. Der Media Desktop im Überblick
 
 Der Media Desktop ist die interne Arbeitsoberfläche.
 
@@ -499,7 +475,7 @@ Die Navigation gliedert sich in mehrere Bereiche.
 
 ---
 
-# 14. Desktop – die tägliche Arbeitszentrale
+# 13. Desktop – die tägliche Arbeitszentrale
 
 Der Desktop soll nach dem Login sofort die wichtigsten Informationen zeigen.
 
@@ -536,7 +512,7 @@ Der Benutzer kann direkt mit einem Klick dort weitermachen, wo er zuletzt aufgeh
 
 ---
 
-# 15. Projekte
+# 14. Projekte
 
 Ein Projekt verbindet mehrere Inhalte zu einer gemeinsamen Arbeit.
 
@@ -573,7 +549,7 @@ Dadurch wird die Plattform auch für kleine Redaktionsteams geeignet.
 
 ---
 
-# 16. Aufgaben
+# 15. Aufgaben
 
 Im Bereich **Aufgaben** wird die tägliche Arbeit organisiert.
 
@@ -603,7 +579,7 @@ Beispiele:
 
 ---
 
-# 17. Kalender & Planung
+# 16. Kalender & Planung
 
 Der Kalender ist der gemeinsame Redaktions- und Veröffentlichungsplan.
 
@@ -627,7 +603,7 @@ So sieht das Team auf einen Blick, was wann vorbereitet oder veröffentlicht wir
 
 ---
 
-# 18. Video Studio
+# 17. Video Studio
 
 Die Videoverwaltung funktioniert wie eine professionelle Content-Bibliothek.
 
@@ -657,7 +633,7 @@ Mögliche Zustände:
 
 ---
 
-# 19. Media Library
+# 18. Media Library
 
 In der Media Library befinden sich alle zentral gespeicherten Medien.
 
@@ -678,7 +654,7 @@ Das Ziel ist ein ordentliches, dauerhaft nutzbares Medienarchiv.
 
 ---
 
-# 20. Publishing
+# 19. Publishing
 
 Der Bereich **Publishing** ist die zentrale Veröffentlichungszentrale.
 
@@ -703,7 +679,7 @@ Wichtig ist:
 
 ---
 
-# 21. Kommentare und Fragen aus allen Plattformen
+# 20. Kommentare und Fragen aus allen Plattformen
 
 Eine zentrale Funktion des Media Desktop ist die gemeinsame Kommunikation.
 
@@ -725,7 +701,7 @@ Damit wird der Media Desktop nicht nur Produktions-, sondern auch Kommunikations
 
 ---
 
-# 22. Live Studio
+# 21. Live Studio
 
 Das Live Studio ist die Arbeitsoberfläche für laufende und geplante Livestreams.
 
@@ -757,7 +733,7 @@ Manna Vom Himmel soll langfristig sowohl mit professioneller Streaming-Software 
 
 ---
 
-# 23. KI-Assistent
+# 22. KI-Assistent
 
 Der KI-Assistent soll nicht als fremdes Extra wirken, sondern direkt in den Arbeitsprozess eingebunden sein.
 
@@ -789,7 +765,7 @@ Der Mensch entscheidet immer selbst, ob ein KI-Vorschlag übernommen wird.
 
 ---
 
-# 24. Import Center
+# 23. Import Center
 
 Viele Inhalte existieren bereits auf anderen Plattformen oder als lokale Dateien.
 
@@ -812,7 +788,7 @@ Nach dem Import können Inhalte überprüft, Kategorien zugeordnet und in Projek
 
 ---
 
-# 25. Analytics
+# 24. Analytics
 
 Der Analytics-Bereich zeigt verständlich, welche Inhalte Menschen tatsächlich erreichen.
 
@@ -832,7 +808,7 @@ Die Statistik soll hilfreich sein, aber nicht den gesamten Desktop dominieren.
 
 ---
 
-# 26. Abonnenten und eigene Community-Basis
+# 25. Abonnenten und eigene Community-Basis
 
 Ein wichtiges Ziel ist, dass Manna Vom Himmel eine eigene Beziehung zu seinen Lesern und Zuschauern aufbaut.
 
@@ -849,7 +825,7 @@ Die eigene Nutzerbasis gehört zur eigenen Plattform und ist nicht ausschließli
 
 ---
 
-# 27. Kostenlose und geschützte Inhalte
+# 26. Kostenlose und geschützte Inhalte
 
 Manna Vom Himmel soll sowohl kostenlose als auch später geschützte oder kostenpflichtige Inhalte unterstützen können.
 
@@ -874,7 +850,7 @@ Nicht jede Funktion muss von Anfang an genutzt werden. Die Plattform soll aber d
 
 ---
 
-# 28. Design von Manna Vom Himmel
+# 27. Design von Manna Vom Himmel
 
 Manna Vom Himmel besitzt ein eigenes visuelles Erscheinungsbild.
 
@@ -904,9 +880,11 @@ Die öffentliche Website darf emotional und atmosphärisch wirken.
 
 Der Media Desktop bleibt dagegen klarer, kompakter und arbeitsorientierter.
 
+Die freigegebenen Referenzscreens und der Master UI Kit in `UI/approved/` sind die maßgebliche visuelle Vorlage für die Umsetzung.
+
 ---
 
-# 29. Responsive und mobil
+# 28. Responsive und mobil
 
 Die Plattform soll nicht nur auf großen Desktop-Bildschirmen funktionieren.
 
@@ -929,7 +907,7 @@ Die interne Anwendung soll später auch als installierbare PWA genutzt werden k�
 
 ---
 
-# 30. Eigenständigkeit der Plattform
+# 29. Eigenständigkeit der Plattform
 
 Manna Vom Himmel wird auf Basis von **Atapin Media** aufgebaut, bleibt aber eine eigenständige Installation.
 
@@ -950,7 +928,7 @@ Auch bei Ausfall eines externen Dienstes müssen die eigenen Inhalte, Benutzer u
 
 ---
 
-# 31. Das langfristige Ziel
+# 30. Das langfristige Ziel
 
 Manna Vom Himmel soll mit der Zeit der Ort werden, an dem die gesamte Medienarbeit beginnt.
 
