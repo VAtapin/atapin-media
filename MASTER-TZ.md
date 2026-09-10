@@ -124,6 +124,24 @@ Public Website должен быть более editorial/emotional. Media Deskt
 
 Scripture и brand quotes могут использоваться как ненавязчивые визуальные элементы, но не должны перегружать рабочие экраны.
 
+### Утверждённый visual reference
+
+Канонический визуальный референс для Manna Vom Himmel находится в:
+
+`UI/approved/`
+
+Для public frontend утверждена серия **Frontend Gold Editorial B** в `UI/approved/frontend-gold-b/`.
+
+Master UI Kit находится в `UI/approved/design-system/master-ui-kit.png`.
+
+Правила:
+
+- Codex должен использовать `UI/approved/` как основной визуальный источник при реализации Manna Vom Himmel;
+- старые изображения в `/UI` и другие preview-варианты являются историческими/экспериментальными;
+- не смешивать разные ранние дизайн-концепции;
+- если конкретный экран ещё не нарисован, строить его из approved Design System и уже утверждённых паттернов;
+- screenshots определяют визуальный язык, а этот Master-ТЗ — функциональность и поведение.
+
 ---
 
 ## 4. Public Website
@@ -1879,6 +1897,8 @@ Alias:               manna-vom-himmel.de
 - Newsletter configuration;
 - public homepage blocks.
 
+Утверждённый UI первой установки находится в `UI/approved/` и должен использоваться как визуальный reference implementation target.
+
 Не использовать `MannaVomHimmel` в именах generic Core-классов.
 
 ---
@@ -2069,6 +2089,8 @@ Alias:               manna-vom-himmel.de
 16. добавить automated tests;
 17. документировать архитектурные решения.
 
+Перед реализацией UI Codex должен открыть `UI/approved/README.md`, approved Master UI Kit и соответствующие approved screenshots. Не использовать ранние экспериментальные UI-варианты как источник визуальных решений.
+
 После завершения Phase 1 остановиться и предоставить отчёт:
 
 - что создано;
@@ -2089,6 +2111,7 @@ Alias:               manna-vom-himmel.de
 - Не делать прямую зависимость runtime от Central Control.
 - Не хранить protected content только за obscured public URL.
 - Не копировать интерфейс конкретной OS или YouTube Studio один в один — использовать собственный Media Desktop design system.
+- Не смешивать approved UI Manna Vom Himmel с историческими preview-концептами из `/UI`.
 
 ---
 
@@ -2144,6 +2167,8 @@ Website + External Platforms
 - modal patterns;
 - pagination/filter/search patterns;
 - responsive behavior.
+
+Для Manna Vom Himmel визуальным источником истины является `UI/approved/`.
 
 Не создавать для каждого нового раздела независимый визуальный стиль.
 
