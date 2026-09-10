@@ -31,7 +31,7 @@ Missing destination screens show a non-blocking notice. Authentication, search i
 - `ui-preview-data.js`: series, original file paths and per-screen rectangles.
 - `ui-preview.html` / `ui-preview.js`: shared renderer, accessible transparent links, image loading/errors, navigation and keyboard controls.
 - `index.html` / `ui-preview-index.js`: gallery and synchronized comparison.
-- `preview-*.html`: compatibility entry points for earlier links.
+- Existing `preview-*.html` files are preserved unchanged as earlier standalone previews. The new index uses the shared `ui-preview.html` renderer directly.
 
 Each rectangle is `{x, y, w, h, target, label}` in percentages from the top-left of the full original image. Inspect individual screens before reusing a common header: some change logo size, menu positions or add an announcement bar. Actions without a screen use an explicit `message` instead of pretending to navigate.
 
@@ -44,6 +44,10 @@ No external fonts, tracking, API calls or third-party script dependencies are in
 ### Checks performed for this change
 
 - JavaScript syntax checks passed for all three scripts.
-- Seven Node tests passed (manifest shape, bounds, path safety, mapped navigation, core files, legacy entry points, non-overlapping duplicate import-menu rectangles).
+- Seven Node tests passed (manifest shape, bounds, path safety, mapped navigation, core files, gallery links, no duplicate import-menu rectangles).
 - In-memory Chromium smoke checks passed using the supplied local screenshot originals: rendering, Videos/Books menu clicks, prototype-only notice, hotspot toggle, toolbar hide/restore, and overlay geometry at 1440/960/390 px. No page JavaScript errors in this smoke run.
 - Normal localhost and file-URL end-to-end navigation was blocked by the execution environment (`ERR_BLOCKED_BY_ADMINISTRATOR`). Full browser history, two-iframe synchronization and deployment still require checking in an ordinary local browser. These are implemented, not claimed to have passed that unavailable end-to-end test.
+
+## Concurrent repository changes
+
+The current main-branch documentation and standalone preview files were preserved when integrating this change. Only `index.html` is replaced; the shared renderer, manifest, gallery script, tests and this guide are added. Nothing in `UI/`, `README.md`, `MASTER-TZ.md` or `MANNA-VOM-HIMMEL.md` is changed.

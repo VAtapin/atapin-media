@@ -4,6 +4,11 @@
 
 Первый реальный deployment проекта — **Manna Vom Himmel**.
 
+- **Основной домен:** `mannavomhimmel.de`
+- **Алиас:** `manna-vom-himmel.de`
+- `manna-vom-himmel.de` должен перенаправляться на `mannavomhimmel.de` постоянным 301 redirect.
+- Канонический домен `mannavomhimmel.de` используется для SEO, canonical URLs, sitemap, OpenGraph и всех внутренних ссылок публичного сайта.
+
 > Media Platform должна стать для владельца основным рабочим местом: создать материал, отредактировать его, обработать с KI, сохранить, запланировать, опубликовать, провести Live и ответить аудитории — всё из одного интерфейса.
 
 ---
@@ -198,7 +203,7 @@ Kanban и табличное представление:
 
 ### Podcast
 
-Серии и эпизоды, audio player, cover, description, transcript, publish date, external destinations и "Weiterhören" для зарегистрированного пользователя.
+Серии и эпизоды, audio player, cover, description, transcript, publish date, external destinations и `Weiterhören` для зарегистрированного пользователя.
 
 ### Bücher & PDF
 
@@ -226,7 +231,7 @@ Kanban и табличное представление:
 
 ### Community
 
-Не отдельный "форум ради форума", а единое пространство общения:
+Не отдельный «форум ради форума», а единое пространство общения:
 
 - собственные Kommentare;
 - Fragen;
@@ -312,6 +317,27 @@ Public Website и Media Desktop должны выглядеть родствен
 
 ---
 
+## Канонический домен Manna Vom Himmel
+
+Для первого deployment зафиксировано:
+
+```text
+canonical_domain = mannavomhimmel.de
+alias_domain     = manna-vom-himmel.de
+```
+
+Правила:
+
+- `https://mannavomhimmel.de` — единственный канонический публичный origin;
+- `https://manna-vom-himmel.de/*` — постоянный 301 redirect на соответствующий URL `https://mannavomhimmel.de/*`;
+- `<link rel="canonical">` всегда указывает на `mannavomhimmel.de`;
+- sitemap и sitemap index содержат только URL `mannavomhimmel.de`;
+- OpenGraph `og:url` и связанные абсолютные metadata URLs используют `mannavomhimmel.de`;
+- все генерируемые внутренние абсолютные ссылки, публичные share URLs, QR-коды и ссылки в generated PDF используют `mannavomhimmel.de`;
+- алиас не должен создавать дубли страниц в поисковых системах и не используется как самостоятельный публичный адрес.
+
+---
+
 ## Независимость и self-hosted принцип
 
 Central Control, AI provider, YouTube или любой другой внешний сервис **не является runtime dependency**.
@@ -384,6 +410,8 @@ enabled_locales = [de]
 
 Manna — только первая клиентская конфигурация:
 
+- canonical domain `mannavomhimmel.de`;
+- alias `manna-vom-himmel.de`;
 - German locale;
 - Branding и Design Tokens;
 - категории и темы;
@@ -429,6 +457,8 @@ Manna — только первая клиентская конфигураци�
 ## Подробное техническое задание
 
 Полная актуальная спецификация находится в [`MASTER-TZ.md`](./MASTER-TZ.md).
+
+Описание первой установки находится в [`MANNA-VOM-HIMMEL.md`](./MANNA-VOM-HIMMEL.md).
 
 ---
 

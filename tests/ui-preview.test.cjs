@@ -34,14 +34,11 @@ test('all core files exist',()=>{
  for(const file of ['index.html','ui-preview.html','ui-preview.js','ui-preview-index.js','ui-preview-data.js','UI-PREVIEW.md'])assert(fs.existsSync(path.join(__dirname,'..',file)));
 });
 
-test('legacy entry points preserve the requested design and hash',()=>{
- const names=['backend-classic','backend-manna','frontend-blue','frontend-gold-a','frontend-gold-b','series-1955','ui-kits'];
- for(const name of names){
-  const html=fs.readFileSync(path.join(__dirname,'..',`preview-${name}.html`),'utf8');
-  assert(html.includes(`ui-preview.html?series=${name}`));
-  assert(html.includes('+location.hash'));
-  assert(series.some(s=>s.id===name));
- }
+test('gallery links use the shared renderer and retain screen identifiers',()=>{
+ const script=fs.readFileSync(path.join(__dirname,'..','ui-preview-index.js'),'utf8');
+ assert(script.includes('ui-preview.html?series='));
+ assert(script.includes('#${encodeURIComponent(page)}'));
+ for(const s of series)assert(s.pages.some(p=>p.id===s.start));
 });
 test('import navigation has no duplicate menu rectangles',()=>{
  const p=series.find(s=>s.id==='backend-manna').pages.find(p=>p.id==='import');

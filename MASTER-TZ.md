@@ -32,7 +32,11 @@ Media Platform должна быть главным **Source of Truth**, Content
 
 Внешние платформы — каналы распространения, а не основное место хранения контента.
 
-Первая установка продукта — **Manna Vom Himmel**.
+Первая установка продукта — **Manna Vom Himmel**:
+
+- canonical/public domain: `mannavomhimmel.de`;
+- alias domain: `manna-vom-himmel.de`;
+- alias обязан делать постоянный 301 redirect на соответствующий URL канонического домена.
 
 ---
 
@@ -645,6 +649,8 @@ Template поддерживает:
 
 После изменения Beitrag PDF должен уметь regenerieren.
 
+Все абсолютные URL и QR-коды в PDF должны использовать канонический домен конкретной установки.
+
 ---
 
 ## 20. Uploaded PDF / Documents
@@ -995,6 +1001,8 @@ KI может подготовить разные metadata варианты дл
 Перед публикацией пользователь видит final preview/summary.
 
 Publishing job выполняется через Queue и хранит per-destination status/error/retry data.
+
+При публикации на собственный Website генерируемые публичные абсолютные URL используют canonical domain установки.
 
 ---
 
@@ -1374,7 +1382,7 @@ Public Search и Media Desktop Search могут использовать оди
 
 ---
 
-## 48. SEO
+## 48. SEO и canonical domain
 
 Поддержать:
 
@@ -1388,6 +1396,35 @@ Public Search и Media Desktop Search могут использовать оди
 - Structured Data where applicable.
 
 Public content должен нормально индексироваться.
+
+Каждая installation должна иметь явный `canonical_domain` и при необходимости список alias domains.
+
+Общие правила:
+
+- canonical URL генерируется только на основе `canonical_domain`;
+- sitemap/sitemap index содержит только URL канонического домена;
+- OpenGraph `og:url` содержит только канонический URL;
+- внутренние absolute URLs и публичные share URLs используют canonical domain;
+- alias domains должны делать permanent 301 redirect на соответствующий path канонического домена;
+- alias не должен отдавать отдельные индексируемые копии страниц;
+- generated PDF/QR links должны использовать canonical domain.
+
+Для **Manna Vom Himmel**:
+
+```text
+canonical_domain = mannavomhimmel.de
+alias_domains    = [manna-vom-himmel.de]
+```
+
+То есть:
+
+```text
+https://manna-vom-himmel.de/*
+        -> 301 ->
+https://mannavomhimmel.de/*
+```
+
+SEO metadata, Sitemap, OpenGraph и все внутренние публичные ссылки Manna Vom Himmel используют `mannavomhimmel.de`.
 
 ---
 
@@ -1803,8 +1840,30 @@ Safe update flow:
 
 Manna Vom Himmel — первый клиент, но не часть Core.
 
+### Domains
+
+Для deployment зафиксировано:
+
+```text
+Primary / Canonical: mannavomhimmel.de
+Alias:               manna-vom-himmel.de
+```
+
+Обязательное поведение:
+
+- `mannavomhimmel.de` — основной и единственный канонический публичный домен;
+- `manna-vom-himmel.de` — только alias;
+- любой path alias-домена перенаправляется permanent 301 на тот же path `mannavomhimmel.de`;
+- SEO canonical URLs используют `mannavomhimmel.de`;
+- Sitemap и Sitemap Index используют только `mannavomhimmel.de`;
+- OpenGraph `og:url` использует только `mannavomhimmel.de`;
+- внутренние ссылки, генерируемые системой абсолютные URL, share links, QR-коды и generated PDF links используют `mannavomhimmel.de`;
+- alias не должен индексироваться как отдельный сайт и не должен создавать duplicate content.
+
 Отдельно задаются:
 
+- canonical domain `mannavomhimmel.de`;
+- alias domain `manna-vom-himmel.de`;
 - German locale;
 - branding;
 - logo;
