@@ -33,6 +33,18 @@ Atapin Media — не обычная CMS и не SaaS-панель. Это са�
 
 ---
 
+## Утверждённый UI Manna Vom Himmel
+
+Для первой установки утверждён визуальный референс **Frontend Gold Editorial B**.
+
+Канонические визуальные материалы находятся в:
+
+[`UI/approved/`](./UI/approved/)
+
+Именно эта папка должна использоваться Codex как основной visual reference при реализации Manna Vom Himmel. Старые концепты в `/UI` и другие preview-варианты считаются историческими и не должны смешиваться с утверждённым дизайном без отдельного указания.
+
+---
+
 ## Две стороны продукта
 
 ### 1. Public Website
@@ -203,7 +215,7 @@ Kanban и табличное представление:
 
 ### Podcast
 
-Серии и эпизоды, audio player, cover, description, transcript, publish date, external destinations и `Weiterhören` для зарегистрированного пользователя.
+Серии и эпизоды, audio player, cover, description, transcript, publish date, external destinations и "Weiterhören" для зарегистрированного пользователя.
 
 ### Bücher & PDF
 
@@ -231,7 +243,7 @@ Kanban и табличное представление:
 
 ### Community
 
-Не отдельный «форум ради форума», а единое пространство общения:
+Не отдельный "форум ради форума", а единое пространство общения:
 
 - собственные Kommentare;
 - Fragen;
@@ -315,26 +327,7 @@ Core должен поддерживать **theme/design tokens**, а не hard
 
 Public Website и Media Desktop должны выглядеть родственными, но не одинаковыми: Public — editorial и эмоциональный, Desktop — плотный и функциональный.
 
----
-
-## Канонический домен Manna Vom Himmel
-
-Для первого deployment зафиксировано:
-
-```text
-canonical_domain = mannavomhimmel.de
-alias_domain     = manna-vom-himmel.de
-```
-
-Правила:
-
-- `https://mannavomhimmel.de` — единственный канонический публичный origin;
-- `https://manna-vom-himmel.de/*` — постоянный 301 redirect на соответствующий URL `https://mannavomhimmel.de/*`;
-- `<link rel="canonical">` всегда указывает на `mannavomhimmel.de`;
-- sitemap и sitemap index содержат только URL `mannavomhimmel.de`;
-- OpenGraph `og:url` и связанные абсолютные metadata URLs используют `mannavomhimmel.de`;
-- все генерируемые внутренние абсолютные ссылки, публичные share URLs, QR-коды и ссылки в generated PDF используют `mannavomhimmel.de`;
-- алиас не должен создавать дубли страниц в поисковых системах и не используется как самостоятельный публичный адрес.
+Утверждённые скриншоты и Master UI Kit для Manna Vom Himmel находятся в [`UI/approved/`](./UI/approved/) и являются каноническим визуальным референсом для реализации.
 
 ---
 
@@ -410,8 +403,6 @@ enabled_locales = [de]
 
 Manna — только первая клиентская конфигурация:
 
-- canonical domain `mannavomhimmel.de`;
-- alias `manna-vom-himmel.de`;
 - German locale;
 - Branding и Design Tokens;
 - категории и темы;
@@ -457,8 +448,6 @@ Manna — только первая клиентская конфигураци�
 ## Подробное техническое задание
 
 Полная актуальная спецификация находится в [`MASTER-TZ.md`](./MASTER-TZ.md).
-
-Описание первой установки находится в [`MANNA-VOM-HIMMEL.md`](./MANNA-VOM-HIMMEL.md).
 
 ---
 
