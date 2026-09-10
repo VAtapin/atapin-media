@@ -1,57 +1,46 @@
 # Atapin Media
 
-**Independent self-hosted media platform with a public website and a creator-focused Media Desktop.**
+**Independent self-hosted Media Platform с публичным сайтом и рабочей средой Media Desktop.**
+
+Atapin Media — универсальный продукт для авторов, издателей, проповедников, преподавателей, блогеров и небольших медиакоманд. Это не SaaS и не multi-tenant панель: каждый клиент получает отдельную самостоятельную установку со своим доменом, данными, пользователями, файлами, интеграциями и branding.
 
 Первый реальный deployment проекта — **Manna Vom Himmel**.
 
 - **Основной домен:** `mannavomhimmel.de`
 - **Алиас:** `manna-vom-himmel.de`
-- `manna-vom-himmel.de` должен перенаправляться на `mannavomhimmel.de` постоянным 301 redirect.
-- Канонический домен `mannavomhimmel.de` используется для SEO, canonical URLs, sitemap, OpenGraph и всех внутренних ссылок публичного сайта.
+- Алиас делает постоянный `301` redirect на соответствующий URL канонического домена.
+- `mannavomhimmel.de` используется для canonical URLs, SEO, sitemap, OpenGraph, share links, QR-кодов и внутренних абсолютных ссылок.
 
-> Media Platform должна стать для владельца основным рабочим местом: создать материал, отредактировать его, обработать с KI, сохранить, запланировать, опубликовать, провести Live и ответить аудитории — всё из одного интерфейса.
+> Главная идея: владелец должен выполнять основную медиаработу в одном месте — создать материал, отредактировать, обработать с KI, сохранить, запланировать, опубликовать, провести Live и ответить аудитории.
 
 ---
 
 ## Что мы создаём
 
-Atapin Media — не обычная CMS и не SaaS-панель. Это самостоятельная **single-tenant Media Platform**, устанавливаемая отдельно для каждого клиента.
-
-Каждая установка имеет собственные:
+Каждая установка Atapin Media имеет собственные:
 
 - домен и branding;
-- приложение и базу данных;
+- Laravel deployment и базу данных;
 - пользователей, роли и подписчиков;
 - Media Library и storage;
-- Social-Media подключения;
-- AI-, mail- и payment-настройки;
-- публичный сайт;
+- Public Website;
 - Media Desktop;
-- конфигурацию, категории, меню и дизайн-токены.
+- Social-Media подключения;
+- AI-, mail- и payment credentials;
+- категории, темы, navigation и настройки;
+- search/index, queue, scheduler, cache и audit log.
 
-Внешние платформы вроде YouTube, Instagram, TikTok, Facebook или Telegram являются **каналами распространения**, а собственная Media Platform остаётся **Source of Truth** и архивом контента.
-
----
-
-## Утверждённый UI Manna Vom Himmel
-
-Для первой установки утверждён визуальный референс **Frontend Gold Editorial B**.
-
-Канонические визуальные материалы находятся в:
-
-[`UI/approved/`](./UI/approved/)
-
-Именно эта папка должна использоваться Codex как основной visual reference при реализации Manna Vom Himmel. Старые концепты в `/UI` и другие preview-варианты считаются историческими и не должны смешиваться с утверждённым дизайном без отдельного указания.
+Внешние платформы — YouTube, Instagram, TikTok, Facebook, Telegram и другие — рассматриваются как **каналы распространения и коммуникации**. Собственная Media Platform остаётся **Source of Truth**, архивом контента, базой подписчиков, Community Base, Publishing Center и Live Center.
 
 ---
 
 ## Две стороны продукта
 
-### 1. Public Website
+### Public Website
 
-Публичная лицевая часть для читателей, зрителей и слушателей. Она визуально отличается от админки и строится из настраиваемых модулей.
+Лицевая часть для читателей, зрителей и слушателей. Она не выглядит как админка и строится из настраиваемых публичных модулей.
 
-Для Manna Vom Himmel основная навигация:
+Для Manna Vom Himmel утверждена основная навигация:
 
 - **Startseite**
 - **Beiträge**
@@ -63,15 +52,15 @@ Atapin Media — не обычная CMS и не SaaS-панель. Это са�
 - **Themen**
 - **Über uns**
 
-Дополнительно: глобальный поиск, Anmeldung/Account и Newsletter.
+Дополнительно: глобальный поиск, Anmeldung/Account, Newsletter, сохранённые материалы и персональное продолжение просмотра/прослушивания/чтения там, где эта функция реализована.
 
-Публичный сайт должен быть живым: если идёт трансляция, сверху автоматически появляется Live-Hinweis; если активен опрос — он показывается на соответствующих страницах; новые материалы, комментарии, эфиры и подборки обновляются из собственных данных платформы.
+Публичный сайт должен быть живым: активный Livestream автоматически отображается как заметное состояние сайта; активный Poll может появляться в заданных layout slots; контент разных типов связывается через Themen, Series, Collections и Projects.
 
-### 2. Media Desktop
+### Media Desktop
 
-Административная часть воспринимается как **рабочий медиа-компьютер**, а не как CRUD Dashboard.
+Административная часть — не обычный CRUD Dashboard, а **creator workspace / виртуальный медиа-компьютер**.
 
-Рекомендуемая структура навигации:
+Навигация:
 
 **Workspace**
 
@@ -106,75 +95,40 @@ Atapin Media — не обычная CMS и не SaaS-панель. Это са�
 - Integrationen
 - Einstellungen
 
-Группы могут сворачиваться, а права пользователя определяют, какие пункты доступны.
+Пункты зависят от permissions, группы могут сворачиваться.
 
 ---
 
-## Media Desktop — главный экран
+## Media Desktop — главный рабочий экран
 
 Desktop должен сразу отвечать на вопросы:
 
 - над чем я сейчас работаю;
-- что публикуется следующим;
-- что загружается или обрабатывается;
-- идёт ли Live;
-- что пишут люди на разных платформах;
-- есть ли проблемы с публикацией или интеграциями;
+- что будет опубликовано следующим;
+- какие uploads/processing jobs идут;
+- запланирован или уже идёт Live;
+- что пишут люди на сайте и внешних платформах;
+- есть ли ошибки публикации или интеграций;
+- какие задачи требуют внимания;
 - что можно сделать прямо сейчас.
 
-Ключевые элементы:
+Ключевой блок — **Weiterarbeiten / Aktuelles Projekt**. Пользователь должен продолжить работу с того места, где остановился, без поиска нужного модуля.
 
-- **Weiterarbeiten / Aktuelles Projekt** с текущим workflow;
+Widgets:
+
 - Nächste Veröffentlichung;
 - Live starten / Live Status;
 - Uploads / Processing;
 - Neue Videos;
 - Letzte Beiträge;
-- Kommentare / Fragen со значком платформы и быстрым ответом;
+- Kommentare / Fragen;
 - Subscribers / Community growth;
 - Social Status;
 - Speicher;
 - Systemstatus / Fehler;
-- контекстные KI-Vorschläge;
-- Schnellaktionen: Neuer Beitrag, Neues Video, Live starten, PDF hochladen, Veröffentlichen.
+- KI-Vorschläge.
 
-Widgets должны быть настраиваемыми: пользователь может скрывать, перемещать и при необходимости менять размер блоков. Технические ошибки обычному редактору показываются только тогда, когда они требуют действий; Admin/Owner может видеть полный Systemstatus.
-
----
-
-## Основной рабочий процесс
-
-```text
-MEDIA DESKTOP
-    |
-    +-- Create
-    +-- Edit
-    +-- KI
-    +-- Store
-    +-- Plan
-    +-- Live
-    +-- Publish
-    +-- Communicate
-    |
-    v
-Website + External Platforms
-```
-
-Один **Projekt** может объединять несколько связанных материалов: Beitrag, Video, Podcast, PDF, Social Posts и Live.
-
-Пример workflow видео:
-
-```text
-Idee -> Skript -> Produktion -> Feinschliff -> Veröffentlichung
-```
-
-Пример workflow статьи:
-
-```text
-Entwurf -> Redaktion -> Medien -> SEO/KI -> Vorschau -> Veröffentlichung
-```
-
-Пользователь должен продолжать работу с того места, где остановился, без поиска нужного раздела.
+Widgets должны быть настраиваемыми: show/hide, order, position и при необходимости size preset.
 
 ---
 
@@ -182,190 +136,134 @@ Entwurf -> Redaktion -> Medien -> SEO/KI -> Vorschau -> Veröffentlichung
 
 ### Projekte
 
-Объединяет материалы в реальные рабочие проекты и серии. Показывает прогресс, текущую фазу, следующую задачу, дедлайн, ответственного и связанные материалы.
+Связывает одну медиаработу или серию с несколькими сущностями: Beitrag, Video, Podcast, PDF, Social Posts, Live, Assets и Tasks. Проект показывает workflow, текущую фазу, следующую задачу, сроки и ответственных.
 
 ### Aufgaben
 
-Kanban и табличное представление:
-
-- Offen
-- In Arbeit
-- Warten
-- Erledigt
-
-Дополнительно: Meine Aufgaben, приоритеты, сроки, ответственные, checklist, фильтры по проекту и типу контента.
+Рабочие задачи с режимами Board, Liste и Meine Aufgaben. Базовые состояния: Offen, In Arbeit, Warten, Erledigt.
 
 ### Kalender / Planung
 
-Редакционный календарь с представлениями:
-
-- Monat
-- Woche
-- Liste
-
-В одном календаре отображаются Beiträge, Videos, Podcasts, PDF, Social Posts и Live. Архитектура должна позволять drag & drop планирование.
+Единый редакционный календарь: Monat, Woche, Liste. В нём видны Beiträge, Videos, Shorts, Podcasts, PDF, Social Posts, Live и при необходимости team tasks/events.
 
 ### Beiträge
 
-Полноценный редактор текстовых публикаций с Cover, Author, Kategorien, Tags, SEO, Access Rules, scheduling и generated PDF.
+Полноценный Rich Content Editor с Cover, Author, Themen/Kategorien, Tags, Project, SEO, Access Rules, scheduling и generated PDF.
 
 ### Videos
 
-Админка в логике Creator/YouTube Studio: таблица всех видео, thumbnails, status, platforms, playlists/series, views, comments, duration, publish date и быстрые действия.
+Creator-Studio-подобная, но собственная админка: thumbnails, title, status, platforms, playlists/series, project, publish date, views, comments, duration, editor, bulk actions, filters, search, sorting и pagination.
 
 ### Podcast
 
-Серии и эпизоды, audio player, cover, description, transcript, publish date, external destinations и "Weiterhören" для зарегистрированного пользователя.
+Podcast Series и Episodes, standalone Audio или Audio, полученное из Video; web player, transcript, metadata, external destinations и public `Weiterhören`.
 
 ### Bücher & PDF
 
-Книги, брошюры, PDF-материалы и документы: Cover, Author, Preview, Download, external shop link, free/paid access и категории.
+Книги, брошюры, PDF и документы с Cover, Author, Preview, Download, external shop link, free/protected/paid access и привязкой к Themen/Projects.
 
 ### Media Library
 
-Единый каталог Video, Audio, Image, PDF, Document, Thumbnail, Recording и других файлов с metadata, Search, Filter, Tags, Collections и Usage References.
+Единый каталог Video, Audio, Image, PDF, Document, Thumbnail, Recording и других media objects. Хранит metadata, stable references, tags, collections, usage references, processing state и storage location.
 
 ### Import Center
 
-Импорт существующего архива из:
-
-- DOCX/TXT/HTML/PDF;
-- локальных Video/Audio/Image файлов;
-- ZIP;
-- URL/RSS;
-- подключённых платформ, если это разрешено их API.
-
-Импортированный контент проходит Review/Zuordnung перед публикацией.
+Импорт существующего архива из DOCX/TXT/HTML/PDF, локальных media files, ZIP, URL/RSS и внешних платформ через connectors. Импорт не публикуется автоматически: материал проходит Review/Zuordnung.
 
 ### Publishing
 
-Единый Publishing Workspace. Пользователь выбирает контент и destinations, например Website, YouTube, Instagram, TikTok, Facebook или Telegram. Для каждой платформы доступны собственные Title, Description, Caption, Hashtags, Thumbnail, Visibility и Publish Time.
+Единый workspace для публикации на Website и внешние destinations. Для каждой платформы можно иметь собственные title, description, caption, hashtags, thumbnail, visibility, schedule и platform-specific options.
 
 ### Community
 
-Не отдельный "форум ради форума", а единое пространство общения:
-
-- собственные Kommentare;
-- Fragen;
-- Diskussionen;
-- Live Questions;
-- Polls;
-- Moderation;
-- общий Inbox комментариев и вопросов из поддерживаемых внешних платформ.
-
-На Media Desktop и в Community Inbox всегда должно быть видно, **с какой платформы пришло сообщение**, и при поддержке API пользователь отвечает прямо из Media Desktop.
+Собственные Kommentare, Fragen, Diskussionen, Live Questions, Polls и Moderation плюс **Unified Community Inbox** для поддерживаемых внешних платформ. Всегда видно источник сообщения. Если connector умеет reply, ответ отправляется прямо из Media Desktop.
 
 ### Subscribers
 
-Собственная база аудитории: E-Mail Subscription, Account Registration, Double Opt-In, Preferences, Unsubscribe и сегменты.
+Собственная база аудитории: E-Mail Subscription, Accounts, Double Opt-In, Preferences, Segments, Notifications и Unsubscribe.
 
 ### Live Studio
 
-Профессиональный центр Live: Preview, Stream Status, destinations, Viewer Count, Recording, Chat/Questions, Start/Stop. Основной профессиональный вход — OBS/RTMP/SRT; Browser Live предусматривается как дополнительный режим.
+Preview, stream status, viewer count, destinations, recording, combined chat/questions, Start/Stop и дальнейшее расширение сценами, Audio Mixer, Run of Show, guests, Q&A, overlays и Browser Live. Профессиональный способ первого этапа — OBS/RTMP/SRT.
 
 ### KI-Assistent
 
-KI — не отдельная игрушка, а встроенный помощник во всех рабочих процессах.
-
-Примеры действий:
-
-- Titel verbessern;
-- Zusammenfassung erstellen;
-- SEO-Titel & Keywords;
-- Meta-Beschreibung;
-- Hashtags generieren;
-- YouTube-Beschreibung;
-- Social Caption;
-- Bibelstellen strukturieren;
-- Text kürzen/verlängern;
-- in anderes Format umwandeln;
-- Antwort auf Kommentar vorschlagen.
-
-Результат KI всегда показывается пользователю до принятия.
+KI встроен в workflows, а не существует только как отдельный chat. Он помогает с titles, summaries, SEO, descriptions, hashtags, platform-specific text, content transformation, import cleanup и предложениями ответов на комментарии. Результат показывается пользователю до применения.
 
 ### Analytics
 
-Собственная статистика сайта и, где возможно, агрегированные данные внешних платформ: Views, Downloads, Subscribers, Registrations, Live Views, Popular Content/Search Terms, Kommentare и Outbound Social Clicks.
+Собственная статистика сайта и агрегированные внешние показатели там, где connector/API это разрешает. Own-platform analytics и external analytics должны различаться.
 
 ---
 
-## Public Website — обязательные экраны
+## Утверждённый UI Manna Vom Himmel
 
-Для первой установки должны быть предусмотрены как минимум:
+**Единственный утверждённый визуальный источник находится в:**
 
-- Startseite;
-- Beiträge overview + Einzelbeitrag;
-- Videos overview + Video detail;
-- Bücher & PDF / Bibliothek + detail;
-- Live overview + active Live page + replay;
-- Podcast overview + episode/series;
-- Community overview + discussion/question views;
-- Themen overview + cross-content topic page;
-- Search results;
-- Über uns;
-- Login/Register/Account;
-- Newsletter subscription/preferences.
+[`UI/approved/`](./UI/approved/)
 
-Главная Manna Vom Himmel может показывать актуальный Live, Umfrage, Beitrag des Tages, Neue Videos, Bücher/PDF, Themen и Newsletter.
+В репозитории больше не должно быть альтернативных UI-концептов, старых preview-серий и конкурирующих вариантов дизайна.
 
----
+Состав утверждённого reference set:
 
-## Design System
+```text
+UI/approved/
+├── README.md
+├── CODEX-REFERENCE.md
+├── design-system/
+│   └── master-ui-kit.png
+└── frontend-gold-b/
+    ├── preview.html
+    ├── 01-start.png
+    ├── 02-videos.png
+    ├── 03-video-detail.png
+    ├── 04-beitraege.png
+    ├── 05-beitrag-detail.png
+    ├── 06-buecher.png
+    ├── 07-buch-detail.png
+    ├── 08-live.png
+    ├── 09-podcast.png
+    └── 10-community.png
+```
 
-Core должен поддерживать **theme/design tokens**, а не hard-coded branding первого клиента.
+### Правило для Codex
 
-Для **Manna Vom Himmel** утверждён визуальный язык:
+- `MASTER-TZ.md` определяет **что система должна делать**.
+- `UI/approved/` определяет **как Manna Vom Himmel должен выглядеть**.
+- `master-ui-kit.png` определяет visual language, typography, palette, cards, buttons, statuses и общие компоненты.
+- `frontend-gold-b/` определяет approved public-page composition и визуальную иерархию.
+- Если для нового экрана нет отдельного screenshot, его нужно спроектировать из тех же компонентов и tokens — **не придумывать новый стиль**.
+- Текст-заглушка внутри mockup не является business requirement, если она противоречит `MASTER-TZ.md` или `MANNA-VOM-HIMMEL.md`.
+- Реальная реализация должна быть responsive, semantic и data-driven; screenshot — визуальный reference, а не картинка, которую нужно буквально вставить в страницу.
 
-- Logo/Mark: стилизованная раскрытая книга / M + свет сверху;
-- Brand palette: Dunkelblau, Gold, Himmelblau, Cremeweiß;
-- Headings/Public Editorial: **Playfair Display**;
-- Interface/Text: **Inter**;
-- Public CTA: преимущественно Gold;
-- Admin Primary Action: Blue/Navy;
-- мягкие светлые cards, спокойная editorial-подача;
-- Scripture/brand quotes могут использоваться как ненавязчивые фирменные элементы.
+Для Manna утверждён visual language:
 
-Public Website и Media Desktop должны выглядеть родственными, но не одинаковыми: Public — editorial и эмоциональный, Desktop — плотный и функциональный.
-
-Утверждённые скриншоты и Master UI Kit для Manna Vom Himmel находятся в [`UI/approved/`](./UI/approved/) и являются каноническим визуальным референсом для реализации.
-
----
-
-## Независимость и self-hosted принцип
-
-Central Control, AI provider, YouTube или любой другой внешний сервис **не является runtime dependency**.
-
-Если внешний сервис исчез или временно недоступен, собственные:
-
-- Public Website;
-- Media Desktop;
-- пользователи;
-- библиотека;
-- ранее приобретённый/защищённый контент;
-- локальный поиск;
-- локальные файлы;
-- основные очереди и scheduler
-
-продолжают работать.
-
-Central Control в будущем отвечает только за лицензирование, support access, update notifications, health monitoring и управление установками.
+- Logo/Mark: стилизованная раскрытая книга / `M` + свет сверху;
+- Dunkelblau / Navy;
+- Gold;
+- Himmelblau;
+- Cremeweiß;
+- Playfair Display для public editorial headings;
+- Inter для интерфейса, forms, tables и metadata;
+- Gold как основной public CTA;
+- Blue/Navy как primary admin action;
+- спокойные светлые cards и editorial public presentation.
 
 ---
 
 ## Архитектурные принципы
 
-- Laravel-based backend.
+- Laravel backend.
 - API/Service-first business logic.
 - Thin Controllers.
-- Actions / Services / Jobs / Policies / Events / Listeners / DTO where useful.
+- Actions / Services / Jobs / Policies / Events / Listeners / DTOs where useful.
 - Queue для тяжёлых операций.
 - Laravel Cache abstraction, Redis-ready.
 - Laravel Filesystem abstraction, Local + S3-compatible storage.
-- Search abstraction через `SearchProviderInterface` / Laravel Scout-compatible provider.
+- Search abstraction через `SearchProviderInterface`, Laravel Scout-compatible.
 - Внешние сервисы только через Interfaces/Adapters.
-- Никаких клиентских credentials в Central Control по умолчанию.
-- Responsive UI и installable PWA foundation.
-- 2FA-ready auth, RBAC, audit log, encrypted secrets, signed URLs и secure protected downloads.
+- Responsive UI + PWA foundation.
+- 2FA-ready auth, granular RBAC, audit log, encrypted secrets, signed URLs и secure protected downloads.
 
 Ключевые abstraction layers:
 
@@ -382,18 +280,28 @@ Central Control в будущем отвечает только за лицен�
 
 ---
 
+## Независимость установки
+
+Central Control, AI provider, YouTube или любой другой внешний сервис **не является runtime dependency**.
+
+При недоступности внешнего сервиса собственные Public Website, Media Desktop, users, media library, local search, protected content, queue и scheduler продолжают работать в пределах доступного локального функционала.
+
+Central Control в будущем отвечает только за лицензирование, support access, update notifications, health monitoring и installation management. Недоступность Central Control сама по себе не блокирует клиентскую установку.
+
+---
+
 ## Multilanguage
 
-Core мультиязычный с первого дня: UI-строки только через translation keys.
+Core мультиязычный с первого дня: UI strings только через translation keys.
 
-Первая установка **Manna Vom Himmel** полностью немецкоязычная:
+Manna Vom Himmel — немецкоязычный deployment:
 
 ```text
 default_locale = de
 enabled_locales = [de]
 ```
 
-Сам Core не должен зависеть от немецкого языка. Архитектурно контент может иметь `locale` и optional `translation_group_id`.
+Core не должен зависеть от немецкого языка. Контент архитектурно может иметь `locale` и optional `translation_group_id`.
 
 ---
 
@@ -401,56 +309,37 @@ enabled_locales = [de]
 
 Нельзя использовать `MannaVomHimmel` в именах generic Core-классов.
 
-Manna — только первая клиентская конфигурация:
+Manna — только первая клиентская конфигурация: German locale, domains, branding, design tokens, categories/topics, navigation, existing content, social accounts, PDF template, newsletter и public homepage composition.
 
-- German locale;
-- Branding и Design Tokens;
-- категории и темы;
-- navigation;
-- существующие тексты, видео и документы;
-- Social Accounts;
-- PDF Template;
-- Newsletter и публичные блоки.
+Подробное популярное описание первого клиента находится в [`MANNA-VOM-HIMMEL.md`](./MANNA-VOM-HIMMEL.md).
 
 ---
 
 ## Roadmap
 
-1. **Foundation** — auth, roles, settings, i18n, Media Desktop shell, storage, Media Library, queue/cache/search/audit/API foundation.
-2. **Workflow** — Projekte, Aufgaben, universal Content Editor, Kalender.
-3. **Content** — Beiträge, Bücher/PDF, categories/tags/collections, imports, PDF generator.
-4. **Media** — video upload/processing, Video Studio, Podcast, playlists/series.
-5. **Publishing & Integrations** — Publishing Workspace, YouTube first, then other connectors through the same adapter layer.
-6. **KI** — contextual assistant and platform-specific preparation.
-7. **Audience** — Subscribers, Community, unified comments/questions Inbox, notifications and Polls.
+1. **Foundation** — auth, roles, settings, i18n, theme tokens, Media Desktop shell, storage, Media Library, queue/cache/search/audit/API foundation.
+2. **Workflow** — Projekte, Aufgaben, universal editor/workflow shell, Kalender, Weiterarbeiten.
+3. **Content** — Beiträge, Bücher/PDF, Themen, Tags, Collections, imports, PDF generator, public content pages.
+4. **Media** — Video upload/processing, Video Studio, Podcast, Playlists/Series.
+5. **Publishing & Integrations** — Publishing Workspace, YouTube first, затем другие connectors через adapter layer.
+6. **KI** — contextual assistant и platform-specific preparation.
+7. **Audience** — Subscribers, Accounts, Community, unified inbox, notifications, Polls.
 8. **Live** — Live Studio, OBS/RTMP/SRT, recording, multistream architecture, Browser Live preparation.
-9. **Monetization** — access policies, entitlements, subscription/purchase/donation providers.
-10. **Mobile & Vendor Infrastructure** — PWA/mobile workflows first; Central Control/licensing/remote updates only after the platform is stable.
+9. **Monetization** — Access Policies, Entitlements, subscriptions, purchases, donations, protected downloads.
+10. **Mobile & Vendor Infrastructure** — PWA/mobile workflows; Central Control/licensing/remote updates только после стабильности основной платформы.
 
 Не реализовывать весь roadmap одним проходом.
 
 ---
 
-## Что не делать
+## Основные документы
 
-- не превращать Media Desktop в обычную CRUD admin panel;
-- не hard-code Manna branding/categories в Core;
-- не делать YouTube специальным исключением архитектуры;
-- не хранить только external URLs вместо собственного архива;
-- не выдавать mock/fake integrations за готовые;
-- не блокировать установку при недоступности license/update server;
-- не пытаться в первом релизе воспроизвести весь OBS;
-- не строить полноценную социальную сеть до того, как готовы базовые Community workflows;
-- не запускать тяжёлые операции внутри обычного HTTP request.
-
----
-
-## Подробное техническое задание
-
-Полная актуальная спецификация находится в [`MASTER-TZ.md`](./MASTER-TZ.md).
+- [`MASTER-TZ.md`](./MASTER-TZ.md) — главный технический и продуктовый specification.
+- [`MANNA-VOM-HIMMEL.md`](./MANNA-VOM-HIMMEL.md) — подробное немецкое описание первого deployment.
+- [`UI/approved/`](./UI/approved/) — единственный approved visual reference.
 
 ---
 
 ## Статус
 
-Проект находится на этапе архитектуры и реализации foundation. UI/UX-концепция Media Desktop и публичного Manna Vom Himmel определена и должна использоваться как ориентир при дальнейшей реализации.
+Проект находится на этапе architecture/foundation. Функциональная концепция Atapin Media, первая установка Manna Vom Himmel и её утверждённый UI определены. Дальнейшая разработка должна опираться на `MASTER-TZ.md` и `UI/approved/` без возвращения к удалённым альтернативным дизайн-концептам.
