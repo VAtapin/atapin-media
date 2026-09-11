@@ -1,0 +1,24 @@
+name: YouTube collector checks
+on:
+  push:
+    paths: ['youtube/**', '.github/workflows/youtube.yml']
+  pull_request:
+    paths: ['youtube/**', '.github/workflows/youtube.yml']
+permissions:
+  contents: read
+jobs:
+  collector:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: python -m pip install -r youtube/requirements.txt
+      - run: python -m unittest discover -s youtube/tests -v
+      - run: bash -n youtube/bin/plesk.sh
+      - run: python youtube/collect.py --help
