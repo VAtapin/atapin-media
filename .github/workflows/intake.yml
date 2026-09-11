@@ -1,0 +1,32 @@
+name: Intake checks
+on:
+  push:
+    paths: ['intake/**', '.github/workflows/intake.yml']
+  pull_request:
+    paths: ['intake/**', '.github/workflows/intake.yml']
+permissions:
+  contents: read
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.2', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo_sqlite, fileinfo
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: PHP syntax
+        run: find intake -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Archive recovery and storage checks
+        run: php intake/tests/archive.php
+      - name: HTTP integration checks
+        run: node intake/tests/http.mjs
+      - name: JavaScript syntax
+        run: node --check intake/public/app.js

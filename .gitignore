@@ -1,0 +1,7 @@
+/intake/config.local.php
+/intake/var/
+/.local/
+/node_modules/
+/.sites-runtime/
+/.env
+*.log
