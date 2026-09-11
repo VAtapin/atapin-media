@@ -42,13 +42,13 @@ try {
     $generatedPassword = null;
     if (array_key_exists('password-stdin', $args)) {
         $password = rtrim((string)fgets(STDIN, 258), "\r\n");
-        if (strlen($password) < 6 || strlen($password) > 72) throw new RuntimeException('Password must contain 6 to 72 bytes.');
+        if ($password === '' || strlen($password) > 72) throw new RuntimeException('Enter a non-empty password (up to 72 bytes).');
         $config['password_hash'] = password_hash($password, PASSWORD_DEFAULT);
         unset($password);
     } elseif (empty($config['password_hash'])) {
         $alphabet = 'abcdefghjkmnpqrstuvwxyz23456789';
         $generatedPassword = '';
-        for ($i = 0; $i < 10; $i++) $generatedPassword .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+        for ($i = 0; $i < 6; $i++) $generatedPassword .= $alphabet[random_int(0, strlen($alphabet) - 1)];
         $config['password_hash'] = password_hash($generatedPassword, PASSWORD_DEFAULT);
     }
     $archive = new Archive($config);

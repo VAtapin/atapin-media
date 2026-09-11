@@ -85,11 +85,11 @@ try {
   assert.equal(statSync(catalogue).size, before, 'URL update does not recreate the catalogue');
   deploy();
   assert.equal((await fetch(url + 'api.php?action=overview', { headers: { 'X-Intake-Request': '1', Cookie: cookie } })).status, 200, 'normal deploy preserves password and login');
-  execFileSync(php, [join(docroot, 'intake/bin/setup.php'), `--origin=${origin}`, '--update-origin', '--password-stdin'], { env, input: 'replacement-test-password\n' });
+  execFileSync(php, [join(docroot, 'intake/bin/setup.php'), `--origin=${origin}`, '--update-origin', '--password-stdin'], { env, input: 'manna\n' });
   assert.equal((await fetch(url + 'api.php?action=overview', { headers: { 'X-Intake-Request': '1', Cookie: cookie } })).status, 401, 'password change revokes old browser logins');
-  await login(url, 'replacement-test-password');
+  await login(url, 'manna'); // Five-character passwords are explicitly supported.
   const protectedConfig = readFileSync(config, 'utf8');
-  assert.throws(() => execFileSync(php, [join(docroot, 'intake/bin/setup.php'), `--origin=${origin}`, '--update-origin', '--password-stdin'], { env, input: 'tiny\n', stdio: ['pipe', 'pipe', 'pipe'] }));
+  assert.throws(() => execFileSync(php, [join(docroot, 'intake/bin/setup.php'), `--origin=${origin}`, '--update-origin', '--password-stdin'], { env, input: '\n', stdio: ['pipe', 'pipe', 'pipe'] }));
   assert.equal(readFileSync(config, 'utf8'), protectedConfig, 'invalid password cannot change config');
   // Upgrade an earlier installation that has an archive but no password.
   const legacyConfig = protectedConfig.replace(/\s*'password_hash' => '[^']+',?/, '');

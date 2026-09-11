@@ -19,6 +19,7 @@ const config = join(scratch, 'config.php');
 const env = { ...process.env, INTAKE_CONFIG: config, INTAKE_ALLOW_LOCAL_HTTP: '1' };
 const setupOutput = execFileSync('php', ['intake/bin/setup.php', `--storage=${storage}`, `--origin=${origin}`, '--max-file-gb=1', '--quota-gb=2'], { env, encoding: 'utf8' });
 const password = setupOutput.match(/Password: ([a-z0-9]+)/)[1];
+assert.equal(password.length, 6, 'generated password is short');
 assert(!readFileSync(config, 'utf8').includes(password), 'plaintext password is not stored');
 let cookie = '';
 let output = '';

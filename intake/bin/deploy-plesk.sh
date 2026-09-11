@@ -53,7 +53,7 @@ if [[ -f "$CONFIG_FILE" ]]; then SETUP_ARGS+=(--update-origin)
 else SETUP_ARGS+=(--storage="$PRIVATE_DIR/manna-intake" --max-file-gb=20 --quota-gb=500); fi
 if [[ "$SET_PASSWORD" == 1 ]]; then
   if [[ ! -t 0 ]]; then printf 'An interactive SSH terminal is required to choose a password.\n' >&2; exit 1; fi
-  IFS= read -r -s -p 'New shared password (at least 6 characters): ' PASSWORD
+  IFS= read -r -s -p 'New shared password: ' PASSWORD
   printf '\n'
   IFS= read -r -s -p 'Repeat password: ' PASSWORD_REPEAT
   printf '\n'
