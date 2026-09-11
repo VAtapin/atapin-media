@@ -1,0 +1,6 @@
+@extends('layouts.app')
+@section('title',__('ui.import_center'))
+@section('content')<a class="back-link" href="{{ route('imports.index') }}">← {{ __('ui.import_center') }}</a><div class="page-heading"><div><p class="eyebrow">YouTube · {{ __('ui.source_'.$record->kind) }}</p><h1>{{ $record->title }}</h1></div><span class="pill">{{ __('ui.import_review') }}</span></div><section class="panel"><p class="prose">{{ $record->body }}</p><dl><dt>{{ __('ui.source') }}</dt><dd>{{ $record->source_id }}</dd><dt>{{ __('ui.date') }}</dt><dd>{{ $record->metadata['published_date'] ?? $record->metadata['published_label'] ?? '—' }}</dd></dl></section>
+@if(!empty($record->metadata['media']))<section class="panel"><h2>{{ __('ui.files') }}</h2>@foreach($record->metadata['media'] as $role=>$ids)@foreach($ids as $id)<p><a href="{{ route('media.show',$id) }}">{{ __('ui.asset_'.$role) }}</a></p>@endforeach @endforeach</section>@endif
+@if(!empty($record->metadata['images']))<section class="panel"><h2>{{ __('ui.kind_image') }}</h2>@foreach($record->metadata['images'] as $id)<a href="{{ route('media.show',$id) }}">{{ __('ui.file_details') }}</a>@endforeach</section>@endif
+<p class="muted">{{ __('ui.import_private') }}</p>@endsection

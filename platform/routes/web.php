@@ -12,6 +12,12 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class,'store']);
 });
 Route::middleware('auth')->group(function () {
+    Route::middleware('can:imports.manage')->prefix('desktop')->group(function(){
+        Route::get('imports',[\App\Http\Controllers\ImportController::class,'index'])->name('imports.index');
+        Route::post('imports',[\App\Http\Controllers\ImportController::class,'store'])->name('imports.store');
+        Route::get('imports/{record}',[\App\Http\Controllers\ImportController::class,'show'])->name('imports.show');
+        Route::get('collections/{collection}',[\App\Http\Controllers\ImportController::class,'collection'])->name('collections.show');
+    });
     Route::middleware('can:projects.manage')->prefix('desktop')->group(function () {
         Route::resource('projects', \App\Http\Controllers\ProjectController::class)->except('destroy');
         Route::get('tasks',[\App\Http\Controllers\TaskController::class,'index'])->name('tasks.index');

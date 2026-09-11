@@ -22,6 +22,7 @@
         @can('media.view')<a @class(['nav-link','active'=>request()->routeIs('media.*')]) href="{{ route('media.index') }}">@include('components.icon',['name'=>'media']) {{ __('ui.media_library') }}</a>@endcan
         @can('media.upload')<a class="nav-link" href="/upload/">@include('components.icon',['name'=>'upload']) {{ __('ui.upload_files') }}</a>@endcan
         <p class="nav-heading">{{ __('ui.more') }}</p>
+        @can('imports.manage')<a @class(['nav-link','active'=>request()->routeIs('imports.*','collections.*')]) href="{{ route('imports.index') }}">@include('components.icon',['name'=>'upload']) {{ __('ui.import_center') }}</a>@endcan
         @can('settings.manage')<a @class(['nav-link','active'=>request()->routeIs('settings')]) href="{{ route('settings') }}">@include('components.icon',['name'=>'settings']) {{ __('ui.settings') }}</a>@endcan
         @can('audit.view')<a @class(['nav-link','active'=>request()->routeIs('audit')]) href="{{ route('audit') }}">@include('components.icon',['name'=>'list']) {{ __('ui.audit') }}</a>@endcan
     </nav>

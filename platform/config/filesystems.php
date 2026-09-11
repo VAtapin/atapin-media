@@ -29,6 +29,14 @@ return [
     */
 
     'disks' => [
+        'intake' => [
+            'driver'=>'local', 'root'=>env('INTAKE_ROOT',dirname(base_path(),2).'/private/manna-intake'),
+            'throw'=>true, 'serve'=>false,
+        ],
+        'youtube' => [
+            'driver'=>'local', 'root'=>env('YOUTUBE_ROOT',dirname(base_path(),2).'/private/manna-youtube'),
+            'throw'=>true, 'serve'=>false,
+        ],
 
         'local' => [
             'driver' => 'local',
