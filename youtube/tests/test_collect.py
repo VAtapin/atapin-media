@@ -129,6 +129,12 @@ class ArchiveTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             posts.download_image('http://127.0.0.1/internal', self.root)
 
+    def test_post_feed_ceiling_is_not_reported_as_full_history(self):
+        result = posts.coverage([{'published_label': '5 months ago'}] * 200, [])
+        self.assertEqual(result['state'], 'partial')
+        self.assertTrue(result['possible_history_limit'])
+        self.assertEqual(result['last_returned_date_label'], '5 months ago')
+
 
 class MediaTest(unittest.TestCase):
     @unittest.skipUnless(shutil.which('ffmpeg') and shutil.which('ffprobe'), 'ffmpeg not installed')

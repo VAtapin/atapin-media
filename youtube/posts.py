@@ -41,6 +41,17 @@ def normalize(post):
             'likes_label': text(post.get('voteCount')), 'links': links, 'images': images, 'raw': post}
 
 
+def coverage(items, warnings):
+    warnings = list(warnings)
+    possible_limit = len(items) >= 200
+    if possible_limit:
+        warnings.append('YouTube returned at least 200 posts. Its public feed may omit older posts; this is not a complete historical archive.')
+    return {'state': 'partial' if warnings else 'complete', 'count': len(items), 'warnings': warnings,
+            'possible_history_limit': possible_limit,
+            'last_returned_date_label': items[-1]['published_label'] if items else None,
+            'comments': 'Only video comments are collected; post discussion threads are not included.'}
+
+
 def extractor_class():
     from yt_dlp.extractor.youtube import YoutubeTabIE
 
@@ -48,6 +59,12 @@ def extractor_class():
         def __init__(self, downloader):
             super().__init__(downloader)
             self.posts = {}
+            self.pagination_warnings = []
+
+        def write_debug(self, message, *args, **kwargs):
+            if 'feed looping' in message.lower():
+                self.pagination_warnings.append(message)
+            return super().write_debug(message, *args, **kwargs)
 
         def capture(self, value):
             for node in walk(value):
@@ -97,7 +114,7 @@ def collect_posts(backend, root, channel, channel_id, save):
         if raw.get('channel_id') != channel_id:
             raise RuntimeError('Posts channel identity did not match.')
         save(root / 'channel' / 'posts.json', raw)
-        warnings = list(backend.log.warnings)
+        warnings = list(backend.log.warnings) + extractor.pagination_warnings
         # Persist every text record before downloading any image: a slow/failed image
         # must not prevent the oldest posts from being archived.
         save(root / 'posts' / 'index.json', {'count': len(extractor.posts), 'entries': [
@@ -120,5 +137,4 @@ def collect_posts(backend, root, channel, channel_id, save):
                 except Exception as error:
                     warnings.append(post['id'] + ': ' + str(error))
             save(folder / 'post.json', post)
-        return {'state': 'partial' if warnings else 'complete', 'count': len(extractor.posts), 'warnings': warnings,
-                'comments': 'Only video comments are collected; post discussion threads are not included.'}
+        return coverage(list(extractor.posts.values()), warnings)

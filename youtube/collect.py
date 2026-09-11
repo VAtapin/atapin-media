@@ -362,6 +362,10 @@ def collect_video(backend, root, entry):
 
 
 def main():
+    # Windows console encodings must not abort an otherwise valid Unicode title.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, 'reconfigure'):
+            stream.reconfigure(encoding='utf-8', errors='replace')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', required=True, help='Private directory outside the checkout/web root')
     parser.add_argument('--node', default=shutil.which('node'))
