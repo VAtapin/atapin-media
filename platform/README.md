@@ -35,6 +35,14 @@ bash platform/bin/plesk.sh check
 
 ## Queue и scheduler
 
+Под root установите worker и ежеминутный scheduler одной командой:
+
+```bash
+bash platform/bin/plesk.sh services
+```
+
+Она создаёт отдельные systemd service/timer, запускает обработку от пользователя сайта и включает запуск после перезагрузки. После этого вторую задачу scheduler в Plesk создавать не нужно. Ниже — ручная альтернатива.
+
 Для постоянного worker используйте systemd с `User=` владельца подписки и `ExecStart=/bin/bash /var/www/vhosts/mannavomhimmel.de/httpdocs/platform/bin/plesk.sh worker`. Restart=always. Фоновая обработка не должна зависеть от открытого SSH-окна. Таймаут worker 3600 секунд требует `retry_after` больше 3600 (в config/queue.php установлено 3660).
 
 В Plesk → Scheduled Tasks добавьте задачу пользователя подписки каждую минуту:

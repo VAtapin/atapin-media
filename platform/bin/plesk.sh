@@ -6,12 +6,59 @@ ROOT=$(dirname -- "$APP")
 PRIVATE="$(dirname -- "$ROOT")/private/atapin-platform"
 PHP_BIN=${PLESK_PHP_BIN:-/opt/plesk/php/8.4/bin/php}
 ACTION=${1:-check}
-case "$ACTION" in install|update|owner|check|worker|schedule) ;; *) printf 'Usage: bash platform/bin/plesk.sh install|update|owner|check|worker|schedule\n' >&2; exit 1 ;; esac
+case "$ACTION" in install|update|owner|check|worker|schedule|services) ;; *) printf 'Usage: bash platform/bin/plesk.sh install|update|owner|check|worker|schedule|services\n' >&2; exit 1 ;; esac
 [[ $(basename -- "$ROOT") == httpdocs ]] || { printf 'Run from the existing httpdocs checkout.\n' >&2; exit 1; }
 [[ -x "$PHP_BIN" ]] || { printf 'PHP 8.4 not found: %s\n' "$PHP_BIN" >&2; exit 1; }
 if [[ $(id -u) == 0 ]]; then
   SITE_USER=$(stat -c '%U' "$ROOT")
   [[ $(stat -c '%u' "$ROOT") != 0 ]] || { printf 'httpdocs must belong to the Plesk subscription user.\n' >&2; exit 1; }
+  if [[ "$ACTION" == services ]]; then
+    [[ -f "$PRIVATE/.env" && -f "$APP/vendor/autoload.php" ]] || { printf 'Run install first.\n' >&2; exit 1; }
+    # Fixed systemd names use numeric UID; reject paths with unit-file specifiers or escapes.
+    [[ "$ROOT" =~ ^/[a-zA-Z0-9_./-]+$ && "$PHP_BIN" =~ ^/[a-zA-Z0-9_./-]+$ && "$SITE_USER" =~ ^[a-zA-Z0-9_.-]+$ ]] || exit 1
+    UNIT="atapin-media-$(stat -c '%u' "$ROOT")"
+    cat > "/etc/systemd/system/$UNIT.service" <<EOF
+[Unit]
+Description=Atapin Media queue worker
+After=network.target
+[Service]
+Type=simple
+User=$SITE_USER
+WorkingDirectory=$APP
+Environment=PLESK_PHP_BIN=$PHP_BIN
+ExecStart=/bin/bash $SCRIPT_DIR/plesk.sh worker
+Restart=always
+RestartSec=5
+TimeoutStopSec=3700
+UMask=0077
+[Install]
+WantedBy=multi-user.target
+EOF
+    cat > "/etc/systemd/system/$UNIT-schedule.service" <<EOF
+[Unit]
+Description=Atapin Media scheduler
+[Service]
+Type=oneshot
+User=$SITE_USER
+WorkingDirectory=$APP
+Environment=PLESK_PHP_BIN=$PHP_BIN
+ExecStart=/bin/bash $SCRIPT_DIR/plesk.sh schedule
+UMask=0077
+EOF
+    cat > "/etc/systemd/system/$UNIT-schedule.timer" <<EOF
+[Unit]
+Description=Atapin Media every-minute schedule
+[Timer]
+OnCalendar=*-*-* *:*:00
+Persistent=true
+[Install]
+WantedBy=timers.target
+EOF
+    systemctl daemon-reload
+    systemctl enable --now "$UNIT.service" "$UNIT-schedule.timer"
+    systemctl is-active "$UNIT.service" "$UNIT-schedule.timer"
+    exit 0
+  fi
   if [[ "$ACTION" == install || "$ACTION" == update ]]; then
     # Only this application's checkout/runtime; existing intake and YouTube archives are untouched.
     chown -R --no-dereference "$SITE_USER" "$APP"
@@ -19,6 +66,7 @@ if [[ $(id -u) == 0 ]]; then
   fi
   exec runuser -u "$SITE_USER" -- env PLESK_PHP_BIN="$PHP_BIN" bash "$SCRIPT_DIR/plesk.sh" "$ACTION"
 fi
+[[ "$ACTION" != services ]] || { printf 'Run services as root to install systemd units.\n' >&2; exit 1; }
 umask 077
 cd -- "$APP"
 if [[ "$ACTION" == install || "$ACTION" == update ]]; then

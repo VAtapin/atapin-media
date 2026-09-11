@@ -13,6 +13,11 @@
     <nav aria-label="{{ __('ui.navigation') }}">
         <p class="nav-heading">{{ __('ui.workspace') }}</p>
         @can('desktop.view')<a @class(['nav-link','active'=>request()->routeIs('desktop')]) href="{{ route('desktop') }}">@include('components.icon',['name'=>'desktop']) {{ __('ui.desktop') }}</a>@endcan
+        @can('projects.manage')
+        @foreach(['projects.index'=>'projects','tasks.index'=>'tasks','calendar'=>'calendar'] as $route=>$label)
+        <a @class(['nav-link','active'=>request()->routeIs(explode('.',$route)[0].'*')]) href="{{ route($route) }}">@include('components.icon',['name'=>'list']) {{ __('ui.'.$label) }}</a>
+        @endforeach
+        @endcan
         <p class="nav-heading">{{ __('ui.contents') }}</p>
         @can('media.view')<a @class(['nav-link','active'=>request()->routeIs('media.*')]) href="{{ route('media.index') }}">@include('components.icon',['name'=>'media']) {{ __('ui.media_library') }}</a>@endcan
         @can('media.upload')<a class="nav-link" href="/upload/">@include('components.icon',['name'=>'upload']) {{ __('ui.upload_files') }}</a>@endcan
