@@ -1,5 +1,16 @@
 <?php
 return [
+    'login_title' => 'Medienarchiv öffnen · Manna Vom Himmel',
+    'login_heading' => 'Willkommen im Medienarchiv',
+    'login_intro' => 'Gib das gemeinsame Passwort ein, um deine Dateien hinzuzufügen.',
+    'password' => 'Passwort',
+    'login_button' => 'Archiv öffnen',
+    'login_remember' => 'Auf diesem Gerät bleibst du 30 Tage angemeldet. Auf einem fremden Gerät bitte danach abmelden.',
+    'login_wrong' => 'Das Passwort stimmt nicht. Bitte versuche es noch einmal.',
+    'login_limited' => 'Zu viele Versuche. Bitte warte 15 Minuten und versuche es erneut.',
+    'login_denied' => 'Bitte öffne diese Seite erneut und versuche es noch einmal.',
+    'login_unavailable' => 'Das Archiv wird noch eingerichtet. Bitte versuche es später erneut.',
+    'logout' => 'Abmelden',
     'description' => 'Dateien für Manna Vom Himmel sammeln und sicher im eigenen Archiv aufbewahren.',
     'title' => 'Dateien sammeln · Manna Vom Himmel',
     'brand_label' => 'Manna Vom Himmel – Dateien sammeln',

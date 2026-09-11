@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { createServer } from 'node:net';
 import { randomUUID, createHash } from 'node:crypto';
+import { login } from './login.mjs';
 
 // Real PHP HTTP server + real disk, no API mocks.
 const scratch = mkdtempSync(join(tmpdir(), 'atapin-http-'));
@@ -16,7 +17,10 @@ await new Promise(resolve => socket.close(resolve));
 const origin = `http://127.0.0.1:${port}`;
 const config = join(scratch, 'config.php');
 const env = { ...process.env, INTAKE_CONFIG: config, INTAKE_ALLOW_LOCAL_HTTP: '1' };
-execFileSync('php', ['intake/bin/setup.php', `--storage=${storage}`, `--origin=${origin}`, '--max-file-gb=1', '--quota-gb=2'], { env });
+const setupOutput = execFileSync('php', ['intake/bin/setup.php', `--storage=${storage}`, `--origin=${origin}`, '--max-file-gb=1', '--quota-gb=2'], { env, encoding: 'utf8' });
+const password = setupOutput.match(/Password: ([a-z0-9]+)/)[1];
+assert(!readFileSync(config, 'utf8').includes(password), 'plaintext password is not stored');
+let cookie = '';
 let output = '';
 const server = spawn('php', ['-S', `127.0.0.1:${port}`, '-t', 'intake/public'], { env, stdio: ['ignore', 'pipe', 'pipe'] });
 server.stdout.on('data', data => output += data); server.stderr.on('data', data => output += data);
@@ -27,7 +31,7 @@ async function api(action, data, extra = {}) {
   const { id, headers, ...rest } = extra;
   const response = await fetch(`${origin}/api.php?action=${action}${id ? `&id=${id}` : ''}`, {
     method: action === 'overview' ? 'GET' : 'POST',
-    headers: { 'X-Intake-Request':'1', Origin: origin, ...(Buffer.isBuffer(data) ? {} : { 'Content-Type':'application/json' }), ...headers },
+    headers: { 'X-Intake-Request':'1', Origin: origin, Cookie: cookie, ...(Buffer.isBuffer(data) ? {} : { 'Content-Type':'application/json' }), ...headers },
     body: data === undefined ? undefined : Buffer.isBuffer(data) ? data : JSON.stringify(data), ...rest,
   });
   let body;
@@ -44,9 +48,16 @@ try {
   assert(ready, `PHP server did not start: ${output}`);
   const page = await fetch(origin);
   const html = await page.text();
-  assert(html.includes('Dateien sammeln') && !html.includes('<?php') && !html.includes('<?=') && !html.includes('Einladungslink'));
+  assert(html.includes('type="password"') && !html.includes('id="workspace"') && !html.includes('<?php'));
   assert(page.headers.get('content-security-policy').includes("frame-ancestors 'none'"));
-  assert.equal((await api('overview')).status, 200, 'open access has no login');
+  for (const action of ['overview', 'start', 'chunk', 'finish']) assert.equal((await api(action)).status, 401, 'all API actions require login');
+  assert.equal((await fetch(origin, { method: 'POST', headers: { Origin: 'https://foreign.example' }, body: new URLSearchParams({ action: 'login', password }) })).status, 403);
+  const wrong = await fetch(origin, { method: 'POST', headers: { Origin: origin }, body: new URLSearchParams({ action: 'login', password: 'wrong-password' }) });
+  assert.equal(wrong.status, 401); assert((await wrong.text()).includes('Das Passwort stimmt nicht'));
+  cookie = await login(origin, password);
+  assert.equal((await api('overview')).status, 200, 'shared password enables API');
+  assert.equal((await api('overview', undefined, { headers: { Cookie: cookie + '0' } })).status, 401, 'tampered cookie rejected');
+  assert((await (await fetch(origin, { headers: { Cookie: cookie } })).text()).includes('id="workspace"'));
   assert.equal((await fetch(`${origin}/api.php?action=overview`)).status, 403, 'simple cross-site submissions rejected');
   assert.equal((await api('overview', undefined, { headers: { Origin: 'https://foreign.example' } })).status, 403);
   for (const path of ['/config.local.php','/../config.local.php','/catalogue.sqlite','/.staging/','/images/']) {
@@ -84,13 +95,21 @@ try {
   const overview = await api('overview'); assert(!('recent' in overview.body));
   if (process.env.INTAKE_BROWSER_TESTS === '1') {
     const { checkBrowser } = await import('./browser.mjs');
-    await checkBrowser(origin);
+    await checkBrowser(origin, password);
   }
   const verify = execFileSync('php',['intake/bin/console.php','verify'],{env,encoding:'utf8'}); assert(verify.includes('failed: 0'));
   // Detect subsequent corruption independently from upload acceptance.
   writeFileSync(join(storage,manifest.stored_path), Buffer.alloc(content.length));
   assert.throws(() => execFileSync('php',['intake/bin/console.php','verify'],{env,stdio:'pipe'}));
-  console.log('HTTP checks passed: public access, real multipart-sized transfer, resume, checksums, zero files, private storage, no execution, integrity verification.');
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const denied = await fetch(origin, { method: 'POST', headers: { Origin: origin }, body: new URLSearchParams({ action: 'login', password: 'wrong-password' }) });
+    assert.equal(denied.status, 401);
+  }
+  const limited = await fetch(origin, { method: 'POST', headers: { Origin: origin }, body: new URLSearchParams({ action: 'login', password }) });
+  assert.equal(limited.status, 429, 'password attempts are limited, even for correct password');
+  assert.equal(limited.headers.get('retry-after'), '900');
+  assert.equal((await api('overview')).status, 200, 'throttle does not block authenticated uploads');
+  console.log('HTTP checks passed: shared password, API protection, signed cookie, brute-force limits, real transfer, resume, checksums, private storage and integrity verification.');
 } finally {
   server.kill();
   await new Promise(resolve => { if (server.exitCode !== null) resolve(); else server.once('exit',resolve); });

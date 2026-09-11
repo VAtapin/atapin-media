@@ -17,10 +17,47 @@ header('Referrer-Policy: no-referrer');
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 header('X-Robots-Tag: noindex, nofollow, noarchive');
-header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'");
+header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
 $translations = require __DIR__ . '/../lang/de.php';
 $t = static fn(string $key): string => htmlspecialchars($translations[$key] ?? $key, ENT_QUOTES, 'UTF-8');
 $asset = static fn(string $file): string => htmlspecialchars((defined('INTAKE_ASSET_BASE') ? INTAKE_ASSET_BASE : '') . $file, ENT_QUOTES, 'UTF-8');
+require_once __DIR__ . '/../src/bootstrap.php';
+require_once __DIR__ . '/../src/auth.php';
+$loginError = '';
+$authenticated = false;
+try {
+    $config = intake_config();
+    $authenticated = intake_authenticated($config);
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+        intake_same_origin($config);
+        if (($_POST['action'] ?? '') === 'logout') {
+            intake_cookie($config, false);
+            header('Location: ' . $basePath, true, 303); exit;
+        }
+        if (($_POST['action'] ?? '') !== 'login' || !is_string($_POST['password'] ?? null)) {
+            throw new \Atapin\Intake\IntakeError('access_denied', 403);
+        }
+        if (intake_login($config, $_POST['password'])) {
+            intake_cookie($config, true);
+            header('Location: ' . $basePath, true, 303); exit;
+        }
+        $loginError = 'login_wrong';
+        http_response_code(401);
+    }
+} catch (\Atapin\Intake\IntakeError $error) {
+    http_response_code($error->status);
+    if ($error->status === 429) header('Retry-After: 900');
+    $loginError = match ($error->key) {
+        'login_limited' => 'login_limited', 'access_denied' => 'login_denied', default => 'login_unavailable',
+    };
+    $authenticated = false;
+} catch (Throwable $error) {
+    http_response_code(503);
+    $loginError = 'login_unavailable';
+    $authenticated = false;
+    error_log('Atapin login failure: ' . get_class($error));
+}
+if (!$authenticated) { require __DIR__ . '/login.php'; exit; }
 ?><!doctype html>
 <html lang="de">
 <head>
@@ -39,6 +76,7 @@ $asset = static fn(string $file): string => htmlspecialchars((defined('INTAKE_AS
     <a class="brand" href="./" aria-label="<?= $t('brand_label') ?>"><span class="brand-line"><?= $t('brand_top') ?></span><span class="brand-sub"><?= $t('brand_bottom') ?></span><span class="brand-motto"><?= $t('motto') ?></span></a>
     <span class="header-label"><?= $t('archive_label') ?></span>
     <span id="connection" class="connection"><?= $t('connecting') ?></span>
+    <form method="post" action="" class="logout-form"><input type="hidden" name="action" value="logout"><button class="text-button" type="submit"><?= $t('logout') ?></button></form>
   </header>
   <main>
     <div class="page-heading"><div><p class="eyebrow"><?= $t('eyebrow') ?></p><h1><?= $t('heading') ?></h1><p class="intro"><?= $t('intro') ?></p></div><span class="private-note"><?= $t('originals') ?></span></div>

@@ -4,6 +4,7 @@ import { mkdtempSync, mkdirSync, cpSync, readFileSync, writeFileSync, existsSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createServer } from 'node:net';
+import { login } from './login.mjs';
 
 // Model the actual Plesk layout, including a separate existing main website.
 const scratch = mkdtempSync(join(tmpdir(), 'atapin-subfolder-'));
@@ -29,7 +30,9 @@ function deploy(nextOrigin = origin) {
 }
 let server;
 try {
-  assert(deploy().includes(url));
+  const deployed = deploy();
+  assert(deployed.includes(url));
+  const password = deployed.match(/Password: ([a-z0-9]+)/)[1];
   const config = join(scratch, 'private/manna-intake-config.php');
   assert(existsSync(config));
   assert(!existsSync(join(docroot, 'intake/config.local.php')));
@@ -42,7 +45,9 @@ try {
     try { if ((await fetch(url)).ok) break; } catch {}
     await new Promise(resolve => setTimeout(resolve, 100));
   }
-  const response = await fetch(url);
+  assert((await (await fetch(url)).text()).includes('type="password"'));
+  const cookie = await login(url, password);
+  const response = await fetch(url, { headers: { Cookie: cookie } });
   assert.equal(response.status, 200, output);
   const html = await response.text();
   assert(html.includes('Dateien sammeln'));
@@ -64,11 +69,12 @@ try {
       assert.equal(await privateResponse.text(), readFileSync(join(docroot, 'index.html'), 'utf8'), path);
     }
   }
-  const overview = await fetch(url + 'api.php?action=overview', { headers: { 'X-Intake-Request': '1', Origin: origin } });
+  assert.equal((await fetch(origin + '/intake/public/api.php?action=overview', { headers: { 'X-Intake-Request': '1' } })).status, 401, 'alternate entry point also requires password');
+  const overview = await fetch(url + 'api.php?action=overview', { headers: { 'X-Intake-Request': '1', Origin: origin, Cookie: cookie } });
   assert.equal(overview.status, 200, 'same-origin subfolder API works');
   if (process.env.INTAKE_BROWSER_TESTS === '1') {
     const { checkBrowser } = await import('./browser.mjs');
-    await checkBrowser(url);
+    await checkBrowser(url, password);
   }
   const catalogue = join(scratch, 'private/manna-intake/catalogue.sqlite');
   const before = statSync(catalogue).size;
@@ -78,6 +84,21 @@ try {
   assert(readFileSync(config, 'utf8').includes(storagePathBefore), 'URL update preserves archive path');
   assert.equal(statSync(catalogue).size, before, 'URL update does not recreate the catalogue');
   deploy();
+  assert.equal((await fetch(url + 'api.php?action=overview', { headers: { 'X-Intake-Request': '1', Cookie: cookie } })).status, 200, 'normal deploy preserves password and login');
+  execFileSync(php, [join(docroot, 'intake/bin/setup.php'), `--origin=${origin}`, '--update-origin', '--password-stdin'], { env, input: 'replacement-test-password\n' });
+  assert.equal((await fetch(url + 'api.php?action=overview', { headers: { 'X-Intake-Request': '1', Cookie: cookie } })).status, 401, 'password change revokes old browser logins');
+  await login(url, 'replacement-test-password');
+  const protectedConfig = readFileSync(config, 'utf8');
+  assert.throws(() => execFileSync(php, [join(docroot, 'intake/bin/setup.php'), `--origin=${origin}`, '--update-origin', '--password-stdin'], { env, input: 'tiny\n', stdio: ['pipe', 'pipe', 'pipe'] }));
+  assert.equal(readFileSync(config, 'utf8'), protectedConfig, 'invalid password cannot change config');
+  // Upgrade an earlier installation that has an archive but no password.
+  const legacyConfig = protectedConfig.replace(/\s*'password_hash' => '[^']+',?/, '');
+  assert.notEqual(legacyConfig, protectedConfig);
+  writeFileSync(config, legacyConfig);
+  assert.equal((await fetch(url + 'api.php?action=overview', { headers: { 'X-Intake-Request': '1' } })).status, 503, 'legacy config cannot silently allow public access');
+  const upgraded = deploy();
+  await login(url, upgraded.match(/Password: ([a-z0-9]+)/)[1]);
+  assert.equal(statSync(catalogue).size, before, 'adding a password preserves the archive');
   const verify = execFileSync(php, [join(docroot, 'intake/bin/console.php'), 'verify'], { env, encoding: 'utf8' });
   assert(verify.includes('failed: 0'));
   assert.equal(readFileSync(join(docroot, 'index.html'), 'utf8'), '<!doctype html><title>Existing site</title>Main website is unchanged');

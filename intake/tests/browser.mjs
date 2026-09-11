@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 /** Runs only in CI when INTAKE_BROWSER_TESTS=1; the PHP endpoint is real. */
-export async function checkBrowser(origin) {
+export async function checkBrowser(origin, password) {
   const { chromium } = await import('../../.local/node_modules/playwright/index.mjs');
   const browser = await chromium.launch({ headless: true });
   try {
@@ -9,6 +9,10 @@ export async function checkBrowser(origin) {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(origin);
+    await page.locator('#password').waitFor();
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'login fits mobile');
+    await page.locator('#password').fill(password);
+    await page.getByRole('button', { name: 'Archiv öffnen' }).click();
     await page.locator('#workspace').waitFor({ state: 'visible' });
     assert.equal(await page.locator('input[type=password]').count(), 0);
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'mobile has no horizontal overflow');
@@ -38,6 +42,10 @@ export async function checkBrowser(origin) {
     await page.setViewportSize({ width: 1440, height: 1000 });
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'desktop has no horizontal overflow');
     assert.deepEqual(errors, [], 'no browser runtime errors');
+    await page.getByRole('button', { name: 'Abmelden', exact: true }).click();
+    await page.locator('#password').waitFor();
+    const denied = await page.request.get(new URL('api.php?action=overview', origin.endsWith('/') ? origin : origin + '/').href, { headers: { 'X-Intake-Request': '1' } });
+    assert.equal(denied.status(), 401, 'logout removes API access');
     console.log('Browser checks passed: mobile/desktop, batch of four file types, multi-chunk upload, lost-response recovery, local history, escaped names.');
   } finally {
     await browser.close();

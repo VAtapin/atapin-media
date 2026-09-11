@@ -14,6 +14,7 @@ export const de = {
   folderUnsupported: 'Ordner können auf diesem Gerät über die Dateiauswahl hinzugefügt werden.',
   dropFailed: 'Einige Dateien konnten nicht gelesen werden. Bitte wähle sie über „Dateien auswählen“ aus.',
   errors: {
+    login_required: 'Bitte lade die Seite neu und gib das Passwort erneut ein. Wähle danach dieselben Dateien aus, um fortzufahren.',
     access_denied: 'Die Übertragung wurde vom Server abgewiesen. Bitte lade die Seite neu.',
     file_too_large: 'Diese Datei überschreitet die erlaubte Größe.', storage_full: 'Im Archiv ist nicht genug freier Speicher. Bitte informiere den Betreiber.',
     checksum_mismatch: 'Ein Teil wurde fehlerhaft übertragen. Bitte erneut versuchen.',

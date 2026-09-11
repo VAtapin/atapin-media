@@ -5,6 +5,7 @@ use Atapin\Intake\Archive;
 use Atapin\Intake\IntakeError;
 
 require __DIR__ . '/../src/bootstrap.php';
+require __DIR__ . '/../src/auth.php';
 
 header('Cache-Control: no-store, private');
 header('X-Content-Type-Options: nosniff');
@@ -17,8 +18,9 @@ try {
     $requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
     if ($requestOrigin !== '' && $requestOrigin !== $origin) throw new IntakeError('access_denied', 403);
     if (($_SERVER['HTTP_SEC_FETCH_SITE'] ?? '') === 'cross-site') throw new IntakeError('access_denied', 403);
-    // Intentionally public intake. This is a same-origin browser guard, not authentication.
+    // Same-origin guard is additional to the shared-password authentication.
     if (($_SERVER['HTTP_X_INTAKE_REQUEST'] ?? '') !== '1') throw new IntakeError('access_denied', 403);
+    if (!intake_authenticated($config)) throw new IntakeError('login_required', 401);
     $archive = new Archive($config);
     $action = $_GET['action'] ?? '';
     $method = $_SERVER['REQUEST_METHOD'];

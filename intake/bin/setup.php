@@ -11,7 +11,7 @@ try {
     foreach (['pdo_sqlite', 'fileinfo'] as $extension) {
         if (!extension_loaded($extension)) throw new RuntimeException('Missing PHP extension: ' . $extension);
     }
-    $args = getopt('', ['storage:', 'origin:', 'max-file-gb:', 'quota-gb:', 'base-path:', 'update-origin']);
+    $args = getopt('', ['storage:', 'origin:', 'max-file-gb:', 'quota-gb:', 'base-path:', 'update-origin', 'password-stdin']);
     $storage = $args['storage'] ?? '';
     $origin = rtrim($args['origin'] ?? '', '/');
     $parts = parse_url($origin);
@@ -39,6 +39,18 @@ try {
         $config = ['origin' => $origin, 'storage_path' => realpath($storage), 'max_file_bytes' => $max * 1024 ** 3,
             'max_archive_bytes' => $quota * 1024 ** 3, 'reserve_free_bytes' => 2 * 1024 ** 3];
     }
+    $generatedPassword = null;
+    if (array_key_exists('password-stdin', $args)) {
+        $password = rtrim((string)fgets(STDIN, 258), "\r\n");
+        if (strlen($password) < 6 || strlen($password) > 72) throw new RuntimeException('Password must contain 6 to 72 bytes.');
+        $config['password_hash'] = password_hash($password, PASSWORD_DEFAULT);
+        unset($password);
+    } elseif (empty($config['password_hash'])) {
+        $alphabet = 'abcdefghjkmnpqrstuvwxyz23456789';
+        $generatedPassword = '';
+        for ($i = 0; $i < 10; $i++) $generatedPassword .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+        $config['password_hash'] = password_hash($generatedPassword, PASSWORD_DEFAULT);
+    }
     $archive = new Archive($config);
     if (!$existing) $archive->migrate();
     $contents = "<?php\ndeclare(strict_types=1);\n// Local server settings. Never commit this file.\nreturn " . var_export($config, true) . ";\n";
@@ -52,6 +64,8 @@ try {
     $max = $config['max_file_bytes'] / 1024 ** 3;
     $quota = $config['max_archive_bytes'] / 1024 ** 3;
     echo "Intake ready.\nURL: {$origin}{$basePath}\nArchive: {$config['storage_path']}\nMaximum file: {$max} GiB; archive quota: {$quota} GiB.\n";
+    if ($generatedPassword !== null) echo "Password: {$generatedPassword}\nSave this password; it is shown only once.\n";
+    if (array_key_exists('password-stdin', $args)) echo "Password updated. Previous browser logins are now invalid.\n";
 } catch (Throwable $error) {
     fwrite(STDERR, $error->getMessage() . "\n");
     exit(1);

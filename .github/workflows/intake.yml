@@ -28,7 +28,9 @@ jobs:
           find intake upload -name '*.php' -print0 | xargs -0 -n1 php -l
           bash -n intake/bin/deploy-plesk.sh
       - name: Archive recovery and storage checks
-        run: php intake/tests/archive.php
+        run: |
+          php intake/tests/archive.php
+          php intake/tests/auth.php
       - name: Browser test dependencies
         if: matrix.php == '8.4'
         run: |

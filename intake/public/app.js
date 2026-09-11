@@ -184,7 +184,7 @@ async function pump() {
       } catch (error) {
         task.state = error.name === 'AbortError' ? 'paused' : 'failed';
         task.message = error.name === 'AbortError' ? '' : error.message;
-        if (error.status === 401 || error.status === 403) { paused = true; notice(t.accessExpired); }
+        if (error.status === 401 || error.status === 403) { paused = true; notice(error.status === 401 ? t.errors.login_required : t.accessExpired); }
         renderTask(task);
       }
     }
