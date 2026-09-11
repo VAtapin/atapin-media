@@ -27,10 +27,10 @@ export async function checkBrowser(origin) {
       { name: 'empty.csv', mimeType: 'text/csv', buffer: Buffer.alloc(0) },
       { name: 'photo.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aWnQAAAAASUVORK5CYII=', 'base64') },
     ]);
-    await page.waitForFunction(() => document.querySelectorAll('#queue .file-state.success').length === 4, { timeout: 60000 });
+    await page.waitForFunction(() => document.querySelectorAll('#queue .file-state.success').length === 4, null, { timeout: 60000 });
     assert(lostResponse, 'lost-response retry exercised');
     assert.equal(await page.locator('#queue .file-state.error').count(), 0);
-    assert.equal(await page.locator('#recent li').count(), 4);
+    await page.waitForFunction(() => document.querySelectorAll('#recent li').length === 4);
     assert((await page.locator('#queue').innerText()).includes('Заметки ü <script>.txt'), 'filename rendered literally');
     await page.reload();
     await page.locator('#workspace').waitFor({ state: 'visible' });

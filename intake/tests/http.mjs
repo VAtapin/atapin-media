@@ -70,7 +70,8 @@ try {
   const malicious = Buffer.from('<?php echo "must never execute";');
   start = await api('start', { request_key: randomUUID(), name: 'evil.php', size: malicious.length, modified: 0 });
   await api('chunk', malicious, { id: start.body.id, headers: { 'X-Upload-Offset':'0', 'X-Chunk-SHA256':sha(malicious) } });
-  result = await api('finish', undefined, { id: start.body.id }); assert.equal(result.body.category, 'other');
+  result = await api('finish', undefined, { id: start.body.id }); assert.equal(result.body.state, 'complete');
+  assert.equal((await fetch(origin + '/evil.php')).status, 404, 'uploaded script is not served or executed');
   const zero = await api('start', { request_key: randomUUID(), name: 'empty.txt', size: 0, modified: 0 });
   assert.equal((await api('finish', undefined, { id: zero.body.id })).body.state, 'complete');
   function allFiles(folder) { return readdirSync(folder, { withFileTypes:true }).flatMap(item => item.isDirectory() ? allFiles(join(folder,item.name)) : [join(folder,item.name)]); }
