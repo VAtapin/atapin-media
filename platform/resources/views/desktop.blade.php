@@ -1,15 +1,76 @@
-@extends('layouts.app')
-@section('title', __('ui.desktop'))
-@section('content')
-<div class="page-heading"><div><p class="eyebrow">{{ now()->locale(app()->getLocale())->translatedFormat('l, d. F Y') }}</p><h1>{{ __('ui.welcome',['name'=>auth()->user()->name]) }}</h1><p class="muted">{{ __('ui.desktop_intro') }}</p></div>@can('media.upload')<a class="button" href="{{ route('media.index') }}#upload">@include('components.icon',['name'=>'upload']) {{ __('ui.upload_files') }}</a>@endcan</div>
-@if($project)<section class="panel continue-panel"><div><p class="eyebrow">{{ __('ui.continue') }}</p><h2>{{ $project->title }}</h2><p class="muted">{{ __('ui.project_'.$project->status) }} @if($project->due_date) · {{ $project->due_date->format('d.m.Y') }} @endif</p></div><a class="button" href="{{ route('projects.show',$project) }}">{{ __('ui.open_project') }} →</a></section>@endif
-<section class="stats">
-@if($count !== null)<article class="stat"><span>{{ __('ui.media_library') }}</span><strong>{{ number_format($count,0,',','.') }}</strong><small>{{ __('ui.files') }}</small></article>
-<article class="stat"><span>{{ __('ui.storage') }}</span><strong>{{ number_format($bytes / 1073741824,2,',','.') }} <small>GB</small></strong><small>{{ __('ui.registered_originals') }}</small></article>@endif
-@if($queued !== null)<article class="stat"><span>{{ __('ui.processing') }}</span><strong>{{ $queued }}</strong><small>{{ __('ui.jobs_waiting') }}</small></article><article class="stat"><span>{{ __('ui.failed_jobs') }}</span><strong>{{ $failed }}</strong><small>{{ __('ui.jobs_need_attention') }}</small></article>@endif
-</section>
-@can('media.view')<section class="panel"><div class="panel-heading"><h2>{{ __('ui.recent_files') }}</h2><a href="{{ route('media.index') }}">{{ __('ui.view_all') }} →</a></div>
-@if($media->isEmpty())<div class="empty">@include('components.icon',['name'=>'media'])<h3>{{ __('ui.no_media') }}</h3><p>{{ __('ui.media_empty_hint') }}</p>@can('media.upload')<a class="button secondary" href="{{ route('media.index') }}#upload">{{ __('ui.upload_files') }}</a>@endcan</div>
-@else<div class="media-grid">@foreach($media as $item)@include('media.card')@endforeach</div>@endif
-</section>@endcan
-@endsection
+@php
+$programs = [
+    ['id'=>'videos','name'=>'Videos','icon'=>'/assets/brand/owner/icon-play.png','shortcut'=>true],
+    ['id'=>'posts','name'=>'Beiträge','icon'=>'/assets/ui/icons/article.png','shortcut'=>true],
+    ['id'=>'images','name'=>'Bilder','icon'=>'/assets/ui/sidebar-icons/media.png','shortcut'=>true],
+    ['id'=>'audio','name'=>'Audio','icon'=>'/assets/ui/icons/podcast.png','shortcut'=>true],
+    ['id'=>'books','name'=>'Bücher','icon'=>'/assets/brand/owner/icon-book.png','shortcut'=>true],
+    ['id'=>'media','name'=>'Media Library','icon'=>'/assets/ui/sidebar-icons/files.png','shortcut'=>false],
+    ['id'=>'projects','name'=>'Projekte','icon'=>'/assets/ui/sidebar-icons/projects.png','shortcut'=>false],
+    ['id'=>'tasks','name'=>'Aufgaben','icon'=>'/assets/ui/sidebar-icons/tasks.png','shortcut'=>true],
+    ['id'=>'calendar','name'=>'Kalender','icon'=>'/assets/ui/sidebar-icons/calendar.png','shortcut'=>false],
+    ['id'=>'community','name'=>'Community','icon'=>'/assets/ui/sidebar-icons/community.png','shortcut'=>true],
+    ['id'=>'statistics','name'=>'Statistiken','icon'=>'/assets/ui/sidebar-icons/analytics.png','shortcut'=>true],
+    ['id'=>'imports','name'=>'Import Center','icon'=>'/assets/ui/sidebar-icons/imports.png','shortcut'=>false],
+    ['id'=>'settings','name'=>'Einstellungen','icon'=>'/assets/brand/owner/icon-settings.png','shortcut'=>true],
+];
+@endphp
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Desktop · {{ config('platform.brand') }}</title>
+    <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/desktop-os.css?v=1">
+    <script src="/assets/desktop-os.js?v=1" defer></script>
+</head>
+<body class="os-body">
+<header class="os-menubar">
+    <div class="os-brand"><img src="/assets/brand/owner/logo-mark.png" alt=""><strong>Manna Media</strong></div>
+    <div class="os-user"><span class="os-notification">●</span><span class="os-avatar">{{ mb_substr(auth()->user()->name,0,1) }}</span><span>{{ auth()->user()->name }}</span></div>
+</header>
+
+<main class="os-desktop" data-desktop>
+    <nav class="os-shortcuts" aria-label="Programme auf dem Desktop">
+        @foreach($programs as $program)
+            @if($program['shortcut'])
+            <button class="os-shortcut" type="button" data-open-app="{{ $program['id'] }}" data-app-name="{{ $program['name'] }}" data-app-icon="{{ $program['icon'] }}">
+                <span class="os-shortcut-icon"><img src="{{ $program['icon'] }}" alt=""></span><span>{{ $program['name'] }}</span>
+            </button>
+            @endif
+        @endforeach
+    </nav>
+
+    <section class="os-start-menu" data-start-menu hidden>
+        <header><img src="/assets/brand/owner/logo-mark.png" alt=""><div><strong>Manna Media</strong><span>Programme</span></div></header>
+        <div class="os-program-grid">
+            @foreach($programs as $program)
+            <button type="button" data-open-app="{{ $program['id'] }}" data-app-name="{{ $program['name'] }}" data-app-icon="{{ $program['icon'] }}"><img src="{{ $program['icon'] }}" alt=""><span>{{ $program['name'] }}</span></button>
+            @endforeach
+        </div>
+        <footer><span>{{ auth()->user()->name }}</span><form method="post" action="{{ route('logout') }}">@csrf<button type="submit">Abmelden</button></form></footer>
+    </section>
+
+    <template id="os-window-template">
+        <article class="os-window" tabindex="-1">
+            <header class="os-window-titlebar" data-drag-handle>
+                <span class="os-window-app"><img src="" alt=""><strong></strong></span>
+                <span class="os-window-controls">
+                    <button type="button" data-window-action="pin" title="Immer im Vordergrund" aria-label="Immer im Vordergrund">◆</button>
+                    <button type="button" data-window-action="minimize" title="Minimieren" aria-label="Minimieren">—</button>
+                    <button type="button" data-window-action="maximize" title="Maximieren" aria-label="Maximieren">□</button>
+                    <button type="button" data-window-action="fullscreen" title="Vollbild" aria-label="Vollbild">⛶</button>
+                    <button type="button" data-window-action="close" title="Schließen" aria-label="Schließen">×</button>
+                </span>
+            </header>
+            <div class="os-window-content"></div>
+        </article>
+    </template>
+</main>
+
+<footer class="os-taskbar">
+    <button class="os-start-button" type="button" data-start-button aria-expanded="false"><img src="/assets/brand/owner/logo-mark.png" alt=""><span>Start</span></button>
+    <div class="os-running-apps" data-running-apps></div>
+    <time data-clock></time>
+</footer>
+</body>
+</html>

@@ -25,7 +25,7 @@ class WorkflowTest extends TestCase
         $this->get('/desktop/calendar?month=2026-11&view=list')->assertOk()->assertDontSee('Skript schreiben');
         $this->get('/desktop/tasks?view=mine')->assertOk()->assertSee('Skript schreiben');
         $this->get('/desktop/tasks')->assertOk()->assertSee('Skript schreiben');
-        $this->get('/desktop')->assertOk()->assertSee('Hoffnung');
+        $this->get('/desktop')->assertOk()->assertSee('Projekte');
         $this->assertDatabaseHas('audit_events',['action'=>'task.saved','subject'=>(string)$task->id]);
     }
     public function test_workflow_denies_unprivileged_users_and_invalid_transitions(): void
