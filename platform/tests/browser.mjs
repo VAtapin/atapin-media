@@ -12,6 +12,14 @@ try {
   browser=await chromium.launch({headless:true});
   const page=await browser.newPage({viewport:{width:1440,height:1000}});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await fs.mkdir('tests/artifacts',{recursive:true});
+  await page.goto('http://127.0.0.1:8791/');
+  await page.evaluate(()=>document.fonts.ready);
+  await page.evaluate(()=>Promise.all([...document.images].map(image=>image.decode())));
+  await page.screenshot({path:'tests/artifacts/home-notice.png',fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  await page.screenshot({path:'tests/artifacts/home-notice-mobile.png',fullPage:true});
+  await page.setViewportSize({width:1440,height:1000});
   await page.goto('http://127.0.0.1:8791/login');
   await page.locator('.kit-brand img').waitFor();
   await page.evaluate(()=>Promise.all([...document.images].map(image=>image.decode())));

@@ -1,1 +1,20 @@
-<!doctype html><html lang="{{ app()->getLocale() }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ app(\App\Services\Settings::class)->get('site_name',config('platform.brand')) }}</title><link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css"><link rel="stylesheet" href="/assets/app.css"></head><body class="login-page"><main class="login-card">@include('components.brand')<h1>{{ app(\App\Services\Settings::class)->get('site_name',config('platform.brand')) }}</h1><p>{{ __('ui.site_preparing') }}</p><a class="button" href="{{ route('login') }}">{{ __('ui.editorial_login') }}</a></main></body></html>
+<!doctype html>
+<html lang="{{ app()->getLocale() }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>{{ app(\App\Services\Settings::class)->get('site_name', config('platform.brand')) }}</title>
+    <link rel="icon" href="/favicon.svg">
+    <link rel="stylesheet" href="/assets/fonts/fonts.css">
+    <link rel="stylesheet" href="/assets/brand/ui-kit.css">
+    <link rel="stylesheet" href="/assets/site-notice.css">
+</head>
+<body class="site-notice">
+    <header class="site-notice-brand">@include('components.brand')</header>
+    <main class="site-notice-message">
+        <span class="site-notice-rule" aria-hidden="true"></span>
+        <h1>{{ __('ui.site_preparing_title') }}</h1>
+        <p>{{ __('ui.site_preparing_message') }}</p>
+    </main>
+</body>
+</html>

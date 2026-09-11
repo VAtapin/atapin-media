@@ -1,0 +1,32 @@
+/* Temporary public notice. Identity and type come from the approved master kit. */
+.site-notice {
+    box-sizing: border-box;
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100svh;
+    padding: clamp(32px, 7vh, 80px) 24px 64px;
+    background: var(--kit-cream);
+    color: var(--kit-navy);
+    font-family: var(--kit-interface);
+    text-align: center;
+}
+.site-notice *, .site-notice *::before, .site-notice *::after { box-sizing: inherit; }
+.site-notice-brand { display: flex; justify-content: center; }
+.site-notice-brand .kit-brand { --brand-width: 330px; }
+.site-notice-message { max-width: 760px; margin: clamp(64px, 15vh, 160px) auto 0; }
+.site-notice-rule { display: block; width: 64px; height: 3px; background: var(--kit-gold); margin: 0 auto 28px; }
+.site-notice-message h1 {
+    font-family: var(--kit-heading);
+    font-weight: 700;
+    font-size: clamp(30px, 4vw, 48px);
+    line-height: 1.2;
+    margin: 0 0 24px;
+    text-wrap: balance;
+}
+.site-notice-message p {
+    max-width: 540px;
+    margin: 0 auto;
+    font-size: clamp(16px, 2vw, 18px);
+    line-height: 1.7;
+    text-wrap: pretty;
+}

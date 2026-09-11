@@ -75,6 +75,8 @@ return [
     'previous' => 'Previous',
     'next' => 'Next',
     'site_preparing' => 'Our new website is on its way. You will find our content here soon.',
+    'site_preparing_title' => 'Our new website is on its way.',
+    'site_preparing_message' => 'Our videos, articles and more will be available here soon. Thank you for your patience.',
     'editorial_login' => 'Editorial sign in',
     'projects' => 'Projects',
     'tasks' => 'Tasks',

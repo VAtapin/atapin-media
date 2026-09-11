@@ -75,6 +75,8 @@ return [
     'previous' => 'Zurück',
     'next' => 'Weiter',
     'site_preparing' => 'Unsere neue Website entsteht. Bald findest du hier unsere Inhalte.',
+    'site_preparing_title' => 'Unsere neue Website entsteht.',
+    'site_preparing_message' => 'Bald findest du hier unsere Videos, Beiträge und weiteren Inhalte. Danke für deine Geduld.',
     'editorial_login' => 'Zugang zur Redaktion',
     'projects' => 'Projekte',
     'tasks' => 'Aufgaben',
