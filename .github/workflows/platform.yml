@@ -74,6 +74,7 @@ jobs:
           touch /tmp/atapin-browser.sqlite
           php artisan migrate --force
           php tests/browser-fixture.php
+          php tests/cron-smoke.php
           timeout 150 node tests/browser.mjs
         env:
           APP_ENV: testing

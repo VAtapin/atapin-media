@@ -37,23 +37,11 @@ bash platform/bin/plesk.sh check
 
 ## Queue и scheduler
 
-Под root установите worker и ежеминутный scheduler одной командой:
+На этом сервере используются **Geplante Aufgaben** в Plesk: две задачи типа **PHP-Skript ausführen**, версия PHP 8.4, путь `httpdocs/platform/bin/cron.php`, аргументы `schedule` и `queue` соответственно. Обе выполняются каждую минуту (`* * * * *`) от пользователя сайта. [Точные поля формы](../docs/PLESK-TASKS.md).
 
-```bash
-bash platform/bin/plesk.sh services
-```
+PHP-скрипт сам удерживает блокировку повторного запуска. Таймаут worker 3600 секунд меньше `retry_after=3660`. Команду `plesk.sh services` для этого способа не выполнять.
 
-Она создаёт отдельные systemd service/timer, запускает обработку от пользователя сайта и включает запуск после перезагрузки. После этого вторую задачу scheduler в Plesk создавать не нужно. Ниже — ручная альтернатива.
-
-Для постоянного worker используйте systemd с `User=` владельца подписки и `ExecStart=/bin/bash /var/www/vhosts/mannavomhimmel.de/httpdocs/platform/bin/plesk.sh worker`. Restart=always. Фоновая обработка не должна зависеть от открытого SSH-окна. Таймаут worker 3600 секунд требует `retry_after` больше 3600 (в config/queue.php установлено 3660).
-
-В Plesk → Scheduled Tasks добавьте задачу пользователя подписки каждую минуту:
-
-```bash
-bash /var/www/vhosts/mannavomhimmel.de/httpdocs/platform/bin/plesk.sh schedule
-```
-
-Исходные YouTube/intake архивы остаются отдельно. На Foundation библиотека показывает файлы, добавленные непосредственно в неё; подключение ранее собранных архивов выполняется следующим этапом импорта.
+YouTube/intake архивы остаются отдельно; Import Center регистрирует их для работы редакции без публикации и копирования оригиналов.
 
 ## Проверка
 
