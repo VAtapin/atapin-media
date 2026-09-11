@@ -1,5 +1,11 @@
 <?php
 declare(strict_types=1);
+// Also reject PHP's development-server PATH_INFO fallback for nonexistent paths.
+$requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+if (!in_array($requestPath, ['/', '/index.php'], true)) {
+    http_response_code(404);
+    exit;
+}
 header('Cache-Control: no-store');
 header('Referrer-Policy: no-referrer');
 header('X-Content-Type-Options: nosniff');

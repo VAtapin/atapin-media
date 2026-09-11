@@ -81,6 +81,10 @@ try {
   assert.deepEqual(readFileSync(join(storage,manifest.stored_path)),content);
   assert.equal((await fetch(origin+'/'+manifest.stored_path)).status,404);
   const overview = await api('overview'); assert(!('recent' in overview.body));
+  if (process.env.INTAKE_BROWSER_TESTS === '1') {
+    const { checkBrowser } = await import('./browser.mjs');
+    await checkBrowser(origin);
+  }
   const verify = execFileSync('php',['intake/bin/console.php','verify'],{env,encoding:'utf8'}); assert(verify.includes('failed: 0'));
   // Detect subsequent corruption independently from upload acceptance.
   writeFileSync(join(storage,manifest.stored_path), Buffer.alloc(content.length));
