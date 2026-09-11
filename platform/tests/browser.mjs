@@ -1,0 +1,42 @@
+import { chromium } from '../../.local/node_modules/playwright/index.mjs';
+import { spawn } from 'node:child_process';
+import fs from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const server=spawn('php',['artisan','serve','--host=127.0.0.1','--port=8791'],{stdio:'pipe'});
+let output='';server.stderr.on('data',b=>output+=b);server.stdout.on('data',b=>output+=b);
+let browser;
+try {
+  let ready=false;
+  for(let i=0;i<60;i++){try{const r=await fetch('http://127.0.0.1:8791/login');if(r.ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,500));}
+  assert(ready,output);
+  browser=await chromium.launch({headless:true});
+  const page=await browser.newPage({viewport:{width:1440,height:1000}});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('http://127.0.0.1:8791/login');
+  await page.locator('[name=email]').fill('test@example.com');
+  await page.locator('[name=password]').fill('kurz5');
+  await page.locator('button[type=submit], form button').click();
+  await page.waitForURL('**/desktop');
+  await fs.mkdir('tests/artifacts',{recursive:true});
+  await page.screenshot({path:'tests/artifacts/desktop.png',fullPage:true});
+  await page.goto('http://127.0.0.1:8791/desktop/media');
+  await page.locator('[name=file]').setInputFiles({name:'Hoffnung.txt',mimeType:'text/plain',buffer:Buffer.from('Hoffnung für heute')});
+  await page.locator('.upload-form button').click();
+  await page.waitForURL(/\/desktop\/media\/.+/);
+  assert.match(await page.locator('h1').innerText(),/Hoffnung/);
+  await page.locator('[name=title]').fill('Notizen für Sonntag');
+  await page.getByRole('button',{name:'Speichern',exact:true}).click();
+  assert.match(await page.locator('h1').innerText(),/Notizen/);
+  const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('link',{name:'Original herunterladen'}).click()]);
+  assert.equal(download.suggestedFilename(),'Hoffnung.txt');
+  await page.goto('http://127.0.0.1:8791/desktop/media');
+  await page.screenshot({path:'tests/artifacts/library.png',fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  await page.reload();
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Mobile overflow');
+  await page.locator('.menu-toggle').click();assert.equal(await page.locator('.menu-toggle').getAttribute('aria-expanded'),'true');
+  await page.keyboard.press('Escape');
+  await page.screenshot({path:'tests/artifacts/mobile.png',fullPage:true});
+  assert.deepEqual(errors,[]);
+  console.log('Browser: login, upload, rename, download, responsive navigation OK');
+} finally {await browser?.close();server.kill();}

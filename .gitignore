@@ -10,3 +10,4 @@ __pycache__/
 /platform/vendor/
 /platform/.env
 /platform/.phpunit.cache/
+/platform/tests/artifacts/

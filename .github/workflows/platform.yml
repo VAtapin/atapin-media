@@ -60,3 +60,29 @@ jobs:
           php artisan route:cache
       - name: Dependency security audit
         run: composer audit --no-interaction
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Browser dependencies
+        run: |
+          npm install --prefix ../.local --no-save --no-package-lock playwright@1.63.0
+          node ../.local/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Browser workflow
+        run: |
+          php artisan optimize:clear
+          touch /tmp/atapin-browser.sqlite
+          php artisan migrate --force
+          php tests/browser-fixture.php
+          node tests/browser.mjs
+        env:
+          APP_ENV: testing
+          APP_LOCALE: de
+          DB_CONNECTION: sqlite
+          DB_DATABASE: /tmp/atapin-browser.sqlite
+          CACHE_STORE: file
+          SESSION_SECURE_COOKIE: 'false'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: platform-browser
+          path: platform/tests/artifacts
