@@ -1,0 +1,8 @@
+@extends('layouts.app')
+@section('title', __('ui.media_library'))
+@section('content')
+<div class="page-heading"><div><p class="eyebrow">{{ __('ui.contents') }}</p><h1>{{ __('ui.media_library') }}</h1><p class="muted">{{ __('ui.library_intro') }}</p></div><span class="count">{{ $media->total() }} {{ __('ui.files') }}</span></div>
+<form method="get" class="filters"><label class="search-label"><span class="sr-only">{{ __('ui.search') }}</span><input type="search" name="q" value="{{ request('q') }}" placeholder="{{ __('ui.search_media') }}"></label><label><span class="sr-only">{{ __('ui.type') }}</span><select name="kind"><option value="">{{ __('ui.all_types') }}</option>@foreach(['video','audio','image','pdf','document','other'] as $kind)<option value="{{ $kind }}" @selected(request('kind')===$kind)>{{ __('ui.kind_'.$kind) }}</option>@endforeach</select></label><button class="button secondary">{{ __('ui.filter') }}</button></form>
+@if($media->isEmpty())<section class="panel empty"><h2>{{ __('ui.no_media') }}</h2><p>{{ __('ui.media_empty_hint') }}</p></section>@else<div class="media-grid">@foreach($media as $item)@include('media.card')@endforeach</div>{{ $media->links() }}@endif
+@can('media.upload')<section class="panel upload-panel" id="upload"><h2>{{ __('ui.upload_files') }}</h2><p class="muted">{{ __('ui.upload_hint') }} <a href="/upload/">{{ __('ui.large_upload') }} ↗</a></p><form action="{{ route('media.store') }}" method="post" enctype="multipart/form-data" class="upload-form">@csrf<label>{{ __('ui.choose_file') }}<input type="file" name="file" required></label><button class="button">{{ __('ui.upload') }}</button></form></section>@endcan
+@endsection

@@ -1,0 +1,62 @@
+name: Platform checks
+on:
+  push:
+    paths: ['platform/**', '.github/workflows/platform.yml']
+  pull_request:
+    paths: ['platform/**', '.github/workflows/platform.yml']
+permissions:
+  contents: read
+jobs:
+  foundation:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: atapin_test
+          MYSQL_ROOT_PASSWORD: test-only-password
+        ports: ['3306:3306']
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=10
+    defaults:
+      run:
+        working-directory: platform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_mysql, pdo_sqlite, mbstring, fileinfo, dom
+          tools: composer:v2
+          coverage: none
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction
+      - name: Preserve resolved dependency lock
+        uses: actions/upload-artifact@v4
+        with:
+          name: platform-lock
+          path: platform/composer.lock
+      - name: Configure test application
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+      - name: PHP and shell syntax
+        run: |
+          find app bootstrap config routes database tests bin -name '*.php' -print0 | xargs -0 -n1 php -l
+          bash -n bin/plesk.sh
+      - name: SQLite feature tests
+        run: php artisan test
+      - name: MySQL migrations and feature tests
+        run: php artisan test
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: atapin_test
+          DB_USERNAME: root
+          DB_PASSWORD: test-only-password
+      - name: Compile views and routes
+        run: |
+          php artisan view:cache
+          php artisan route:cache
+      - name: Dependency security audit
+        run: composer audit --no-interaction

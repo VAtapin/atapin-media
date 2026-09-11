@@ -1,0 +1,3 @@
+@extends('layouts.app')
+@section('title', __('ui.audit'))
+@section('content')<div class="page-heading"><h1>{{ __('ui.audit') }}</h1></div><div class="panel table-wrap"><table><thead><tr><th>{{ __('ui.date') }}</th><th>{{ __('ui.action') }}</th><th>{{ __('ui.user') }}</th><th>{{ __('ui.subject') }}</th></tr></thead><tbody>@forelse($events as $event)<tr><td>{{ $event->created_at->timezone(config('platform.timezone'))->format('d.m.Y H:i') }}</td><td>{{ $event->action }}</td><td>{{ $event->user_id ?? '—' }}</td><td>{{ $event->subject ?? '—' }}</td></tr>@empty<tr><td colspan="4">{{ __('ui.no_events') }}</td></tr>@endforelse</tbody></table></div>{{ $events->links() }}@endsection
