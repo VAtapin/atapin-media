@@ -20,15 +20,10 @@ $programs = [
 <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Desktop · {{ config('platform.brand') }}</title>
-    <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/desktop-os.css?v=2"><link rel="stylesheet" href="/assets/desktop-windows.css?v=2">
+    <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/desktop-os.css?v=2"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3">
     <script src="/assets/desktop-os.js?v=3" defer></script>
 </head>
 <body class="os-body">
-<header class="os-menubar">
-    <div class="os-brand"><img src="/assets/brand/owner/logo-mark.png" alt=""><strong>Manna Media</strong></div>
-    <div class="os-user"><span class="os-notification">●</span><span class="os-avatar">{{ mb_substr(auth()->user()->name,0,1) }}</span><span>{{ auth()->user()->name }}</span></div>
-</header>
-
 <main class="os-desktop" data-desktop>
     <nav class="os-shortcuts" aria-label="Programme auf dem Desktop">
         @foreach($programs as $program)
