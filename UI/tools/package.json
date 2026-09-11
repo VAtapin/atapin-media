@@ -1,0 +1,1 @@
+{"name":"approved-ui-assets","private":true,"type":"module","scripts":{"extract":"node extract-assets.mjs"},"dependencies":{"pngjs":"7.0.0"}}

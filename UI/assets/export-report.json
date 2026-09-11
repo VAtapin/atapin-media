@@ -1,0 +1,4046 @@
+[
+  {
+    "group": "icons",
+    "name": "video",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      61,
+      410,
+      56,
+      59
+    ],
+    "file": "assets/ui/icons/video.png",
+    "width": 56,
+    "height": 59,
+    "bytes": 4479,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "902eea2e48c1abb61857ca2d143035137bcceafe97088261a413a39d0589ca8c"
+  },
+  {
+    "group": "icons",
+    "name": "article",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      333,
+      410,
+      59,
+      60
+    ],
+    "file": "assets/ui/icons/article.png",
+    "width": 59,
+    "height": 60,
+    "bytes": 4586,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "a7c0d4489cd1de4d88e0ef84875ea3e1a001929be019f73cbefbeefb1846105a"
+  },
+  {
+    "group": "icons",
+    "name": "book",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      590,
+      410,
+      59,
+      60
+    ],
+    "file": "assets/ui/icons/book.png",
+    "width": 59,
+    "height": 60,
+    "bytes": 4852,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "9a279ed9405d0d64318ac9bb9d645a1bb35dbcf70dbf95c50c6ae3b213dae58f"
+  },
+  {
+    "group": "icons",
+    "name": "live",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      857,
+      410,
+      61,
+      60
+    ],
+    "file": "assets/ui/icons/live.png",
+    "width": 61,
+    "height": 60,
+    "bytes": 5525,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "72229d9c568bcc2d35e2897b8a7e1f6b9986a32254e5d6b91ad3a03b606eb141"
+  },
+  {
+    "group": "icons",
+    "name": "podcast",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      1117,
+      410,
+      61,
+      60
+    ],
+    "file": "assets/ui/icons/podcast.png",
+    "width": 61,
+    "height": 60,
+    "bytes": 4923,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "baf8a4f8deb8a67d78a8d2beae17a4f7afcd5f0016d2e39c2daab22ca88c805b"
+  },
+  {
+    "group": "icons",
+    "name": "community",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      1372,
+      410,
+      64,
+      60
+    ],
+    "file": "assets/ui/icons/community.png",
+    "width": 64,
+    "height": 60,
+    "bytes": 5616,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "4ba2f127d7bfdcf6392c258f3a0b74faca249526666df8ae4dc04c93dcd48d2e"
+  },
+  {
+    "group": "icons",
+    "name": "newsletter",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      106,
+      813,
+      39,
+      42
+    ],
+    "file": "assets/ui/icons/newsletter.png",
+    "width": 39,
+    "height": 42,
+    "bytes": 3909,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "fae471b39204082534ab3ed1906c5f1524b98112aafd83ceff24e3d793d106e3"
+  },
+  {
+    "group": "icons",
+    "name": "youtube",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      1130,
+      897,
+      24,
+      21
+    ],
+    "file": "assets/ui/icons/youtube.png",
+    "width": 24,
+    "height": 21,
+    "bytes": 1175,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "4f86753407a9889ce919db92eba78fbe473a7ae06a5ed181e6f20401957c2960"
+  },
+  {
+    "group": "icons",
+    "name": "instagram",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      1167,
+      894,
+      24,
+      26
+    ],
+    "file": "assets/ui/icons/instagram.png",
+    "width": 24,
+    "height": 26,
+    "bytes": 1553,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "d1fff68972b31ec1ad5551d54c18831fb58ba90d45fd99ac4a0b6545a48b4a26"
+  },
+  {
+    "group": "icons",
+    "name": "spotify",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      1205,
+      894,
+      24,
+      26
+    ],
+    "file": "assets/ui/icons/spotify.png",
+    "width": 24,
+    "height": 26,
+    "bytes": 1744,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "8b98854a80f2513a1253b486dfc8bd389f8f49fab092f03d55896dc778da4761"
+  },
+  {
+    "group": "icons",
+    "name": "facebook",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      1243,
+      893,
+      26,
+      28
+    ],
+    "file": "assets/ui/icons/facebook.png",
+    "width": 26,
+    "height": 28,
+    "bytes": 1846,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "6fa635a49f3707827722cfe1fbd1110953fea1c38de353060d98c6ff0e42b749"
+  },
+  {
+    "group": "icons",
+    "name": "cross",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      1565,
+      889,
+      26,
+      35
+    ],
+    "file": "assets/ui/icons/cross.png",
+    "width": 26,
+    "height": 35,
+    "bytes": 1344,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "fc8e7214024bab2adf5edbd84451e250dc1ad2d89bd4faf86f083828dc988188"
+  },
+  {
+    "group": "icons",
+    "name": "search",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      1061,
+      21,
+      24,
+      24
+    ],
+    "file": "assets/ui/icons/search.png",
+    "width": 24,
+    "height": 24,
+    "bytes": 1330,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "d12c52551fd0f7563aaffb2588ccada60c908c773efb7f3b08b1347ccc836b2e"
+  },
+  {
+    "group": "icons",
+    "name": "headphones",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      54,
+      398,
+      57,
+      55
+    ],
+    "file": "assets/ui/icons/headphones.png",
+    "width": 57,
+    "height": 55,
+    "bytes": 4305,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "11c66a94dbbdd5a778dc83391c7d297e792aa45aaadf6d8cdd29cf39a55d876e"
+  },
+  {
+    "group": "icons",
+    "name": "series",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      311,
+      398,
+      57,
+      55
+    ],
+    "file": "assets/ui/icons/series.png",
+    "width": 57,
+    "height": 55,
+    "bytes": 3916,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "7182fa7e63a72578bdd7410b5b9ea0e8c28090a7491827743936910f756819f2"
+  },
+  {
+    "group": "icons",
+    "name": "tag",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      564,
+      398,
+      57,
+      55
+    ],
+    "file": "assets/ui/icons/tag.png",
+    "width": 57,
+    "height": 55,
+    "bytes": 4124,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "3cf92bd03ba90a0449f3e3e22dfddd6c10a7fe6daa072eafc0fed55c10a3e156"
+  },
+  {
+    "group": "icons",
+    "name": "hosts",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      822,
+      398,
+      57,
+      55
+    ],
+    "file": "assets/ui/icons/hosts.png",
+    "width": 57,
+    "height": 55,
+    "bytes": 4631,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "35a871612bb005784b8a6d8dfcfbf3272c97337d135b20e406f3656a3fd7ea4a"
+  },
+  {
+    "group": "icons",
+    "name": "heart-gold",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      1095,
+      398,
+      56,
+      55
+    ],
+    "file": "assets/ui/icons/heart-gold.png",
+    "width": 56,
+    "height": 55,
+    "bytes": 4151,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "59ca010da52f10c24e23956357ec28646f4b291003bbd3c7c45c7d92ffacc382"
+  },
+  {
+    "group": "icons",
+    "name": "bible-gold",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      972,
+      523,
+      32,
+      28
+    ],
+    "file": "assets/ui/icons/bible-gold.png",
+    "width": 32,
+    "height": 28,
+    "bytes": 1935,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "d12c908fd31920530fb89a3a37ef9100c2b15f943c5843fdb1672ab9eb91ec38"
+  },
+  {
+    "group": "icons",
+    "name": "heart-small",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      1107,
+      523,
+      33,
+      28
+    ],
+    "file": "assets/ui/icons/heart-small.png",
+    "width": 33,
+    "height": 28,
+    "bytes": 1986,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "e500202e14b35d9c10421cef1a5baf80ddf8d15bc77b3d578d7461b0db7702dd"
+  },
+  {
+    "group": "icons",
+    "name": "people-gold",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      1240,
+      522,
+      35,
+      29
+    ],
+    "file": "assets/ui/icons/people-gold.png",
+    "width": 35,
+    "height": 29,
+    "bytes": 2359,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "8e3b0bcd962772c274f92c169d9555a7028f9e11bb33fc5045d3525339268cc3"
+  },
+  {
+    "group": "icons",
+    "name": "leaf",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      970,
+      612,
+      37,
+      29
+    ],
+    "file": "assets/ui/icons/leaf.png",
+    "width": 37,
+    "height": 29,
+    "bytes": 2277,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "b5a48e9ea9be4f26d5a4688d4fd2be53be484902e03992951c5851db37c96584"
+  },
+  {
+    "group": "icons",
+    "name": "mountains",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      1105,
+      612,
+      35,
+      30
+    ],
+    "file": "assets/ui/icons/mountains.png",
+    "width": 35,
+    "height": 30,
+    "bytes": 2088,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "8cab47dd034259233f2d18ddfa2e952dfe3614dc93d66593560f479c02534442"
+  },
+  {
+    "group": "icons",
+    "name": "sun",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      1240,
+      608,
+      34,
+      35
+    ],
+    "file": "assets/ui/icons/sun.png",
+    "width": 34,
+    "height": 35,
+    "bytes": 2514,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "e4bfe2878c9fe7ed1dad39b80d64494758b7e552c37fc68b9566fe3f436fa8e9"
+  },
+  {
+    "group": "icons",
+    "name": "compass",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      972,
+      719,
+      31,
+      29
+    ],
+    "file": "assets/ui/icons/compass.png",
+    "width": 31,
+    "height": 29,
+    "bytes": 2306,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "e3625636b561bd24aa5deb18b274e6b24bcb540390df7aca39ab07a7d24587c4"
+  },
+  {
+    "group": "icons",
+    "name": "prayer",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      1109,
+      716,
+      29,
+      34
+    ],
+    "file": "assets/ui/icons/prayer.png",
+    "width": 29,
+    "height": 34,
+    "bytes": 2230,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "9eef0818437417bea144f412187c6e66f2fafd0a1c1bc31c493ea9f47ed29dd2"
+  },
+  {
+    "group": "icons",
+    "name": "church",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      1243,
+      712,
+      29,
+      37
+    ],
+    "file": "assets/ui/icons/church.png",
+    "width": 29,
+    "height": 37,
+    "bytes": 2391,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "ce3092d0dad31e5fc6217ecac570d854ba4b062898826d5388e4a8a9840e4ccb"
+  },
+  {
+    "group": "icons",
+    "name": "platform-headphones",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      394,
+      822,
+      27,
+      27
+    ],
+    "file": "assets/ui/icons/platform-headphones.png",
+    "width": 27,
+    "height": 27,
+    "bytes": 1710,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "0b328eb8bb92e653adeb0e6cc907ad3ecf19d3c3928d7da7529e912f4b8654a7"
+  },
+  {
+    "group": "icons",
+    "name": "platform-podcast",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      500,
+      820,
+      30,
+      31
+    ],
+    "file": "assets/ui/icons/platform-podcast.png",
+    "width": 30,
+    "height": 31,
+    "bytes": 2533,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "6cfa23bbc04cba891dfafb76a684a167e8f5a0d002c282c583b952f50c5e6f4c"
+  },
+  {
+    "group": "icons",
+    "name": "platform-audio",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      608,
+      822,
+      26,
+      29
+    ],
+    "file": "assets/ui/icons/platform-audio.png",
+    "width": 26,
+    "height": 29,
+    "bytes": 1628,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "4c8363938b85127f636844bd7712fcefb409d8b1a54d6200e47947b18013ff99"
+  },
+  {
+    "group": "icons",
+    "name": "platform-bars",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      715,
+      822,
+      24,
+      28
+    ],
+    "file": "assets/ui/icons/platform-bars.png",
+    "width": 24,
+    "height": 28,
+    "bytes": 1330,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "be9e406a387beaa0105735f4f4d7b02852f4bab46fa7b4e0f4603c4ef19e62d9"
+  },
+  {
+    "group": "icons",
+    "name": "plus",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      847,
+      822,
+      24,
+      24
+    ],
+    "file": "assets/ui/icons/plus.png",
+    "width": 24,
+    "height": 24,
+    "bytes": 984,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "befeaff477cf7fe543a5ffa602a702cab7f0116960d3dc21cba4f07d8fcc38a7"
+  },
+  {
+    "group": "icons",
+    "name": "discussion",
+    "source": "frontend-gold-b/10-community.png",
+    "rect": [
+      52,
+      409,
+      61,
+      61
+    ],
+    "file": "assets/ui/icons/discussion.png",
+    "width": 61,
+    "height": 61,
+    "bytes": 6015,
+    "sourceSha256": "534719176880e78d797d672f0ea09f8ebad2e9a8bff35c4ec90cf6dd8e073661",
+    "sha256": "748cd2ab954b5039dc4df64054502f92980df689bcbcb754b905bd1da9584293"
+  },
+  {
+    "group": "icons",
+    "name": "question",
+    "source": "frontend-gold-b/10-community.png",
+    "rect": [
+      375,
+      409,
+      61,
+      61
+    ],
+    "file": "assets/ui/icons/question.png",
+    "width": 61,
+    "height": 61,
+    "bytes": 5748,
+    "sourceSha256": "534719176880e78d797d672f0ea09f8ebad2e9a8bff35c4ec90cf6dd8e073661",
+    "sha256": "b39126b8ff9b9c05be98cbfd1dcfd61c85dcc9287ca7330be3c0231b1ff3d89d"
+  },
+  {
+    "group": "icons",
+    "name": "poll",
+    "source": "frontend-gold-b/10-community.png",
+    "rect": [
+      680,
+      409,
+      63,
+      61
+    ],
+    "file": "assets/ui/icons/poll.png",
+    "width": 63,
+    "height": 61,
+    "bytes": 4754,
+    "sourceSha256": "534719176880e78d797d672f0ea09f8ebad2e9a8bff35c4ec90cf6dd8e073661",
+    "sha256": "4ee620ab973ce83e1730cf7fef7e5ee70dc0ccf716ff04f1ade4dee3a39ec53b"
+  },
+  {
+    "group": "icons",
+    "name": "friendly-community",
+    "source": "frontend-gold-b/10-community.png",
+    "rect": [
+      991,
+      408,
+      65,
+      63
+    ],
+    "file": "assets/ui/icons/friendly-community.png",
+    "width": 65,
+    "height": 63,
+    "bytes": 6319,
+    "sourceSha256": "534719176880e78d797d672f0ea09f8ebad2e9a8bff35c4ec90cf6dd8e073661",
+    "sha256": "6140debdd799a56d96dd93e8f19adeaa272de9d735f0c89092139a093f8567d4"
+  },
+  {
+    "group": "icons",
+    "name": "join-heart",
+    "source": "frontend-gold-b/10-community.png",
+    "rect": [
+      1337,
+      407,
+      61,
+      64
+    ],
+    "file": "assets/ui/icons/join-heart.png",
+    "width": 61,
+    "height": 64,
+    "bytes": 5461,
+    "sourceSha256": "534719176880e78d797d672f0ea09f8ebad2e9a8bff35c4ec90cf6dd8e073661",
+    "sha256": "4e3649a73a9d72374692c837d8bbd6dcc592bb3fbd5eca0277d1fcda27e8cff6"
+  },
+  {
+    "group": "sidebar-icons",
+    "name": "desktop",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      43,
+      450,
+      17,
+      16
+    ],
+    "file": "assets/ui/sidebar-icons/desktop.png",
+    "width": 17,
+    "height": 16,
+    "bytes": 781,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "eec2c37f937421fdefd630c1dc0082f6d7f732fde8a111e90e0de11af90ba867"
+  },
+  {
+    "group": "sidebar-icons",
+    "name": "projects",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      43,
+      470,
+      17,
+      16
+    ],
+    "file": "assets/ui/sidebar-icons/projects.png",
+    "width": 17,
+    "height": 16,
+    "bytes": 766,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "b8804c6b4786cea8642a3d35aa1f245dc7ab02a4547f8f61f3e89f6e8d07d4c6"
+  },
+  {
+    "group": "sidebar-icons",
+    "name": "tasks",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      43,
+      486,
+      17,
+      16
+    ],
+    "file": "assets/ui/sidebar-icons/tasks.png",
+    "width": 17,
+    "height": 16,
+    "bytes": 759,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "1aaa667a3b2da836599fc974ef256bd792645b71790447336cfda1b1663610a1"
+  },
+  {
+    "group": "sidebar-icons",
+    "name": "calendar",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      43,
+      502,
+      17,
+      16
+    ],
+    "file": "assets/ui/sidebar-icons/calendar.png",
+    "width": 17,
+    "height": 16,
+    "bytes": 757,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "0382a12e4b8ae630cccc219c587847abac70dab1e0aacdbb6aaa7abfc8be1a8e"
+  },
+  {
+    "group": "sidebar-icons",
+    "name": "articles",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      43,
+      537,
+      17,
+      16
+    ],
+    "file": "assets/ui/sidebar-icons/articles.png",
+    "width": 17,
+    "height": 16,
+    "bytes": 802,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "0be19cfaabefbb7ec97820fc370148fc7b1233e6b26f21024b41cdb7427d8d6f"
+  },
+  {
+    "group": "sidebar-icons",
+    "name": "videos",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      43,
+      555,
+      17,
+      16
+    ],
+    "file": "assets/ui/sidebar-icons/videos.png",
+    "width": 17,
+    "height": 16,
+    "bytes": 763,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "53fb15adbc36e5238facdb78779e275080ea57d1becc15a2f96121e6113d0355"
+  },
+  {
+    "group": "sidebar-icons",
+    "name": "books",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      43,
+      570,
+      17,
+      16
+    ],
+    "file": "assets/ui/sidebar-icons/books.png",
+    "width": 17,
+    "height": 16,
+    "bytes": 714,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "5010c0731b1bdb42c61888f5125fe38b5d15b00ada028c9cce803bebe900feec"
+  },
+  {
+    "group": "sidebar-icons",
+    "name": "media",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      43,
+      588,
+      17,
+      16
+    ],
+    "file": "assets/ui/sidebar-icons/media.png",
+    "width": 17,
+    "height": 16,
+    "bytes": 793,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "ec2712c96244f0b764ce80204fcc680dbb5efe2fd5e173f9c234894fd3a3577f"
+  },
+  {
+    "group": "sidebar-icons",
+    "name": "community",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      43,
+      624,
+      17,
+      16
+    ],
+    "file": "assets/ui/sidebar-icons/community.png",
+    "width": 17,
+    "height": 16,
+    "bytes": 864,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "25ce0b8fe211c9d0043cca511c03f48fd42ca36a11b0f9925f2d0e8b1b55b441"
+  },
+  {
+    "group": "sidebar-icons",
+    "name": "subscribers",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      43,
+      641,
+      17,
+      16
+    ],
+    "file": "assets/ui/sidebar-icons/subscribers.png",
+    "width": 17,
+    "height": 16,
+    "bytes": 863,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "a0d29ee95293fc52f3797191ec3e05579476978821a2afe39ebb56814d4983e5"
+  },
+  {
+    "group": "sidebar-icons",
+    "name": "live-studio",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      43,
+      680,
+      17,
+      16
+    ],
+    "file": "assets/ui/sidebar-icons/live-studio.png",
+    "width": 17,
+    "height": 16,
+    "bytes": 809,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "fcba0e7395966621f2ea90c688624c9047f0d513017ef933e443e52921147642"
+  },
+  {
+    "group": "sidebar-icons",
+    "name": "publishing",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      43,
+      698,
+      17,
+      16
+    ],
+    "file": "assets/ui/sidebar-icons/publishing.png",
+    "width": 17,
+    "height": 16,
+    "bytes": 855,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "6c104d9e6218bdcdaa7e8b469d386ab09bda4dff12468098771277162b1b7a2d"
+  },
+  {
+    "group": "sidebar-icons",
+    "name": "ai",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      43,
+      716,
+      17,
+      16
+    ],
+    "file": "assets/ui/sidebar-icons/ai.png",
+    "width": 17,
+    "height": 16,
+    "bytes": 788,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "20b7aa21c5a6d82e0afb3f8c69a8bd7c23add40fe9333d5c781a3d1bc13a295a"
+  },
+  {
+    "group": "sidebar-icons",
+    "name": "analytics",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      43,
+      734,
+      17,
+      16
+    ],
+    "file": "assets/ui/sidebar-icons/analytics.png",
+    "width": 17,
+    "height": 16,
+    "bytes": 862,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "15c905957f584733a5b651ed123425d361239f94075961f153629e8926d0e763"
+  },
+  {
+    "group": "sidebar-icons",
+    "name": "imports",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      43,
+      770,
+      17,
+      16
+    ],
+    "file": "assets/ui/sidebar-icons/imports.png",
+    "width": 17,
+    "height": 16,
+    "bytes": 808,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "542504d617aae922ee2741580bbe7bade728fd9550ae0d3509c406ca698976db"
+  },
+  {
+    "group": "sidebar-icons",
+    "name": "files",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      43,
+      787,
+      17,
+      16
+    ],
+    "file": "assets/ui/sidebar-icons/files.png",
+    "width": 17,
+    "height": 16,
+    "bytes": 766,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "e14129b79aea0d84f9b78c92b73f227fa5e21dcda850e6f95351629f8f6f8446"
+  },
+  {
+    "group": "sidebar-icons",
+    "name": "integrations",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      43,
+      804,
+      17,
+      16
+    ],
+    "file": "assets/ui/sidebar-icons/integrations.png",
+    "width": 17,
+    "height": 16,
+    "bytes": 838,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "f06c6524ffe78764844323f9c834d60b26b7ada095c74f2f32411b0ecf37701d"
+  },
+  {
+    "group": "sidebar-icons",
+    "name": "settings",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      43,
+      822,
+      17,
+      16
+    ],
+    "file": "assets/ui/sidebar-icons/settings.png",
+    "width": 17,
+    "height": 16,
+    "bytes": 897,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "2d8a7791298a50e62328dd0ab0feefa655d465935bf8a4dc22616c778771695b"
+  },
+  {
+    "group": "icons",
+    "name": "home-outline",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      1319,
+      885,
+      24,
+      27
+    ],
+    "file": "assets/ui/icons/home-outline.png",
+    "width": 24,
+    "height": 27,
+    "bytes": 1483,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "285e794e378ef75f779b3804a580aa06bcfb12ea62e101f2a77b4f9c09de19a4"
+  },
+  {
+    "group": "icons",
+    "name": "play-outline",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      1353,
+      885,
+      23,
+      27
+    ],
+    "file": "assets/ui/icons/play-outline.png",
+    "width": 23,
+    "height": 27,
+    "bytes": 1349,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "44cf0b06c7cfd6b898c462dd54f4eb8b0ea1aff05cb0a5ae6f0d49f3ea68586d"
+  },
+  {
+    "group": "icons",
+    "name": "book-outline",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      1384,
+      885,
+      27,
+      27
+    ],
+    "file": "assets/ui/icons/book-outline.png",
+    "width": 27,
+    "height": 27,
+    "bytes": 1509,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "aae1d3d4f9abe2fcf5da3c074bd70d021042885e2d85570e6714197d99e101a6"
+  },
+  {
+    "group": "icons",
+    "name": "heart-outline",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      1418,
+      883,
+      29,
+      30
+    ],
+    "file": "assets/ui/icons/heart-outline.png",
+    "width": 29,
+    "height": 30,
+    "bytes": 2035,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "cb615a9725e7a027839709b069616322d1b0d54beb72c30cd4c8463ba447889c"
+  },
+  {
+    "group": "icons",
+    "name": "community-outline",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      1457,
+      883,
+      29,
+      30
+    ],
+    "file": "assets/ui/icons/community-outline.png",
+    "width": 29,
+    "height": 30,
+    "bytes": 2104,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "f3d72ec4ec2f1692ee2e99267f84cf15dd79c0e63fc33faf42ee6c184236a8f9"
+  },
+  {
+    "group": "icons",
+    "name": "bookmark-outline",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      731,
+      435,
+      25,
+      27
+    ],
+    "file": "assets/ui/icons/bookmark-outline.png",
+    "width": 25,
+    "height": 27,
+    "bytes": 1192,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "a677d84c191b7d3929b4867522dae69c35d17925834b5ef11ebd0ca6a05c080b"
+  },
+  {
+    "group": "icons",
+    "name": "more-outline",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      769,
+      435,
+      25,
+      27
+    ],
+    "file": "assets/ui/icons/more-outline.png",
+    "width": 25,
+    "height": 27,
+    "bytes": 944,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "ac929e1b86da412c5cff1d0ab7b28f7b72338bb849a94b5a0ca43409829bddec"
+  },
+  {
+    "group": "icons",
+    "name": "heart-button-outline",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      691,
+      435,
+      25,
+      27
+    ],
+    "file": "assets/ui/icons/heart-button-outline.png",
+    "width": 25,
+    "height": 27,
+    "bytes": 1319,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "2bcfb43505f1ee3e048c780a93569b2d908c757706563a5812dd514f9d406062"
+  },
+  {
+    "group": "icons",
+    "name": "notification",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      568,
+      401,
+      28,
+      24
+    ],
+    "file": "assets/ui/icons/notification.png",
+    "width": 28,
+    "height": 24,
+    "bytes": 1521,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "f1a342d7d9a3a1e21e7f0fc01493a6ecbfdf7f98dd9e5332cfb3bdeecabb45f3"
+  },
+  {
+    "group": "icons",
+    "name": "mobile-menu",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      227,
+      406,
+      20,
+      18
+    ],
+    "file": "assets/ui/icons/mobile-menu.png",
+    "width": 20,
+    "height": 18,
+    "bytes": 666,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "771424ab8c33efdcdca5cae8149da88618a1371fe97a4784b1592b3cf4c3672f"
+  },
+  {
+    "group": "buttons",
+    "name": "gold-discover",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      689,
+      333,
+      108,
+      28
+    ],
+    "file": "assets/ui/buttons/gold-discover.png",
+    "note": "Reference with baked-in label/icon. Keep live button labels in HTML.",
+    "width": 108,
+    "height": 28,
+    "bytes": 5591,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "d1f51aaeb3f6b4485c724f47c140ad92b863788672c43616b3a14f1a0e557118"
+  },
+  {
+    "group": "buttons",
+    "name": "white-more",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      689,
+      366,
+      108,
+      27
+    ],
+    "file": "assets/ui/buttons/white-more.png",
+    "note": "Reference with baked-in label/icon. Keep live button labels in HTML.",
+    "width": 108,
+    "height": 27,
+    "bytes": 4523,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "a9cc573c8b8219b8c7162c9bd7d460a5e8b6809fe02365b70199985b2d70023a"
+  },
+  {
+    "group": "buttons",
+    "name": "white-preview",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      689,
+      399,
+      108,
+      27
+    ],
+    "file": "assets/ui/buttons/white-preview.png",
+    "note": "Reference with baked-in label/icon. Keep live button labels in HTML.",
+    "width": 108,
+    "height": 27,
+    "bytes": 3909,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "eb5691db7d3da75f0b3c1d4897ca533a5dec99b9288d6ed141d88c275adbd517"
+  },
+  {
+    "group": "buttons",
+    "name": "blue-new",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      812,
+      333,
+      111,
+      28
+    ],
+    "file": "assets/ui/buttons/blue-new.png",
+    "note": "Reference with baked-in label/icon. Keep live button labels in HTML.",
+    "width": 111,
+    "height": 28,
+    "bytes": 5471,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "6c08b3996282cc2156259c2ea4f5e0febaecc00d732e98a4cf3b11a25c4b580f"
+  },
+  {
+    "group": "buttons",
+    "name": "blue-download",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      812,
+      366,
+      111,
+      27
+    ],
+    "file": "assets/ui/buttons/blue-download.png",
+    "note": "Reference with baked-in label/icon. Keep live button labels in HTML.",
+    "width": 111,
+    "height": 27,
+    "bytes": 4626,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "2a0694a3a48cab6f7c026c5885c7a2646768904811978551de24d0d63085399a"
+  },
+  {
+    "group": "buttons",
+    "name": "white-cancel",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      812,
+      399,
+      111,
+      27
+    ],
+    "file": "assets/ui/buttons/white-cancel.png",
+    "note": "Reference with baked-in label/icon. Keep live button labels in HTML.",
+    "width": 111,
+    "height": 27,
+    "bytes": 4097,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "9266826d33f6ace0bde21a39dabbbcefc0f5c9a9da572d03ad949290d927c22a"
+  },
+  {
+    "group": "buttons",
+    "name": "disabled",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      812,
+      433,
+      111,
+      29
+    ],
+    "file": "assets/ui/buttons/disabled.png",
+    "note": "Reference with baked-in label/icon. Keep live button labels in HTML.",
+    "width": 111,
+    "height": 29,
+    "bytes": 4122,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "1fb9a3c2af099bde16839639696e4c4be4dd0e8f9b13a40d03c9d94ce7c62b3b"
+  },
+  {
+    "group": "buttons",
+    "name": "favorite",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      689,
+      433,
+      31,
+      30
+    ],
+    "file": "assets/ui/buttons/favorite.png",
+    "note": "Reference with baked-in label/icon. Keep live button labels in HTML.",
+    "width": 31,
+    "height": 30,
+    "bytes": 1647,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "cdf71ef5c85034194db5672405d8529eee185ff586221bf490d310f060c32a67"
+  },
+  {
+    "group": "buttons",
+    "name": "bookmark",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      727,
+      433,
+      31,
+      30
+    ],
+    "file": "assets/ui/buttons/bookmark.png",
+    "note": "Reference with baked-in label/icon. Keep live button labels in HTML.",
+    "width": 31,
+    "height": 30,
+    "bytes": 1519,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "61f02e6aa2488fc15040a3c9aada6922743746ad381054e36693cbc7d8377d1f"
+  },
+  {
+    "group": "buttons",
+    "name": "more",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      767,
+      433,
+      30,
+      30
+    ],
+    "file": "assets/ui/buttons/more.png",
+    "note": "Reference with baked-in label/icon. Keep live button labels in HTML.",
+    "width": 30,
+    "height": 30,
+    "bytes": 1241,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "0b0948dc9c4a2bebb6dbacde8273ecf84ceaf2fc7fe1f4750006dd5286d62b6c"
+  },
+  {
+    "group": "buttons",
+    "name": "start-discover",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      221,
+      284,
+      207,
+      42
+    ],
+    "file": "assets/ui/buttons/start-discover.png",
+    "note": "Reference with baked-in label/icon.",
+    "width": 207,
+    "height": 42,
+    "bytes": 14012,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "74289701e8ddf9c7b107cda713793e72656e8d878d8d6d50b811d8c2845cbfbb"
+  },
+  {
+    "group": "buttons",
+    "name": "start-about",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      449,
+      284,
+      161,
+      42
+    ],
+    "file": "assets/ui/buttons/start-about.png",
+    "note": "Reference with baked-in label/icon.",
+    "width": 161,
+    "height": 42,
+    "bytes": 10469,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "2aa20c6d26e399725351421015f46627d108d1c08e8cdee54bd0affc34c1a2ef"
+  },
+  {
+    "group": "buttons",
+    "name": "join",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      1426,
+      12,
+      152,
+      42
+    ],
+    "file": "assets/ui/buttons/join.png",
+    "note": "Reference with baked-in label/icon.",
+    "width": 152,
+    "height": 42,
+    "bytes": 10436,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "81b272a5a60b87fcdf161dac54f7f0ffa997cda1558ce8fdb980957f4f739a2f"
+  },
+  {
+    "group": "buttons",
+    "name": "book-view",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      1022,
+      740,
+      175,
+      39
+    ],
+    "file": "assets/ui/buttons/book-view.png",
+    "note": "Reference with baked-in label/icon.",
+    "width": 175,
+    "height": 39,
+    "bytes": 10478,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "30d6718b825b1f09d536479632ee7c6f8a3b0d4def50583ecd72dda39481b649"
+  },
+  {
+    "group": "buttons",
+    "name": "live-join",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      1245,
+      739,
+      370,
+      40
+    ],
+    "file": "assets/ui/buttons/live-join.png",
+    "note": "Reference with baked-in label/icon.",
+    "width": 370,
+    "height": 40,
+    "bytes": 18759,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "d96819444397a1882e45c23e029635b0f7ae5879705c857729c23ed2df02f4b0"
+  },
+  {
+    "group": "buttons",
+    "name": "newsletter-subscribe",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      1143,
+      815,
+      182,
+      42
+    ],
+    "file": "assets/ui/buttons/newsletter-subscribe.png",
+    "note": "Reference with baked-in label/icon.",
+    "width": 182,
+    "height": 42,
+    "bytes": 11391,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "4035955dd4ab06a8c91464520a7af5ca3b9f814f192b454d42f8a26265ab7f08"
+  },
+  {
+    "group": "buttons",
+    "name": "article-pdf",
+    "source": "frontend-gold-b/05-beitrag-detail.png",
+    "rect": [
+      166,
+      585,
+      278,
+      45
+    ],
+    "file": "assets/ui/buttons/article-pdf.png",
+    "note": "Reference with baked-in label/icon.",
+    "width": 278,
+    "height": 45,
+    "bytes": 17047,
+    "sourceSha256": "6b6cb33d2a33752fa876549736766b387e2588162f49239f888a7a405455c4da",
+    "sha256": "722da3096dc37cb299178c06bd9f3b73eeac5bf476ceb2c97e415e733549a5b7"
+  },
+  {
+    "group": "buttons",
+    "name": "article-listen",
+    "source": "frontend-gold-b/05-beitrag-detail.png",
+    "rect": [
+      453,
+      585,
+      159,
+      45
+    ],
+    "file": "assets/ui/buttons/article-listen.png",
+    "note": "Reference with baked-in label/icon.",
+    "width": 159,
+    "height": 45,
+    "bytes": 8143,
+    "sourceSha256": "6b6cb33d2a33752fa876549736766b387e2588162f49239f888a7a405455c4da",
+    "sha256": "8f86c1d54b222cdee3ad37357279157fae24dbbf44d081b2316ec0c4c8f2b1b4"
+  },
+  {
+    "group": "buttons",
+    "name": "article-share",
+    "source": "frontend-gold-b/05-beitrag-detail.png",
+    "rect": [
+      622,
+      585,
+      140,
+      45
+    ],
+    "file": "assets/ui/buttons/article-share.png",
+    "note": "Reference with baked-in label/icon.",
+    "width": 140,
+    "height": 45,
+    "bytes": 6935,
+    "sourceSha256": "6b6cb33d2a33752fa876549736766b387e2588162f49239f888a7a405455c4da",
+    "sha256": "ce5075bf036a02be847a4f0fa57e9c80a5a4595d52eaf120e05ea34aa7fcccd9"
+  },
+  {
+    "group": "buttons",
+    "name": "article-save",
+    "source": "frontend-gold-b/05-beitrag-detail.png",
+    "rect": [
+      770,
+      585,
+      148,
+      45
+    ],
+    "file": "assets/ui/buttons/article-save.png",
+    "note": "Reference with baked-in label/icon.",
+    "width": 148,
+    "height": 45,
+    "bytes": 7167,
+    "sourceSha256": "6b6cb33d2a33752fa876549736766b387e2588162f49239f888a7a405455c4da",
+    "sha256": "f11a82c9c8a59fa17588dfe35080234dcbbd67ddec7c595d6104af50f9f93850"
+  },
+  {
+    "group": "buttons",
+    "name": "article-read-more",
+    "source": "frontend-gold-b/05-beitrag-detail.png",
+    "rect": [
+      489,
+      870,
+      154,
+      39
+    ],
+    "file": "assets/ui/buttons/article-read-more.png",
+    "note": "Reference with baked-in label/icon.",
+    "width": 154,
+    "height": 39,
+    "bytes": 8767,
+    "sourceSha256": "6b6cb33d2a33752fa876549736766b387e2588162f49239f888a7a405455c4da",
+    "sha256": "a6572aacfced67aac5f8f86d9255b89b3416d644ab6d5fdb5fc8faf766926146"
+  },
+  {
+    "group": "buttons",
+    "name": "buy-book",
+    "source": "frontend-gold-b/07-buch-detail.png",
+    "rect": [
+      1025,
+      192,
+      399,
+      53
+    ],
+    "file": "assets/ui/buttons/buy-book.png",
+    "note": "Reference with baked-in label/icon.",
+    "width": 399,
+    "height": 53,
+    "bytes": 21576,
+    "sourceSha256": "a2d16f7ee5707445ef1c03c55f5a1557dbdb48e69c414bc878ecd77bc3217a48",
+    "sha256": "5e12b55ff9b553acfb021fe9ed45b897faa1754ca831be7e9ed9a9a27b3988e3"
+  },
+  {
+    "group": "buttons",
+    "name": "buy-pdf",
+    "source": "frontend-gold-b/07-buch-detail.png",
+    "rect": [
+      1025,
+      251,
+      399,
+      44
+    ],
+    "file": "assets/ui/buttons/buy-pdf.png",
+    "note": "Reference with baked-in label/icon.",
+    "width": 399,
+    "height": 44,
+    "bytes": 19137,
+    "sourceSha256": "a2d16f7ee5707445ef1c03c55f5a1557dbdb48e69c414bc878ecd77bc3217a48",
+    "sha256": "4d3817ae4eb39080517647b187664df88f469c583e36083e34cc653b278b3fb3"
+  },
+  {
+    "group": "buttons",
+    "name": "buy-ebook",
+    "source": "frontend-gold-b/07-buch-detail.png",
+    "rect": [
+      1025,
+      300,
+      399,
+      43
+    ],
+    "file": "assets/ui/buttons/buy-ebook.png",
+    "note": "Reference with baked-in label/icon.",
+    "width": 399,
+    "height": 43,
+    "bytes": 17934,
+    "sourceSha256": "a2d16f7ee5707445ef1c03c55f5a1557dbdb48e69c414bc878ecd77bc3217a48",
+    "sha256": "66b0fec8b33e3f5fb5d8c866c6a88b1376273ef75d1f803766cfcb7412a0e8b3"
+  },
+  {
+    "group": "buttons",
+    "name": "read-sample",
+    "source": "frontend-gold-b/07-buch-detail.png",
+    "rect": [
+      1025,
+      348,
+      399,
+      45
+    ],
+    "file": "assets/ui/buttons/read-sample.png",
+    "note": "Reference with baked-in label/icon.",
+    "width": 399,
+    "height": 45,
+    "bytes": 16532,
+    "sourceSha256": "a2d16f7ee5707445ef1c03c55f5a1557dbdb48e69c414bc878ecd77bc3217a48",
+    "sha256": "ced9ead94c2cb3bda83c70e14a21541a02dfe4e73fe3ab365e1bd44f3b14d02d"
+  },
+  {
+    "group": "buttons",
+    "name": "live-reminder",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      799,
+      494,
+      209,
+      46
+    ],
+    "file": "assets/ui/buttons/live-reminder.png",
+    "note": "Reference with baked-in label/icon.",
+    "width": 209,
+    "height": 46,
+    "bytes": 12178,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "1f36293f9a1d3741dfaa600b2ba01f6b95b2776ef8d42c47d8c5d6595992ca9a"
+  },
+  {
+    "group": "buttons",
+    "name": "chat-send",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      1470,
+      463,
+      43,
+      39
+    ],
+    "file": "assets/ui/buttons/chat-send.png",
+    "note": "Reference with baked-in label/icon.",
+    "width": 43,
+    "height": 39,
+    "bytes": 2903,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "fe16dea7a8e729646c78d7b71898da063e5832e92955387522f99bf5f56b0a5b"
+  },
+  {
+    "group": "buttons",
+    "name": "poll-vote",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      1027,
+      780,
+      187,
+      34
+    ],
+    "file": "assets/ui/buttons/poll-vote.png",
+    "note": "Reference with baked-in label/icon.",
+    "width": 187,
+    "height": 34,
+    "bytes": 9392,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "4e248744f68b5119c66e8119a36d308119ca15330343494ef7c1e23c3f2c4c0e"
+  },
+  {
+    "group": "button-textures",
+    "name": "gold",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      233,
+      285,
+      2,
+      40
+    ],
+    "file": "assets/ui/button-textures/gold.png",
+    "note": "Text-free vertical strip for CSS background-size: 100% 100%.",
+    "width": 2,
+    "height": 40,
+    "bytes": 211,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "afcbad42c01c7ffc49a71c9a1f5462de36fb7f64fbeb2855d2525a2bc59652a7"
+  },
+  {
+    "group": "button-textures",
+    "name": "white",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      462,
+      285,
+      2,
+      40
+    ],
+    "file": "assets/ui/button-textures/white.png",
+    "note": "Text-free vertical strip for CSS background-size: 100% 100%.",
+    "width": 2,
+    "height": 40,
+    "bytes": 186,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "ebaa2b9fb40248cf1778852ecd87dcc0a45efb17d10627cb0e34e77157ee44a8"
+  },
+  {
+    "group": "button-textures",
+    "name": "blue",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      823,
+      334,
+      2,
+      25
+    ],
+    "file": "assets/ui/button-textures/blue.png",
+    "note": "Text-free vertical strip for CSS background-size: 100% 100%.",
+    "width": 2,
+    "height": 25,
+    "bytes": 155,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "d3235ba6e4da3278d9af526171313b6aa8a5c9359b6741aabde5ce83ce9d9636"
+  },
+  {
+    "group": "button-textures",
+    "name": "disabled",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      823,
+      434,
+      2,
+      25
+    ],
+    "file": "assets/ui/button-textures/disabled.png",
+    "note": "Text-free vertical strip for CSS background-size: 100% 100%.",
+    "width": 2,
+    "height": 25,
+    "bytes": 146,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "3578b74ad6cf552a1d6d12789c67663fcb9bc61c17b1c8466a94f04668714acb"
+  },
+  {
+    "group": "badges",
+    "name": "live",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      947,
+      318,
+      57,
+      27
+    ],
+    "file": "assets/ui/badges/live.png",
+    "note": "Reference badge with baked-in text.",
+    "width": 57,
+    "height": 27,
+    "bytes": 3000,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "a3ada6087f44773acb53f546ebf39ba7361cf93b5567579854b3efaa60e87a7a"
+  },
+  {
+    "group": "badges",
+    "name": "new",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      1008,
+      318,
+      49,
+      27
+    ],
+    "file": "assets/ui/badges/new.png",
+    "note": "Reference badge with baked-in text.",
+    "width": 49,
+    "height": 27,
+    "bytes": 2261,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "a422d94c8279f5a54d5c97273ae9bafcbab97273996327ba53d8cf136df7496e"
+  },
+  {
+    "group": "badges",
+    "name": "draft",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      1063,
+      318,
+      64,
+      27
+    ],
+    "file": "assets/ui/badges/draft.png",
+    "note": "Reference badge with baked-in text.",
+    "width": 64,
+    "height": 27,
+    "bytes": 3003,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "d38d554882c1d011ea10f434e5e004e1fc4e6a561a4904046035323f1c33140c"
+  },
+  {
+    "group": "badges",
+    "name": "working",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      947,
+      350,
+      96,
+      28
+    ],
+    "file": "assets/ui/badges/working.png",
+    "note": "Reference badge with baked-in text.",
+    "width": 96,
+    "height": 28,
+    "bytes": 4226,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "7dbce99537b450bdabd65aabe5d05a1291b80d06bced2be27b4eb1833c195fe4"
+  },
+  {
+    "group": "badges",
+    "name": "planned",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      1048,
+      350,
+      64,
+      28
+    ],
+    "file": "assets/ui/badges/planned.png",
+    "note": "Reference badge with baked-in text.",
+    "width": 64,
+    "height": 28,
+    "bytes": 2968,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "7f897c967e8c174ad5cd6d3c357b28d790970b242e84792a4f387c4072a4c72c"
+  },
+  {
+    "group": "badges",
+    "name": "published",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      947,
+      383,
+      101,
+      28
+    ],
+    "file": "assets/ui/badges/published.png",
+    "note": "Reference badge with baked-in text.",
+    "width": 101,
+    "height": 28,
+    "bytes": 5367,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "8f5e83f2338e54bc67b31f5c91fc1ab5f27f2b7ed76d527a85a57bf2218338b9"
+  },
+  {
+    "group": "badges",
+    "name": "error",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      1054,
+      383,
+      64,
+      28
+    ],
+    "file": "assets/ui/badges/error.png",
+    "note": "Reference badge with baked-in text.",
+    "width": 64,
+    "height": 28,
+    "bytes": 3057,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "aa1383f79a93fdeef2ef6c4edbb0cf20a0898b49939ddaab770297e53a2ccf99"
+  },
+  {
+    "group": "badges",
+    "name": "warning",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      947,
+      416,
+      73,
+      27
+    ],
+    "file": "assets/ui/badges/warning.png",
+    "note": "Reference badge with baked-in text.",
+    "width": 73,
+    "height": 27,
+    "bytes": 3228,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "2b74f63be403c27762c73fc274bce85c53e806d05716b84ccb99e21b57c41e23"
+  },
+  {
+    "group": "badges",
+    "name": "success",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      1024,
+      416,
+      101,
+      27
+    ],
+    "file": "assets/ui/badges/success.png",
+    "note": "Reference badge with baked-in text.",
+    "width": 101,
+    "height": 27,
+    "bytes": 4858,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "003963de4858cb7ee27335c3f37a243317bf191dc995ed0f9e7df8fe8fc9ed69"
+  },
+  {
+    "group": "badges",
+    "name": "free",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      947,
+      449,
+      75,
+      28
+    ],
+    "file": "assets/ui/badges/free.png",
+    "note": "Reference badge with baked-in text.",
+    "width": 75,
+    "height": 28,
+    "bytes": 3664,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "c248ca145fefc015d7b55539eba0e8ca1950e0b5d3fa612e5acc94c1b6b194ad"
+  },
+  {
+    "group": "badges",
+    "name": "paid",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      1028,
+      449,
+      71,
+      28
+    ],
+    "file": "assets/ui/badges/paid.png",
+    "note": "Reference badge with baked-in text.",
+    "width": 71,
+    "height": 28,
+    "bytes": 3215,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "0bc89a767e407e7ffeb073ddf0f195d6ddb6218e611d55281b44d061eaa40b38"
+  },
+  {
+    "group": "controls",
+    "name": "checkbox-checked",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      877,
+      764,
+      15,
+      16
+    ],
+    "file": "assets/ui/controls/checkbox-checked.png",
+    "note": "Original control graphic; the app supplies interactive behavior.",
+    "width": 15,
+    "height": 16,
+    "bytes": 624,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "9698dc3ede3b492bb6a1dceb9d38129b888cdc8998cd2b498154425ff92508e7"
+  },
+  {
+    "group": "controls",
+    "name": "radio-selected",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      876,
+      797,
+      17,
+      17
+    ],
+    "file": "assets/ui/controls/radio-selected.png",
+    "note": "Original control graphic; the app supplies interactive behavior.",
+    "width": 17,
+    "height": 17,
+    "bytes": 811,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "c7934d28db9c06aee1e92bb74af67d100e9d32cb29c9e7d51c5c8ef17ea1066a"
+  },
+  {
+    "group": "controls",
+    "name": "radio-empty",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      926,
+      797,
+      17,
+      17
+    ],
+    "file": "assets/ui/controls/radio-empty.png",
+    "note": "Original control graphic; the app supplies interactive behavior.",
+    "width": 17,
+    "height": 17,
+    "bytes": 666,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "90a71b0ee2099b2f905c5ec1f26553c9dfc4664352cd14989fe81e65e1bcc66a"
+  },
+  {
+    "group": "controls",
+    "name": "toggle-on",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      875,
+      832,
+      33,
+      17
+    ],
+    "file": "assets/ui/controls/toggle-on.png",
+    "note": "Original control graphic; the app supplies interactive behavior.",
+    "width": 33,
+    "height": 17,
+    "bytes": 1239,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "c00df354edf32923bfdcc66585779d186f82190176c1a001f7b5d122a9103f43"
+  },
+  {
+    "group": "controls",
+    "name": "pagination-previous",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      1013,
+      829,
+      21,
+      23
+    ],
+    "file": "assets/ui/controls/pagination-previous.png",
+    "note": "Original control graphic; the app supplies interactive behavior.",
+    "width": 21,
+    "height": 23,
+    "bytes": 1051,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "7bb604f06330afd77b0c8d29ccf6ad7d45e3a815dcd44814a720b30e04e9146b"
+  },
+  {
+    "group": "controls",
+    "name": "pagination-next",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      1152,
+      829,
+      21,
+      23
+    ],
+    "file": "assets/ui/controls/pagination-next.png",
+    "note": "Original control graphic; the app supplies interactive behavior.",
+    "width": 21,
+    "height": 23,
+    "bytes": 842,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "670c9315d0fd8736f66f1a79b0843908258500af34829157ba610f5f6cd6c741"
+  },
+  {
+    "group": "controls",
+    "name": "player-play",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      1224,
+      828,
+      23,
+      23
+    ],
+    "file": "assets/ui/controls/player-play.png",
+    "note": "Original control graphic; the app supplies interactive behavior.",
+    "width": 23,
+    "height": 23,
+    "bytes": 1409,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "0ab54cac32861d98bdf15647d6a54d97486a07fe0f50c183362c018ec9c3cf52"
+  },
+  {
+    "group": "controls",
+    "name": "player-volume",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      1361,
+      828,
+      22,
+      23
+    ],
+    "file": "assets/ui/controls/player-volume.png",
+    "note": "Original control graphic; the app supplies interactive behavior.",
+    "width": 22,
+    "height": 23,
+    "bytes": 1139,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "dfb49701b4a5a1ebbda5b4727f020528a35afbcaeb9cdc181bb5c085e66a4006"
+  },
+  {
+    "group": "controls",
+    "name": "player-settings",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      1390,
+      828,
+      22,
+      23
+    ],
+    "file": "assets/ui/controls/player-settings.png",
+    "note": "Original control graphic; the app supplies interactive behavior.",
+    "width": 22,
+    "height": 23,
+    "bytes": 1182,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "466427211138a373e6ba7f3d93762f642e4d10347880ce75ba06afcfa9c166ae"
+  },
+  {
+    "group": "controls",
+    "name": "player-fullscreen",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      1415,
+      828,
+      24,
+      23
+    ],
+    "file": "assets/ui/controls/player-fullscreen.png",
+    "note": "Original control graphic; the app supplies interactive behavior.",
+    "width": 24,
+    "height": 23,
+    "bytes": 1191,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "350a79b9919ebd8548323a10e5f4d0b738e181a832451b4ff6607a5c08ee12dd"
+  },
+  {
+    "group": "photos",
+    "name": "start-video-mountains",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      62,
+      541,
+      141,
+      71
+    ],
+    "file": "assets/ui/photos/start-video-mountains.png",
+    "note": "Original thumbnail includes duration overlay.",
+    "width": 141,
+    "height": 71,
+    "bytes": 20691,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "f03937f5afb5187fdd172b3709660b227af648f9f114bba28b9c09a3a4f302e4"
+  },
+  {
+    "group": "photos",
+    "name": "start-video-worship",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      62,
+      625,
+      141,
+      71
+    ],
+    "file": "assets/ui/photos/start-video-worship.png",
+    "note": "Original thumbnail includes duration overlay.",
+    "width": 141,
+    "height": 71,
+    "bytes": 19023,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "d28b33edb1cae003d03d050f9a965ac6986d4eae858fb7085667b282c3dfa215"
+  },
+  {
+    "group": "photos",
+    "name": "start-video-bible",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      62,
+      709,
+      141,
+      70
+    ],
+    "file": "assets/ui/photos/start-video-bible.png",
+    "note": "Original thumbnail includes duration overlay.",
+    "width": 141,
+    "height": 70,
+    "bytes": 23178,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "08c22c3d47ed486455fed72eac82d77cc9dab544b370dfdcbb30491ef598c29b"
+  },
+  {
+    "group": "photos",
+    "name": "start-article-reading",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      477,
+      541,
+      126,
+      72
+    ],
+    "file": "assets/ui/photos/start-article-reading.png",
+    "width": 126,
+    "height": 72,
+    "bytes": 20194,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "dc264f7682b974eefb4b06040d31b76dd3b981ae74660cea81d630f472675e58"
+  },
+  {
+    "group": "photos",
+    "name": "start-article-bible",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      477,
+      625,
+      126,
+      71
+    ],
+    "file": "assets/ui/photos/start-article-bible.png",
+    "width": 126,
+    "height": 71,
+    "bytes": 19343,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "830e5f32732a67cb89d02714c2f677862cda07bf2ad7f4ef3e13b8dcdd77e16d"
+  },
+  {
+    "group": "photos",
+    "name": "start-article-flowers",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      477,
+      709,
+      126,
+      70
+    ],
+    "file": "assets/ui/photos/start-article-flowers.png",
+    "width": 126,
+    "height": 70,
+    "bytes": 22539,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "6cd350530ed563dfdfa0c519301e8c33c4c1964107362122c43c8cfc17f97b63"
+  },
+  {
+    "group": "photos",
+    "name": "start-live",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      1245,
+      541,
+      370,
+      111
+    ],
+    "file": "assets/ui/photos/start-live.png",
+    "note": "Original poster includes LIVE badge.",
+    "width": 370,
+    "height": 111,
+    "bytes": 79347,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "818c413bad551185f01d9dafbc64dc8abeb6ea693818b746129fcaedf3225253"
+  },
+  {
+    "group": "books",
+    "name": "hoffnung-start",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      859,
+      545,
+      145,
+      225
+    ],
+    "file": "assets/ui/books/hoffnung-start.png",
+    "width": 145,
+    "height": 225,
+    "bytes": 61175,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "466ad1d98a3a74613f4479b4d20f869d90e97213a4bc7f447af3dd1cd65040da"
+  },
+  {
+    "group": "posters",
+    "name": "featured-start",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      821,
+      96,
+      634,
+      281
+    ],
+    "file": "assets/ui/posters/featured-start.png",
+    "note": "Original complete poster: title, author and playback icon are baked in.",
+    "width": 634,
+    "height": 281,
+    "bytes": 345331,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "b2a0ff1ffcef00527050ba40ae07d17cdc7a5dc3e2c8a17d4485e3aad7ca7df2"
+  },
+  {
+    "group": "photos",
+    "name": "video-plan",
+    "source": "frontend-gold-b/02-videos.png",
+    "rect": [
+      59,
+      445,
+      209,
+      86
+    ],
+    "file": "assets/ui/photos/video-plan.png",
+    "note": "Original thumbnail includes duration overlay.",
+    "width": 209,
+    "height": 86,
+    "bytes": 38958,
+    "sourceSha256": "bb1775546048cd195a1d0d9899a2771a94a49a750ebca25809ef30798d5dddd4",
+    "sha256": "6c82755800ee84d8a24f438bed41d44eaf93d4d184730d9c75f8762c495054a3"
+  },
+  {
+    "group": "photos",
+    "name": "video-life",
+    "source": "frontend-gold-b/02-videos.png",
+    "rect": [
+      281,
+      445,
+      209,
+      86
+    ],
+    "file": "assets/ui/photos/video-life.png",
+    "note": "Original thumbnail includes duration overlay.",
+    "width": 209,
+    "height": 86,
+    "bytes": 42012,
+    "sourceSha256": "bb1775546048cd195a1d0d9899a2771a94a49a750ebca25809ef30798d5dddd4",
+    "sha256": "aa65e7ba8a4bbbfa7bc92393a30ed6360b1ef07b61ff937965f883b1a160afb3"
+  },
+  {
+    "group": "photos",
+    "name": "video-prayer",
+    "source": "frontend-gold-b/02-videos.png",
+    "rect": [
+      503,
+      445,
+      209,
+      86
+    ],
+    "file": "assets/ui/photos/video-prayer.png",
+    "note": "Original thumbnail includes duration overlay.",
+    "width": 209,
+    "height": 86,
+    "bytes": 41983,
+    "sourceSha256": "bb1775546048cd195a1d0d9899a2771a94a49a750ebca25809ef30798d5dddd4",
+    "sha256": "e2f5185ba74e19879c5f87ce27577b89906f1b300af46556b0cffcedb019f6c3"
+  },
+  {
+    "group": "photos",
+    "name": "video-cross",
+    "source": "frontend-gold-b/02-videos.png",
+    "rect": [
+      725,
+      445,
+      210,
+      86
+    ],
+    "file": "assets/ui/photos/video-cross.png",
+    "note": "Original thumbnail includes duration overlay.",
+    "width": 210,
+    "height": 86,
+    "bytes": 38048,
+    "sourceSha256": "bb1775546048cd195a1d0d9899a2771a94a49a750ebca25809ef30798d5dddd4",
+    "sha256": "8540dc62f976bd875459f24da65a73235f714a27e3b30bd5eb7616b3b2759e50"
+  },
+  {
+    "group": "photos",
+    "name": "video-sharing",
+    "source": "frontend-gold-b/02-videos.png",
+    "rect": [
+      59,
+      597,
+      209,
+      85
+    ],
+    "file": "assets/ui/photos/video-sharing.png",
+    "note": "Original thumbnail includes duration overlay.",
+    "width": 209,
+    "height": 85,
+    "bytes": 34448,
+    "sourceSha256": "bb1775546048cd195a1d0d9899a2771a94a49a750ebca25809ef30798d5dddd4",
+    "sha256": "aae8b6e457f553ef33d877ef79ef2a04d2f085c9214c2aea9f63eb12d7f77621"
+  },
+  {
+    "group": "photos",
+    "name": "video-rest",
+    "source": "frontend-gold-b/02-videos.png",
+    "rect": [
+      281,
+      597,
+      209,
+      85
+    ],
+    "file": "assets/ui/photos/video-rest.png",
+    "note": "Original thumbnail includes duration overlay.",
+    "width": 209,
+    "height": 85,
+    "bytes": 41053,
+    "sourceSha256": "bb1775546048cd195a1d0d9899a2771a94a49a750ebca25809ef30798d5dddd4",
+    "sha256": "76b2e82745e046fea36b685ffb2111f16797ffd6f379b48104cda83bec9ed081"
+  },
+  {
+    "group": "photos",
+    "name": "video-seen",
+    "source": "frontend-gold-b/02-videos.png",
+    "rect": [
+      503,
+      597,
+      209,
+      85
+    ],
+    "file": "assets/ui/photos/video-seen.png",
+    "note": "Original thumbnail includes duration overlay.",
+    "width": 209,
+    "height": 85,
+    "bytes": 42650,
+    "sourceSha256": "bb1775546048cd195a1d0d9899a2771a94a49a750ebca25809ef30798d5dddd4",
+    "sha256": "48d656610641627371bafd3c93185fa76795b3aa7e0f461b9ea17aab762e70ce"
+  },
+  {
+    "group": "photos",
+    "name": "video-hope",
+    "source": "frontend-gold-b/02-videos.png",
+    "rect": [
+      725,
+      597,
+      210,
+      85
+    ],
+    "file": "assets/ui/photos/video-hope.png",
+    "note": "Original thumbnail includes duration overlay.",
+    "width": 210,
+    "height": 85,
+    "bytes": 38674,
+    "sourceSha256": "bb1775546048cd195a1d0d9899a2771a94a49a750ebca25809ef30798d5dddd4",
+    "sha256": "2adee901770b6b319c212413807508ff872480dc32b04632344b55e081597d51"
+  },
+  {
+    "group": "posters",
+    "name": "featured-videos",
+    "source": "frontend-gold-b/02-videos.png",
+    "rect": [
+      835,
+      80,
+      617,
+      252
+    ],
+    "file": "assets/ui/posters/featured-videos.png",
+    "note": "Original poster includes labels and/or playback controls.",
+    "width": 617,
+    "height": 252,
+    "bytes": 302324,
+    "sourceSha256": "bb1775546048cd195a1d0d9899a2771a94a49a750ebca25809ef30798d5dddd4",
+    "sha256": "c869108eb37941e29754462c6301cfc559761dce090805190bd725cca8619b7a"
+  },
+  {
+    "group": "posters",
+    "name": "playlist-hope",
+    "source": "frontend-gold-b/02-videos.png",
+    "rect": [
+      63,
+      788,
+      229,
+      59
+    ],
+    "file": "assets/ui/posters/playlist-hope.png",
+    "note": "Original poster includes labels and/or playback controls.",
+    "width": 229,
+    "height": 59,
+    "bytes": 30080,
+    "sourceSha256": "bb1775546048cd195a1d0d9899a2771a94a49a750ebca25809ef30798d5dddd4",
+    "sha256": "95b1f4fb7496f0ed156caf2841640a7e2128b1ff2d5037d576cc0e2f0d591b88"
+  },
+  {
+    "group": "posters",
+    "name": "playlist-bible",
+    "source": "frontend-gold-b/02-videos.png",
+    "rect": [
+      308,
+      788,
+      229,
+      59
+    ],
+    "file": "assets/ui/posters/playlist-bible.png",
+    "note": "Original poster includes labels and/or playback controls.",
+    "width": 229,
+    "height": 59,
+    "bytes": 31734,
+    "sourceSha256": "bb1775546048cd195a1d0d9899a2771a94a49a750ebca25809ef30798d5dddd4",
+    "sha256": "c762f3fc547818d9446d4684b586a353e7ca36478b342e152754e49830d6cb4c"
+  },
+  {
+    "group": "posters",
+    "name": "playlist-family",
+    "source": "frontend-gold-b/02-videos.png",
+    "rect": [
+      553,
+      788,
+      229,
+      59
+    ],
+    "file": "assets/ui/posters/playlist-family.png",
+    "note": "Original poster includes labels and/or playback controls.",
+    "width": 229,
+    "height": 59,
+    "bytes": 29395,
+    "sourceSha256": "bb1775546048cd195a1d0d9899a2771a94a49a750ebca25809ef30798d5dddd4",
+    "sha256": "4eadf43824225f2e2b521744d56825f21ea22d4912a38ea9611106ff3c02f1d9"
+  },
+  {
+    "group": "posters",
+    "name": "playlist-everyday",
+    "source": "frontend-gold-b/02-videos.png",
+    "rect": [
+      797,
+      788,
+      229,
+      59
+    ],
+    "file": "assets/ui/posters/playlist-everyday.png",
+    "note": "Original poster includes labels and/or playback controls.",
+    "width": 229,
+    "height": 59,
+    "bytes": 32369,
+    "sourceSha256": "bb1775546048cd195a1d0d9899a2771a94a49a750ebca25809ef30798d5dddd4",
+    "sha256": "f5dda88a04bf6e7b37f0a66358e7710caeb179c18d5b2850a874004c468d61e0"
+  },
+  {
+    "group": "posters",
+    "name": "playlist-testimony",
+    "source": "frontend-gold-b/02-videos.png",
+    "rect": [
+      1041,
+      788,
+      209,
+      59
+    ],
+    "file": "assets/ui/posters/playlist-testimony.png",
+    "note": "Original poster includes labels and/or playback controls.",
+    "width": 209,
+    "height": 59,
+    "bytes": 28867,
+    "sourceSha256": "bb1775546048cd195a1d0d9899a2771a94a49a750ebca25809ef30798d5dddd4",
+    "sha256": "d9260533e7e8d919b75633438fb0355c110e3e21028e3320086419d7622cd09d"
+  },
+  {
+    "group": "photos",
+    "name": "related-hope",
+    "source": "frontend-gold-b/03-video-detail.png",
+    "rect": [
+      1086,
+      130,
+      145,
+      66
+    ],
+    "file": "assets/ui/photos/related-hope.png",
+    "note": "Original thumbnail includes duration overlay.",
+    "width": 145,
+    "height": 66,
+    "bytes": 19537,
+    "sourceSha256": "76012b32739efa6645420344bc281da3f8b77e09f2a2573ec6d4e77e7b86e019",
+    "sha256": "8da489f83c34e1eec7c10907f60b0c06555546689044432821040f14349f6728"
+  },
+  {
+    "group": "photos",
+    "name": "related-trust",
+    "source": "frontend-gold-b/03-video-detail.png",
+    "rect": [
+      1086,
+      205,
+      145,
+      66
+    ],
+    "file": "assets/ui/photos/related-trust.png",
+    "note": "Original thumbnail includes duration overlay.",
+    "width": 145,
+    "height": 66,
+    "bytes": 18182,
+    "sourceSha256": "76012b32739efa6645420344bc281da3f8b77e09f2a2573ec6d4e77e7b86e019",
+    "sha256": "1cf115ca2321803e0a04284a2173e37fd0cffe9ea8004fe7e110890b89affc1b"
+  },
+  {
+    "group": "photos",
+    "name": "related-bible",
+    "source": "frontend-gold-b/03-video-detail.png",
+    "rect": [
+      1086,
+      280,
+      145,
+      66
+    ],
+    "file": "assets/ui/photos/related-bible.png",
+    "note": "Original thumbnail includes duration overlay.",
+    "width": 145,
+    "height": 66,
+    "bytes": 20722,
+    "sourceSha256": "76012b32739efa6645420344bc281da3f8b77e09f2a2573ec6d4e77e7b86e019",
+    "sha256": "ac72bc15da39e7e619afba51eb7c06b01583e941ef8796d7d86826f4da62f3ed"
+  },
+  {
+    "group": "photos",
+    "name": "related-flowers",
+    "source": "frontend-gold-b/03-video-detail.png",
+    "rect": [
+      1086,
+      349,
+      145,
+      59
+    ],
+    "file": "assets/ui/photos/related-flowers.png",
+    "note": "Original thumbnail includes duration overlay.",
+    "width": 145,
+    "height": 59,
+    "bytes": 21544,
+    "sourceSha256": "76012b32739efa6645420344bc281da3f8b77e09f2a2573ec6d4e77e7b86e019",
+    "sha256": "98ae4b2411d785b2e610758361621b39b478199a4ad454c96be1140ed36a6cc4"
+  },
+  {
+    "group": "photos",
+    "name": "related-mountains",
+    "source": "frontend-gold-b/03-video-detail.png",
+    "rect": [
+      1086,
+      419,
+      145,
+      57
+    ],
+    "file": "assets/ui/photos/related-mountains.png",
+    "note": "Original thumbnail includes duration overlay.",
+    "width": 145,
+    "height": 57,
+    "bytes": 17553,
+    "sourceSha256": "76012b32739efa6645420344bc281da3f8b77e09f2a2573ec6d4e77e7b86e019",
+    "sha256": "6e9177266fdda1b5fabea7053163274778782138e9656e3d7ccad6c3d79426e8"
+  },
+  {
+    "group": "posters",
+    "name": "video-detail",
+    "source": "frontend-gold-b/03-video-detail.png",
+    "rect": [
+      97,
+      110,
+      951,
+      356
+    ],
+    "file": "assets/ui/posters/video-detail.png",
+    "note": "Original poster includes title/controls.",
+    "width": 951,
+    "height": 356,
+    "bytes": 646334,
+    "sourceSha256": "76012b32739efa6645420344bc281da3f8b77e09f2a2573ec6d4e77e7b86e019",
+    "sha256": "6a60df2cf85984b8c67beaacc892f4e6e6a6f7db0478a996fdd286f5ac0cb98b"
+  },
+  {
+    "group": "posters",
+    "name": "video-detail-live",
+    "source": "frontend-gold-b/03-video-detail.png",
+    "rect": [
+      1076,
+      503,
+      499,
+      122
+    ],
+    "file": "assets/ui/posters/video-detail-live.png",
+    "note": "Original poster includes title/controls.",
+    "width": 499,
+    "height": 122,
+    "bytes": 115562,
+    "sourceSha256": "76012b32739efa6645420344bc281da3f8b77e09f2a2573ec6d4e77e7b86e019",
+    "sha256": "8ccd9e9f45cef8a538e7c26f12259ea61f4829bdb5932f0a13af0948a8627dc0"
+  },
+  {
+    "group": "photos",
+    "name": "article-worship",
+    "source": "frontend-gold-b/04-beitraege.png",
+    "rect": [
+      61,
+      441,
+      124,
+      162
+    ],
+    "file": "assets/ui/photos/article-worship.png",
+    "width": 124,
+    "height": 162,
+    "bytes": 38967,
+    "sourceSha256": "73c7f6ac49942e044f1b45493c306f11817da3f9c069dc768cf4812371dc7cd3",
+    "sha256": "e29b2b8e3f63885ec32c0dfb8887e248392219958317d402a10c302974baa364"
+  },
+  {
+    "group": "photos",
+    "name": "article-prayer",
+    "source": "frontend-gold-b/04-beitraege.png",
+    "rect": [
+      391,
+      441,
+      121,
+      162
+    ],
+    "file": "assets/ui/photos/article-prayer.png",
+    "width": 121,
+    "height": 162,
+    "bytes": 40356,
+    "sourceSha256": "73c7f6ac49942e044f1b45493c306f11817da3f9c069dc768cf4812371dc7cd3",
+    "sha256": "ce6322d40fccef07342463889dda0761175a89f92f897169fa921933d252e9d9"
+  },
+  {
+    "group": "photos",
+    "name": "article-family",
+    "source": "frontend-gold-b/04-beitraege.png",
+    "rect": [
+      711,
+      441,
+      117,
+      162
+    ],
+    "file": "assets/ui/photos/article-family.png",
+    "width": 117,
+    "height": 162,
+    "bytes": 42585,
+    "sourceSha256": "73c7f6ac49942e044f1b45493c306f11817da3f9c069dc768cf4812371dc7cd3",
+    "sha256": "fff59a5125a0ed0cd0adefe2d57be712289ce70073ad5c5be8de9551928459ba"
+  },
+  {
+    "group": "photos",
+    "name": "article-lake",
+    "source": "frontend-gold-b/04-beitraege.png",
+    "rect": [
+      61,
+      631,
+      124,
+      171
+    ],
+    "file": "assets/ui/photos/article-lake.png",
+    "width": 124,
+    "height": 171,
+    "bytes": 48135,
+    "sourceSha256": "73c7f6ac49942e044f1b45493c306f11817da3f9c069dc768cf4812371dc7cd3",
+    "sha256": "f128016f3665985800be99c2ae3879c04cf84ffad42366c475a4eb995ed16554"
+  },
+  {
+    "group": "photos",
+    "name": "article-flower",
+    "source": "frontend-gold-b/04-beitraege.png",
+    "rect": [
+      391,
+      631,
+      121,
+      171
+    ],
+    "file": "assets/ui/photos/article-flower.png",
+    "width": 121,
+    "height": 171,
+    "bytes": 47336,
+    "sourceSha256": "73c7f6ac49942e044f1b45493c306f11817da3f9c069dc768cf4812371dc7cd3",
+    "sha256": "56a8437e03968233ec6cfe74ab57c8ee1d015d3a22e6619483d70393497d5e5a"
+  },
+  {
+    "group": "photos",
+    "name": "article-woman",
+    "source": "frontend-gold-b/04-beitraege.png",
+    "rect": [
+      711,
+      631,
+      117,
+      171
+    ],
+    "file": "assets/ui/photos/article-woman.png",
+    "width": 117,
+    "height": 171,
+    "bytes": 45092,
+    "sourceSha256": "73c7f6ac49942e044f1b45493c306f11817da3f9c069dc768cf4812371dc7cd3",
+    "sha256": "596372d488a2275130c3248c1c52bdea04c0d09eddc2ad71e95fd92885c8e0c6"
+  },
+  {
+    "group": "photos",
+    "name": "popular-mountains",
+    "source": "frontend-gold-b/04-beitraege.png",
+    "rect": [
+      1067,
+      440,
+      88,
+      55
+    ],
+    "file": "assets/ui/photos/popular-mountains.png",
+    "width": 88,
+    "height": 55,
+    "bytes": 10685,
+    "sourceSha256": "73c7f6ac49942e044f1b45493c306f11817da3f9c069dc768cf4812371dc7cd3",
+    "sha256": "9b5d3a6c43e1bdf8bcaa1a76acd855d720b3f145751f581b0840fef71270ff63"
+  },
+  {
+    "group": "photos",
+    "name": "popular-reading",
+    "source": "frontend-gold-b/04-beitraege.png",
+    "rect": [
+      1067,
+      509,
+      88,
+      58
+    ],
+    "file": "assets/ui/photos/popular-reading.png",
+    "width": 88,
+    "height": 58,
+    "bytes": 11502,
+    "sourceSha256": "73c7f6ac49942e044f1b45493c306f11817da3f9c069dc768cf4812371dc7cd3",
+    "sha256": "60db46b07d87cf8b9e0617f46c6cb222e709f0f3c1e889c59eb689d8c7447f8f"
+  },
+  {
+    "group": "photos",
+    "name": "popular-worship",
+    "source": "frontend-gold-b/04-beitraege.png",
+    "rect": [
+      1067,
+      583,
+      88,
+      61
+    ],
+    "file": "assets/ui/photos/popular-worship.png",
+    "width": 88,
+    "height": 61,
+    "bytes": 11185,
+    "sourceSha256": "73c7f6ac49942e044f1b45493c306f11817da3f9c069dc768cf4812371dc7cd3",
+    "sha256": "3fbb0f8b5d7b8e05a4db649b49aebecafab3bea87d444a9c1a2b2e9cfd61e38d"
+  },
+  {
+    "group": "photos",
+    "name": "popular-bible",
+    "source": "frontend-gold-b/04-beitraege.png",
+    "rect": [
+      1067,
+      662,
+      88,
+      64
+    ],
+    "file": "assets/ui/photos/popular-bible.png",
+    "width": 88,
+    "height": 64,
+    "bytes": 14003,
+    "sourceSha256": "73c7f6ac49942e044f1b45493c306f11817da3f9c069dc768cf4812371dc7cd3",
+    "sha256": "f23cf12282c0f41af372f1c6ad7cfe30bd140b16f24881f9b64128ee27e2fddf"
+  },
+  {
+    "group": "photos",
+    "name": "popular-forest",
+    "source": "frontend-gold-b/04-beitraege.png",
+    "rect": [
+      1067,
+      739,
+      88,
+      68
+    ],
+    "file": "assets/ui/photos/popular-forest.png",
+    "width": 88,
+    "height": 68,
+    "bytes": 15750,
+    "sourceSha256": "73c7f6ac49942e044f1b45493c306f11817da3f9c069dc768cf4812371dc7cd3",
+    "sha256": "82d717955a67e8d062773d7c0c13697d039ddfe4d556a6bcad443131835cb985"
+  },
+  {
+    "group": "posters",
+    "name": "featured-articles",
+    "source": "frontend-gold-b/04-beitraege.png",
+    "rect": [
+      810,
+      89,
+      639,
+      228
+    ],
+    "file": "assets/ui/posters/featured-articles.png",
+    "note": "Original poster includes title, author and button.",
+    "width": 639,
+    "height": 228,
+    "bytes": 282027,
+    "sourceSha256": "73c7f6ac49942e044f1b45493c306f11817da3f9c069dc768cf4812371dc7cd3",
+    "sha256": "df24f9c53c97a32d6ee61f29812721babdf895a36a76ef127e9202c0a56d58e5"
+  },
+  {
+    "group": "photos",
+    "name": "related-article-trust",
+    "source": "frontend-gold-b/05-beitrag-detail.png",
+    "rect": [
+      1079,
+      311,
+      120,
+      56
+    ],
+    "file": "assets/ui/photos/related-article-trust.png",
+    "width": 120,
+    "height": 56,
+    "bytes": 15547,
+    "sourceSha256": "6b6cb33d2a33752fa876549736766b387e2588162f49239f888a7a405455c4da",
+    "sha256": "deffa3cbeae4073e70c3629509a0d6f6004e4480d37990236d0a9949f6e68d02"
+  },
+  {
+    "group": "photos",
+    "name": "related-article-bible",
+    "source": "frontend-gold-b/05-beitrag-detail.png",
+    "rect": [
+      1079,
+      376,
+      120,
+      54
+    ],
+    "file": "assets/ui/photos/related-article-bible.png",
+    "width": 120,
+    "height": 54,
+    "bytes": 14502,
+    "sourceSha256": "6b6cb33d2a33752fa876549736766b387e2588162f49239f888a7a405455c4da",
+    "sha256": "8ac87ef2095d31a14e6ed8a5a93695d8d4901380f8368487c8c3f5fce93f6f89"
+  },
+  {
+    "group": "photos",
+    "name": "related-article-courage",
+    "source": "frontend-gold-b/05-beitrag-detail.png",
+    "rect": [
+      1079,
+      440,
+      120,
+      58
+    ],
+    "file": "assets/ui/photos/related-article-courage.png",
+    "width": 120,
+    "height": 58,
+    "bytes": 15486,
+    "sourceSha256": "6b6cb33d2a33752fa876549736766b387e2588162f49239f888a7a405455c4da",
+    "sha256": "bc9c9b7bb9fe4d5bafe8b2b79d4af0783cb6454a71c5013085a30284a2cb57f7"
+  },
+  {
+    "group": "posters",
+    "name": "article-cover",
+    "source": "frontend-gold-b/05-beitrag-detail.png",
+    "rect": [
+      166,
+      106,
+      877,
+      243
+    ],
+    "file": "assets/ui/posters/article-cover.png",
+    "note": "Original cover includes lettering / video overlay.",
+    "width": 877,
+    "height": 243,
+    "bytes": 421112,
+    "sourceSha256": "6b6cb33d2a33752fa876549736766b387e2588162f49239f888a7a405455c4da",
+    "sha256": "dff8f7bb7a67fcf0382fdb115216eb71c4fdf1c806ab79ff800eb47694b20509"
+  },
+  {
+    "group": "posters",
+    "name": "article-related-video",
+    "source": "frontend-gold-b/05-beitrag-detail.png",
+    "rect": [
+      1079,
+      783,
+      176,
+      98
+    ],
+    "file": "assets/ui/posters/article-related-video.png",
+    "note": "Original cover includes lettering / video overlay.",
+    "width": 176,
+    "height": 98,
+    "bytes": 35510,
+    "sourceSha256": "6b6cb33d2a33752fa876549736766b387e2588162f49239f888a7a405455c4da",
+    "sha256": "af37a6ce0575d1c707ce0bcec49c29447f7568736c478ab501f370c5d593c683"
+  },
+  {
+    "group": "books",
+    "name": "hoffnung-article",
+    "source": "frontend-gold-b/05-beitrag-detail.png",
+    "rect": [
+      1081,
+      557,
+      133,
+      165
+    ],
+    "file": "assets/ui/books/hoffnung-article.png",
+    "width": 133,
+    "height": 165,
+    "bytes": 42768,
+    "sourceSha256": "6b6cb33d2a33752fa876549736766b387e2588162f49239f888a7a405455c4da",
+    "sha256": "4e42ac9ac198c4dd3528dd9e0865612e1c16d0e9a5e2f38276550acd7940bd82"
+  },
+  {
+    "group": "posters",
+    "name": "books-still-life",
+    "source": "frontend-gold-b/06-buecher.png",
+    "rect": [
+      1085,
+      146,
+      551,
+      187
+    ],
+    "file": "assets/ui/posters/books-still-life.png",
+    "note": "Original book spines and mug include printed lettering.",
+    "width": 551,
+    "height": 187,
+    "bytes": 211449,
+    "sourceSha256": "933e091f6541a1f846828042b5a67e4a8e2ffa771b6ff2c844f43d34f8ebb6f5",
+    "sha256": "8fddac7911b643dad1d9f8c7d81f8245635d9258c1171defe6073f0dcc59f53c"
+  },
+  {
+    "group": "books",
+    "name": "hoffnung-library",
+    "source": "frontend-gold-b/06-buecher.png",
+    "rect": [
+      59,
+      500,
+      94,
+      161
+    ],
+    "file": "assets/ui/books/hoffnung-library.png",
+    "note": "Original cover; any edition/category badges are baked in.",
+    "width": 94,
+    "height": 161,
+    "bytes": 31940,
+    "sourceSha256": "933e091f6541a1f846828042b5a67e4a8e2ffa771b6ff2c844f43d34f8ebb6f5",
+    "sha256": "d75abe111d62ae2aaee325c11edd4b4683cfa1d3357f6d0835fcc80469bf2362"
+  },
+  {
+    "group": "books",
+    "name": "glauben-im-alltag",
+    "source": "frontend-gold-b/06-buecher.png",
+    "rect": [
+      310,
+      500,
+      94,
+      161
+    ],
+    "file": "assets/ui/books/glauben-im-alltag.png",
+    "note": "Original cover; any edition/category badges are baked in.",
+    "width": 94,
+    "height": 161,
+    "bytes": 33485,
+    "sourceSha256": "933e091f6541a1f846828042b5a67e4a8e2ffa771b6ff2c844f43d34f8ebb6f5",
+    "sha256": "58f2d89512eb52265298ccaa1f600657d078c909570fdbec5879823881ac317f"
+  },
+  {
+    "group": "books",
+    "name": "bibel-neu-entdecken",
+    "source": "frontend-gold-b/06-buecher.png",
+    "rect": [
+      544,
+      500,
+      100,
+      162
+    ],
+    "file": "assets/ui/books/bibel-neu-entdecken.png",
+    "note": "Original cover; any edition/category badges are baked in.",
+    "width": 100,
+    "height": 162,
+    "bytes": 35442,
+    "sourceSha256": "933e091f6541a1f846828042b5a67e4a8e2ffa771b6ff2c844f43d34f8ebb6f5",
+    "sha256": "745fe533d41e6fd3d5c8397cc78d193a1887e18065b8f42364cb97fe166017bf"
+  },
+  {
+    "group": "books",
+    "name": "staerker-in-stuermen",
+    "source": "frontend-gold-b/06-buecher.png",
+    "rect": [
+      822,
+      509,
+      93,
+      154
+    ],
+    "file": "assets/ui/books/staerker-in-stuermen.png",
+    "note": "Original cover; any edition/category badges are baked in.",
+    "width": 93,
+    "height": 154,
+    "bytes": 32687,
+    "sourceSha256": "933e091f6541a1f846828042b5a67e4a8e2ffa771b6ff2c844f43d34f8ebb6f5",
+    "sha256": "3476c195df3deecd6ed6ce07b57497486cddcf8b97f92e26db528144d658076e"
+  },
+  {
+    "group": "books",
+    "name": "sein-plan",
+    "source": "frontend-gold-b/06-buecher.png",
+    "rect": [
+      1031,
+      509,
+      89,
+      155
+    ],
+    "file": "assets/ui/books/sein-plan.png",
+    "note": "Original cover; any edition/category badges are baked in.",
+    "width": 89,
+    "height": 155,
+    "bytes": 29982,
+    "sourceSha256": "933e091f6541a1f846828042b5a67e4a8e2ffa771b6ff2c844f43d34f8ebb6f5",
+    "sha256": "2ecbbed735ce656800a8d2fac06a52c61af2a92250fa74fab6a24fe88629e74f"
+  },
+  {
+    "group": "books",
+    "name": "popular-hoffnung",
+    "source": "frontend-gold-b/06-buecher.png",
+    "rect": [
+      99,
+      727,
+      65,
+      91
+    ],
+    "file": "assets/ui/books/popular-hoffnung.png",
+    "note": "Original cover; any edition/category badges are baked in.",
+    "width": 65,
+    "height": 91,
+    "bytes": 12941,
+    "sourceSha256": "933e091f6541a1f846828042b5a67e4a8e2ffa771b6ff2c844f43d34f8ebb6f5",
+    "sha256": "f35a0c28ecd012a9889617b3260e50735cf18c50de2b28335e042bd89713cc3b"
+  },
+  {
+    "group": "books",
+    "name": "gott-sieht-dich",
+    "source": "frontend-gold-b/06-buecher.png",
+    "rect": [
+      327,
+      727,
+      62,
+      91
+    ],
+    "file": "assets/ui/books/gott-sieht-dich.png",
+    "note": "Original cover; any edition/category badges are baked in.",
+    "width": 62,
+    "height": 91,
+    "bytes": 13542,
+    "sourceSha256": "933e091f6541a1f846828042b5a67e4a8e2ffa771b6ff2c844f43d34f8ebb6f5",
+    "sha256": "4d914cdad560ded6e431cf5c029033c35c533e4a5643054e55b06748792808d4"
+  },
+  {
+    "group": "books",
+    "name": "leben-mit-perspektive",
+    "source": "frontend-gold-b/06-buecher.png",
+    "rect": [
+      563,
+      727,
+      63,
+      91
+    ],
+    "file": "assets/ui/books/leben-mit-perspektive.png",
+    "note": "Original cover; any edition/category badges are baked in.",
+    "width": 63,
+    "height": 91,
+    "bytes": 13077,
+    "sourceSha256": "933e091f6541a1f846828042b5a67e4a8e2ffa771b6ff2c844f43d34f8ebb6f5",
+    "sha256": "f4bdb54f12f7ba194ca01238333d412d75e64c59b4ca501372bcb061c4f5f1db"
+  },
+  {
+    "group": "books",
+    "name": "kraft-des-gebets",
+    "source": "frontend-gold-b/06-buecher.png",
+    "rect": [
+      804,
+      727,
+      61,
+      85
+    ],
+    "file": "assets/ui/books/kraft-des-gebets.png",
+    "note": "Original cover; any edition/category badges are baked in.",
+    "width": 61,
+    "height": 85,
+    "bytes": 11158,
+    "sourceSha256": "933e091f6541a1f846828042b5a67e4a8e2ffa771b6ff2c844f43d34f8ebb6f5",
+    "sha256": "f3a079c19503d660c6f2d98696e18f3955a3e182d2a1071b5fabffe58315081c"
+  },
+  {
+    "group": "books",
+    "name": "hoffnung-detail",
+    "source": "frontend-gold-b/07-buch-detail.png",
+    "rect": [
+      204,
+      110,
+      311,
+      391
+    ],
+    "file": "assets/ui/books/hoffnung-detail.png",
+    "note": "Original displayed cover crop; the main cover includes its PDF badge.",
+    "width": 311,
+    "height": 391,
+    "bytes": 212771,
+    "sourceSha256": "a2d16f7ee5707445ef1c03c55f5a1557dbdb48e69c414bc878ecd77bc3217a48",
+    "sha256": "8d710756ecc9f1103731609498f4920069ec5dd4332cc229a374d381f19a6855"
+  },
+  {
+    "group": "books",
+    "name": "related-hoffnung",
+    "source": "frontend-gold-b/07-buch-detail.png",
+    "rect": [
+      1028,
+      774,
+      105,
+      80
+    ],
+    "file": "assets/ui/books/related-hoffnung.png",
+    "note": "Original displayed cover crop; the main cover includes its PDF badge.",
+    "width": 105,
+    "height": 80,
+    "bytes": 18079,
+    "sourceSha256": "a2d16f7ee5707445ef1c03c55f5a1557dbdb48e69c414bc878ecd77bc3217a48",
+    "sha256": "ea02e8c8a310e00d57e5265df8de59ef688cba6135fa97f3715eee4b2d8c239f"
+  },
+  {
+    "group": "books",
+    "name": "related-gott-sieht-dich",
+    "source": "frontend-gold-b/07-buch-detail.png",
+    "rect": [
+      1160,
+      774,
+      107,
+      80
+    ],
+    "file": "assets/ui/books/related-gott-sieht-dich.png",
+    "note": "Original displayed cover crop; the main cover includes its PDF badge.",
+    "width": 107,
+    "height": 80,
+    "bytes": 16900,
+    "sourceSha256": "a2d16f7ee5707445ef1c03c55f5a1557dbdb48e69c414bc878ecd77bc3217a48",
+    "sha256": "570e202d3444755fb725e4b124cba4128bbe7f822719be1df24a35080ed27143"
+  },
+  {
+    "group": "books",
+    "name": "related-gebet",
+    "source": "frontend-gold-b/07-buch-detail.png",
+    "rect": [
+      1297,
+      774,
+      109,
+      80
+    ],
+    "file": "assets/ui/books/related-gebet.png",
+    "note": "Original displayed cover crop; the main cover includes its PDF badge.",
+    "width": 109,
+    "height": 80,
+    "bytes": 18965,
+    "sourceSha256": "a2d16f7ee5707445ef1c03c55f5a1557dbdb48e69c414bc878ecd77bc3217a48",
+    "sha256": "ac0777237529661710d16eccbadbcad34df57afb8b2be2b732f7964b48a2526f"
+  },
+  {
+    "group": "books",
+    "name": "related-licht",
+    "source": "frontend-gold-b/07-buch-detail.png",
+    "rect": [
+      1438,
+      774,
+      109,
+      80
+    ],
+    "file": "assets/ui/books/related-licht.png",
+    "note": "Original displayed cover crop; the main cover includes its PDF badge.",
+    "width": 109,
+    "height": 80,
+    "bytes": 17854,
+    "sourceSha256": "a2d16f7ee5707445ef1c03c55f5a1557dbdb48e69c414bc878ecd77bc3217a48",
+    "sha256": "57bc5781ca61d0a7af25a401c88e46cd0b8f66137f567775676df352bafe00a3"
+  },
+  {
+    "group": "photos",
+    "name": "book-related-article",
+    "source": "frontend-gold-b/07-buch-detail.png",
+    "rect": [
+      1025,
+      660,
+      176,
+      65
+    ],
+    "file": "assets/ui/photos/book-related-article.png",
+    "width": 176,
+    "height": 65,
+    "bytes": 22903,
+    "sourceSha256": "a2d16f7ee5707445ef1c03c55f5a1557dbdb48e69c414bc878ecd77bc3217a48",
+    "sha256": "9221c2b91ba0960cbf8774381d3ae193c393a67a07a18e7d2e0d18b9415d4d59"
+  },
+  {
+    "group": "posters",
+    "name": "book-related-video",
+    "source": "frontend-gold-b/07-buch-detail.png",
+    "rect": [
+      1025,
+      540,
+      184,
+      71
+    ],
+    "file": "assets/ui/posters/book-related-video.png",
+    "note": "Original thumbnail includes playback icon.",
+    "width": 184,
+    "height": 71,
+    "bytes": 32066,
+    "sourceSha256": "a2d16f7ee5707445ef1c03c55f5a1557dbdb48e69c414bc878ecd77bc3217a48",
+    "sha256": "120960901f4a0bc8cadf186adf69fd5908c96a69f742d161de31f7b3d18d26fb"
+  },
+  {
+    "group": "photos",
+    "name": "live-next-lake",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      59,
+      594,
+      107,
+      66
+    ],
+    "file": "assets/ui/photos/live-next-lake.png",
+    "width": 107,
+    "height": 66,
+    "bytes": 16579,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "57841fd3b8b856fad1f7729e816755a6aa616ed38a0bf98bc13fde985e256ce3"
+  },
+  {
+    "group": "photos",
+    "name": "live-next-cross",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      59,
+      666,
+      107,
+      66
+    ],
+    "file": "assets/ui/photos/live-next-cross.png",
+    "width": 107,
+    "height": 66,
+    "bytes": 14279,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "0bad3b26928dbf39fe8b28b139e0aa1b2208ff413b79aa456e8aa4c8104b666e"
+  },
+  {
+    "group": "photos",
+    "name": "live-next-prayer",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      59,
+      738,
+      107,
+      66
+    ],
+    "file": "assets/ui/photos/live-next-prayer.png",
+    "width": 107,
+    "height": 66,
+    "bytes": 15566,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "f2470271a6446addb35e6d8e2873390eb070906b774034fe20f212bcebf3c779"
+  },
+  {
+    "group": "photos",
+    "name": "live-recording-hope",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      1255,
+      594,
+      159,
+      46
+    ],
+    "file": "assets/ui/photos/live-recording-hope.png",
+    "note": "Original thumbnail includes duration overlay.",
+    "width": 159,
+    "height": 46,
+    "bytes": 16885,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "a17a209bad2e20ed012b6628eaa81e884eb0d8058f17834cd9880194950d256a"
+  },
+  {
+    "group": "photos",
+    "name": "live-recording-worship",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      1255,
+      646,
+      159,
+      47
+    ],
+    "file": "assets/ui/photos/live-recording-worship.png",
+    "note": "Original thumbnail includes duration overlay.",
+    "width": 159,
+    "height": 47,
+    "bytes": 17500,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "d29302a7e5b8c0942b3db72de52f7707fc7fc55b33d616e20958937f2921ad61"
+  },
+  {
+    "group": "photos",
+    "name": "live-recording-rest",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      1255,
+      698,
+      159,
+      47
+    ],
+    "file": "assets/ui/photos/live-recording-rest.png",
+    "note": "Original thumbnail includes duration overlay.",
+    "width": 159,
+    "height": 47,
+    "bytes": 17733,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "6234bc59c7a73983e5fb3115668ed0f149b4b2e409bc69ccccd30254e3a02e81"
+  },
+  {
+    "group": "photos",
+    "name": "live-recording-morning",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      1255,
+      751,
+      159,
+      44
+    ],
+    "file": "assets/ui/photos/live-recording-morning.png",
+    "note": "Original thumbnail includes duration overlay.",
+    "width": 159,
+    "height": 44,
+    "bytes": 15959,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "efc758a6676791d27d724faa6a554cd21f5d5dd51ba3a3c67743573c11352086"
+  },
+  {
+    "group": "posters",
+    "name": "live-player",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      143,
+      73,
+      872,
+      410
+    ],
+    "file": "assets/ui/posters/live-player.png",
+    "note": "Original poster includes title, live badge and player controls.",
+    "width": 872,
+    "height": 410,
+    "bytes": 724731,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "a63622bf5bf24d59c7cd86a29152446cc741e0a9ec1ba6864a3ad31b2ef84fa4"
+  },
+  {
+    "group": "posters",
+    "name": "podcast-featured",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      821,
+      91,
+      635,
+      280
+    ],
+    "file": "assets/ui/posters/podcast-featured.png",
+    "note": "Original cover includes lettering and/or playback overlays.",
+    "width": 635,
+    "height": 280,
+    "bytes": 339883,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "ba9f516d732582d65d4495d2bb4a6793ebed55dcd48ea8b2ee6891490dde5bb5"
+  },
+  {
+    "group": "posters",
+    "name": "podcast-episode-trust",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      55,
+      517,
+      139,
+      57
+    ],
+    "file": "assets/ui/posters/podcast-episode-trust.png",
+    "note": "Original cover includes lettering and/or playback overlays.",
+    "width": 139,
+    "height": 57,
+    "bytes": 18527,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "11679d5208815681e4cf2a707087b2b1bb77e52c53ba2631afecbdf85dfb6beb"
+  },
+  {
+    "group": "posters",
+    "name": "podcast-episode-thanks",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      55,
+      587,
+      139,
+      57
+    ],
+    "file": "assets/ui/posters/podcast-episode-thanks.png",
+    "note": "Original cover includes lettering and/or playback overlays.",
+    "width": 139,
+    "height": 57,
+    "bytes": 17348,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "0692c64fbcdf6e2874a1ca3e517d40e1f53a55cf1ce0a55fbfc4b38fed013466"
+  },
+  {
+    "group": "posters",
+    "name": "podcast-episode-steps",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      55,
+      658,
+      139,
+      57
+    ],
+    "file": "assets/ui/posters/podcast-episode-steps.png",
+    "note": "Original cover includes lettering and/or playback overlays.",
+    "width": 139,
+    "height": 57,
+    "bytes": 17748,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "408e8a537e29a3c7f81b6fa10d86c0b7762449c5942d66dc015073b26a5bd08e"
+  },
+  {
+    "group": "posters",
+    "name": "podcast-episode-bible",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      55,
+      728,
+      139,
+      57
+    ],
+    "file": "assets/ui/posters/podcast-episode-bible.png",
+    "note": "Original cover includes lettering and/or playback overlays.",
+    "width": 139,
+    "height": 57,
+    "bytes": 19127,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "59ab8085b65aca5053dfc7f3fedcb5e49a627cdc5bbcb91c8b13289d3a79d51c"
+  },
+  {
+    "group": "posters",
+    "name": "podcast-series-hope",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      523,
+      517,
+      151,
+      83
+    ],
+    "file": "assets/ui/posters/podcast-series-hope.png",
+    "note": "Original cover includes lettering and/or playback overlays.",
+    "width": 151,
+    "height": 83,
+    "bytes": 28814,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "881f6d6c575059b26d22714683947ba3d0f8f047b2fe079a68b852277d096fa5"
+  },
+  {
+    "group": "posters",
+    "name": "podcast-series-faith",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      523,
+      612,
+      151,
+      83
+    ],
+    "file": "assets/ui/posters/podcast-series-faith.png",
+    "note": "Original cover includes lettering and/or playback overlays.",
+    "width": 151,
+    "height": 83,
+    "bytes": 28142,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "2ff0f400178d6a3a86f27d86d8825d2259cba7c8e607a2e47dc7e5f349374ec5"
+  },
+  {
+    "group": "posters",
+    "name": "podcast-series-bible",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      523,
+      707,
+      151,
+      83
+    ],
+    "file": "assets/ui/posters/podcast-series-bible.png",
+    "note": "Original cover includes lettering and/or playback overlays.",
+    "width": 151,
+    "height": 83,
+    "bytes": 26694,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "9f2b6843806130b90483f52aaeaa4bd8683d2efa06e5cd4facec370c2f0eb510"
+  },
+  {
+    "group": "posters",
+    "name": "podcast-resume",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      1359,
+      515,
+      261,
+      60
+    ],
+    "file": "assets/ui/posters/podcast-resume.png",
+    "note": "Original cover includes lettering and/or playback overlays.",
+    "width": 261,
+    "height": 60,
+    "bytes": 40009,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "52b8817ace38da24154c6b15dec6751cf8cb7414d08eb5d629d0f42469545839"
+  },
+  {
+    "group": "posters",
+    "name": "podcast-recommended",
+    "source": "frontend-gold-b/09-podcast.png",
+    "rect": [
+      1359,
+      692,
+      112,
+      97
+    ],
+    "file": "assets/ui/posters/podcast-recommended.png",
+    "note": "Original cover includes lettering and/or playback overlays.",
+    "width": 112,
+    "height": 97,
+    "bytes": 23798,
+    "sourceSha256": "432d227aa0949aa02abdbc0c9a022b8d8290cb0211a6f8fd0b438cb3d9b53795",
+    "sha256": "4a7dfe423a339d3bd68c520f3177f7f55d2d24821da27a6551c09ce05b7aa527"
+  },
+  {
+    "group": "illustrations",
+    "name": "matthew-quote",
+    "source": "design-system/master-ui-kit.png",
+    "rect": [
+      1262,
+      343,
+      392,
+      146
+    ],
+    "file": "assets/ui/illustrations/matthew-quote.png",
+    "note": "Original complete quote artwork with lettering.",
+    "width": 392,
+    "height": 146,
+    "bytes": 118769,
+    "sourceSha256": "242e50148d1c83122d9f01ddd4674f8e6281fe08dad41203f6f33cac8f575ae0",
+    "sha256": "70fa40285d57ac03ea3adb8fe0a951afb59a2726dfb7babd2bcc8c56710cc017"
+  },
+  {
+    "group": "illustrations",
+    "name": "glaube-bewegt",
+    "source": "frontend-gold-b/02-videos.png",
+    "rect": [
+      1279,
+      723,
+      348,
+      126
+    ],
+    "file": "assets/ui/illustrations/glaube-bewegt.png",
+    "note": "Original complete quote artwork with lettering.",
+    "width": 348,
+    "height": 126,
+    "bytes": 76610,
+    "sourceSha256": "bb1775546048cd195a1d0d9899a2771a94a49a750ebca25809ef30798d5dddd4",
+    "sha256": "554e041c2059025871713124d939d7a6d8627f00857e20bb7500b043d31644b7"
+  },
+  {
+    "group": "illustrations",
+    "name": "jeremiah-quote",
+    "source": "frontend-gold-b/05-beitrag-detail.png",
+    "rect": [
+      1064,
+      80,
+      442,
+      181
+    ],
+    "file": "assets/ui/illustrations/jeremiah-quote.png",
+    "note": "Original complete quote artwork with lettering.",
+    "width": 442,
+    "height": 181,
+    "bytes": 146002,
+    "sourceSha256": "6b6cb33d2a33752fa876549736766b387e2588162f49239f888a7a405455c4da",
+    "sha256": "ba25a1880391795632e5c3888da6ee1e048582d4974a768df75d769fa4b1fe9c"
+  },
+  {
+    "group": "illustrations",
+    "name": "galatians-quote",
+    "source": "frontend-gold-b/10-community.png",
+    "rect": [
+      1327,
+      711,
+      305,
+      126
+    ],
+    "file": "assets/ui/illustrations/galatians-quote.png",
+    "note": "Original complete quote artwork with lettering.",
+    "width": 305,
+    "height": 126,
+    "bytes": 75523,
+    "sourceSha256": "534719176880e78d797d672f0ea09f8ebad2e9a8bff35c4ec90cf6dd8e073661",
+    "sha256": "ea24608875632a8e2212df324112973f54b53a15744f62415b8f193a1b651fbf"
+  },
+  {
+    "group": "avatars",
+    "name": "author-start",
+    "source": "frontend-gold-b/01-start.png",
+    "rect": [
+      849,
+      310,
+      46,
+      46
+    ],
+    "file": "assets/ui/avatars/author-start.png",
+    "width": 46,
+    "height": 46,
+    "bytes": 5640,
+    "sourceSha256": "020d8b0ad49252dd61b66fe3be5c1ff60d57ab0bb86058214b355770da7e6bcf",
+    "sha256": "e7e045f0f2da0e56d3fa81a78dbca8b32331e96ef09fcc6ee00ec594d36ae298"
+  },
+  {
+    "group": "avatars",
+    "name": "author-article",
+    "source": "frontend-gold-b/05-beitrag-detail.png",
+    "rect": [
+      166,
+      523,
+      48,
+      50
+    ],
+    "file": "assets/ui/avatars/author-article.png",
+    "width": 48,
+    "height": 50,
+    "bytes": 5952,
+    "sourceSha256": "6b6cb33d2a33752fa876549736766b387e2588162f49239f888a7a405455c4da",
+    "sha256": "b2441e53c7503be213a5991c5842630e3ab1351738f953f2f75ccadbbfc15484"
+  },
+  {
+    "group": "avatars",
+    "name": "author-book",
+    "source": "frontend-gold-b/07-buch-detail.png",
+    "rect": [
+      525,
+      251,
+      51,
+      51
+    ],
+    "file": "assets/ui/avatars/author-book.png",
+    "width": 51,
+    "height": 51,
+    "bytes": 6145,
+    "sourceSha256": "a2d16f7ee5707445ef1c03c55f5a1557dbdb48e69c414bc878ecd77bc3217a48",
+    "sha256": "cee34f2c7632f45bcf7e3076885ba0121bdbd64e34c517afd6358a3b3f746484"
+  },
+  {
+    "group": "avatars",
+    "name": "live-author",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      156,
+      490,
+      54,
+      54
+    ],
+    "file": "assets/ui/avatars/live-author.png",
+    "width": 54,
+    "height": 54,
+    "bytes": 6646,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "0dbc15cb9499412f95349c81698978d8e04cad7c21ef50bc30760c255851629d"
+  },
+  {
+    "group": "avatars",
+    "name": "community-woman-1",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      257,
+      832,
+      54,
+      54
+    ],
+    "file": "assets/ui/avatars/community-woman-1.png",
+    "width": 54,
+    "height": 54,
+    "bytes": 7330,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "7a501c47925a66321ef63744d82cdcaab829b6e1c49403fe81618eb879e48719"
+  },
+  {
+    "group": "avatars",
+    "name": "community-man-1",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      552,
+      832,
+      54,
+      54
+    ],
+    "file": "assets/ui/avatars/community-man-1.png",
+    "width": 54,
+    "height": 54,
+    "bytes": 6907,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "e70060aace2102049cd51e8c9394f75c89e897b3d817b9b262d4d8e12793fa65"
+  },
+  {
+    "group": "avatars",
+    "name": "community-woman-2",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      858,
+      832,
+      54,
+      54
+    ],
+    "file": "assets/ui/avatars/community-woman-2.png",
+    "width": 54,
+    "height": 54,
+    "bytes": 7441,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "1c7a99f85d305041d1da461dc75cffcf016ebb2d7452e9536e5bdf5355b1f51c"
+  },
+  {
+    "group": "avatars",
+    "name": "chat-1",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      1043,
+      117,
+      31,
+      31
+    ],
+    "file": "assets/ui/avatars/chat-1.png",
+    "width": 31,
+    "height": 31,
+    "bytes": 2476,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "363f500b5f55d23088132306eddd7ccb9d3880a77224e660d7f1351585ecab73"
+  },
+  {
+    "group": "avatars",
+    "name": "chat-2",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      1043,
+      155,
+      31,
+      31
+    ],
+    "file": "assets/ui/avatars/chat-2.png",
+    "width": 31,
+    "height": 31,
+    "bytes": 2453,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "8526c5a4c5a0e8da2862592272ccad1e1a59d5e780e8a5d3206a5c0471bfa1c7"
+  },
+  {
+    "group": "avatars",
+    "name": "chat-3",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      1043,
+      193,
+      31,
+      31
+    ],
+    "file": "assets/ui/avatars/chat-3.png",
+    "width": 31,
+    "height": 31,
+    "bytes": 2540,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "b8c05650ff6d6c560c274fd252ecaa2bf36259dcde41cdb4ef6e893e325ae35d"
+  },
+  {
+    "group": "avatars",
+    "name": "chat-4",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      1043,
+      231,
+      31,
+      31
+    ],
+    "file": "assets/ui/avatars/chat-4.png",
+    "width": 31,
+    "height": 31,
+    "bytes": 2562,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "66561d504e6287517bed4505ef0359ca45d5780cd75e3e9380a7491591575395"
+  },
+  {
+    "group": "avatars",
+    "name": "chat-5",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      1043,
+      269,
+      31,
+      31
+    ],
+    "file": "assets/ui/avatars/chat-5.png",
+    "width": 31,
+    "height": 31,
+    "bytes": 2553,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "725919191760460d2639495fb1d8784fed51adb780ff77323eea94ddb95d9502"
+  },
+  {
+    "group": "avatars",
+    "name": "chat-6",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      1043,
+      307,
+      31,
+      31
+    ],
+    "file": "assets/ui/avatars/chat-6.png",
+    "width": 31,
+    "height": 31,
+    "bytes": 2702,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "ddab733edb0293326aeac17931ceec1b7811348e8cd3d642c2273a2f03fec869"
+  },
+  {
+    "group": "avatars",
+    "name": "chat-7",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      1043,
+      345,
+      31,
+      31
+    ],
+    "file": "assets/ui/avatars/chat-7.png",
+    "width": 31,
+    "height": 31,
+    "bytes": 2724,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "445cfbfafa1457cd98108ec4a98e589141e9a504b37b0c1b2bb5f56664814682"
+  },
+  {
+    "group": "avatars",
+    "name": "chat-8",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      1043,
+      383,
+      31,
+      31
+    ],
+    "file": "assets/ui/avatars/chat-8.png",
+    "width": 31,
+    "height": 31,
+    "bytes": 2626,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "f46d7e1a0fb3f43f1ed7771e4aa7a37517eef48096858c40b62770e4f2be1e6b"
+  },
+  {
+    "group": "avatars",
+    "name": "chat-9",
+    "source": "frontend-gold-b/08-live.png",
+    "rect": [
+      1043,
+      421,
+      31,
+      31
+    ],
+    "file": "assets/ui/avatars/chat-9.png",
+    "width": 31,
+    "height": 31,
+    "bytes": 2596,
+    "sourceSha256": "9be155a5b3bbf010adadb56469e55ba39e2a95094e71202514f8bae335888e02",
+    "sha256": "af2acf507c77fceb79be5fe8f9688230c40ab31eb49842cd8ff8fdb2ac9b1770"
+  },
+  {
+    "group": "avatars",
+    "name": "member-1",
+    "source": "frontend-gold-b/10-community.png",
+    "rect": [
+      1364,
+      535,
+      34,
+      33
+    ],
+    "file": "assets/ui/avatars/member-1.png",
+    "width": 34,
+    "height": 33,
+    "bytes": 2965,
+    "sourceSha256": "534719176880e78d797d672f0ea09f8ebad2e9a8bff35c4ec90cf6dd8e073661",
+    "sha256": "9e72a6e9845f90a0697df98a039e12dd4d46bc7e36364609940ee7be00aaf877"
+  },
+  {
+    "group": "avatars",
+    "name": "member-2",
+    "source": "frontend-gold-b/10-community.png",
+    "rect": [
+      1364,
+      567,
+      34,
+      33
+    ],
+    "file": "assets/ui/avatars/member-2.png",
+    "width": 34,
+    "height": 33,
+    "bytes": 2844,
+    "sourceSha256": "534719176880e78d797d672f0ea09f8ebad2e9a8bff35c4ec90cf6dd8e073661",
+    "sha256": "7cf36a2a4da1bb1ceea009265566afa2c106b423b2fc0fd768d43f126e09829b"
+  },
+  {
+    "group": "avatars",
+    "name": "member-3",
+    "source": "frontend-gold-b/10-community.png",
+    "rect": [
+      1364,
+      599,
+      34,
+      33
+    ],
+    "file": "assets/ui/avatars/member-3.png",
+    "width": 34,
+    "height": 33,
+    "bytes": 2942,
+    "sourceSha256": "534719176880e78d797d672f0ea09f8ebad2e9a8bff35c4ec90cf6dd8e073661",
+    "sha256": "a7e781e3954494467c4c8d95623d089d254d4b969d887c8cc6df2de6266743f6"
+  },
+  {
+    "group": "avatars",
+    "name": "member-4",
+    "source": "frontend-gold-b/10-community.png",
+    "rect": [
+      1364,
+      631,
+      34,
+      33
+    ],
+    "file": "assets/ui/avatars/member-4.png",
+    "width": 34,
+    "height": 33,
+    "bytes": 2914,
+    "sourceSha256": "534719176880e78d797d672f0ea09f8ebad2e9a8bff35c4ec90cf6dd8e073661",
+    "sha256": "e0cf2045d43096b7e59ebd251bfc01feb51fc62fef904945988ea2067c8e95f7"
+  },
+  {
+    "group": "avatars",
+    "name": "member-5",
+    "source": "frontend-gold-b/10-community.png",
+    "rect": [
+      1364,
+      663,
+      34,
+      33
+    ],
+    "file": "assets/ui/avatars/member-5.png",
+    "width": 34,
+    "height": 33,
+    "bytes": 2943,
+    "sourceSha256": "534719176880e78d797d672f0ea09f8ebad2e9a8bff35c4ec90cf6dd8e073661",
+    "sha256": "bccfd519bde89f4fd3c66735c3f713a5f6a3f5175d54159b0ee67e5296c6c7a4"
+  },
+  {
+    "group": "avatars",
+    "name": "discussion-1",
+    "source": "frontend-gold-b/10-community.png",
+    "rect": [
+      439,
+      538,
+      44,
+      44
+    ],
+    "file": "assets/ui/avatars/discussion-1.png",
+    "width": 44,
+    "height": 44,
+    "bytes": 4903,
+    "sourceSha256": "534719176880e78d797d672f0ea09f8ebad2e9a8bff35c4ec90cf6dd8e073661",
+    "sha256": "de90265af23ff1e53706cf2cf7099c9f9c52bdc2b7566028ea96e1f0575bb8c8"
+  },
+  {
+    "group": "avatars",
+    "name": "discussion-2",
+    "source": "frontend-gold-b/10-community.png",
+    "rect": [
+      439,
+      599,
+      44,
+      44
+    ],
+    "file": "assets/ui/avatars/discussion-2.png",
+    "width": 44,
+    "height": 44,
+    "bytes": 4797,
+    "sourceSha256": "534719176880e78d797d672f0ea09f8ebad2e9a8bff35c4ec90cf6dd8e073661",
+    "sha256": "0f14981df97a13ea2e3ea467d66e82a7843482b0471171f7c3308f8034748a5d"
+  },
+  {
+    "group": "avatars",
+    "name": "discussion-3",
+    "source": "frontend-gold-b/10-community.png",
+    "rect": [
+      439,
+      660,
+      44,
+      44
+    ],
+    "file": "assets/ui/avatars/discussion-3.png",
+    "width": 44,
+    "height": 44,
+    "bytes": 4834,
+    "sourceSha256": "534719176880e78d797d672f0ea09f8ebad2e9a8bff35c4ec90cf6dd8e073661",
+    "sha256": "06db868c6b1ccb8bb7b79525ab82cb6846a882def1d36ece79602d0ce00f4247"
+  },
+  {
+    "group": "avatars",
+    "name": "discussion-4",
+    "source": "frontend-gold-b/10-community.png",
+    "rect": [
+      439,
+      721,
+      44,
+      44
+    ],
+    "file": "assets/ui/avatars/discussion-4.png",
+    "width": 44,
+    "height": 44,
+    "bytes": 4806,
+    "sourceSha256": "534719176880e78d797d672f0ea09f8ebad2e9a8bff35c4ec90cf6dd8e073661",
+    "sha256": "38673daa6182b58e9d76313f86163bec5b1ec97efaf0e8cfe4592a065b48f5b3"
+  },
+  {
+    "group": "avatars",
+    "name": "discussion-5",
+    "source": "frontend-gold-b/10-community.png",
+    "rect": [
+      439,
+      782,
+      44,
+      44
+    ],
+    "file": "assets/ui/avatars/discussion-5.png",
+    "width": 44,
+    "height": 44,
+    "bytes": 4494,
+    "sourceSha256": "534719176880e78d797d672f0ea09f8ebad2e9a8bff35c4ec90cf6dd8e073661",
+    "sha256": "b6af9027654cce8e652d04b315bbdd9064f5932414d1896d2711fded80ba9b9f"
+  }
+]

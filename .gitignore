@@ -2,6 +2,7 @@
 /intake/var/
 /.local/
 /node_modules/
+/UI/tools/node_modules/
 /.sites-runtime/
 /.env
 *.log

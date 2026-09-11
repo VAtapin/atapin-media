@@ -1,0 +1,2895 @@
+{
+  "schema": "approved-ui-assets/v1",
+  "method": "pixel-exact rectangular extraction",
+  "assets": [
+    {
+      "group": "icons",
+      "name": "video",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        61,
+        410,
+        56,
+        59
+      ],
+      "file": "assets/ui/icons/video.png"
+    },
+    {
+      "group": "icons",
+      "name": "article",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        333,
+        410,
+        59,
+        60
+      ],
+      "file": "assets/ui/icons/article.png"
+    },
+    {
+      "group": "icons",
+      "name": "book",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        590,
+        410,
+        59,
+        60
+      ],
+      "file": "assets/ui/icons/book.png"
+    },
+    {
+      "group": "icons",
+      "name": "live",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        857,
+        410,
+        61,
+        60
+      ],
+      "file": "assets/ui/icons/live.png"
+    },
+    {
+      "group": "icons",
+      "name": "podcast",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        1117,
+        410,
+        61,
+        60
+      ],
+      "file": "assets/ui/icons/podcast.png"
+    },
+    {
+      "group": "icons",
+      "name": "community",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        1372,
+        410,
+        64,
+        60
+      ],
+      "file": "assets/ui/icons/community.png"
+    },
+    {
+      "group": "icons",
+      "name": "newsletter",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        106,
+        813,
+        39,
+        42
+      ],
+      "file": "assets/ui/icons/newsletter.png"
+    },
+    {
+      "group": "icons",
+      "name": "youtube",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        1130,
+        897,
+        24,
+        21
+      ],
+      "file": "assets/ui/icons/youtube.png"
+    },
+    {
+      "group": "icons",
+      "name": "instagram",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        1167,
+        894,
+        24,
+        26
+      ],
+      "file": "assets/ui/icons/instagram.png"
+    },
+    {
+      "group": "icons",
+      "name": "spotify",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        1205,
+        894,
+        24,
+        26
+      ],
+      "file": "assets/ui/icons/spotify.png"
+    },
+    {
+      "group": "icons",
+      "name": "facebook",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        1243,
+        893,
+        26,
+        28
+      ],
+      "file": "assets/ui/icons/facebook.png"
+    },
+    {
+      "group": "icons",
+      "name": "cross",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        1565,
+        889,
+        26,
+        35
+      ],
+      "file": "assets/ui/icons/cross.png"
+    },
+    {
+      "group": "icons",
+      "name": "search",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        1061,
+        21,
+        24,
+        24
+      ],
+      "file": "assets/ui/icons/search.png"
+    },
+    {
+      "group": "icons",
+      "name": "headphones",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        54,
+        398,
+        57,
+        55
+      ],
+      "file": "assets/ui/icons/headphones.png"
+    },
+    {
+      "group": "icons",
+      "name": "series",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        311,
+        398,
+        57,
+        55
+      ],
+      "file": "assets/ui/icons/series.png"
+    },
+    {
+      "group": "icons",
+      "name": "tag",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        564,
+        398,
+        57,
+        55
+      ],
+      "file": "assets/ui/icons/tag.png"
+    },
+    {
+      "group": "icons",
+      "name": "hosts",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        822,
+        398,
+        57,
+        55
+      ],
+      "file": "assets/ui/icons/hosts.png"
+    },
+    {
+      "group": "icons",
+      "name": "heart-gold",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        1095,
+        398,
+        56,
+        55
+      ],
+      "file": "assets/ui/icons/heart-gold.png"
+    },
+    {
+      "group": "icons",
+      "name": "bible-gold",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        972,
+        523,
+        32,
+        28
+      ],
+      "file": "assets/ui/icons/bible-gold.png"
+    },
+    {
+      "group": "icons",
+      "name": "heart-small",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        1107,
+        523,
+        33,
+        28
+      ],
+      "file": "assets/ui/icons/heart-small.png"
+    },
+    {
+      "group": "icons",
+      "name": "people-gold",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        1240,
+        522,
+        35,
+        29
+      ],
+      "file": "assets/ui/icons/people-gold.png"
+    },
+    {
+      "group": "icons",
+      "name": "leaf",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        970,
+        612,
+        37,
+        29
+      ],
+      "file": "assets/ui/icons/leaf.png"
+    },
+    {
+      "group": "icons",
+      "name": "mountains",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        1105,
+        612,
+        35,
+        30
+      ],
+      "file": "assets/ui/icons/mountains.png"
+    },
+    {
+      "group": "icons",
+      "name": "sun",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        1240,
+        608,
+        34,
+        35
+      ],
+      "file": "assets/ui/icons/sun.png"
+    },
+    {
+      "group": "icons",
+      "name": "compass",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        972,
+        719,
+        31,
+        29
+      ],
+      "file": "assets/ui/icons/compass.png"
+    },
+    {
+      "group": "icons",
+      "name": "prayer",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        1109,
+        716,
+        29,
+        34
+      ],
+      "file": "assets/ui/icons/prayer.png"
+    },
+    {
+      "group": "icons",
+      "name": "church",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        1243,
+        712,
+        29,
+        37
+      ],
+      "file": "assets/ui/icons/church.png"
+    },
+    {
+      "group": "icons",
+      "name": "platform-headphones",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        394,
+        822,
+        27,
+        27
+      ],
+      "file": "assets/ui/icons/platform-headphones.png"
+    },
+    {
+      "group": "icons",
+      "name": "platform-podcast",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        500,
+        820,
+        30,
+        31
+      ],
+      "file": "assets/ui/icons/platform-podcast.png"
+    },
+    {
+      "group": "icons",
+      "name": "platform-audio",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        608,
+        822,
+        26,
+        29
+      ],
+      "file": "assets/ui/icons/platform-audio.png"
+    },
+    {
+      "group": "icons",
+      "name": "platform-bars",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        715,
+        822,
+        24,
+        28
+      ],
+      "file": "assets/ui/icons/platform-bars.png"
+    },
+    {
+      "group": "icons",
+      "name": "plus",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        847,
+        822,
+        24,
+        24
+      ],
+      "file": "assets/ui/icons/plus.png"
+    },
+    {
+      "group": "icons",
+      "name": "discussion",
+      "source": "frontend-gold-b/10-community.png",
+      "rect": [
+        52,
+        409,
+        61,
+        61
+      ],
+      "file": "assets/ui/icons/discussion.png"
+    },
+    {
+      "group": "icons",
+      "name": "question",
+      "source": "frontend-gold-b/10-community.png",
+      "rect": [
+        375,
+        409,
+        61,
+        61
+      ],
+      "file": "assets/ui/icons/question.png"
+    },
+    {
+      "group": "icons",
+      "name": "poll",
+      "source": "frontend-gold-b/10-community.png",
+      "rect": [
+        680,
+        409,
+        63,
+        61
+      ],
+      "file": "assets/ui/icons/poll.png"
+    },
+    {
+      "group": "icons",
+      "name": "friendly-community",
+      "source": "frontend-gold-b/10-community.png",
+      "rect": [
+        991,
+        408,
+        65,
+        63
+      ],
+      "file": "assets/ui/icons/friendly-community.png"
+    },
+    {
+      "group": "icons",
+      "name": "join-heart",
+      "source": "frontend-gold-b/10-community.png",
+      "rect": [
+        1337,
+        407,
+        61,
+        64
+      ],
+      "file": "assets/ui/icons/join-heart.png"
+    },
+    {
+      "group": "sidebar-icons",
+      "name": "desktop",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        43,
+        450,
+        17,
+        16
+      ],
+      "file": "assets/ui/sidebar-icons/desktop.png"
+    },
+    {
+      "group": "sidebar-icons",
+      "name": "projects",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        43,
+        470,
+        17,
+        16
+      ],
+      "file": "assets/ui/sidebar-icons/projects.png"
+    },
+    {
+      "group": "sidebar-icons",
+      "name": "tasks",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        43,
+        486,
+        17,
+        16
+      ],
+      "file": "assets/ui/sidebar-icons/tasks.png"
+    },
+    {
+      "group": "sidebar-icons",
+      "name": "calendar",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        43,
+        502,
+        17,
+        16
+      ],
+      "file": "assets/ui/sidebar-icons/calendar.png"
+    },
+    {
+      "group": "sidebar-icons",
+      "name": "articles",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        43,
+        537,
+        17,
+        16
+      ],
+      "file": "assets/ui/sidebar-icons/articles.png"
+    },
+    {
+      "group": "sidebar-icons",
+      "name": "videos",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        43,
+        555,
+        17,
+        16
+      ],
+      "file": "assets/ui/sidebar-icons/videos.png"
+    },
+    {
+      "group": "sidebar-icons",
+      "name": "books",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        43,
+        570,
+        17,
+        16
+      ],
+      "file": "assets/ui/sidebar-icons/books.png"
+    },
+    {
+      "group": "sidebar-icons",
+      "name": "media",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        43,
+        588,
+        17,
+        16
+      ],
+      "file": "assets/ui/sidebar-icons/media.png"
+    },
+    {
+      "group": "sidebar-icons",
+      "name": "community",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        43,
+        624,
+        17,
+        16
+      ],
+      "file": "assets/ui/sidebar-icons/community.png"
+    },
+    {
+      "group": "sidebar-icons",
+      "name": "subscribers",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        43,
+        641,
+        17,
+        16
+      ],
+      "file": "assets/ui/sidebar-icons/subscribers.png"
+    },
+    {
+      "group": "sidebar-icons",
+      "name": "live-studio",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        43,
+        680,
+        17,
+        16
+      ],
+      "file": "assets/ui/sidebar-icons/live-studio.png"
+    },
+    {
+      "group": "sidebar-icons",
+      "name": "publishing",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        43,
+        698,
+        17,
+        16
+      ],
+      "file": "assets/ui/sidebar-icons/publishing.png"
+    },
+    {
+      "group": "sidebar-icons",
+      "name": "ai",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        43,
+        716,
+        17,
+        16
+      ],
+      "file": "assets/ui/sidebar-icons/ai.png"
+    },
+    {
+      "group": "sidebar-icons",
+      "name": "analytics",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        43,
+        734,
+        17,
+        16
+      ],
+      "file": "assets/ui/sidebar-icons/analytics.png"
+    },
+    {
+      "group": "sidebar-icons",
+      "name": "imports",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        43,
+        770,
+        17,
+        16
+      ],
+      "file": "assets/ui/sidebar-icons/imports.png"
+    },
+    {
+      "group": "sidebar-icons",
+      "name": "files",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        43,
+        787,
+        17,
+        16
+      ],
+      "file": "assets/ui/sidebar-icons/files.png"
+    },
+    {
+      "group": "sidebar-icons",
+      "name": "integrations",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        43,
+        804,
+        17,
+        16
+      ],
+      "file": "assets/ui/sidebar-icons/integrations.png"
+    },
+    {
+      "group": "sidebar-icons",
+      "name": "settings",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        43,
+        822,
+        17,
+        16
+      ],
+      "file": "assets/ui/sidebar-icons/settings.png"
+    },
+    {
+      "group": "icons",
+      "name": "home-outline",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        1319,
+        885,
+        24,
+        27
+      ],
+      "file": "assets/ui/icons/home-outline.png"
+    },
+    {
+      "group": "icons",
+      "name": "play-outline",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        1353,
+        885,
+        23,
+        27
+      ],
+      "file": "assets/ui/icons/play-outline.png"
+    },
+    {
+      "group": "icons",
+      "name": "book-outline",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        1384,
+        885,
+        27,
+        27
+      ],
+      "file": "assets/ui/icons/book-outline.png"
+    },
+    {
+      "group": "icons",
+      "name": "heart-outline",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        1418,
+        883,
+        29,
+        30
+      ],
+      "file": "assets/ui/icons/heart-outline.png"
+    },
+    {
+      "group": "icons",
+      "name": "community-outline",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        1457,
+        883,
+        29,
+        30
+      ],
+      "file": "assets/ui/icons/community-outline.png"
+    },
+    {
+      "group": "icons",
+      "name": "bookmark-outline",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        731,
+        435,
+        25,
+        27
+      ],
+      "file": "assets/ui/icons/bookmark-outline.png"
+    },
+    {
+      "group": "icons",
+      "name": "more-outline",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        769,
+        435,
+        25,
+        27
+      ],
+      "file": "assets/ui/icons/more-outline.png"
+    },
+    {
+      "group": "icons",
+      "name": "heart-button-outline",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        691,
+        435,
+        25,
+        27
+      ],
+      "file": "assets/ui/icons/heart-button-outline.png"
+    },
+    {
+      "group": "icons",
+      "name": "notification",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        568,
+        401,
+        28,
+        24
+      ],
+      "file": "assets/ui/icons/notification.png"
+    },
+    {
+      "group": "icons",
+      "name": "mobile-menu",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        227,
+        406,
+        20,
+        18
+      ],
+      "file": "assets/ui/icons/mobile-menu.png"
+    },
+    {
+      "group": "buttons",
+      "name": "gold-discover",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        689,
+        333,
+        108,
+        28
+      ],
+      "file": "assets/ui/buttons/gold-discover.png",
+      "note": "Reference with baked-in label/icon. Keep live button labels in HTML."
+    },
+    {
+      "group": "buttons",
+      "name": "white-more",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        689,
+        366,
+        108,
+        27
+      ],
+      "file": "assets/ui/buttons/white-more.png",
+      "note": "Reference with baked-in label/icon. Keep live button labels in HTML."
+    },
+    {
+      "group": "buttons",
+      "name": "white-preview",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        689,
+        399,
+        108,
+        27
+      ],
+      "file": "assets/ui/buttons/white-preview.png",
+      "note": "Reference with baked-in label/icon. Keep live button labels in HTML."
+    },
+    {
+      "group": "buttons",
+      "name": "blue-new",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        812,
+        333,
+        111,
+        28
+      ],
+      "file": "assets/ui/buttons/blue-new.png",
+      "note": "Reference with baked-in label/icon. Keep live button labels in HTML."
+    },
+    {
+      "group": "buttons",
+      "name": "blue-download",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        812,
+        366,
+        111,
+        27
+      ],
+      "file": "assets/ui/buttons/blue-download.png",
+      "note": "Reference with baked-in label/icon. Keep live button labels in HTML."
+    },
+    {
+      "group": "buttons",
+      "name": "white-cancel",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        812,
+        399,
+        111,
+        27
+      ],
+      "file": "assets/ui/buttons/white-cancel.png",
+      "note": "Reference with baked-in label/icon. Keep live button labels in HTML."
+    },
+    {
+      "group": "buttons",
+      "name": "disabled",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        812,
+        433,
+        111,
+        29
+      ],
+      "file": "assets/ui/buttons/disabled.png",
+      "note": "Reference with baked-in label/icon. Keep live button labels in HTML."
+    },
+    {
+      "group": "buttons",
+      "name": "favorite",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        689,
+        433,
+        31,
+        30
+      ],
+      "file": "assets/ui/buttons/favorite.png",
+      "note": "Reference with baked-in label/icon. Keep live button labels in HTML."
+    },
+    {
+      "group": "buttons",
+      "name": "bookmark",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        727,
+        433,
+        31,
+        30
+      ],
+      "file": "assets/ui/buttons/bookmark.png",
+      "note": "Reference with baked-in label/icon. Keep live button labels in HTML."
+    },
+    {
+      "group": "buttons",
+      "name": "more",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        767,
+        433,
+        30,
+        30
+      ],
+      "file": "assets/ui/buttons/more.png",
+      "note": "Reference with baked-in label/icon. Keep live button labels in HTML."
+    },
+    {
+      "group": "buttons",
+      "name": "start-discover",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        221,
+        284,
+        207,
+        42
+      ],
+      "file": "assets/ui/buttons/start-discover.png",
+      "note": "Reference with baked-in label/icon."
+    },
+    {
+      "group": "buttons",
+      "name": "start-about",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        449,
+        284,
+        161,
+        42
+      ],
+      "file": "assets/ui/buttons/start-about.png",
+      "note": "Reference with baked-in label/icon."
+    },
+    {
+      "group": "buttons",
+      "name": "join",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        1426,
+        12,
+        152,
+        42
+      ],
+      "file": "assets/ui/buttons/join.png",
+      "note": "Reference with baked-in label/icon."
+    },
+    {
+      "group": "buttons",
+      "name": "book-view",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        1022,
+        740,
+        175,
+        39
+      ],
+      "file": "assets/ui/buttons/book-view.png",
+      "note": "Reference with baked-in label/icon."
+    },
+    {
+      "group": "buttons",
+      "name": "live-join",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        1245,
+        739,
+        370,
+        40
+      ],
+      "file": "assets/ui/buttons/live-join.png",
+      "note": "Reference with baked-in label/icon."
+    },
+    {
+      "group": "buttons",
+      "name": "newsletter-subscribe",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        1143,
+        815,
+        182,
+        42
+      ],
+      "file": "assets/ui/buttons/newsletter-subscribe.png",
+      "note": "Reference with baked-in label/icon."
+    },
+    {
+      "group": "buttons",
+      "name": "article-pdf",
+      "source": "frontend-gold-b/05-beitrag-detail.png",
+      "rect": [
+        166,
+        585,
+        278,
+        45
+      ],
+      "file": "assets/ui/buttons/article-pdf.png",
+      "note": "Reference with baked-in label/icon."
+    },
+    {
+      "group": "buttons",
+      "name": "article-listen",
+      "source": "frontend-gold-b/05-beitrag-detail.png",
+      "rect": [
+        453,
+        585,
+        159,
+        45
+      ],
+      "file": "assets/ui/buttons/article-listen.png",
+      "note": "Reference with baked-in label/icon."
+    },
+    {
+      "group": "buttons",
+      "name": "article-share",
+      "source": "frontend-gold-b/05-beitrag-detail.png",
+      "rect": [
+        622,
+        585,
+        140,
+        45
+      ],
+      "file": "assets/ui/buttons/article-share.png",
+      "note": "Reference with baked-in label/icon."
+    },
+    {
+      "group": "buttons",
+      "name": "article-save",
+      "source": "frontend-gold-b/05-beitrag-detail.png",
+      "rect": [
+        770,
+        585,
+        148,
+        45
+      ],
+      "file": "assets/ui/buttons/article-save.png",
+      "note": "Reference with baked-in label/icon."
+    },
+    {
+      "group": "buttons",
+      "name": "article-read-more",
+      "source": "frontend-gold-b/05-beitrag-detail.png",
+      "rect": [
+        489,
+        870,
+        154,
+        39
+      ],
+      "file": "assets/ui/buttons/article-read-more.png",
+      "note": "Reference with baked-in label/icon."
+    },
+    {
+      "group": "buttons",
+      "name": "buy-book",
+      "source": "frontend-gold-b/07-buch-detail.png",
+      "rect": [
+        1025,
+        192,
+        399,
+        53
+      ],
+      "file": "assets/ui/buttons/buy-book.png",
+      "note": "Reference with baked-in label/icon."
+    },
+    {
+      "group": "buttons",
+      "name": "buy-pdf",
+      "source": "frontend-gold-b/07-buch-detail.png",
+      "rect": [
+        1025,
+        251,
+        399,
+        44
+      ],
+      "file": "assets/ui/buttons/buy-pdf.png",
+      "note": "Reference with baked-in label/icon."
+    },
+    {
+      "group": "buttons",
+      "name": "buy-ebook",
+      "source": "frontend-gold-b/07-buch-detail.png",
+      "rect": [
+        1025,
+        300,
+        399,
+        43
+      ],
+      "file": "assets/ui/buttons/buy-ebook.png",
+      "note": "Reference with baked-in label/icon."
+    },
+    {
+      "group": "buttons",
+      "name": "read-sample",
+      "source": "frontend-gold-b/07-buch-detail.png",
+      "rect": [
+        1025,
+        348,
+        399,
+        45
+      ],
+      "file": "assets/ui/buttons/read-sample.png",
+      "note": "Reference with baked-in label/icon."
+    },
+    {
+      "group": "buttons",
+      "name": "live-reminder",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        799,
+        494,
+        209,
+        46
+      ],
+      "file": "assets/ui/buttons/live-reminder.png",
+      "note": "Reference with baked-in label/icon."
+    },
+    {
+      "group": "buttons",
+      "name": "chat-send",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        1470,
+        463,
+        43,
+        39
+      ],
+      "file": "assets/ui/buttons/chat-send.png",
+      "note": "Reference with baked-in label/icon."
+    },
+    {
+      "group": "buttons",
+      "name": "poll-vote",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        1027,
+        780,
+        187,
+        34
+      ],
+      "file": "assets/ui/buttons/poll-vote.png",
+      "note": "Reference with baked-in label/icon."
+    },
+    {
+      "group": "button-textures",
+      "name": "gold",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        233,
+        285,
+        2,
+        40
+      ],
+      "file": "assets/ui/button-textures/gold.png",
+      "note": "Text-free vertical strip for CSS background-size: 100% 100%."
+    },
+    {
+      "group": "button-textures",
+      "name": "white",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        462,
+        285,
+        2,
+        40
+      ],
+      "file": "assets/ui/button-textures/white.png",
+      "note": "Text-free vertical strip for CSS background-size: 100% 100%."
+    },
+    {
+      "group": "button-textures",
+      "name": "blue",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        823,
+        334,
+        2,
+        25
+      ],
+      "file": "assets/ui/button-textures/blue.png",
+      "note": "Text-free vertical strip for CSS background-size: 100% 100%."
+    },
+    {
+      "group": "button-textures",
+      "name": "disabled",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        823,
+        434,
+        2,
+        25
+      ],
+      "file": "assets/ui/button-textures/disabled.png",
+      "note": "Text-free vertical strip for CSS background-size: 100% 100%."
+    },
+    {
+      "group": "badges",
+      "name": "live",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        947,
+        318,
+        57,
+        27
+      ],
+      "file": "assets/ui/badges/live.png",
+      "note": "Reference badge with baked-in text."
+    },
+    {
+      "group": "badges",
+      "name": "new",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        1008,
+        318,
+        49,
+        27
+      ],
+      "file": "assets/ui/badges/new.png",
+      "note": "Reference badge with baked-in text."
+    },
+    {
+      "group": "badges",
+      "name": "draft",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        1063,
+        318,
+        64,
+        27
+      ],
+      "file": "assets/ui/badges/draft.png",
+      "note": "Reference badge with baked-in text."
+    },
+    {
+      "group": "badges",
+      "name": "working",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        947,
+        350,
+        96,
+        28
+      ],
+      "file": "assets/ui/badges/working.png",
+      "note": "Reference badge with baked-in text."
+    },
+    {
+      "group": "badges",
+      "name": "planned",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        1048,
+        350,
+        64,
+        28
+      ],
+      "file": "assets/ui/badges/planned.png",
+      "note": "Reference badge with baked-in text."
+    },
+    {
+      "group": "badges",
+      "name": "published",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        947,
+        383,
+        101,
+        28
+      ],
+      "file": "assets/ui/badges/published.png",
+      "note": "Reference badge with baked-in text."
+    },
+    {
+      "group": "badges",
+      "name": "error",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        1054,
+        383,
+        64,
+        28
+      ],
+      "file": "assets/ui/badges/error.png",
+      "note": "Reference badge with baked-in text."
+    },
+    {
+      "group": "badges",
+      "name": "warning",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        947,
+        416,
+        73,
+        27
+      ],
+      "file": "assets/ui/badges/warning.png",
+      "note": "Reference badge with baked-in text."
+    },
+    {
+      "group": "badges",
+      "name": "success",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        1024,
+        416,
+        101,
+        27
+      ],
+      "file": "assets/ui/badges/success.png",
+      "note": "Reference badge with baked-in text."
+    },
+    {
+      "group": "badges",
+      "name": "free",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        947,
+        449,
+        75,
+        28
+      ],
+      "file": "assets/ui/badges/free.png",
+      "note": "Reference badge with baked-in text."
+    },
+    {
+      "group": "badges",
+      "name": "paid",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        1028,
+        449,
+        71,
+        28
+      ],
+      "file": "assets/ui/badges/paid.png",
+      "note": "Reference badge with baked-in text."
+    },
+    {
+      "group": "controls",
+      "name": "checkbox-checked",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        877,
+        764,
+        15,
+        16
+      ],
+      "file": "assets/ui/controls/checkbox-checked.png",
+      "note": "Original control graphic; the app supplies interactive behavior."
+    },
+    {
+      "group": "controls",
+      "name": "radio-selected",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        876,
+        797,
+        17,
+        17
+      ],
+      "file": "assets/ui/controls/radio-selected.png",
+      "note": "Original control graphic; the app supplies interactive behavior."
+    },
+    {
+      "group": "controls",
+      "name": "radio-empty",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        926,
+        797,
+        17,
+        17
+      ],
+      "file": "assets/ui/controls/radio-empty.png",
+      "note": "Original control graphic; the app supplies interactive behavior."
+    },
+    {
+      "group": "controls",
+      "name": "toggle-on",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        875,
+        832,
+        33,
+        17
+      ],
+      "file": "assets/ui/controls/toggle-on.png",
+      "note": "Original control graphic; the app supplies interactive behavior."
+    },
+    {
+      "group": "controls",
+      "name": "pagination-previous",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        1013,
+        829,
+        21,
+        23
+      ],
+      "file": "assets/ui/controls/pagination-previous.png",
+      "note": "Original control graphic; the app supplies interactive behavior."
+    },
+    {
+      "group": "controls",
+      "name": "pagination-next",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        1152,
+        829,
+        21,
+        23
+      ],
+      "file": "assets/ui/controls/pagination-next.png",
+      "note": "Original control graphic; the app supplies interactive behavior."
+    },
+    {
+      "group": "controls",
+      "name": "player-play",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        1224,
+        828,
+        23,
+        23
+      ],
+      "file": "assets/ui/controls/player-play.png",
+      "note": "Original control graphic; the app supplies interactive behavior."
+    },
+    {
+      "group": "controls",
+      "name": "player-volume",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        1361,
+        828,
+        22,
+        23
+      ],
+      "file": "assets/ui/controls/player-volume.png",
+      "note": "Original control graphic; the app supplies interactive behavior."
+    },
+    {
+      "group": "controls",
+      "name": "player-settings",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        1390,
+        828,
+        22,
+        23
+      ],
+      "file": "assets/ui/controls/player-settings.png",
+      "note": "Original control graphic; the app supplies interactive behavior."
+    },
+    {
+      "group": "controls",
+      "name": "player-fullscreen",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        1415,
+        828,
+        24,
+        23
+      ],
+      "file": "assets/ui/controls/player-fullscreen.png",
+      "note": "Original control graphic; the app supplies interactive behavior."
+    },
+    {
+      "group": "photos",
+      "name": "start-video-mountains",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        62,
+        541,
+        141,
+        71
+      ],
+      "file": "assets/ui/photos/start-video-mountains.png",
+      "note": "Original thumbnail includes duration overlay."
+    },
+    {
+      "group": "photos",
+      "name": "start-video-worship",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        62,
+        625,
+        141,
+        71
+      ],
+      "file": "assets/ui/photos/start-video-worship.png",
+      "note": "Original thumbnail includes duration overlay."
+    },
+    {
+      "group": "photos",
+      "name": "start-video-bible",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        62,
+        709,
+        141,
+        70
+      ],
+      "file": "assets/ui/photos/start-video-bible.png",
+      "note": "Original thumbnail includes duration overlay."
+    },
+    {
+      "group": "photos",
+      "name": "start-article-reading",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        477,
+        541,
+        126,
+        72
+      ],
+      "file": "assets/ui/photos/start-article-reading.png"
+    },
+    {
+      "group": "photos",
+      "name": "start-article-bible",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        477,
+        625,
+        126,
+        71
+      ],
+      "file": "assets/ui/photos/start-article-bible.png"
+    },
+    {
+      "group": "photos",
+      "name": "start-article-flowers",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        477,
+        709,
+        126,
+        70
+      ],
+      "file": "assets/ui/photos/start-article-flowers.png"
+    },
+    {
+      "group": "photos",
+      "name": "start-live",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        1245,
+        541,
+        370,
+        111
+      ],
+      "file": "assets/ui/photos/start-live.png",
+      "note": "Original poster includes LIVE badge."
+    },
+    {
+      "group": "books",
+      "name": "hoffnung-start",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        859,
+        545,
+        145,
+        225
+      ],
+      "file": "assets/ui/books/hoffnung-start.png"
+    },
+    {
+      "group": "posters",
+      "name": "featured-start",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        821,
+        96,
+        634,
+        281
+      ],
+      "file": "assets/ui/posters/featured-start.png",
+      "note": "Original complete poster: title, author and playback icon are baked in."
+    },
+    {
+      "group": "photos",
+      "name": "video-plan",
+      "source": "frontend-gold-b/02-videos.png",
+      "rect": [
+        59,
+        445,
+        209,
+        86
+      ],
+      "file": "assets/ui/photos/video-plan.png",
+      "note": "Original thumbnail includes duration overlay."
+    },
+    {
+      "group": "photos",
+      "name": "video-life",
+      "source": "frontend-gold-b/02-videos.png",
+      "rect": [
+        281,
+        445,
+        209,
+        86
+      ],
+      "file": "assets/ui/photos/video-life.png",
+      "note": "Original thumbnail includes duration overlay."
+    },
+    {
+      "group": "photos",
+      "name": "video-prayer",
+      "source": "frontend-gold-b/02-videos.png",
+      "rect": [
+        503,
+        445,
+        209,
+        86
+      ],
+      "file": "assets/ui/photos/video-prayer.png",
+      "note": "Original thumbnail includes duration overlay."
+    },
+    {
+      "group": "photos",
+      "name": "video-cross",
+      "source": "frontend-gold-b/02-videos.png",
+      "rect": [
+        725,
+        445,
+        210,
+        86
+      ],
+      "file": "assets/ui/photos/video-cross.png",
+      "note": "Original thumbnail includes duration overlay."
+    },
+    {
+      "group": "photos",
+      "name": "video-sharing",
+      "source": "frontend-gold-b/02-videos.png",
+      "rect": [
+        59,
+        597,
+        209,
+        85
+      ],
+      "file": "assets/ui/photos/video-sharing.png",
+      "note": "Original thumbnail includes duration overlay."
+    },
+    {
+      "group": "photos",
+      "name": "video-rest",
+      "source": "frontend-gold-b/02-videos.png",
+      "rect": [
+        281,
+        597,
+        209,
+        85
+      ],
+      "file": "assets/ui/photos/video-rest.png",
+      "note": "Original thumbnail includes duration overlay."
+    },
+    {
+      "group": "photos",
+      "name": "video-seen",
+      "source": "frontend-gold-b/02-videos.png",
+      "rect": [
+        503,
+        597,
+        209,
+        85
+      ],
+      "file": "assets/ui/photos/video-seen.png",
+      "note": "Original thumbnail includes duration overlay."
+    },
+    {
+      "group": "photos",
+      "name": "video-hope",
+      "source": "frontend-gold-b/02-videos.png",
+      "rect": [
+        725,
+        597,
+        210,
+        85
+      ],
+      "file": "assets/ui/photos/video-hope.png",
+      "note": "Original thumbnail includes duration overlay."
+    },
+    {
+      "group": "posters",
+      "name": "featured-videos",
+      "source": "frontend-gold-b/02-videos.png",
+      "rect": [
+        835,
+        80,
+        617,
+        252
+      ],
+      "file": "assets/ui/posters/featured-videos.png",
+      "note": "Original poster includes labels and/or playback controls."
+    },
+    {
+      "group": "posters",
+      "name": "playlist-hope",
+      "source": "frontend-gold-b/02-videos.png",
+      "rect": [
+        63,
+        788,
+        229,
+        59
+      ],
+      "file": "assets/ui/posters/playlist-hope.png",
+      "note": "Original poster includes labels and/or playback controls."
+    },
+    {
+      "group": "posters",
+      "name": "playlist-bible",
+      "source": "frontend-gold-b/02-videos.png",
+      "rect": [
+        308,
+        788,
+        229,
+        59
+      ],
+      "file": "assets/ui/posters/playlist-bible.png",
+      "note": "Original poster includes labels and/or playback controls."
+    },
+    {
+      "group": "posters",
+      "name": "playlist-family",
+      "source": "frontend-gold-b/02-videos.png",
+      "rect": [
+        553,
+        788,
+        229,
+        59
+      ],
+      "file": "assets/ui/posters/playlist-family.png",
+      "note": "Original poster includes labels and/or playback controls."
+    },
+    {
+      "group": "posters",
+      "name": "playlist-everyday",
+      "source": "frontend-gold-b/02-videos.png",
+      "rect": [
+        797,
+        788,
+        229,
+        59
+      ],
+      "file": "assets/ui/posters/playlist-everyday.png",
+      "note": "Original poster includes labels and/or playback controls."
+    },
+    {
+      "group": "posters",
+      "name": "playlist-testimony",
+      "source": "frontend-gold-b/02-videos.png",
+      "rect": [
+        1041,
+        788,
+        209,
+        59
+      ],
+      "file": "assets/ui/posters/playlist-testimony.png",
+      "note": "Original poster includes labels and/or playback controls."
+    },
+    {
+      "group": "photos",
+      "name": "related-hope",
+      "source": "frontend-gold-b/03-video-detail.png",
+      "rect": [
+        1086,
+        130,
+        145,
+        66
+      ],
+      "file": "assets/ui/photos/related-hope.png",
+      "note": "Original thumbnail includes duration overlay."
+    },
+    {
+      "group": "photos",
+      "name": "related-trust",
+      "source": "frontend-gold-b/03-video-detail.png",
+      "rect": [
+        1086,
+        205,
+        145,
+        66
+      ],
+      "file": "assets/ui/photos/related-trust.png",
+      "note": "Original thumbnail includes duration overlay."
+    },
+    {
+      "group": "photos",
+      "name": "related-bible",
+      "source": "frontend-gold-b/03-video-detail.png",
+      "rect": [
+        1086,
+        280,
+        145,
+        66
+      ],
+      "file": "assets/ui/photos/related-bible.png",
+      "note": "Original thumbnail includes duration overlay."
+    },
+    {
+      "group": "photos",
+      "name": "related-flowers",
+      "source": "frontend-gold-b/03-video-detail.png",
+      "rect": [
+        1086,
+        349,
+        145,
+        59
+      ],
+      "file": "assets/ui/photos/related-flowers.png",
+      "note": "Original thumbnail includes duration overlay."
+    },
+    {
+      "group": "photos",
+      "name": "related-mountains",
+      "source": "frontend-gold-b/03-video-detail.png",
+      "rect": [
+        1086,
+        419,
+        145,
+        57
+      ],
+      "file": "assets/ui/photos/related-mountains.png",
+      "note": "Original thumbnail includes duration overlay."
+    },
+    {
+      "group": "posters",
+      "name": "video-detail",
+      "source": "frontend-gold-b/03-video-detail.png",
+      "rect": [
+        97,
+        110,
+        951,
+        356
+      ],
+      "file": "assets/ui/posters/video-detail.png",
+      "note": "Original poster includes title/controls."
+    },
+    {
+      "group": "posters",
+      "name": "video-detail-live",
+      "source": "frontend-gold-b/03-video-detail.png",
+      "rect": [
+        1076,
+        503,
+        499,
+        122
+      ],
+      "file": "assets/ui/posters/video-detail-live.png",
+      "note": "Original poster includes title/controls."
+    },
+    {
+      "group": "photos",
+      "name": "article-worship",
+      "source": "frontend-gold-b/04-beitraege.png",
+      "rect": [
+        61,
+        441,
+        124,
+        162
+      ],
+      "file": "assets/ui/photos/article-worship.png"
+    },
+    {
+      "group": "photos",
+      "name": "article-prayer",
+      "source": "frontend-gold-b/04-beitraege.png",
+      "rect": [
+        391,
+        441,
+        121,
+        162
+      ],
+      "file": "assets/ui/photos/article-prayer.png"
+    },
+    {
+      "group": "photos",
+      "name": "article-family",
+      "source": "frontend-gold-b/04-beitraege.png",
+      "rect": [
+        711,
+        441,
+        117,
+        162
+      ],
+      "file": "assets/ui/photos/article-family.png"
+    },
+    {
+      "group": "photos",
+      "name": "article-lake",
+      "source": "frontend-gold-b/04-beitraege.png",
+      "rect": [
+        61,
+        631,
+        124,
+        171
+      ],
+      "file": "assets/ui/photos/article-lake.png"
+    },
+    {
+      "group": "photos",
+      "name": "article-flower",
+      "source": "frontend-gold-b/04-beitraege.png",
+      "rect": [
+        391,
+        631,
+        121,
+        171
+      ],
+      "file": "assets/ui/photos/article-flower.png"
+    },
+    {
+      "group": "photos",
+      "name": "article-woman",
+      "source": "frontend-gold-b/04-beitraege.png",
+      "rect": [
+        711,
+        631,
+        117,
+        171
+      ],
+      "file": "assets/ui/photos/article-woman.png"
+    },
+    {
+      "group": "photos",
+      "name": "popular-mountains",
+      "source": "frontend-gold-b/04-beitraege.png",
+      "rect": [
+        1067,
+        440,
+        88,
+        55
+      ],
+      "file": "assets/ui/photos/popular-mountains.png"
+    },
+    {
+      "group": "photos",
+      "name": "popular-reading",
+      "source": "frontend-gold-b/04-beitraege.png",
+      "rect": [
+        1067,
+        509,
+        88,
+        58
+      ],
+      "file": "assets/ui/photos/popular-reading.png"
+    },
+    {
+      "group": "photos",
+      "name": "popular-worship",
+      "source": "frontend-gold-b/04-beitraege.png",
+      "rect": [
+        1067,
+        583,
+        88,
+        61
+      ],
+      "file": "assets/ui/photos/popular-worship.png"
+    },
+    {
+      "group": "photos",
+      "name": "popular-bible",
+      "source": "frontend-gold-b/04-beitraege.png",
+      "rect": [
+        1067,
+        662,
+        88,
+        64
+      ],
+      "file": "assets/ui/photos/popular-bible.png"
+    },
+    {
+      "group": "photos",
+      "name": "popular-forest",
+      "source": "frontend-gold-b/04-beitraege.png",
+      "rect": [
+        1067,
+        739,
+        88,
+        68
+      ],
+      "file": "assets/ui/photos/popular-forest.png"
+    },
+    {
+      "group": "posters",
+      "name": "featured-articles",
+      "source": "frontend-gold-b/04-beitraege.png",
+      "rect": [
+        810,
+        89,
+        639,
+        228
+      ],
+      "file": "assets/ui/posters/featured-articles.png",
+      "note": "Original poster includes title, author and button."
+    },
+    {
+      "group": "photos",
+      "name": "related-article-trust",
+      "source": "frontend-gold-b/05-beitrag-detail.png",
+      "rect": [
+        1079,
+        311,
+        120,
+        56
+      ],
+      "file": "assets/ui/photos/related-article-trust.png"
+    },
+    {
+      "group": "photos",
+      "name": "related-article-bible",
+      "source": "frontend-gold-b/05-beitrag-detail.png",
+      "rect": [
+        1079,
+        376,
+        120,
+        54
+      ],
+      "file": "assets/ui/photos/related-article-bible.png"
+    },
+    {
+      "group": "photos",
+      "name": "related-article-courage",
+      "source": "frontend-gold-b/05-beitrag-detail.png",
+      "rect": [
+        1079,
+        440,
+        120,
+        58
+      ],
+      "file": "assets/ui/photos/related-article-courage.png"
+    },
+    {
+      "group": "posters",
+      "name": "article-cover",
+      "source": "frontend-gold-b/05-beitrag-detail.png",
+      "rect": [
+        166,
+        106,
+        877,
+        243
+      ],
+      "file": "assets/ui/posters/article-cover.png",
+      "note": "Original cover includes lettering / video overlay."
+    },
+    {
+      "group": "posters",
+      "name": "article-related-video",
+      "source": "frontend-gold-b/05-beitrag-detail.png",
+      "rect": [
+        1079,
+        783,
+        176,
+        98
+      ],
+      "file": "assets/ui/posters/article-related-video.png",
+      "note": "Original cover includes lettering / video overlay."
+    },
+    {
+      "group": "books",
+      "name": "hoffnung-article",
+      "source": "frontend-gold-b/05-beitrag-detail.png",
+      "rect": [
+        1081,
+        557,
+        133,
+        165
+      ],
+      "file": "assets/ui/books/hoffnung-article.png"
+    },
+    {
+      "group": "posters",
+      "name": "books-still-life",
+      "source": "frontend-gold-b/06-buecher.png",
+      "rect": [
+        1085,
+        146,
+        551,
+        187
+      ],
+      "file": "assets/ui/posters/books-still-life.png",
+      "note": "Original book spines and mug include printed lettering."
+    },
+    {
+      "group": "books",
+      "name": "hoffnung-library",
+      "source": "frontend-gold-b/06-buecher.png",
+      "rect": [
+        59,
+        500,
+        94,
+        161
+      ],
+      "file": "assets/ui/books/hoffnung-library.png",
+      "note": "Original cover; any edition/category badges are baked in."
+    },
+    {
+      "group": "books",
+      "name": "glauben-im-alltag",
+      "source": "frontend-gold-b/06-buecher.png",
+      "rect": [
+        310,
+        500,
+        94,
+        161
+      ],
+      "file": "assets/ui/books/glauben-im-alltag.png",
+      "note": "Original cover; any edition/category badges are baked in."
+    },
+    {
+      "group": "books",
+      "name": "bibel-neu-entdecken",
+      "source": "frontend-gold-b/06-buecher.png",
+      "rect": [
+        544,
+        500,
+        100,
+        162
+      ],
+      "file": "assets/ui/books/bibel-neu-entdecken.png",
+      "note": "Original cover; any edition/category badges are baked in."
+    },
+    {
+      "group": "books",
+      "name": "staerker-in-stuermen",
+      "source": "frontend-gold-b/06-buecher.png",
+      "rect": [
+        822,
+        509,
+        93,
+        154
+      ],
+      "file": "assets/ui/books/staerker-in-stuermen.png",
+      "note": "Original cover; any edition/category badges are baked in."
+    },
+    {
+      "group": "books",
+      "name": "sein-plan",
+      "source": "frontend-gold-b/06-buecher.png",
+      "rect": [
+        1031,
+        509,
+        89,
+        155
+      ],
+      "file": "assets/ui/books/sein-plan.png",
+      "note": "Original cover; any edition/category badges are baked in."
+    },
+    {
+      "group": "books",
+      "name": "popular-hoffnung",
+      "source": "frontend-gold-b/06-buecher.png",
+      "rect": [
+        99,
+        727,
+        65,
+        91
+      ],
+      "file": "assets/ui/books/popular-hoffnung.png",
+      "note": "Original cover; any edition/category badges are baked in."
+    },
+    {
+      "group": "books",
+      "name": "gott-sieht-dich",
+      "source": "frontend-gold-b/06-buecher.png",
+      "rect": [
+        327,
+        727,
+        62,
+        91
+      ],
+      "file": "assets/ui/books/gott-sieht-dich.png",
+      "note": "Original cover; any edition/category badges are baked in."
+    },
+    {
+      "group": "books",
+      "name": "leben-mit-perspektive",
+      "source": "frontend-gold-b/06-buecher.png",
+      "rect": [
+        563,
+        727,
+        63,
+        91
+      ],
+      "file": "assets/ui/books/leben-mit-perspektive.png",
+      "note": "Original cover; any edition/category badges are baked in."
+    },
+    {
+      "group": "books",
+      "name": "kraft-des-gebets",
+      "source": "frontend-gold-b/06-buecher.png",
+      "rect": [
+        804,
+        727,
+        61,
+        85
+      ],
+      "file": "assets/ui/books/kraft-des-gebets.png",
+      "note": "Original cover; any edition/category badges are baked in."
+    },
+    {
+      "group": "books",
+      "name": "hoffnung-detail",
+      "source": "frontend-gold-b/07-buch-detail.png",
+      "rect": [
+        204,
+        110,
+        311,
+        391
+      ],
+      "file": "assets/ui/books/hoffnung-detail.png",
+      "note": "Original displayed cover crop; the main cover includes its PDF badge."
+    },
+    {
+      "group": "books",
+      "name": "related-hoffnung",
+      "source": "frontend-gold-b/07-buch-detail.png",
+      "rect": [
+        1028,
+        774,
+        105,
+        80
+      ],
+      "file": "assets/ui/books/related-hoffnung.png",
+      "note": "Original displayed cover crop; the main cover includes its PDF badge."
+    },
+    {
+      "group": "books",
+      "name": "related-gott-sieht-dich",
+      "source": "frontend-gold-b/07-buch-detail.png",
+      "rect": [
+        1160,
+        774,
+        107,
+        80
+      ],
+      "file": "assets/ui/books/related-gott-sieht-dich.png",
+      "note": "Original displayed cover crop; the main cover includes its PDF badge."
+    },
+    {
+      "group": "books",
+      "name": "related-gebet",
+      "source": "frontend-gold-b/07-buch-detail.png",
+      "rect": [
+        1297,
+        774,
+        109,
+        80
+      ],
+      "file": "assets/ui/books/related-gebet.png",
+      "note": "Original displayed cover crop; the main cover includes its PDF badge."
+    },
+    {
+      "group": "books",
+      "name": "related-licht",
+      "source": "frontend-gold-b/07-buch-detail.png",
+      "rect": [
+        1438,
+        774,
+        109,
+        80
+      ],
+      "file": "assets/ui/books/related-licht.png",
+      "note": "Original displayed cover crop; the main cover includes its PDF badge."
+    },
+    {
+      "group": "photos",
+      "name": "book-related-article",
+      "source": "frontend-gold-b/07-buch-detail.png",
+      "rect": [
+        1025,
+        660,
+        176,
+        65
+      ],
+      "file": "assets/ui/photos/book-related-article.png"
+    },
+    {
+      "group": "posters",
+      "name": "book-related-video",
+      "source": "frontend-gold-b/07-buch-detail.png",
+      "rect": [
+        1025,
+        540,
+        184,
+        71
+      ],
+      "file": "assets/ui/posters/book-related-video.png",
+      "note": "Original thumbnail includes playback icon."
+    },
+    {
+      "group": "photos",
+      "name": "live-next-lake",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        59,
+        594,
+        107,
+        66
+      ],
+      "file": "assets/ui/photos/live-next-lake.png"
+    },
+    {
+      "group": "photos",
+      "name": "live-next-cross",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        59,
+        666,
+        107,
+        66
+      ],
+      "file": "assets/ui/photos/live-next-cross.png"
+    },
+    {
+      "group": "photos",
+      "name": "live-next-prayer",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        59,
+        738,
+        107,
+        66
+      ],
+      "file": "assets/ui/photos/live-next-prayer.png"
+    },
+    {
+      "group": "photos",
+      "name": "live-recording-hope",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        1255,
+        594,
+        159,
+        46
+      ],
+      "file": "assets/ui/photos/live-recording-hope.png",
+      "note": "Original thumbnail includes duration overlay."
+    },
+    {
+      "group": "photos",
+      "name": "live-recording-worship",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        1255,
+        646,
+        159,
+        47
+      ],
+      "file": "assets/ui/photos/live-recording-worship.png",
+      "note": "Original thumbnail includes duration overlay."
+    },
+    {
+      "group": "photos",
+      "name": "live-recording-rest",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        1255,
+        698,
+        159,
+        47
+      ],
+      "file": "assets/ui/photos/live-recording-rest.png",
+      "note": "Original thumbnail includes duration overlay."
+    },
+    {
+      "group": "photos",
+      "name": "live-recording-morning",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        1255,
+        751,
+        159,
+        44
+      ],
+      "file": "assets/ui/photos/live-recording-morning.png",
+      "note": "Original thumbnail includes duration overlay."
+    },
+    {
+      "group": "posters",
+      "name": "live-player",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        143,
+        73,
+        872,
+        410
+      ],
+      "file": "assets/ui/posters/live-player.png",
+      "note": "Original poster includes title, live badge and player controls."
+    },
+    {
+      "group": "posters",
+      "name": "podcast-featured",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        821,
+        91,
+        635,
+        280
+      ],
+      "file": "assets/ui/posters/podcast-featured.png",
+      "note": "Original cover includes lettering and/or playback overlays."
+    },
+    {
+      "group": "posters",
+      "name": "podcast-episode-trust",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        55,
+        517,
+        139,
+        57
+      ],
+      "file": "assets/ui/posters/podcast-episode-trust.png",
+      "note": "Original cover includes lettering and/or playback overlays."
+    },
+    {
+      "group": "posters",
+      "name": "podcast-episode-thanks",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        55,
+        587,
+        139,
+        57
+      ],
+      "file": "assets/ui/posters/podcast-episode-thanks.png",
+      "note": "Original cover includes lettering and/or playback overlays."
+    },
+    {
+      "group": "posters",
+      "name": "podcast-episode-steps",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        55,
+        658,
+        139,
+        57
+      ],
+      "file": "assets/ui/posters/podcast-episode-steps.png",
+      "note": "Original cover includes lettering and/or playback overlays."
+    },
+    {
+      "group": "posters",
+      "name": "podcast-episode-bible",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        55,
+        728,
+        139,
+        57
+      ],
+      "file": "assets/ui/posters/podcast-episode-bible.png",
+      "note": "Original cover includes lettering and/or playback overlays."
+    },
+    {
+      "group": "posters",
+      "name": "podcast-series-hope",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        523,
+        517,
+        151,
+        83
+      ],
+      "file": "assets/ui/posters/podcast-series-hope.png",
+      "note": "Original cover includes lettering and/or playback overlays."
+    },
+    {
+      "group": "posters",
+      "name": "podcast-series-faith",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        523,
+        612,
+        151,
+        83
+      ],
+      "file": "assets/ui/posters/podcast-series-faith.png",
+      "note": "Original cover includes lettering and/or playback overlays."
+    },
+    {
+      "group": "posters",
+      "name": "podcast-series-bible",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        523,
+        707,
+        151,
+        83
+      ],
+      "file": "assets/ui/posters/podcast-series-bible.png",
+      "note": "Original cover includes lettering and/or playback overlays."
+    },
+    {
+      "group": "posters",
+      "name": "podcast-resume",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        1359,
+        515,
+        261,
+        60
+      ],
+      "file": "assets/ui/posters/podcast-resume.png",
+      "note": "Original cover includes lettering and/or playback overlays."
+    },
+    {
+      "group": "posters",
+      "name": "podcast-recommended",
+      "source": "frontend-gold-b/09-podcast.png",
+      "rect": [
+        1359,
+        692,
+        112,
+        97
+      ],
+      "file": "assets/ui/posters/podcast-recommended.png",
+      "note": "Original cover includes lettering and/or playback overlays."
+    },
+    {
+      "group": "illustrations",
+      "name": "matthew-quote",
+      "source": "design-system/master-ui-kit.png",
+      "rect": [
+        1262,
+        343,
+        392,
+        146
+      ],
+      "file": "assets/ui/illustrations/matthew-quote.png",
+      "note": "Original complete quote artwork with lettering."
+    },
+    {
+      "group": "illustrations",
+      "name": "glaube-bewegt",
+      "source": "frontend-gold-b/02-videos.png",
+      "rect": [
+        1279,
+        723,
+        348,
+        126
+      ],
+      "file": "assets/ui/illustrations/glaube-bewegt.png",
+      "note": "Original complete quote artwork with lettering."
+    },
+    {
+      "group": "illustrations",
+      "name": "jeremiah-quote",
+      "source": "frontend-gold-b/05-beitrag-detail.png",
+      "rect": [
+        1064,
+        80,
+        442,
+        181
+      ],
+      "file": "assets/ui/illustrations/jeremiah-quote.png",
+      "note": "Original complete quote artwork with lettering."
+    },
+    {
+      "group": "illustrations",
+      "name": "galatians-quote",
+      "source": "frontend-gold-b/10-community.png",
+      "rect": [
+        1327,
+        711,
+        305,
+        126
+      ],
+      "file": "assets/ui/illustrations/galatians-quote.png",
+      "note": "Original complete quote artwork with lettering."
+    },
+    {
+      "group": "avatars",
+      "name": "author-start",
+      "source": "frontend-gold-b/01-start.png",
+      "rect": [
+        849,
+        310,
+        46,
+        46
+      ],
+      "file": "assets/ui/avatars/author-start.png"
+    },
+    {
+      "group": "avatars",
+      "name": "author-article",
+      "source": "frontend-gold-b/05-beitrag-detail.png",
+      "rect": [
+        166,
+        523,
+        48,
+        50
+      ],
+      "file": "assets/ui/avatars/author-article.png"
+    },
+    {
+      "group": "avatars",
+      "name": "author-book",
+      "source": "frontend-gold-b/07-buch-detail.png",
+      "rect": [
+        525,
+        251,
+        51,
+        51
+      ],
+      "file": "assets/ui/avatars/author-book.png"
+    },
+    {
+      "group": "avatars",
+      "name": "live-author",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        156,
+        490,
+        54,
+        54
+      ],
+      "file": "assets/ui/avatars/live-author.png"
+    },
+    {
+      "group": "avatars",
+      "name": "community-woman-1",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        257,
+        832,
+        54,
+        54
+      ],
+      "file": "assets/ui/avatars/community-woman-1.png"
+    },
+    {
+      "group": "avatars",
+      "name": "community-man-1",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        552,
+        832,
+        54,
+        54
+      ],
+      "file": "assets/ui/avatars/community-man-1.png"
+    },
+    {
+      "group": "avatars",
+      "name": "community-woman-2",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        858,
+        832,
+        54,
+        54
+      ],
+      "file": "assets/ui/avatars/community-woman-2.png"
+    },
+    {
+      "group": "avatars",
+      "name": "chat-1",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        1043,
+        117,
+        31,
+        31
+      ],
+      "file": "assets/ui/avatars/chat-1.png"
+    },
+    {
+      "group": "avatars",
+      "name": "chat-2",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        1043,
+        155,
+        31,
+        31
+      ],
+      "file": "assets/ui/avatars/chat-2.png"
+    },
+    {
+      "group": "avatars",
+      "name": "chat-3",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        1043,
+        193,
+        31,
+        31
+      ],
+      "file": "assets/ui/avatars/chat-3.png"
+    },
+    {
+      "group": "avatars",
+      "name": "chat-4",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        1043,
+        231,
+        31,
+        31
+      ],
+      "file": "assets/ui/avatars/chat-4.png"
+    },
+    {
+      "group": "avatars",
+      "name": "chat-5",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        1043,
+        269,
+        31,
+        31
+      ],
+      "file": "assets/ui/avatars/chat-5.png"
+    },
+    {
+      "group": "avatars",
+      "name": "chat-6",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        1043,
+        307,
+        31,
+        31
+      ],
+      "file": "assets/ui/avatars/chat-6.png"
+    },
+    {
+      "group": "avatars",
+      "name": "chat-7",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        1043,
+        345,
+        31,
+        31
+      ],
+      "file": "assets/ui/avatars/chat-7.png"
+    },
+    {
+      "group": "avatars",
+      "name": "chat-8",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        1043,
+        383,
+        31,
+        31
+      ],
+      "file": "assets/ui/avatars/chat-8.png"
+    },
+    {
+      "group": "avatars",
+      "name": "chat-9",
+      "source": "frontend-gold-b/08-live.png",
+      "rect": [
+        1043,
+        421,
+        31,
+        31
+      ],
+      "file": "assets/ui/avatars/chat-9.png"
+    },
+    {
+      "group": "avatars",
+      "name": "member-1",
+      "source": "frontend-gold-b/10-community.png",
+      "rect": [
+        1364,
+        535,
+        34,
+        33
+      ],
+      "file": "assets/ui/avatars/member-1.png"
+    },
+    {
+      "group": "avatars",
+      "name": "member-2",
+      "source": "frontend-gold-b/10-community.png",
+      "rect": [
+        1364,
+        567,
+        34,
+        33
+      ],
+      "file": "assets/ui/avatars/member-2.png"
+    },
+    {
+      "group": "avatars",
+      "name": "member-3",
+      "source": "frontend-gold-b/10-community.png",
+      "rect": [
+        1364,
+        599,
+        34,
+        33
+      ],
+      "file": "assets/ui/avatars/member-3.png"
+    },
+    {
+      "group": "avatars",
+      "name": "member-4",
+      "source": "frontend-gold-b/10-community.png",
+      "rect": [
+        1364,
+        631,
+        34,
+        33
+      ],
+      "file": "assets/ui/avatars/member-4.png"
+    },
+    {
+      "group": "avatars",
+      "name": "member-5",
+      "source": "frontend-gold-b/10-community.png",
+      "rect": [
+        1364,
+        663,
+        34,
+        33
+      ],
+      "file": "assets/ui/avatars/member-5.png"
+    },
+    {
+      "group": "avatars",
+      "name": "discussion-1",
+      "source": "frontend-gold-b/10-community.png",
+      "rect": [
+        439,
+        538,
+        44,
+        44
+      ],
+      "file": "assets/ui/avatars/discussion-1.png"
+    },
+    {
+      "group": "avatars",
+      "name": "discussion-2",
+      "source": "frontend-gold-b/10-community.png",
+      "rect": [
+        439,
+        599,
+        44,
+        44
+      ],
+      "file": "assets/ui/avatars/discussion-2.png"
+    },
+    {
+      "group": "avatars",
+      "name": "discussion-3",
+      "source": "frontend-gold-b/10-community.png",
+      "rect": [
+        439,
+        660,
+        44,
+        44
+      ],
+      "file": "assets/ui/avatars/discussion-3.png"
+    },
+    {
+      "group": "avatars",
+      "name": "discussion-4",
+      "source": "frontend-gold-b/10-community.png",
+      "rect": [
+        439,
+        721,
+        44,
+        44
+      ],
+      "file": "assets/ui/avatars/discussion-4.png"
+    },
+    {
+      "group": "avatars",
+      "name": "discussion-5",
+      "source": "frontend-gold-b/10-community.png",
+      "rect": [
+        439,
+        782,
+        44,
+        44
+      ],
+      "file": "assets/ui/avatars/discussion-5.png"
+    }
+  ]
+}

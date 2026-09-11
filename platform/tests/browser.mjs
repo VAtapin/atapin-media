@@ -16,6 +16,9 @@ try {
   await page.goto('http://127.0.0.1:8791/');
   await page.evaluate(()=>document.fonts.ready);
   await page.evaluate(()=>Promise.all([...document.images].map(image=>image.decode())));
+  assert.equal(await page.locator('link[rel="icon"]').getAttribute('href'),'/favicon.png');
+  assert.equal(await page.locator('.kit-brand img').getAttribute('src'),'/assets/brand/owner/logo-stacked.png');
+  assert.deepEqual(await page.locator('.kit-brand img').evaluate(image=>[image.naturalWidth,image.naturalHeight]),[1448,1086]);
   await page.screenshot({path:'tests/artifacts/home-notice.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});
   await page.screenshot({path:'tests/artifacts/home-notice-mobile.png',fullPage:true});

@@ -1,6 +1,10 @@
 @if(config('platform.theme')==='manna')
-<span class="kit-brand {{ ($mark ?? false) ? 'kit-brand-mark' : (($inverse ?? false) ? 'kit-brand-inverse' : '') }}" role="img" aria-label="{{ config('platform.brand') }}">
-    <img src="/assets/brand/approved-ui-kit.png" width="1672" height="941" alt="" aria-hidden="true">
+@php
+    $brandMark = ($mark ?? false) || ($inverse ?? false);
+    $brandVariant = $brandMark ? 'mark' : (($horizontal ?? false) ? 'horizontal' : 'stacked');
+@endphp
+<span class="kit-brand kit-brand-{{ $brandVariant }}" role="img" aria-label="{{ config('platform.brand') }}">
+    <img src="/assets/brand/owner/logo-{{ $brandVariant }}.png" alt="" aria-hidden="true">
 </span>
 @else
 <span>{{ config('platform.brand') }}</span>

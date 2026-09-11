@@ -4,9 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>{{ app(\App\Services\Settings::class)->get('site_name', config('platform.brand')) }}</title>
-    <link rel="icon" href="/favicon.svg">
+    <link rel="icon" href="/favicon.png">
     <link rel="stylesheet" href="/assets/fonts/fonts.css">
-    <link rel="stylesheet" href="/assets/brand/ui-kit.css">
+    <link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1">
     <link rel="stylesheet" href="/assets/site-notice.css">
 </head>
 <body class="site-notice">
