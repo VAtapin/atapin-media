@@ -9,7 +9,7 @@ $ask = function (string $label, string $default = '', bool $secret = false): str
     if ($secret) system('stty -echo');
     try { $line = fgets(STDIN); } finally { if ($secret) { system('stty echo'); fwrite(STDOUT,"\n"); } }
     if ($line === false) throw new RuntimeException('Interactive terminal input is required.');
-    $value = trim($line);
+    $value = $secret ? rtrim($line,"\r\n") : trim($line);
     if (str_contains($value,"\0")) throw new RuntimeException('Invalid input.');
     return $value !== '' ? $value : $default;
 };

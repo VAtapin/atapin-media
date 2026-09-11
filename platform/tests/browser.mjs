@@ -13,6 +13,10 @@ try {
   const page=await browser.newPage({viewport:{width:1440,height:1000}});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:8791/login');
+  await page.locator('.kit-brand img').waitFor();
+  await page.evaluate(()=>Promise.all([...document.images].map(image=>image.decode())));
+  await fs.mkdir('tests/artifacts',{recursive:true});
+  await page.screenshot({path:'tests/artifacts/login.png',fullPage:true});
   await page.locator('[name=email]').fill('test@example.com');
   await page.locator('[name=password]').fill('kurz5');
   await page.locator('button[type=submit], form button').click();

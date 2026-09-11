@@ -12,6 +12,11 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class,'store']);
 });
 Route::middleware('auth')->group(function () {
+    Route::middleware('can:users.manage')->prefix('desktop')->group(function(){
+        Route::get('users',[\App\Http\Controllers\UserController::class,'index'])->name('users.index');
+        Route::post('users',[\App\Http\Controllers\UserController::class,'store'])->name('users.store');
+        Route::patch('users/{user}',[\App\Http\Controllers\UserController::class,'update'])->name('users.update');
+    });
     Route::middleware('can:imports.manage')->prefix('desktop')->group(function(){
         Route::get('imports',[\App\Http\Controllers\ImportController::class,'index'])->name('imports.index');
         Route::post('imports',[\App\Http\Controllers\ImportController::class,'store'])->name('imports.store');

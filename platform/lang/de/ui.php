@@ -1,5 +1,7 @@
 <?php
 return [
+    'users'=>'Benutzer', 'name'=>'Name', 'role'=>'Rolle', 'new_user'=>'Neuer Benutzer', 'create_user'=>'Benutzer erstellen',
+    'last_owner'=>'Mindestens ein Eigentümer muss erhalten bleiben.',
     'desktop' => 'Desktop',
     'skip' => 'Zum Inhalt',
     'navigation' => 'Navigation',

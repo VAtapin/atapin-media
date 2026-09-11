@@ -3,13 +3,13 @@
 <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', __('ui.desktop')) · {{ config('platform.brand') }}</title>
-    <link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/assets/fonts/fonts.css">
+    <link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css">
     <link rel="stylesheet" href="/assets/app.css"><script src="/assets/app.js" defer></script>
 </head>
 <body class="workspace">
 <a class="skip" href="#main">{{ __('ui.skip') }}</a>
 <aside class="sidebar" id="sidebar">
-    <a class="brand" href="{{ route('desktop') }}"><img src="/favicon.svg" width="38" height="38" alt=""><span>{{ config('platform.brand') }}<small>Media Desktop</small></span></a>
+    <a class="brand" href="{{ route('desktop') }}">@include('components.brand',['inverse'=>true])</a>
     <nav aria-label="{{ __('ui.navigation') }}">
         <p class="nav-heading">{{ __('ui.workspace') }}</p>
         @can('desktop.view')<a @class(['nav-link','active'=>request()->routeIs('desktop')]) href="{{ route('desktop') }}">@include('components.icon',['name'=>'desktop']) {{ __('ui.desktop') }}</a>@endcan
@@ -25,6 +25,7 @@
         @can('imports.manage')<a @class(['nav-link','active'=>request()->routeIs('imports.*','collections.*')]) href="{{ route('imports.index') }}">@include('components.icon',['name'=>'upload']) {{ __('ui.import_center') }}</a>@endcan
         @can('settings.manage')<a @class(['nav-link','active'=>request()->routeIs('settings')]) href="{{ route('settings') }}">@include('components.icon',['name'=>'settings']) {{ __('ui.settings') }}</a>@endcan
         @can('audit.view')<a @class(['nav-link','active'=>request()->routeIs('audit')]) href="{{ route('audit') }}">@include('components.icon',['name'=>'list']) {{ __('ui.audit') }}</a>@endcan
+        @can('users.manage')<a @class(['nav-link','active'=>request()->routeIs('users.*')]) href="{{ route('users.index') }}">@include('components.icon',['name'=>'list']) {{ __('ui.users') }}</a>@endcan
     </nav>
     <div class="sidebar-footer"><a href="/">{{ __('ui.public_website') }} ↗</a><span>{{ __('ui.private_workspace') }}</span></div>
 </aside>

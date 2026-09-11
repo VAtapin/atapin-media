@@ -1,6 +1,7 @@
 <?php
 return [
     'brand' => env('PLATFORM_BRAND', 'Atapin Media'),
+    'theme' => env('PLATFORM_THEME', 'manna'),
     'timezone' => env('PLATFORM_TIMEZONE', 'Europe/Berlin'),
     'locales' => ['de', 'en'],
     'media_disk' => env('MEDIA_DISK', 'local'),

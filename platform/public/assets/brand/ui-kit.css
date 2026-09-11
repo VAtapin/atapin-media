@@ -1,0 +1,59 @@
+/* Approved source: UI/approved/design-system/master-ui-kit.png (1672 × 941).
+   The image remains byte-for-byte unchanged. Only its viewport is clipped. */
+:root {
+  --kit-gold: #d4a043;
+  --kit-navy: #0f2b5b;
+  --kit-sky: #3882f6;
+  --kit-cream: #fff8f5;
+  --kit-fog: #e5e7eb;
+  --kit-grey: #9ca3af;
+  --kit-anthracite: #1f2937;
+  --kit-success: #10b981;
+  --kit-warning: #f59e0b;
+  --kit-error: #ef4444;
+  --kit-live: #ec4899;
+  --kit-heading: 'Playfair Display', Georgia, serif;
+  --kit-interface: Inter, Arial, sans-serif;
+  --kit-space-1: 8px;
+  --kit-space-2: 16px;
+  --kit-space-3: 24px;
+  --kit-space-4: 32px;
+  --kit-space-5: 48px;
+  --kit-radius-small: 4px;
+  --kit-radius-medium: 8px;
+  --kit-radius-large: 12px;
+  --kit-radius-panel: 16px;
+}
+.kit-brand {
+  position: relative;
+  display: block;
+  flex: none;
+  overflow: hidden;
+  isolation: isolate;
+  width: var(--brand-width, 238px);
+  max-width: 100%;
+  aspect-ratio: 379 / 83;
+}
+.kit-brand > img {
+  position: absolute;
+  display: block;
+  max-width: none !important;
+  width: 441.16095% !important;
+  height: 1133.73494% !important;
+  left: -5.01319%;
+  top: -9.63855%;
+}
+.kit-brand-inverse { --brand-width: 196px; aspect-ratio: 132 / 30; }
+.kit-brand-inverse > img {
+  width: 1266.66667% !important;
+  height: 3136.66667% !important;
+  left: -32.57576%;
+  top: -1306.66667%;
+}
+.kit-brand-mark { --brand-width: 80px; aspect-ratio: 90 / 77; }
+.kit-brand-mark > img {
+  width: 1857.77778% !important;
+  height: 1222.07792% !important;
+  left: -237.77778%;
+  top: -187.01299%;
+}

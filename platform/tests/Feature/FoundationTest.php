@@ -76,4 +76,13 @@ class FoundationTest extends TestCase
         $this->assertTrue($editor->hasPermission('content.publish'));
         $this->assertFalse($editor->hasPermission('users.manage'));
     }
+    public function test_last_owner_cannot_be_demoted_and_short_password_account_can_be_created():void
+    {
+        $owner=$this->user('Owner');$this->actingAs($owner);$role=Role::where('name','Editor')->firstOrFail();
+        $this->patch('/desktop/users/'.$owner->id,['role_id'=>$role->id])->assertSessionHasErrors('role_id');
+        $this->assertTrue($owner->fresh()->hasPermission('users.manage'));
+        $this->post('/desktop/users',['name'=>'Editor','email'=>'editor@example.com','password'=>'12345','role_id'=>$role->id])->assertRedirect();
+        $this->assertTrue(User::where('email','editor@example.com')->first()->hasPermission('content.edit'));
+        $this->get('/desktop/users')->assertOk()->assertSee('editor@example.com');
+    }
 }
