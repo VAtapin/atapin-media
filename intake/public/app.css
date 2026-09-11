@@ -1,7 +1,8 @@
 :root {
   --navy: #0f285b;
   --blue: #2463ac;
-  --gold: #b77b20;
+  --gold: #9c6918;
+  --brand-gold: #d4a043;
   --cream: #fff8f5;
   --surface: #fff;
   --ink: #172b4b;
@@ -11,7 +12,7 @@
   --red: #a82e32;
   font-family: Inter, "Segoe UI", Arial, sans-serif;
   color: var(--ink);
-  background: #f6f7fa;
+  background: var(--cream);
   font-synthesis: none;
 }
 * {
@@ -19,6 +20,7 @@
 }
 body {
   margin: 0;
+  background: linear-gradient(160deg, #e9f1fa 0, #fff8f0 340px, #fff8f5 750px);
 }
 button,
 input {
@@ -51,8 +53,9 @@ a:focus-visible,
 }
 .header {
   min-height: 100px;
-  background: white;
-  border-bottom: 1px solid var(--line);
+  background: linear-gradient(100deg, #fff 30%, #fffcf6);
+  border-top: 3px solid var(--brand-gold);
+  border-bottom: 1px solid #e5d9c7;
   display: flex;
   align-items: center;
   gap: 32px;
@@ -77,8 +80,14 @@ a:focus-visible,
   letter-spacing: 2.7px;
   margin-top: 5px;
 }
+.brand-motto {
+  font-size: 12px;
+  color: var(--gold);
+  line-height: 1.5;
+  margin-top: 9px;
+}
 .header-label {
-  border-left: 1px solid var(--line);
+  border-left: 1px solid #dfc99e;
   padding-left: 30px;
   color: var(--muted);
   font-size: 14px;
@@ -91,6 +100,10 @@ a:focus-visible,
 }
 .connection.ready {
   color: var(--green);
+  background: #edf6ef;
+  border: 1px solid #d7e8da;
+  border-radius: 24px;
+  padding: 9px 14px;
 }
 main {
   max-width: 1184px;
@@ -119,10 +132,11 @@ h1 {
   color: var(--navy);
 }
 h2 {
+  font-family: "Playfair Display", Georgia, serif;
   font-size: 23px;
   color: var(--navy);
   margin: 0;
-  font-weight: 650;
+  font-weight: 700;
 }
 h3 {
   font-size: 16px;
@@ -139,14 +153,16 @@ h3 {
   white-space: nowrap;
   font-size: 13px;
   color: var(--muted);
-  border: 1px solid var(--line);
+  border: 1px solid #e3d5bb;
+  background: #fffcf7;
   padding: 9px 12px;
   border-radius: 20px;
 }
 .dropzone {
   text-align: center;
   background: linear-gradient(135deg, #fff 30%, #fff9ee);
-  border: 2px dashed #c2cfe1;
+  border: 2px dashed #d8bb86;
+  box-shadow: 0 10px 32px #64450d08;
   border-radius: 16px;
   padding: 32px 24px;
   transition:
@@ -166,8 +182,9 @@ h3 {
 .upload-icon {
   height: 60px;
   width: 60px;
-  border-radius: 18px;
-  background: #f6ead4;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #fff7e9, #efddba);
+  border: 1px solid #ead4ad;
   color: var(--gold);
   margin: 0 auto 18px;
   display: grid;
@@ -202,12 +219,15 @@ h3 {
   text-decoration: none;
 }
 .primary {
-  background: var(--navy);
-  color: #fff;
-  box-shadow: 0 3px 8px #0f285b15;
+  background: linear-gradient(180deg, #edc575, #d4a043);
+  color: var(--navy);
+  border-color: #c39137;
+  box-shadow:
+    0 3px 8px #9c69181a,
+    inset 0 1px 0 #fff5dc;
 }
 .primary:hover {
-  background: #183d7a;
+  background: linear-gradient(180deg, #f4ce86, #dbac52);
 }
 .secondary {
   background: white;

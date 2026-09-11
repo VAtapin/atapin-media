@@ -1,9 +1,9 @@
 name: Intake checks
 on:
   push:
-    paths: ['intake/**', '.github/workflows/intake.yml']
+    paths: ['intake/**', 'upload/**', '.github/workflows/intake.yml']
   pull_request:
-    paths: ['intake/**', '.github/workflows/intake.yml']
+    paths: ['intake/**', 'upload/**', '.github/workflows/intake.yml']
 permissions:
   contents: read
 jobs:
@@ -24,7 +24,9 @@ jobs:
         with:
           node-version: '22'
       - name: PHP syntax
-        run: find intake -name '*.php' -print0 | xargs -0 -n1 php -l
+        run: |
+          find intake upload -name '*.php' -print0 | xargs -0 -n1 php -l
+          bash -n intake/bin/deploy-plesk.sh
       - name: Archive recovery and storage checks
         run: php intake/tests/archive.php
       - name: Browser test dependencies
@@ -34,6 +36,10 @@ jobs:
           node .local/node_modules/playwright/cli.js install --with-deps chromium
       - name: HTTP integration checks
         run: node intake/tests/http.mjs
+        env:
+          INTAKE_BROWSER_TESTS: ${{ matrix.php == '8.4' && '1' || '0' }}
+      - name: Existing httpdocs deployment and subfolder uploads
+        run: node intake/tests/subfolder.mjs
         env:
           INTAKE_BROWSER_TESTS: ${{ matrix.php == '8.4' && '1' || '0' }}
       - name: JavaScript syntax

@@ -3,9 +3,17 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/Archive.php';
 
+function intake_config_path(): string
+{
+    if ($configured = getenv('INTAKE_CONFIG')) return $configured;
+    // In Plesk the checkout may itself be httpdocs. Prefer its private sibling.
+    $private = dirname(__DIR__, 3) . '/private/manna-intake-config.php';
+    return is_file($private) ? $private : __DIR__ . '/../config.local.php';
+}
+
 function intake_config(): array
 {
-    $file = getenv('INTAKE_CONFIG') ?: __DIR__ . '/../config.local.php';
+    $file = intake_config_path();
     if (!is_file($file)) throw new \Atapin\Intake\IntakeError('not_configured', 503);
     $config = require $file;
     if (!is_array($config) || empty($config['storage_path']) || empty($config['origin'])) {
