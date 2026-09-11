@@ -1,0 +1,154 @@
+# AGENTS.md — Atapin Media
+
+Постоянные правила работы Codex с репозиторием. Не превращать этот файл в копию ТЗ или журнал мелких изменений.
+
+## Продолжение работы между чатами
+
+- В начале каждой задачи прочитать `PROJECT_STATUS.md`, если он существует.
+- Если проект рассчитан более чем на одну задачу, а `PROJECT_STATUS.md` отсутствует, создать его.
+- Перед завершением каждой выполненной задачи обновить `PROJECT_STATUS.md`.
+- Записывать только:
+  - что уже реализовано;
+  - текущее состояние проекта;
+  - важные принятые решения;
+  - известные проблемы;
+  - что рекомендуется делать следующим;
+  - какие проверки прошли;
+  - последний связанный commit.
+- Не превращать `PROJECT_STATUS.md` в подробную историю переписки или список всех мелких изменений.
+- Удалять или исправлять устаревшую информацию.
+- Изменение `PROJECT_STATUS.md` включать в тот же commit и push, что и выполненную задачу.
+
+## Работа с задачами
+
+- Одна задача/чат — один ограниченный, проверяемый смысловой блок.
+- Не проводить повторную полную ревизию проекта без прямого запроса.
+- Для локальной задачи читать только относящиеся к ней документы, код, тесты и непосредственные зависимости.
+- Не расширять «и так далее» до самостоятельной переделки всего проекта.
+- Сначала искать существующую реализацию; не создавать параллельный модуль рядом с уже работающим.
+- Делать минимально достаточное законченное изменение. Не смешивать с попутным массовым рефакторингом или форматированием.
+- Не реализовывать весь roadmap одним проходом.
+
+## Источники истины
+
+Приоритет при противоречиях:
+
+1. Текущая явная команда владельца.
+2. Этот `AGENTS.md` — правила работы и Git.
+3. `MASTER-TZ.md` — функциональность, архитектура, workflows и acceptance criteria.
+4. `MANNA-VOM-HIMMEL.md` — особенности первой установки.
+5. `UI/approved/` — единственный визуальный источник для Manna Vom Himmel.
+6. Существующий код и тесты — текущее поведение, которое нельзя ломать случайно.
+
+Дополнительные инструкции находятся в `README.md`, `docs/` и README соответствующего модуля. Старый checklist, mockup-текст или название коммита не доказывает текущий статус: сверять с кодом, тестами и релевантной историей Git.
+
+## Текущее устройство проекта
+
+- `platform/` — основное приложение: Laravel 13, PHP 8.4, Blade и progressive JavaScript без обязательной Node-сборки.
+- Уже существуют foundation, auth/users/RBAC, settings, audit, Media Library, imports, проекты, задачи, календарь и оболочка Media Desktop.
+- Public Website уже имеет approved brand assets/design tokens и начатую компонентную реализацию. Не начинать его заново.
+- `intake/` — отдельный защищённый resumable upload в приватный архив.
+- `youtube/` — отдельный Python-сборщик публичного YouTube-архива.
+- `tools/manna.ps1` автоматизирует повторяющиеся локальные операции.
+- `.github/workflows/` содержит отдельные CI-проверки для `platform`, `intake` и `youtube`.
+
+Перед новой функцией проверить наличие подходящих model, service, controller, view, command, test и UI-компонента.
+
+## Архитектурные ограничения
+
+- Atapin Media — self-hosted single-tenant платформа, не SaaS/multi-tenant.
+- Manna Vom Himmel — первый deployment, но не Core. Не использовать `MannaVomHimmel` в generic Core-классах; клиентские домены, branding и navigation держать в конфигурации/данных.
+- Laravel: тонкие Controllers; бизнес-операции в Services/Actions; длительные операции в Jobs/queue.
+- Доступ проверять через Policies/Gates/permissions, а не только скрытием кнопок или URL.
+- Внешние сервисы подключать через Interfaces/Adapters с реальной authorization и обработкой ошибок. Не выдавать fake/mock integration за готовую.
+- Central Control и внешние сервисы не должны быть обязательной runtime dependency.
+- Использовать Filesystem/Cache/Queue abstractions; сохранять готовность к S3/Redis.
+- Не создавать giant Controllers/Services/Blade-файлы и не дублировать бизнес-логику между UI, API, worker и importer.
+- Не менять действующие public routes, storage keys и protected-download contracts без проверки совместимости.
+- Изменения БД делать forward-compatible. Никогда не применять `migrate:fresh` к существующим или production-данным.
+- Runtime, секреты, оригиналы media и клиентские данные находятся вне Git и public document root.
+- Import регистрирует существующий оригинал; он не означает копирование или автоматическую публикацию.
+
+## UI и локализация
+
+- Manna Vom Himmel работает на немецком (`de`); Core остаётся мультиязычным.
+- Новые UI-строки добавлять через translation keys. Не принимать пользовательский/богословский контент за строки интерфейса.
+- Использовать только `UI/approved/`, `docs/UI-IMPLEMENTATION.md` и owner assets в `platform/public/assets/brand/owner/`.
+- Не восстанавливать старые UI-концепты, не придумывать новый стиль и не подменять интерфейс целым screenshot.
+- Screenshot задаёт композицию и visual language, но не business logic и не фиктивные production-данные.
+- UI должен быть semantic, responsive, data-driven и устойчив к длинным текстам, пустым состояниям и большим спискам.
+- Public и Desktop принадлежат одной бренд-системе, но их CSS/JS должны оставаться изолированными.
+- Не заявлять точное совпадение с макетом без визуальной проверки desktop `1672 × 941` и отдельной mobile-проверки.
+
+## Безопасность
+
+- Не добавлять в Git `.env`, credentials, cookies, database dumps, private media, production logs или runtime storage.
+- Не просить присылать секреты в чат и не менять Git/server credentials.
+- Protected content требует authorization; сложный или скрытый URL защитой не считается.
+- Не ослаблять permissions, rate limits, security headers, path validation или upload limits без причины и тестов.
+- Не удалять и не перемещать данные массово без явного подтверждения и backup/migration plan.
+
+## Порядок выполнения
+
+1. Проверить `git status --short --branch` и текущую ветку.
+2. Изучить релевантную документацию, существующий код и при необходимости историю затрагиваемых файлов.
+3. Изменить только файлы текущей задачи; при изменении поведения добавить/обновить тест.
+4. Запустить минимальный достаточный набор проверок.
+5. Просмотреть `git diff --check`, `git diff --stat` и содержательный diff.
+6. Обновить документацию только при реальном изменении архитектуры, установки, команд или подтверждённого статуса.
+7. После успешной проверки сделать один commit и push по правилам ниже.
+
+Незавершённые изменения до начала задачи принадлежат пользователю: не стирать и не включать их в свой commit. При пересечении остановиться и объяснить конфликт. Не применять stash/reset/checkout для сокрытия чужих изменений без прямой команды.
+
+## Проверки
+
+Запускать только относящиеся к изменению проверки; полный suite нужен для широких/cross-cutting изменений.
+
+```bash
+# Laravel platform
+cd platform && composer test
+
+# Intake (выбирать релевантные; весь набор при изменении upload/auth/storage)
+php intake/tests/archive.php
+php intake/tests/auth.php
+node intake/tests/http.mjs
+node intake/tests/subfolder.mjs
+node --check intake/public/app.js
+bash -n intake/bin/deploy-plesk.sh
+
+# YouTube collector
+python -m unittest discover -s youtube/tests -v
+python youtube/collect.py --help
+bash -n youtube/bin/plesk.sh
+```
+
+- При изменении dependencies запускать `cd platform && composer audit --no-interaction`.
+- При изменении routes, auth/RBAC, upload/download, Blade, navigation или JS запускать соответствующие Feature/browser checks из `.github/workflows/platform.yml`.
+- Не запускать реальный массовый сбор YouTube как тест.
+- Не повторять уже успешную проверку только ради commit/push, если после неё tree не менялся. После новых изменений повторить затронутые проверки.
+- Не утверждать, что проверка пройдена, если она не запускалась; точно назвать недоступные локально проверки.
+
+## Git: commit и push
+
+- Один законченный смысловой блок — один atomic commit; не commit после каждой промежуточной мелочи.
+- После завершённой implementation-задачи и успешных релевантных проверок сделать commit и push текущей ветки, если пользователь прямо не запретил Git-операции.
+- Перед commit проверить status/diff и добавить только файлы задачи.
+- Commit message — короткое, содержательное, в imperative style.
+- Не повторять полный анализ проекта или уже пройденные тесты для commit message/push.
+- Push не является deployment. Сервер обновлять только по явной команде/согласованному этапу; получать изменения через `git pull --ff-only`.
+- Не использовать force-push, `reset --hard`, destructive checkout, amend или rebase опубликованной истории без прямого указания.
+- Не создавать branch/PR/tag без запроса и не менять remote/global Git config.
+- Если remote ушёл вперёд, не force-push: сообщить о расхождении и безопасно интегрировать его только в рамках разрешённой задачи.
+
+## Production
+
+- Production checkout: `httpdocs`; document root: `httpdocs/platform/public`; runtime: `private/atapin-platform`.
+- Intake и YouTube archives независимы и не должны затрагиваться обновлением платформы.
+- Использовать документированные `platform/bin/plesk.sh` и `platform/bin/cron.php`.
+- На текущем сервере queue/scheduler работают через Plesk PHP scheduled tasks; не устанавливать systemd без отдельной команды.
+- Перед production migration нужен backup. Не менять Plesk, cron, ownership или production DB в обычной кодовой задаче.
+- После deployment выполнить документированный `check`; не выдавать успешный push за проверку production.
+
+## Итог Codex
+
+Кратко сообщить: что изменено, какие проверки действительно прошли, commit hash/message и ветку push (если выполнены), а также что осталось незавершённым. Не представлять план как готовую функцию.
