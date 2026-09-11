@@ -34,6 +34,18 @@ try {
   await page.waitForURL('**/desktop');
   await fs.mkdir('tests/artifacts',{recursive:true});
   await page.screenshot({path:'tests/artifacts/desktop.png',fullPage:true});
+  await page.locator('[data-open-app="videos"]').first().click();
+  const desktopTitle=await page.locator('.os-window[data-app-id="videos"] [data-drag-handle]').boundingBox();
+  await page.mouse.move(desktopTitle.x+100,desktopTitle.y+20);
+  await page.mouse.down();await page.mouse.move(720,8,{steps:8});await page.mouse.up();
+  await page.locator('[data-layout="four"][data-zone="0"]').click();
+  await page.locator('[data-start-button]').click();
+  await page.locator('.os-start-menu [data-open-app="tasks"]').click();
+  assert.deepEqual(await page.locator('.os-window').evaluateAll(items=>items.map(item=>item.dataset.snapZone)),['0','1']);
+  await page.reload();
+  assert.equal(await page.locator('.os-window').count(),2,'Desktop windows were not restored');
+  await page.locator('[data-close-all]').click();await page.reload();
+  assert.equal(await page.locator('.os-window').count(),0,'Desktop windows returned after close all');
   await page.goto('http://127.0.0.1:8791/desktop/media');
   await page.locator('[name=file]').setInputFiles({name:'Hoffnung.txt',mimeType:'text/plain',buffer:Buffer.from('Hoffnung für heute')});
   await page.locator('.upload-form button').click();
@@ -53,5 +65,5 @@ try {
   await page.keyboard.press('Escape');
   await page.screenshot({path:'tests/artifacts/mobile.png',fullPage:true});
   assert.deepEqual(errors,[]);
-  console.log('Browser: login, upload, rename, download, responsive navigation OK');
+  console.log('Browser: desktop persistence, upload, rename, download, responsive navigation OK');
 } finally {await browser?.close();try{process.kill(-server.pid,'SIGTERM');}catch{}server.stdout.destroy();server.stderr.destroy();server.unref();}

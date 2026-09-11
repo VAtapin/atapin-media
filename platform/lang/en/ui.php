@@ -16,6 +16,7 @@ return [
     'private_workspace' => 'Your media workspace',
     'menu' => 'Menu',
     'logout' => 'Sign out',
+    'close_all_windows' => 'Close all windows',
     'login' => 'Sign in',
     'login_intro' => 'Welcome to your Media Desktop.',
     'email' => 'Email',

@@ -4,13 +4,15 @@
   const startButton = document.querySelector('[data-start-button]');
   const startMenu = document.querySelector('[data-start-menu]');
   const runningApps = document.querySelector('[data-running-apps]');
+  const closeAllButton = document.querySelector('[data-close-all]');
   const clock = document.querySelector('[data-clock]');
-  if (!desktop || !template || !startButton || !startMenu || !runningApps) return;
+  if (!desktop || !template || !startButton || !startMenu || !runningApps || !closeAllButton) return;
 
   const MIN_WIDTH = 210;
   const MIN_HEIGHT = 160;
   const SNAP_GAP = 6;
   const SNAP_TRIGGER_PX = 14;
+  const STORAGE_KEY = desktop.dataset.storageKey || 'atapin.desktop.state.v1';
   const layouts = [
     { id:'two', label:'2 Fenster', cells:[[0,0,.5,1],[.5,0,.5,1]] },
     { id:'three', label:'3 Fenster', cells:[[0,0,1/3,1],[1/3,0,1/3,1],[2/3,0,1/3,1]] },
@@ -26,13 +28,17 @@
   let normalZ = 10;
   let pinnedZ = 9000;
   let cascade = 0;
+  let activeLayoutId = null;
   let snapWindow = null;
+  let restoring = false;
+  let stateWasCleared = false;
+  let saveTimer = null;
 
   const snapPanel = document.createElement('section');
   snapPanel.className = 'os-snap-panel';
   snapPanel.hidden = true;
   snapPanel.setAttribute('aria-label', 'Fensteranordnung wählen');
-  snapPanel.innerHTML = layouts.map(layout => `<div class="os-snap-layout" title="${layout.label}" aria-label="${layout.label}">${layout.cells.map((cell, zone) => `<button type="button" class="os-snap-zone" data-layout="${layout.id}" data-zone="${zone}" style="--x:${cell[0]};--y:${cell[1]};--w:${cell[2]};--h:${cell[3]}" aria-label="${layout.label}, Bereich ${zone + 1}"></button>`).join('')}</div>`).join('');
+  snapPanel.innerHTML = layouts.map(layout => `<div class="os-snap-layout" data-layout-preview="${layout.id}" title="${layout.label}" aria-label="${layout.label}">${layout.cells.map((cell, zone) => `<button type="button" class="os-snap-zone" data-layout="${layout.id}" data-zone="${zone}" style="--x:${cell[0]};--y:${cell[1]};--w:${cell[2]};--h:${cell[3]}" aria-label="${layout.label}, Bereich ${zone + 1}"></button>`).join('')}</div>`).join('');
   desktop.append(snapPanel);
 
   const snapPreview = document.createElement('div');
@@ -42,7 +48,10 @@
 
   const desktopBounds = () => ({ width:desktop.clientWidth, height:desktop.clientHeight });
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+  const layoutById = id => layouts.find(layout => layout.id === id);
   const taskButtonFor = appId => document.querySelector(`.os-task-app[data-app-id="${CSS.escape(appId)}"]`);
+  const windowFor = appId => document.querySelector(`.os-window[data-app-id="${CSS.escape(appId)}"]`);
+  const programTrigger = appId => document.querySelector(`[data-open-app="${CSS.escape(appId)}"]`);
 
   const focusWindow = windowElement => {
     document.querySelectorAll('.os-task-app').forEach(button => button.classList.toggle('is-active', button.dataset.appId === windowElement.dataset.appId));
@@ -72,6 +81,105 @@
     windowElement.style.height = `${height}px`;
   };
 
+  const occupiedZones = (layoutId, exceptWindow = null) => new Set(
+    [...document.querySelectorAll(`.os-window[data-snap-layout="${CSS.escape(layoutId)}"]`)]
+      .filter(windowElement => windowElement !== exceptWindow)
+      .map(windowElement => Number(windowElement.dataset.snapZone))
+  );
+
+  const clearWindowSnap = windowElement => {
+    delete windowElement.dataset.snapLayout;
+    delete windowElement.dataset.snapZone;
+  };
+
+  const saveState = () => {
+    if (restoring) return;
+    const desktopRect = desktop.getBoundingClientRect();
+    const windows = [...document.querySelectorAll('.os-window')].map(windowElement => {
+      const rect = windowElement.getBoundingClientRect();
+      return {
+        appId:windowElement.dataset.appId,
+        left:Math.round(parseFloat(windowElement.style.left) || rect.left - desktopRect.left),
+        top:Math.round(parseFloat(windowElement.style.top) || rect.top - desktopRect.top),
+        width:Math.round(parseFloat(windowElement.style.width) || rect.width),
+        height:Math.round(parseFloat(windowElement.style.height) || rect.height),
+        snapLayout:windowElement.dataset.snapLayout || null,
+        snapZone:windowElement.dataset.snapZone === undefined ? null : Number(windowElement.dataset.snapZone),
+        minimized:windowElement.hidden,
+        pinned:windowElement.dataset.pinned === 'true',
+        maximized:windowElement.classList.contains('is-maximized'),
+      };
+    });
+    if (stateWasCleared && windows.length === 0) {
+      try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+      return;
+    }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ version:1, layoutId:activeLayoutId, windows }));
+    } catch (_) {}
+  };
+
+  const scheduleSave = () => {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveState, 80);
+  };
+
+  const assignToZone = (windowElement, layout, zone, persist = true) => {
+    if (!layout || !layout.cells[zone]) return false;
+    if (activeLayoutId !== layout.id) {
+      document.querySelectorAll('.os-window').forEach(clearWindowSnap);
+      activeLayoutId = layout.id;
+    }
+    if (occupiedZones(layout.id, windowElement).has(zone)) return false;
+    windowElement.dataset.snapLayout = layout.id;
+    windowElement.dataset.snapZone = String(zone);
+    applyRect(windowElement, rectForCell(layout.cells[zone]));
+    if (persist) saveState();
+    return true;
+  };
+
+  const nextFreeZone = () => {
+    const layout = layoutById(activeLayoutId);
+    if (!layout) return null;
+    const occupied = occupiedZones(layout.id);
+    const zone = layout.cells.findIndex((_, index) => !occupied.has(index));
+    return zone < 0 ? null : { layout, zone };
+  };
+
+  const freeZoneAtPoint = (windowElement, clientX, clientY) => {
+    const layout = layoutById(activeLayoutId);
+    if (!layout) return null;
+    const desktopRect = desktop.getBoundingClientRect();
+    const x = clientX - desktopRect.left;
+    const y = clientY - desktopRect.top;
+    const occupied = occupiedZones(layout.id, windowElement);
+    const zone = layout.cells.findIndex((cell, index) => {
+      if (occupied.has(index)) return false;
+      const rect = rectForCell(cell);
+      return x >= rect.left && x <= rect.left + rect.width && y >= rect.top && y <= rect.top + rect.height;
+    });
+    return zone < 0 ? null : { layout, zone };
+  };
+
+  const showZonePreview = placement => {
+    if (!placement) {
+      snapPreview.hidden = true;
+      return;
+    }
+    const rect = rectForCell(placement.layout.cells[placement.zone]);
+    Object.assign(snapPreview.style, { left:`${rect.left}px`, top:`${rect.top}px`, width:`${rect.width}px`, height:`${rect.height}px` });
+    snapPreview.hidden = false;
+  };
+
+  const refreshSnapPanel = () => {
+    snapPanel.querySelectorAll('.os-snap-zone').forEach(zone => {
+      const occupied = zone.dataset.layout === activeLayoutId && occupiedZones(activeLayoutId, snapWindow).has(Number(zone.dataset.zone));
+      zone.disabled = occupied;
+      zone.classList.toggle('is-occupied', occupied);
+    });
+    snapPanel.querySelectorAll('[data-layout-preview]').forEach(preview => preview.classList.toggle('is-active', preview.dataset.layoutPreview === activeLayoutId));
+  };
+
   const hideSnap = () => {
     snapPanel.hidden = true;
     snapPreview.hidden = true;
@@ -81,32 +189,46 @@
   const showSnap = windowElement => {
     if (window.innerWidth <= 960) return;
     snapWindow = windowElement;
+    refreshSnapPanel();
     snapPanel.hidden = false;
   };
 
   snapPanel.addEventListener('pointerover', event => {
     const zone = event.target.closest('.os-snap-zone');
-    if (!zone || !snapWindow) return;
-    const layout = layouts.find(item => item.id === zone.dataset.layout);
-    const rect = rectForCell(layout.cells[Number(zone.dataset.zone)]);
-    Object.assign(snapPreview.style, { left:`${rect.left}px`, top:`${rect.top}px`, width:`${rect.width}px`, height:`${rect.height}px` });
-    snapPreview.hidden = false;
+    if (!zone || zone.disabled || !snapWindow) return;
+    showZonePreview({ layout:layoutById(zone.dataset.layout), zone:Number(zone.dataset.zone) });
   });
   snapPanel.addEventListener('pointerout', event => {
     if (!event.relatedTarget?.closest?.('.os-snap-zone')) snapPreview.hidden = true;
   });
   snapPanel.addEventListener('click', event => {
     const zone = event.target.closest('.os-snap-zone');
-    if (!zone || !snapWindow) return;
-    const layout = layouts.find(item => item.id === zone.dataset.layout);
-    applyRect(snapWindow, rectForCell(layout.cells[Number(zone.dataset.zone)]));
-    focusWindow(snapWindow);
+    if (!zone || zone.disabled || !snapWindow) return;
+    const targetWindow = snapWindow;
+    assignToZone(targetWindow, layoutById(zone.dataset.layout), Number(zone.dataset.zone));
+    focusWindow(targetWindow);
     hideSnap();
   });
 
-  const openProgram = trigger => {
+  const createTaskButton = (windowElement, trigger) => {
+    const taskButton = document.createElement('button');
+    taskButton.type = 'button';
+    taskButton.className = 'os-task-app';
+    taskButton.dataset.appId = windowElement.dataset.appId;
+    taskButton.innerHTML = `<img src="${trigger.dataset.appIcon}" alt=""><span></span>`;
+    taskButton.querySelector('span').textContent = trigger.dataset.appName;
+    taskButton.addEventListener('click', () => {
+      windowElement.hidden = false;
+      focusWindow(windowElement);
+      saveState();
+    });
+    runningApps.append(taskButton);
+  };
+
+  const openProgram = (trigger, saved = null) => {
+    stateWasCleared = false;
     const appId = trigger.dataset.openApp;
-    let windowElement = document.querySelector(`.os-window[data-app-id="${CSS.escape(appId)}"]`);
+    let windowElement = windowFor(appId);
     if (!windowElement) {
       windowElement = template.content.firstElementChild.cloneNode(true);
       windowElement.dataset.appId = appId;
@@ -116,27 +238,36 @@
       windowElement.style.left = `${170 + offset * 28}px`;
       windowElement.style.top = `${28 + offset * 24}px`;
       desktop.append(windowElement);
-      const desktopRect = desktop.getBoundingClientRect();
-      const initialRect = windowElement.getBoundingClientRect();
-      applyRect(windowElement, { left:initialRect.left - desktopRect.left, top:initialRect.top - desktopRect.top, width:initialRect.width, height:initialRect.height });
-
-      const taskButton = document.createElement('button');
-      taskButton.type = 'button';
-      taskButton.className = 'os-task-app';
-      taskButton.dataset.appId = appId;
-      taskButton.innerHTML = `<img src="${trigger.dataset.appIcon}" alt=""><span></span>`;
-      taskButton.querySelector('span').textContent = trigger.dataset.appName;
-      taskButton.addEventListener('click', () => {
-        windowElement.hidden = false;
-        focusWindow(windowElement);
-      });
-      runningApps.append(taskButton);
       bindWindow(windowElement);
+      createTaskButton(windowElement, trigger);
+
+      if (saved) {
+        windowElement.dataset.pinned = saved.pinned ? 'true' : 'false';
+        windowElement.querySelector('[data-window-action="pin"]')?.classList.toggle('is-active', saved.pinned);
+        const savedLayout = layoutById(saved.snapLayout);
+        if (savedLayout && Number.isInteger(saved.snapZone)) assignToZone(windowElement, savedLayout, saved.snapZone, false);
+        else applyRect(windowElement, { left:saved.left, top:saved.top, width:saved.width, height:saved.height });
+        windowElement.classList.toggle('is-maximized', Boolean(saved.maximized));
+        windowElement.querySelector('[data-window-action="maximize"]')?.classList.toggle('is-active', Boolean(saved.maximized));
+        windowElement.hidden = Boolean(saved.minimized);
+      } else {
+        const free = nextFreeZone();
+        if (free) assignToZone(windowElement, free.layout, free.zone, false);
+        else {
+          const desktopRect = desktop.getBoundingClientRect();
+          const initialRect = windowElement.getBoundingClientRect();
+          applyRect(windowElement, { left:initialRect.left - desktopRect.left, top:initialRect.top - desktopRect.top, width:initialRect.width, height:initialRect.height });
+        }
+      }
     }
-    windowElement.hidden = false;
-    focusWindow(windowElement);
+    if (!saved) {
+      windowElement.hidden = false;
+      focusWindow(windowElement);
+      saveState();
+    }
     startMenu.hidden = true;
     startButton.setAttribute('aria-expanded', 'false');
+    return windowElement;
   };
 
   const bindResize = windowElement => {
@@ -150,6 +281,7 @@
         event.preventDefault();
         event.stopPropagation();
         focusWindow(windowElement);
+        clearWindowSnap(windowElement);
         const desktopRect = desktop.getBoundingClientRect();
         const startRect = windowElement.getBoundingClientRect();
         const original = { left:startRect.left - desktopRect.left, top:startRect.top - desktopRect.top, width:startRect.width, height:startRect.height };
@@ -177,6 +309,7 @@
           handle.removeEventListener('pointermove', move);
           handle.removeEventListener('pointerup', stop);
           handle.removeEventListener('pointercancel', stop);
+          saveState();
         };
         handle.addEventListener('pointermove', move);
         handle.addEventListener('pointerup', stop);
@@ -195,17 +328,21 @@
         if (snapWindow === windowElement) hideSnap();
         taskButtonFor(windowElement.dataset.appId)?.remove();
         windowElement.remove();
+        saveState();
       } else if (action === 'minimize') {
         if (snapWindow === windowElement) hideSnap();
         windowElement.hidden = true;
         taskButtonFor(windowElement.dataset.appId)?.classList.remove('is-active');
+        saveState();
       } else if (action === 'maximize') {
         windowElement.classList.toggle('is-maximized');
         button.classList.toggle('is-active', windowElement.classList.contains('is-maximized'));
+        saveState();
       } else if (action === 'pin') {
         windowElement.dataset.pinned = windowElement.dataset.pinned === 'true' ? 'false' : 'true';
         button.classList.toggle('is-active', windowElement.dataset.pinned === 'true');
         focusWindow(windowElement);
+        saveState();
       } else if (action === 'fullscreen') {
         if (document.fullscreenElement === windowElement) await document.exitFullscreen();
         else await windowElement.requestFullscreen();
@@ -221,7 +358,9 @@
       const originalTop = rect.top - desktopRect.top;
       const startX = event.clientX;
       const startY = event.clientY;
+      let placement = null;
       let snapShown = false;
+      clearWindowSnap(windowElement);
       handle.setPointerCapture(event.pointerId);
       const move = moveEvent => {
         const maxLeft = Math.max(0, desktop.clientWidth - windowElement.offsetWidth);
@@ -229,19 +368,29 @@
         windowElement.style.left = `${clamp(originalLeft + moveEvent.clientX - startX, 0, maxLeft)}px`;
         windowElement.style.top = `${clamp(originalTop + moveEvent.clientY - startY, 0, maxTop)}px`;
         const pointerFromTop = moveEvent.clientY - desktopRect.top;
-        if (pointerFromTop >= 0 && pointerFromTop <= SNAP_TRIGGER_PX) {
+        snapShown = pointerFromTop >= 0 && pointerFromTop <= SNAP_TRIGGER_PX;
+        if (snapShown) {
+          placement = null;
+          snapPreview.hidden = true;
           showSnap(windowElement);
-          snapShown = true;
-        } else if (snapWindow === windowElement) {
-          hideSnap();
-          snapShown = false;
+        } else {
+          if (!snapPanel.hidden) {
+            snapPanel.hidden = true;
+            snapWindow = null;
+          }
+          placement = freeZoneAtPoint(windowElement, moveEvent.clientX, moveEvent.clientY);
+          showZonePreview(placement);
         }
       };
       const stop = () => {
         handle.removeEventListener('pointermove', move);
         handle.removeEventListener('pointerup', stop);
         handle.removeEventListener('pointercancel', stop);
-        if (!snapShown && snapWindow === windowElement) hideSnap();
+        if (placement) assignToZone(windowElement, placement.layout, placement.zone);
+        else if (!snapShown) {
+          hideSnap();
+          saveState();
+        }
       };
       handle.addEventListener('pointermove', move);
       handle.addEventListener('pointerup', stop);
@@ -249,11 +398,34 @@
     });
   };
 
+  const restoreDesktop = () => {
+    let state;
+    try { state = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (_) { return; }
+    if (!state || state.version !== 1 || !Array.isArray(state.windows)) return;
+    activeLayoutId = layoutById(state.layoutId)?.id || null;
+    restoring = true;
+    state.windows.forEach(saved => {
+      const trigger = programTrigger(saved.appId);
+      if (trigger) openProgram(trigger, saved);
+    });
+    restoring = false;
+    const visible = [...document.querySelectorAll('.os-window:not([hidden])')];
+    if (visible.length) focusWindow(visible.at(-1));
+  };
+
   document.querySelectorAll('[data-open-app]').forEach(button => button.addEventListener('click', () => openProgram(button)));
   startButton.addEventListener('click', event => {
     event.stopPropagation();
     startMenu.hidden = !startMenu.hidden;
     startButton.setAttribute('aria-expanded', String(!startMenu.hidden));
+  });
+  closeAllButton.addEventListener('click', () => {
+    hideSnap();
+    clearTimeout(saveTimer);
+    document.querySelectorAll('.os-window,.os-task-app').forEach(element => element.remove());
+    activeLayoutId = null;
+    stateWasCleared = true;
+    try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
   });
   document.addEventListener('pointerdown', event => {
     if (!startMenu.hidden && !startMenu.contains(event.target)) {
@@ -274,13 +446,21 @@
   window.addEventListener('resize', () => {
     hideSnap();
     if (window.innerWidth <= 700) return;
+    const desktopRect = desktop.getBoundingClientRect();
     document.querySelectorAll('.os-window:not(.is-maximized)').forEach(windowElement => {
-      const rect = windowElement.getBoundingClientRect();
-      const desktopRect = desktop.getBoundingClientRect();
-      applyRect(windowElement, { left:rect.left - desktopRect.left, top:rect.top - desktopRect.top, width:rect.width, height:rect.height });
+      const layout = layoutById(windowElement.dataset.snapLayout);
+      const zone = Number(windowElement.dataset.snapZone);
+      if (layout?.cells[zone]) applyRect(windowElement, rectForCell(layout.cells[zone]));
+      else {
+        const rect = windowElement.getBoundingClientRect();
+        applyRect(windowElement, { left:rect.left - desktopRect.left, top:rect.top - desktopRect.top, width:rect.width, height:rect.height });
+      }
     });
+    scheduleSave();
   });
+  window.addEventListener('beforeunload', saveState);
   const updateClock = () => { clock.textContent = new Intl.DateTimeFormat('de-DE', { hour:'2-digit', minute:'2-digit' }).format(new Date()); };
   updateClock();
   setInterval(updateClock, 30000);
+  restoreDesktop();
 })();

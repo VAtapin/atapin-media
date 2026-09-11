@@ -16,6 +16,7 @@ return [
     'private_workspace' => 'Dein persönlicher Medienarbeitsplatz',
     'menu' => 'Menü',
     'logout' => 'Abmelden',
+    'close_all_windows' => 'Alle Fenster schließen',
     'login' => 'Anmelden',
     'login_intro' => 'Willkommen in deinem Media Desktop.',
     'email' => 'E-Mail',

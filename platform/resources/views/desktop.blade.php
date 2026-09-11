@@ -21,10 +21,10 @@ $programs = [
     <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Desktop · {{ config('platform.brand') }}</title>
     <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/desktop-os.css?v=2"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3">
-    <script src="/assets/desktop-os.js?v=3" defer></script>
+    <script src="/assets/desktop-os.js?v=4" defer></script>
 </head>
 <body class="os-body">
-<main class="os-desktop" data-desktop>
+<main class="os-desktop" data-desktop data-storage-key="atapin.desktop.{{ auth()->id() }}.v1">
     <nav class="os-shortcuts" aria-label="Programme auf dem Desktop">
         @foreach($programs as $program)
             @if($program['shortcut'])
@@ -65,6 +65,7 @@ $programs = [
 <footer class="os-taskbar">
     <button class="os-start-button" type="button" data-start-button aria-expanded="false"><img src="/assets/brand/owner/logo-mark.png" alt=""><span>Start</span></button>
     <div class="os-running-apps" data-running-apps></div>
+    <button class="os-close-all" type="button" data-close-all title="{{ __('ui.close_all_windows') }}" aria-label="{{ __('ui.close_all_windows') }}"><b aria-hidden="true">×</b><span>{{ __('ui.close_all_windows') }}</span></button>
     <time data-clock></time>
 </footer>
 </body>
