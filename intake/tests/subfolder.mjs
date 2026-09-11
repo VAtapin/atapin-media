@@ -51,8 +51,18 @@ try {
   }
   assert((await (await fetch(origin)).text()).includes('Main website is unchanged'));
   assert.equal((await fetch(origin + '/upload')).url, url, 'missing trailing slash is redirected');
-  for (const path of ['/upload/missing/', '/upload/missing.php', '/private/manna-intake-config.php', '/private/manna-intake/catalogue.sqlite']) {
+  for (const path of ['/upload/missing/', '/upload/missing.php']) {
     assert.equal((await fetch(origin + path)).status, 404, path);
+  }
+  for (const path of ['/private/manna-intake-config.php', '/private/manna-intake/catalogue.sqlite']) {
+    assert(!existsSync(join(docroot, path)), 'private file is outside the document root');
+    const privateResponse = await fetch(origin + path);
+    // PHP 8.4's built-in server may fall back to the existing site's index.html.
+    // Neither a 404 nor that exact public page exposes the private file.
+    if (privateResponse.status !== 404) {
+      assert.equal(privateResponse.status, 200, path);
+      assert.equal(await privateResponse.text(), readFileSync(join(docroot, 'index.html'), 'utf8'), path);
+    }
   }
   const overview = await fetch(url + 'api.php?action=overview', { headers: { 'X-Intake-Request': '1', Origin: origin } });
   assert.equal(overview.status, 200, 'same-origin subfolder API works');
