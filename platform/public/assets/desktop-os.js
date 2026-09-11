@@ -10,6 +10,7 @@
   const MIN_WIDTH = 210;
   const MIN_HEIGHT = 160;
   const SNAP_GAP = 6;
+  const SNAP_TRIGGER_PX = 14;
   const layouts = [
     { id:'two', label:'2 Fenster', cells:[[0,0,.5,1],[.5,0,.5,1]] },
     { id:'three', label:'3 Fenster', cells:[[0,0,1/3,1],[1/3,0,1/3,1],[2/3,0,1/3,1]] },
@@ -227,7 +228,8 @@
         const maxTop = Math.max(0, desktop.clientHeight - windowElement.offsetHeight);
         windowElement.style.left = `${clamp(originalLeft + moveEvent.clientX - startX, 0, maxLeft)}px`;
         windowElement.style.top = `${clamp(originalTop + moveEvent.clientY - startY, 0, maxTop)}px`;
-        if (moveEvent.clientY <= desktopRect.top + 54) {
+        const pointerFromTop = moveEvent.clientY - desktopRect.top;
+        if (pointerFromTop >= 0 && pointerFromTop <= SNAP_TRIGGER_PX) {
           showSnap(windowElement);
           snapShown = true;
         } else if (snapWindow === windowElement) {
