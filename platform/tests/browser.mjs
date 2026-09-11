@@ -2,7 +2,7 @@ import { chromium } from '../../.local/node_modules/playwright/index.mjs';
 import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
-const server=spawn('php',['artisan','serve','--host=127.0.0.1','--port=8791'],{stdio:'pipe'});
+const server=spawn('php',['artisan','serve','--host=127.0.0.1','--port=8791'],{stdio:'pipe',detached:true});
 let output='';server.stderr.on('data',b=>output+=b);server.stdout.on('data',b=>output+=b);
 let browser;
 try {
@@ -39,4 +39,4 @@ try {
   await page.screenshot({path:'tests/artifacts/mobile.png',fullPage:true});
   assert.deepEqual(errors,[]);
   console.log('Browser: login, upload, rename, download, responsive navigation OK');
-} finally {await browser?.close();server.kill();}
+} finally {await browser?.close();try{process.kill(-server.pid,'SIGTERM');}catch{}server.stdout.destroy();server.stderr.destroy();server.unref();}

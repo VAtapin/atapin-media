@@ -9,6 +9,7 @@ permissions:
 jobs:
   foundation:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     services:
       mysql:
         image: mysql:8.4
@@ -73,7 +74,7 @@ jobs:
           touch /tmp/atapin-browser.sqlite
           php artisan migrate --force
           php tests/browser-fixture.php
-          node tests/browser.mjs
+          timeout 150 node tests/browser.mjs
         env:
           APP_ENV: testing
           APP_LOCALE: de
