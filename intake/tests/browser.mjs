@@ -12,7 +12,10 @@ export async function checkBrowser(origin, password) {
     await page.locator('#password').waitFor();
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'login fits mobile');
     await page.locator('#password').fill(password);
+    const submitted = page.waitForResponse(response => response.request().method() === 'POST' && response.request().isNavigationRequest());
     await page.getByRole('button', { name: 'Archiv öffnen' }).click();
+    const loginResponse = await submitted;
+    assert.equal(loginResponse.status(), 303, 'same-origin browser login must succeed: ' + await loginResponse.text().catch(() => 'redirect'));
     await page.locator('#workspace').waitFor({ state: 'visible' });
     assert.equal(await page.locator('input[type=password]').count(), 0);
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'mobile has no horizontal overflow');

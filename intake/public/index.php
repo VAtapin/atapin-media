@@ -13,7 +13,8 @@ if (!in_array($requestPath, [$basePath, $basePath . 'index.php'], true)) {
     exit;
 }
 header('Cache-Control: no-store');
-header('Referrer-Policy: no-referrer');
+// Same-origin form POSTs need a non-null Origin; do not send referrers to other sites.
+header('Referrer-Policy: same-origin');
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 header('X-Robots-Tag: noindex, nofollow, noarchive');
