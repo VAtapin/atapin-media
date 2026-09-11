@@ -15,6 +15,9 @@ function intake_config(): array
 {
     $file = intake_config_path();
     if (!is_file($file)) throw new \Atapin\Intake\IntakeError('not_configured', 503);
+    // Password changes must invalidate existing cookies on the next request,
+    // even when FPM/CLI OPcache would otherwise keep the old configuration.
+    if (function_exists('opcache_invalidate')) opcache_invalidate($file, true);
     $config = require $file;
     if (!is_array($config) || empty($config['storage_path']) || empty($config['origin'])) {
         throw new \Atapin\Intake\IntakeError('not_configured', 503);
