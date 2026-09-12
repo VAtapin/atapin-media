@@ -1,5 +1,18 @@
 <?php
 return [
+    'progress_queued'=>'Waiting for a free background worker. Starts automatically; do not import again.',
+    'progress_active'=>'Processing active · Update :seconds seconds ago',
+    'progress_last'=>'Last update from this import :seconds seconds ago',
+    'progress_stale'=>'No recent progress update from this import. The process measurement above shows queue activity, not completion of this import.',
+    'progress_part'=>'ZIP part :part of :parts', 'progress_file'=>'Current file',
+    'progress_file_bytes'=>'Progress of this file', 'progress_extracted'=>'Extracted in this ZIP part', 'progress_entry'=>'ZIP entry :entry of :entries',
+    'stage_verify_archive'=>'Checking ZIP file (SHA-256)', 'stage_verify_file'=>'Checking original file (SHA-256)',
+    'worker_working'=>'Background process active',
+    'worker_observed'=>'Background process found. Another activity measurement will follow.',
+    'worker_not_found'=>'No visible queue process found. Wait for the next Plesk tick; if this persists, check the scheduled task.',
+    'worker_unavailable'=>'Process measurement unavailable. Use the progress updates from the import.',
+    'worker_io'=>'Since the last measurement (:seconds seconds)', 'worker_read'=>'read', 'worker_written'=>'written', 'worker_measured'=>'Process measurement',
+    'worker_scope'=>'Activity of the entire queue, not proof of this import completing.',
     'trash_title'=>'Trash', 'trash_active'=>'Active content', 'trash_restore'=>'Restore',
     'delete_content'=>'Delete content', 'delete_file'=>'Delete file',
     'delete_content_confirm'=>'Move this content and its polls/comments to trash? Original files are retained. You can restore the content.',

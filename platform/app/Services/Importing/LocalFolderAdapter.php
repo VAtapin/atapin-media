@@ -51,7 +51,8 @@ class LocalFolderAdapter implements ImportAdapter
             if(! $journal->item($run,$key)) $run->increment('discovered');
             try {
                 $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($absolute) ?: 'application/octet-stream';
-                $hash = hash_file('sha256', $absolute);
+                $hash = app(ImportProgress::class)->hashFile($run, $absolute, 'verify_file');
+                app(ImportProgress::class)->checkpoint($run, 'files', ['file' => $file->getFilename(), 'file_bytes' => $file->getSize(), 'file_total_bytes' => $file->getSize()]);
                 $media = app(ImportedMediaRegistry::class)->register(['source' => $run->source, 'source_id' => hash('sha256', $relative.'|'.$hash),
                     'title' => mb_substr($file->getFilename(), 0, 255), 'original_name' => mb_substr($file->getFilename(), 0, 255),
                     'kind' => MediaLibrary::kind($mime), 'mime' => $mime, 'bytes' => $file->getSize(),

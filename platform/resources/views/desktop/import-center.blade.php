@@ -2,6 +2,7 @@
     <div class="media-library-toolbar-row"><button type="button" class="desktop-button" data-open-import-history>{{ __('imports.run_history') }}</button>@can('media.edit')<button type="button" class="desktop-button" data-local-video-check>{{ __('imports.audit_start') }}</button>@endcan
     @can('content.edit')<button type="button" class="desktop-button" data-catalog-reset>{{ __('imports.reset_start') }}</button>@endcan</div>
     <div class="import-center-status" data-import-status role="status">{{ __('imports.history_loading') }}</div>
+    <p class="import-worker-status" data-import-worker-status role="status" hidden></p>
     <form class="import-center-form" data-import-form>
         <fieldset class="import-methods">
             <legend>{{ __('imports.choose_method') }}</legend>
@@ -52,6 +53,7 @@
     <dialog class="import-report-dialog import-history-dialog os-window-content" data-import-history-dialog aria-label="{{ __('imports.run_history') }}">
         <div class="import-center-run-list-wrap">
             <div class="import-center-run-list-head"><strong>{{ __('imports.run_history') }}</strong><div><button type="button" class="desktop-button" data-import-refresh>{{ __('imports.refresh') }}</button><button type="button" class="desktop-button" data-close-import-history>{{ __('imports.report_close') }}</button></div></div>
+            <p class="import-worker-status" data-import-worker-status role="status" hidden></p>
             <div class="import-center-run-list" data-import-run-list aria-live="polite"></div>
             <nav class="media-library-pagination" data-import-pages aria-label="{{ __('imports.pages') }}"></nav>
         </div>

@@ -79,8 +79,8 @@ class TakeoutArchiveAdapter implements ImportAdapter
         if($entries>100000 || $expandedTotal>config('platform.media_upload_max_archive_bytes'))throw new \RuntimeException('Takeout extraction limit exceeded.');
         if($free===false || $free-$required<config('platform.media_upload_reserve_free_bytes'))throw new \RuntimeException('Not enough private storage for all Takeout parts.');
         $roots=[];
-        foreach($archives as $archive) {
-            app(ImportProgress::class)->checkpoint($run,'extract');
+        foreach($archives as $index => $archive) {
+            app(ImportProgress::class)->checkpoint($run,'extract', ['part' => $index + 1, 'parts' => count($archives), 'archive' => basename($archive)], true);
             $root=app(LocalArchiveAdapter::class)->expandFile($run,$archive,basename($archive)); $roots[]=$root;
             app(LocalFolderAdapter::class)->importDirectory($run,$root,false);
         }

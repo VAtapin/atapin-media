@@ -1,5 +1,18 @@
 <?php
 return [
+    'progress_queued'=>'Wartet auf einen freien Hintergrundprozess. Startet automatisch; bitte nicht erneut importieren.',
+    'progress_active'=>'Verarbeitung aktiv · Rückmeldung vor :seconds Sekunden',
+    'progress_last'=>'Letzte Rückmeldung dieses Imports vor :seconds Sekunden',
+    'progress_stale'=>'Keine aktuelle Fortschrittsmeldung dieses Imports. Die Prozessmessung oben zeigt die Aktivität der Warteschlange, nicht den Abschluss dieses Imports.',
+    'progress_part'=>'ZIP-Teil :part von :parts', 'progress_file'=>'Aktuelle Datei',
+    'progress_file_bytes'=>'Fortschritt dieser Datei', 'progress_extracted'=>'Ausgepackt in diesem ZIP-Teil', 'progress_entry'=>'ZIP-Eintrag :entry von :entries',
+    'stage_verify_archive'=>'ZIP-Datei wird geprüft (SHA-256)', 'stage_verify_file'=>'Originaldatei wird geprüft (SHA-256)',
+    'worker_working'=>'Hintergrundprozess aktiv',
+    'worker_observed'=>'Hintergrundprozess gefunden. Weitere Aktivitätsmessung folgt.',
+    'worker_not_found'=>'Kein sichtbarer Warteschlangenprozess gefunden. Auf den nächsten Plesk-Start warten; bei anhaltendem Zustand die geplante Aufgabe prüfen.',
+    'worker_unavailable'=>'Prozessmessung nicht verfügbar. Maßgeblich sind die Fortschrittsmeldungen des Imports.',
+    'worker_io'=>'Seit der letzten Messung (:seconds Sekunden)', 'worker_read'=>'gelesen', 'worker_written'=>'geschrieben', 'worker_measured'=>'Prozessmessung',
+    'worker_scope'=>'Aktivität der gesamten Warteschlange, kein Abschlussnachweis für diesen Import.',
     'trash_title'=>'Papierkorb', 'trash_active'=>'Aktive Inhalte', 'trash_restore'=>'Wiederherstellen',
     'delete_content'=>'Inhalt löschen', 'delete_file'=>'Datei löschen',
     'delete_content_confirm'=>'Diesen Inhalt mit seinen Umfragen und Kommentaren in den Papierkorb verschieben? Originaldateien bleiben erhalten. Wiederherstellung ist möglich.',

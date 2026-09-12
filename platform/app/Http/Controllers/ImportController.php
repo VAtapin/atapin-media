@@ -43,7 +43,7 @@ class ImportController extends Controller
             'page' => 'nullable|integer|min:1',
         ]);
 
-        $query = ImportRun::orderByDesc('updated_at');
+        $query = ImportRun::orderByRaw("CASE WHEN status IN ('running','stop_requested') THEN 0 WHEN status = 'queued' THEN 1 ELSE 2 END")->orderByDesc('created_at')->orderByDesc('id');
         if (($filters['source'] ?? null)) {
             $query->where('source', $filters['source']);
         }
@@ -58,7 +58,7 @@ class ImportController extends Controller
         }
 
         $active=ImportRun::whereIn('status',['queued','running','stop_requested'])->count();
-        $activeRun=ImportRun::whereIn('status',['queued','running','stop_requested'])->latest('updated_at')->first();
+        $activeRun=ImportRun::whereIn('status',['queued','running','stop_requested'])->orderByRaw("CASE WHEN status = 'queued' THEN 1 ELSE 0 END")->latest('updated_at')->first();
         $runs = $query->paginate(20)->withQueryString();
         $items = $runs->getCollection()->map(function (ImportRun $run) {
             $summary=app(\App\Services\Importing\ImportJournal::class)->summary($run);
@@ -91,6 +91,8 @@ class ImportController extends Controller
                 'last_page' => $runs->lastPage(),
                 'total' => $runs->total(),
                 'active'=>$active,
+                'server_time'=>now()->toIso8601String(),
+                'worker'=>$active ? app(\App\Services\Importing\ImportWorkerActivity::class)->observe() : ['state'=>'idle'],
                 'active_run'=>$activeRun?['id'=>$activeRun->id,'source'=>$activeRun->source,'status'=>$activeRun->status,'progress'=>$activeRun->progress,'updated_at'=>$activeRun->updated_at?->toIso8601String()]:null,
             ],
         ]);

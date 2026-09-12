@@ -26,6 +26,10 @@ if ($lock === false) {
 if (!flock($lock, LOCK_EX | LOCK_NB, $wouldBlock)) {
     fclose($lock);
     if ($wouldBlock) {
+        if ($mode === 'queue') {
+            try { $app->make(\App\Services\Importing\ImportWorkerActivity::class)->observe(true); }
+            catch (\Throwable $error) { report($error); } // Optional telemetry must not affect queue locking.
+        }
         fwrite(STDOUT, "The previous task is still running; this tick was skipped.\n");
         exit(0);
     }

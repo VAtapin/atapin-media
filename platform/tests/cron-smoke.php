@@ -24,6 +24,10 @@ $lock = fopen(storage_path('framework/cron-queue.lock'), 'c');
 flock($lock, LOCK_EX);
 try {
     if (!str_contains(runCron('queue'), 'skipped')) throw new RuntimeException('Concurrent tick was not skipped.');
+    if (PHP_OS_FAMILY === 'Linux' && config('cache.default') === 'file') {
+        $measurement = \Illuminate\Support\Facades\Cache::get('import-worker-observation:'.hash('sha256', base_path()).':scheduled');
+        if (!$measurement || in_array($measurement['public']['state'] ?? null, ['observed','working'], true)) throw new RuntimeException('A skipped observer tick must not be reported as a worker.');
+    }
 } finally { flock($lock, LOCK_UN); fclose($lock); }
 
 Queue::push(new \Tests\Fixtures\CronMarkerJob);

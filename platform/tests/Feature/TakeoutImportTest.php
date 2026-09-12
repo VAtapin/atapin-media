@@ -52,7 +52,19 @@ class TakeoutImportTest extends TestCase
     }
     public function test_german_multipart_takeout_builds_complete_content_and_attachments(): void
     {
+        $progress = new class extends \App\Services\Importing\ImportProgress {
+            public array $samples = [];
+            public function checkpoint(ImportRun $run, ?string $stage = null, array $details = [], bool $force = false): void
+            {
+                parent::checkpoint($run, $stage, $details, $force); $this->samples[] = $run->progress;
+            }
+        };
+        app()->instance(\App\Services\Importing\ImportProgress::class, $progress);
         $this->fixture();$run=$this->runImport();$this->assertSame('partial',$run->status);
+        $extract = collect($progress->samples)->first(fn($p)=>($p['stage']??null)==='extract' && ($p['part']??null)===2 && ($p['file_bytes']??0)>0);
+        $this->assertNotNull($extract); $this->assertSame(2, $extract['parts']); $this->assertGreaterThan(0, $extract['extract_total_bytes']);
+        $this->assertContains('verify_archive', array_column($progress->samples, 'stage'));
+        $this->assertContains('verify_file', array_column($progress->samples, 'stage'));
         $video=SourceRecord::where('source_id','abcdefghijk')->firstOrFail();$this->assertStringContainsString('additional details',$video->body);$this->assertCount(1,$video->metadata['media_ids']);
         $this->assertSame(60.0,(float)$video->metadata['duration']);
         $post=SourceRecord::where('source_id','UgFixture')->firstOrFail();$this->assertSame('Real post text',$post->body);$this->assertCount(1,$post->metadata['media_ids']);

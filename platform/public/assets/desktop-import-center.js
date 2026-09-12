@@ -40,7 +40,7 @@
     const folderButton = root.querySelector('[data-import-use-folder]');
     const up = root.querySelector('[data-import-up]');
     let selection = null, folder = '', parent = null, runPage = 1, previousStatuses = new Map();
-    let browsing = 0;
+    let browsing = 0, serverNow = Date.now();
     let uploadControl = null, uploadPaused = false;
     const uploadControls = root.querySelector('[data-import-upload-controls]');
     const pause = root.querySelector('[data-import-upload-pause]');
@@ -93,10 +93,41 @@
       fileInput.files = event.dataTransfer.files; setMethod('computer');
     });
     const date = value => value ? new Intl.DateTimeFormat(document.documentElement.lang, {dateStyle:'medium',timeStyle:'short'}).format(new Date(value)) : '—';
-    const runHtml = run => '<article class="import-center-run" data-import-run="' + escape(run.id) + '"><div class="import-run-heading"><strong>' + escape(t['source_' + run.source] || run.source) + '</strong><span class="media-library-status status-' + escape(run.status) + '">' + escape(t['run_' + run.status] || run.status) + '</span></div>' + (['running','stop_requested'].includes(run.status) && run.progress?.stage ? '<p>' + escape(t['stage_' + run.progress.stage] || run.progress.stage) + '</p>' : '') + (run.status === 'stop_requested' ? '<small>' + escape(t.stop_pending_hint) + '</small>' : '') + (run.source_ref ? '<p>' + escape(run.source_ref) + '</p>' : '') + '<dl><dt>' + escape(t.result_added) + '</dt><dd>' + Number(run.imported || 0) + '</dd><dt>' + escape(t.result_found) + '</dt><dd>' + Number(run.discovered || 0) + '</dd><dt>' + escape(t.result_skipped) + '</dt><dd>' + Number(run.skipped || 0) + '</dd><dt>' + escape(t.updated) + '</dt><dd>' + escape(date(run.updated_at)) + '</dd></dl>' + (run.skipped ? '<small>' + escape(t.skipped_hint) + '</small>' : '') + (run.error || run.notes?.length ? '<p class="is-error">' + escape(run.error || run.notes.join(' / ')) + '</p>' : '') + '<div class="import-run-actions"><button type="button" class="desktop-button" data-open-app="media">' + escape(t.view_library) + '</button>' + (['failed','partial','cancelled'].includes(run.status) ? '<button type="button" class="desktop-button" data-import-retry="' + escape(run.id) + '">' + escape(t.retry) + '</button>' : '') + (['queued','running'].includes(run.status) ? '<button type="button" class="desktop-button" data-import-stop="' + escape(run.id) + '">' + escape(t.stop_import) + '</button>' : '') + '</div></article>';
+    const bytes = value => {
+      const n = Math.max(0, Number(value) || 0), units = ['B','KB','MB','GB','TB'];
+      const unit = n ? Math.min(4, Math.floor(Math.log(n) / Math.log(1024))) : 0;
+      return new Intl.NumberFormat(document.documentElement.lang, {maximumFractionDigits:1}).format(n / 1024 ** unit) + ' ' + units[unit];
+    };
+    const progressHtml = run => {
+      if (run.status === 'queued') return '<p class="import-live-status">' + escape(t.progress_queued) + '</p>';
+      if (!['running','stop_requested'].includes(run.status)) return '';
+      const p = run.progress || {}, seconds = Math.max(0, Math.floor((serverNow - Date.parse(p.activity_at || run.updated_at)) / 1000));
+      const fresh = Number.isFinite(seconds) && seconds <= 30;
+      const activity = Number.isFinite(seconds) ? (fresh ? t.progress_active : t.progress_last).replace(':seconds', seconds) : t.history_stale;
+      let html = '<div class="import-live-status' + (fresh ? ' is-active' : '') + '"><strong>' + escape(t['stage_' + p.stage] || t.processing) + '</strong><p>' + escape(activity) + '</p>';
+      if (seconds > 600) html += '<p class="import-progress-warning">' + escape(t.progress_stale) + '</p>';
+      if (p.part && p.parts) html += '<p>' + escape(t.progress_part.replace(':part', p.part).replace(':parts', p.parts)) + (p.archive ? ' · ' + escape(p.archive) : '') + '</p>';
+      if (p.file) html += '<p class="import-progress-file">' + escape(t.progress_file) + ': ' + escape(p.file) + '</p>';
+      if (Number(p.file_total_bytes) > 0) {
+        const done = Math.min(Number(p.file_total_bytes), Math.max(0, Number(p.file_bytes) || 0)), percent = Math.floor(done / Number(p.file_total_bytes) * 100);
+        html += '<label class="import-file-progress">' + escape(t.progress_file_bytes) + ': ' + bytes(done) + ' / ' + bytes(p.file_total_bytes) + ' · ' + percent + ' %<progress max="' + Number(p.file_total_bytes) + '" value="' + done + '"></progress></label>';
+      }
+      if (p.stage === 'extract' && Number(p.extract_total_bytes) > 0) html += '<p>' + escape(t.progress_extracted) + ': ' + bytes(p.extracted_bytes) + ' / ' + bytes(p.extract_total_bytes) + '</p>';
+      if (p.stage === 'extract' && p.entry && p.entries) html += '<small>' + escape(t.progress_entry.replace(':entry', p.entry).replace(':entries', p.entries)) + '</small>';
+      return html + '</div>';
+    };
+    const workerText = worker => {
+      if (!worker || worker.state === 'idle') return '';
+      let value = t['worker_' + worker.state] || t.worker_unavailable;
+      if (worker.state === 'working') value += ' · ' + t.worker_io.replace(':seconds', worker.interval_seconds) + ': ' + t.worker_read + ' ' + bytes(worker.read_bytes) + ', ' + t.worker_written + ' ' + bytes(worker.written_bytes);
+      if (worker.observed_at) value += ' · ' + t.worker_measured + ': ' + date(worker.observed_at);
+      return value + ' ' + t.worker_scope;
+    };
+    const runHtml = run => '<article class="import-center-run" data-import-run="' + escape(run.id) + '"><div class="import-run-heading"><strong>' + escape(t['source_' + run.source] || run.source) + '</strong><span class="media-library-status status-' + escape(run.status) + '">' + escape(t['run_' + run.status] || run.status) + '</span></div>' + progressHtml(run) + (run.status === 'stop_requested' ? '<small>' + escape(t.stop_pending_hint) + '</small>' : '') + (run.source_ref ? '<p>' + escape(run.source_ref) + '</p>' : '') + '<dl><dt>' + escape(t.result_added) + '</dt><dd>' + Number(run.imported || 0) + '</dd><dt>' + escape(t.result_found) + '</dt><dd>' + Number(run.discovered || 0) + '</dd><dt>' + escape(t.result_skipped) + '</dt><dd>' + Number(run.skipped || 0) + '</dd><dt>' + escape(t.updated) + '</dt><dd>' + escape(date(run.updated_at)) + '</dd></dl>' + (run.skipped ? '<small>' + escape(t.skipped_hint) + '</small>' : '') + (run.error || run.notes?.length ? '<p class="is-error">' + escape(run.error || run.notes.join(' / ')) + '</p>' : '') + '<div class="import-run-actions"><button type="button" class="desktop-button" data-open-app="media">' + escape(t.view_library) + '</button>' + (['failed','partial','cancelled'].includes(run.status) ? '<button type="button" class="desktop-button" data-import-retry="' + escape(run.id) + '">' + escape(t.retry) + '</button>' : '') + (['queued','running'].includes(run.status) ? '<button type="button" class="desktop-button" data-import-stop="' + escape(run.id) + '">' + escape(t.stop_import) + '</button>' : '') + '</div></article>';
     const loadRuns = async (number = runPage) => {
       const data = await request(root.dataset.importsUrl + '?page=' + number);
       if (!root.isConnected) return;
+      serverNow = Date.parse(data.meta.server_time) || Date.now();
       runPage = data.meta.current_page;
       if (data.data.some(run => ['complete','partial','cancelled'].includes(run.status) && previousStatuses.get(run.id) !== run.status)) document.dispatchEvent(new Event('desktop-media-changed'));
       previousStatuses = new Map(data.data.map(run => [run.id,run.status]));
@@ -104,6 +135,7 @@
       root.dispatchEvent(new CustomEvent('import-runs-loaded',{bubbles:true,detail:data.data}));
       const active=data.meta.active??data.data.filter(run=>['queued','running','stop_requested'].includes(run.status)).length;
       const current=data.meta.active_run||data.data[0];
+      root.querySelectorAll('[data-import-worker-status]').forEach(element => {element.textContent = workerText(data.meta.worker); element.hidden = !element.textContent;});
       root.querySelector('[data-import-status]').textContent=data.meta.total+' '+t.run_history+' · '+active+' '+t.history_active+(current?' · '+(t['source_'+current.source]||current.source)+': '+(t['run_'+current.status]||current.status)+(current.progress?.stage?' · '+(t['stage_'+current.progress.stage]||current.progress.stage):'')+' · '+t.history_updated+': '+date(current.updated_at)+(active&&Date.now()-Date.parse(current.updated_at)>600000?' · '+t.history_stale:''):'');
       root.querySelector('[data-import-pages]').innerHTML = '<button type="button" data-import-page="' + (runPage - 1) + '" ' + (runPage <= 1 ? 'disabled' : '') + '>‹</button><span>' + runPage + ' / ' + data.meta.last_page + '</span><button type="button" data-import-page="' + (runPage + 1) + '" ' + (runPage >= data.meta.last_page ? 'disabled' : '') + '>›</button>';
     };
