@@ -19,7 +19,7 @@
 - Einstellungen внутри Desktop использует компактные вкладки: одновременно видна только одна панель. В Benutzer & Rechte роль выбирается отдельно, а её права и форма создания роли раскрываются по запросу.
 - Встроенные Einstellungen начинаются с вкладок без повторного branding/title/introduction. Форма использует плотную Desktop-компоновку; персональный масштаб 90–130 % применяется к Media Desktop и сохраняется в browser storage только после явного сохранения.
 - Пользовательские язык, timezone и branding применяются на уровне запроса из БД. Einstellungen открывается внутри стандартного окна Media Desktop как чистое встроенное приложение без старой sidebar/header-оболочки. Desktop & Design даёт live preview обоев, набора значков, акцента, плотности, эффектов и масштаба; закрытие с несохранёнными изменениями запрашивает подтверждение и восстанавливает сохранённое состояние.
-- Legacy UI Media Desktop полностью удалён: удалены standalone-страницы, общий layout, sidebar, header, breadcrumbs, навигация и все старые GET-маршруты модулей. `Einstellungen` монтируется прямо в окно Desktop через reusable Blade partial; iframe и параметры `embed=1` не используются.
+- Legacy UI Media Desktop полностью удалён: удалены standalone-страницы, общий layout, sidebar, header, breadcrumbs, навигация и все старые GET-маршруты модулей. `Einstellungen` использует самостоятельный native-view `desktop/settings.blade.php` и `desktop-settings.css`, без `app.css`, legacy partial или iframe.
 - Каталог Start/Desktop содержит 19 программ: Media Library объединяет Bilder, Audio и Dateien; Newsletter включает Subscribers. Добавлены Podcast, Themen & Kategorien и Shop & Verkäufe. Shop имеет базовые таблицы товаров и продаж без фиктивного payment provider.
 
 ## Текущее состояние и решения
@@ -27,6 +27,7 @@
 - Manna Vom Himmel — первый single-tenant deployment платформы.
 - Desktop реализован как адаптивная Blade/JavaScript-оболочка без обязательной Node-сборки.
 - Окна программ без нового native-интерфейса намеренно остаются пустыми; старый интерфейс не сохранён как fallback. Backend-операции модулей, защищённые загрузки, RBAC, settings, import jobs и workflow-сервисы сохранены для следующих native-интерфейсов.
+- Проверен весь Media Desktop: Settings — единственное окно с содержимым и оно использует только новый Desktop UI; остальные программы создаются оконным менеджером без module Blade/views, legacy CSS/JS, iframe или embed-вариантов.
 - Snap Layouts активируются курсором только в узкой зоне 14 px у верхней границы рабочего стола.
 - Синяя подсветка Snap-зоны является только временным drag-preview и очищается после Drop, отмены, сворачивания, закрытия и восстановления Desktop.
 - После закрытия последнего окна активная Snap-схема сбрасывается; свёрнутые окна продолжают удерживать схему и свои области.
@@ -68,8 +69,8 @@
 - Пройден `node --check` для `settings-tabs.js`; проверено отсутствие anchor-навигации и наличие семи вкладок/панелей. Laravel Feature test обновлён, но локально не запускался из-за отсутствия PHP.
 - Пройден `node --check` для `desktop-os.js`, `settings-tabs.js` и `browser.mjs`, а также `git diff --check`. Browser-сценарий расширен проверкой live preview и отмены несохранённых изменений; локальный запуск Laravel/browser suite недоступен из-за отсутствия PHP.
 - Проверено отсутствие iframe, `embed=1`, `postMessage`, legacy routes и legacy Blade layouts в исходниках платформы. Laravel Feature tests обновлены для прямого Settings UI и удаления старых GET-маршрутов, но локально не запускались из-за отсутствия PHP.
-- Исправлена Blade-компиляция `settings-content.blade.php`: директивы partial снова разделены строками, поэтому удаление legacy-обёртки не создаёт ошибку `unexpected endif` на production.
+- Проверены зависимости всех окон Desktop: `settings-content.blade.php` и его стили удалены; в runtime-исходниках отсутствуют legacy layouts, iframe, `embed=1`, `postMessage` и прямые legacy links.
 
 ## Последний связанный commit
 
-- `Fix settings Blade compilation`
+- `Replace legacy settings partial`

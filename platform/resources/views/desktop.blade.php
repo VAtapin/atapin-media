@@ -33,7 +33,7 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
 <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Desktop · {{ config('platform.brand') }}</title>
-    <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/app.css"><link rel="stylesheet" href="/assets/desktop-os.css?v=3"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3">
+    <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=3"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3"><link rel="stylesheet" href="/assets/desktop-settings.css?v=1">
     <link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3">
     <script src="/assets/desktop-shortcuts.js?v=1" defer></script>
     <script src="/assets/desktop-os.js?v=9" defer></script><script src="/assets/settings-tabs.js?v=2" defer></script>
@@ -67,12 +67,7 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
 
     @if($canManageSettings)
     <template id="settings-app-template">
-        <section class="settings-app settings-desktop-app" data-settings-app data-settings-direct data-active-section="desktop_design">
-            <div class="settings-app-main">
-                <div class="notice" data-settings-notice hidden role="status"></div>
-                @include('settings-content', $settingsPageData)
-            </div>
-        </section>
+        @include('desktop.settings', $settingsPageData)
     </template>
     @endif
 

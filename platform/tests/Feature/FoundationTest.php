@@ -121,7 +121,8 @@ class FoundationTest extends TestCase
         $this->putJson('/desktop/settings', ['section'=>'desktop_design','desktop_icon_set'=>'manna','desktop_wallpaper'=>'navy','desktop_accent'=>'gold','desktop_density'=>'comfortable','desktop_effects'=>true])
             ->assertOk()->assertJson(['status'=>'saved','section'=>'desktop_design']);
         $this->assertSame('navy', app(Settings::class)->get('desktop_wallpaper'));
-        $this->get('/desktop')->assertOk()->assertSee('settings-app-template', false)->assertDontSee('<iframe', false);
+        $this->get('/desktop')->assertOk()->assertSee('desktop-settings', false)
+            ->assertDontSee('/assets/app.css', false)->assertDontSee('<iframe', false);
     }
     public function test_desktop_includes_settings_directly(): void
     {
@@ -130,7 +131,8 @@ class FoundationTest extends TestCase
         $this->get('/desktop/shop')->assertStatus(405);
         $desktop = $this->get('/desktop')->assertOk();
         foreach (['Videos','Beiträge','Bücher & PDF','Podcast','Live Studio','Media Library','Projekte','Aufgaben','Kalender','Community','Newsletter','Themen & Kategorien','Publishing','Shop & Verkäufe','KI-Assistent','Analytics','Import Center','Integrationen','Einstellungen'] as $name) $desktop->assertSee($name);
-        $desktop->assertSee('settings-app-template', false)->assertDontSee('<iframe', false);
+        $desktop->assertSee('desktop-settings', false)->assertSee('/assets/desktop-settings.css?v=1', false)
+            ->assertDontSee('/assets/app.css', false)->assertDontSee('<iframe', false);
         $desktop->assertDontSee('>Subscribers<', false)->assertDontSee('>Bilder<', false)->assertDontSee('>Audio<', false)->assertDontSee('>Dateien<', false);
     }
     public function test_last_owner_cannot_be_demoted_and_short_password_account_can_be_created():void

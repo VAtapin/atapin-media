@@ -55,7 +55,7 @@ try {
   assert.match(await page.locator('[data-desktop]').getAttribute('style'), /desktop1\.png/);
   assert.equal(await page.locator('body').getAttribute('data-ui-scale'), '120');
   assert.equal(await page.evaluate(key => localStorage.getItem(`${key}.ui-scale`), shortcutStorage), savedScale);
-  assert.match(await settingsFrame.locator('[data-settings-save]').getAttribute('class'), /button/);
+  assert.match(await settingsFrame.locator('[data-settings-save]').getAttribute('class'), /desktop-settings-primary/);
   assert.equal(await settingsFrame.locator('form').first().evaluate(form => form.classList.contains('is-dirty')), true);
   page.once('dialog', dialog => { assert.match(dialog.message(), /nicht gespeicherte Änderungen/); return dialog.dismiss(); });
   await settingsWindow.locator('[data-window-action="close"]').click();
