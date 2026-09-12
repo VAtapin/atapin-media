@@ -52,6 +52,17 @@ class FoundationTest extends TestCase
         $this->patch('/desktop/media/'.$media->id,['title'=>'Hoffnung'])->assertRedirect();
         $this->assertDatabaseHas('audit_events',['action'=>'media.uploaded','subject'=>$media->id]);
     }
+    public function test_pdf_preview_is_authorised_and_disallows_active_content(): void
+    {
+        Storage::fake('local'); $user = $this->user('Owner'); $this->actingAs($user);
+        Storage::disk('local')->put('originals/document.pdf', '%PDF-1.4');
+        $media = Media::create(['title'=>'Dokument','original_name'=>'dokument.pdf','kind'=>'document','mime'=>'application/pdf','bytes'=>8,
+            'disk'=>'local','path'=>'originals/document.pdf','source'=>'upload','source_id'=>'document-preview']);
+        $this->get('/desktop/media/'.$media->id.'/preview')->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf')
+            ->assertHeader('Content-Security-Policy', "sandbox; default-src 'none';");
+        $this->getJson('/desktop/media/library')->assertJsonPath('data.0.preview_url', route('media.preview', $media));
+    }
     public function test_settings_invalidate_cache_and_escape_public_text(): void
     {
         $settings=app(Settings::class); $settings->all();

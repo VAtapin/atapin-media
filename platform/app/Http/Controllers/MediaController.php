@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 class MediaController extends Controller
 {
+    private const PREVIEW_MIMES = ['image/jpeg','image/png','image/webp','image/gif','audio/mpeg','audio/ogg','video/mp4','video/webm','application/pdf'];
+
     public function library(Request $request)
     {
         $filters = $request->validate([
@@ -35,6 +37,7 @@ class MediaController extends Controller
                 'title' => $media->title,
                 'original_name' => $media->original_name,
                 'kind' => $media->kind,
+                'mime' => $media->mime,
                 'asset_role' => $media->asset_role,
                 'bytes' => $media->bytes,
                 'formatted_size' => $media->formattedSize(),
@@ -44,6 +47,7 @@ class MediaController extends Controller
                 'tags' => $media->tags->pluck('name')->values(),
                 'asset_count' => $media->assets->count(),
                 'download_url' => route('media.download', $media),
+                'preview_url' => in_array($media->mime, self::PREVIEW_MIMES, true) ? route('media.preview', $media) : null,
             ]),
             'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total()],
         ]);
@@ -71,9 +75,9 @@ class MediaController extends Controller
     }
     public function preview(Media $media)
     {
-        abort_unless(in_array($media->mime, ['image/jpeg','image/png','image/webp','image/gif','audio/mpeg','audio/ogg','video/mp4','video/webm']), 415);
+        abort_unless(in_array($media->mime, self::PREVIEW_MIMES, true), 415);
         abort_unless(Storage::disk($media->disk)->exists($media->path), 404);
         return Storage::disk($media->disk)->response($media->path, null,
-            ['Content-Type' => $media->mime, 'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store']);
+            ['Content-Type' => $media->mime, 'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store', 'Content-Security-Policy' => "sandbox; default-src 'none';"]);
     }
 }

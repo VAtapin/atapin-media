@@ -3,6 +3,15 @@
   const escape = value => String(value ?? '').replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[char]));
   const date = value => value ? new Intl.DateTimeFormat('de-DE', { dateStyle:'medium' }).format(new Date(value)) : '–';
   const icon = kind => ({ video:'▶', audio:'♫', image:'▧', document:'▤', other:'…' }[kind] || '…');
+  const preview = item => {
+    if (!item.preview_url) return '';
+    const url = escape(item.preview_url);
+    if (item.kind === 'image') return `<img class="media-library-preview image" src="${url}" alt="">`;
+    if (item.kind === 'audio') return `<audio class="media-library-preview audio" controls preload="metadata" src="${url}"></audio>`;
+    if (item.kind === 'video') return `<video class="media-library-preview video" controls preload="metadata" src="${url}"></video>`;
+    if (item.mime === 'application/pdf') return `<iframe class="media-library-preview pdf" src="${url}" title="PDF-Vorschau" sandbox></iframe>`;
+    return '';
+  };
   window.initializeMediaLibrary = root => {
     if (!root || root.dataset.initialized) return;
     root.dataset.initialized = 'true';
@@ -22,7 +31,7 @@
     };
     const renderDetails = item => {
       if (!item) { details.innerHTML = '<p>Wähle ein Medium, um Details zu sehen.</p>'; return; }
-      details.innerHTML = `<span class="media-library-detail-icon" aria-hidden="true">${icon(item.kind)}</span><h3>${escape(item.title)}</h3><p>${escape(item.original_name)}</p><dl><div><dt>Typ</dt><dd>${escape(labels[item.kind] || item.kind)}</dd></div><div><dt>Quelle</dt><dd>${escape(labels[item.source] || item.source)}</dd></div><div><dt>Status</dt><dd>${escape(labels[item.status] || item.status)}</dd></div><div><dt>Größe</dt><dd>${escape(item.formatted_size)}</dd></div><div><dt>Hinzugefügt</dt><dd>${date(item.created_at)}</dd></div>${item.asset_count ? `<div><dt>Verbundene Assets</dt><dd>${item.asset_count}</dd></div>` : ''}</dl>${item.tags.length ? `<p class="media-library-tags">${item.tags.map(tag => `<span>${escape(tag)}</span>`).join('')}</p>` : ''}<a class="media-library-download" href="${escape(item.download_url)}">Herunterladen</a>`;
+      details.innerHTML = `${preview(item)}<span class="media-library-detail-icon" aria-hidden="true">${icon(item.kind)}</span><h3>${escape(item.title)}</h3><p>${escape(item.original_name)}</p><dl><div><dt>Typ</dt><dd>${escape(labels[item.kind] || item.kind)}</dd></div><div><dt>Quelle</dt><dd>${escape(labels[item.source] || item.source)}</dd></div><div><dt>Status</dt><dd>${escape(labels[item.status] || item.status)}</dd></div><div><dt>Größe</dt><dd>${escape(item.formatted_size)}</dd></div><div><dt>Hinzugefügt</dt><dd>${date(item.created_at)}</dd></div>${item.asset_count ? `<div><dt>Verbundene Assets</dt><dd>${item.asset_count}</dd></div>` : ''}</dl>${item.tags.length ? `<p class="media-library-tags">${item.tags.map(tag => `<span>${escape(tag)}</span>`).join('')}</p>` : ''}<a class="media-library-download" href="${escape(item.download_url)}">Herunterladen</a>`;
     };
     const render = payload => {
       lastPayload = payload;
