@@ -98,5 +98,5 @@
 
 ## Последний связанный commit
 
-- `Unify Media Library desktop presentation` (`c089dc4`)
+- `Build Import Center pipeline for desktop` (`d173f27`)
 
