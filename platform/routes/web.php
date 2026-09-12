@@ -29,6 +29,7 @@ Route::middleware('auth')->group(function () {
         Route::get('imports/files', [\App\Http\Controllers\ImportController::class, 'files'])->name('imports.files');
         Route::post('imports', [\App\Http\Controllers\ImportController::class,'store'])->name('imports.store');
         Route::post('imports/{run}/retry', [\App\Http\Controllers\ImportController::class,'retry'])->name('imports.retry');
+        Route::post('imports/{run}/stop', [\App\Http\Controllers\ImportController::class,'stop'])->name('imports.stop');
     });
     Route::middleware('can:projects.manage')->prefix('desktop')->group(function () {
         Route::post('projects', [\App\Http\Controllers\ProjectController::class,'store'])->name('projects.store');

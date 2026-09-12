@@ -31,6 +31,7 @@ class LocalArchiveAdapter implements ImportAdapter
     }
     public function import(ImportRun $run): void
     {
+        app(ImportProgress::class)->checkpoint($run, 'prepare');
         if ($id = $run->source_options['media_id'] ?? null) {
             $media = Media::where('user_id', $run->user_id)->where('source', 'upload')->findOrFail($id);
             $archive = Storage::disk($media->disk)->path($media->path); $name = $media->original_name;
@@ -48,12 +49,13 @@ class LocalArchiveAdapter implements ImportAdapter
             $data = $root.'/files';
             if (! is_file($root.'/.complete')) {
                 if (! is_dir($data)) mkdir($data, 0700);
-                $this->extract($archive, $name, $data); touch($root.'/.complete');
+                app(ImportProgress::class)->checkpoint($run, 'extract');
+                $this->extract($archive, $name, $data, $run); touch($root.'/.complete');
             }
             (new LocalFolderAdapter($this->inboxRoot))->importDirectory($run, $data);
         } finally { flock($lock, LOCK_UN); fclose($lock); }
     }
-    private function extract(string $archive, string $name, string $root): void
+    private function extract(string $archive, string $name, string $root, ImportRun $run): void
     {
         $bytes = 0; $count = 0;
         if (str_ends_with(strtolower($name), '.zip')) {
@@ -61,12 +63,14 @@ class LocalArchiveAdapter implements ImportAdapter
             if ($zip->open($archive) !== true) throw new RuntimeException('Cannot open ZIP archive.');
             try {
                 for ($i = 0; $i < $zip->numFiles; $i++) {
+                    app(ImportProgress::class)->checkpoint($run);
                     $entry = $zip->statIndex($i); ImportPath::entry($entry['name']);
                     $zip->getExternalAttributesIndex($i, $os, $attributes);
                     if ($os === ZipArchive::OPSYS_UNIX && (($attributes >> 16) & 0170000) === 0120000) throw new RuntimeException('Archive links are not supported.');
                     $this->limit($bytes, $count, (int) $entry['size']);
                 }
                 for ($i = 0; $i < $zip->numFiles; $i++) {
+                    app(ImportProgress::class)->checkpoint($run);
                     $entry = $zip->statIndex($i);
                     if (str_ends_with($entry['name'], '/')) continue;
                     $stream = $zip->getStream($entry['name']);
@@ -83,12 +87,14 @@ class LocalArchiveAdapter implements ImportAdapter
         $tar = new \PharData($alias);
         $iterator = new \RecursiveIteratorIterator($tar);
         foreach ($iterator as $file) {
+            app(ImportProgress::class)->checkpoint($run);
             $entry = substr($file->getPathname(), strlen('phar://'.str_replace('\\', '/', $alias).'/'));
             ImportPath::entry($entry);
             if ($file->isLink()) throw new RuntimeException('Archive links are not supported.');
             $this->limit($bytes, $count, $file->getSize());
         }
         foreach ($iterator as $file) {
+            app(ImportProgress::class)->checkpoint($run);
             if (! $file->isFile()) continue;
             $entry = substr($file->getPathname(), strlen('phar://'.str_replace('\\', '/', $alias).'/'));
             $stream = fopen($file->getPathname(), 'rb');

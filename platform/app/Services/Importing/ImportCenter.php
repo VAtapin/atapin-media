@@ -58,21 +58,34 @@ class ImportCenter
 
     public function run(ImportRun $run): void
     {
-        $run->update(['status' => 'running', 'started_at' => now()]);
+        $claimed = \Illuminate\Support\Facades\DB::transaction(function () use ($run) {
+            $current = ImportRun::lockForUpdate()->findOrFail($run->id);
+            if ($current->status !== 'queued') return false;
+            $current->update(['status' => 'running', 'started_at' => now(), 'progress' => ['stage' => 'prepare']]);
+            return true;
+        });
+        if (! $claimed) return;
+        $run->refresh();
         try {
+            app(ImportProgress::class)->checkpoint($run);
             $this->adapter($run->source)->import($run);
-            $run->update([
-                'status' => $run->notes ? 'partial' : 'complete',
-                'finished_at' => now(),
-            ]);
+            $this->finish($run, $run->fresh()->notes ? 'partial' : 'complete');
+        } catch (ImportStopped) {
+            $this->finish($run, 'cancelled');
         } catch (Throwable $e) {
+            if ($run->fresh()->status === 'stop_requested') { $this->finish($run, 'cancelled'); return; }
             $run->increment('skipped');
-            $run->update([
-                'status' => 'failed',
-                'error' => $e->getMessage(),
-                'finished_at' => now(),
-            ]);
+            $this->finish($run, 'failed', $e->getMessage());
             throw $e;
         }
+    }
+
+    private function finish(ImportRun $run, string $status, ?string $error = null): void
+    {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($run, $status, $error) {
+            $current = ImportRun::lockForUpdate()->findOrFail($run->id);
+            if ($current->status === 'stop_requested') { $status = 'cancelled'; $error = null; }
+            $current->update(['status' => $status, 'error' => $error, 'finished_at' => now()]);
+        });
     }
 }

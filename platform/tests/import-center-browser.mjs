@@ -90,6 +90,13 @@ try {
   await imports.locator('[data-import-start]').click();
   await imports.locator('[data-import-message]').getByText('Import läuft im Hintergrund.').waitFor();
   await imports.locator('[data-import-run-list]').getByText('Gespeichertes YouTube-Archiv').first().waitFor();
+  const queuedRun = imports.locator('.import-center-run').filter({hasText:'Gespeichertes YouTube-Archiv'}).first();
+  const stopResponse = page.waitForResponse(response => response.url().endsWith('/stop') && response.request().method() === 'POST');
+  page.once('dialog', dialog => dialog.accept());
+  await queuedRun.locator('[data-import-stop]').click();
+  assert((await stopResponse).ok());
+  await queuedRun.getByText('Angehalten',{exact:true}).waitFor();
+  await queuedRun.locator('[data-import-retry]').waitFor();
   await imports.locator('[data-window-action="help"]').click();
   const help = page.locator('.os-window[data-app-id="help-imports"]');
   await help.locator('.desktop-help').getByText('Wählen Sie zuerst einen von vier Wegen:', {exact:false}).waitFor();

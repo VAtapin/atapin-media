@@ -26,7 +26,9 @@ class ContentMetadataImporter
 
     public function comments(string $source, string $parent, array $comments, array $metadata = []): void
     {
+        $run = isset($metadata['import_id']) ? ImportRun::find($metadata['import_id']) : null;
         foreach ($comments as $comment) {
+            if ($run) app(ImportProgress::class)->checkpoint($run);
             if (! is_array($comment)) continue;
             $text = $comment['text'] ?? $comment['content'] ?? '';
             $id = (string) ($comment['id'] ?? hash('sha256', json_encode($comment)));
@@ -40,6 +42,7 @@ class ContentMetadataImporter
     {
         $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS));
         foreach ($iterator as $file) {
+            app(ImportProgress::class)->checkpoint($run);
             if (! $file->isFile() || $file->isLink()) continue;
             $extension = strtolower($file->getExtension());
             if ($file->getSize() > 64 * 1024 * 1024) continue;
@@ -54,7 +57,10 @@ class ContentMetadataImporter
                     $source = $data['source'] ?? ($run->source === 'youtube-service' || isset($data['ordered_items']) || str_starts_with(strtolower($data['extractor_key']??''),'youtube') ? 'youtube' : $run->source);
                     $this->playlist($source, $data, ['import_id'=>$run->id]);
                 } elseif (($data['schema'] ?? null) === 'atapin-content/v1') {
-                    foreach ($data['records'] ?? [] as $record) $this->normalized($run, $record, $root, dirname($file->getPathname()), count($data['records']) === 1);
+                    foreach ($data['records'] ?? [] as $record) {
+                        app(ImportProgress::class)->checkpoint($run);
+                        $this->normalized($run, $record, $root, dirname($file->getPathname()), count($data['records']) === 1);
+                    }
                 } elseif (isset($data['youtube']) || (isset($data['id'], $data['title']) && isset($data['extractor_key']))) {
                     $info = $data['youtube'] ?? $data;
                     $info['id'] ??= basename(dirname($file->getPathname()));
@@ -65,6 +71,7 @@ class ContentMetadataImporter
                         'title' => mb_substr($data['text'], 0, 120), 'body' => $data['text'], 'metadata' => $data], $root, dirname($file->getPathname()));
                 }
             } catch (\Throwable $error) {
+                if ($error instanceof ImportStopped) throw $error;
                 $notes = $run->fresh()->notes ?? [];
                 if (count($notes) < 100) $notes[] = $file->getFilename().': '.$error->getMessage();
                 $run->update(['notes' => $notes]);
@@ -169,6 +176,7 @@ class ContentMetadataImporter
             if (! $headers) return;
             $headers = array_map(fn ($key) => preg_replace('/[^a-z0-9]/', '', strtolower(ltrim($key, "\xEF\xBB\xBF"))), $headers);
             while (($values = fgetcsv($stream, escape: '')) !== false) {
+                app(ImportProgress::class)->checkpoint($run);
                 if (count($values) !== count($headers)) continue;
                 $row = array_combine($headers, $values);
                 $id = $row['videoid'] ?? $row['id'] ?? null;

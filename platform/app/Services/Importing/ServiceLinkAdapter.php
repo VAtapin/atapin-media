@@ -52,7 +52,7 @@ class ServiceLinkAdapter implements ImportAdapter
         if (! $lock) throw new \RuntimeException('Storage unavailable.');
         if (! flock($lock, LOCK_EX | LOCK_NB)) { fclose($lock); throw new \RuntimeException('Source import is already running.'); }
         try {
-        $process->run();
+        app(ImportProgress::class)->download($run, $process);
         // Even a partial service response can contain useful completed originals.
         (new LocalFolderAdapter)->importDirectory($run, $root);
         if (! $process->isSuccessful()) {

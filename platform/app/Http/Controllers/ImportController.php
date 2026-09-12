@@ -37,7 +37,7 @@ class ImportController extends Controller
         $filters = $request->validate([
             'source' => 'nullable|string|max:64',
             'source_kind' => 'nullable|string|max:64',
-            'status' => 'nullable|in:queued,running,complete,partial,failed',
+            'status' => 'nullable|in:queued,running,stop_requested,cancelled,complete,partial,failed',
             'target_profile' => 'nullable|in:media_library,videos,posts,shorts,comments,polls,mixed',
             'page' => 'nullable|integer|min:1',
         ]);
@@ -64,6 +64,7 @@ class ImportController extends Controller
                 'source_kind' => $run->source_kind,
                 'source_ref' => $run->source_ref,
                 'status' => $run->status,
+                'progress' => $run->progress,
                 'target_profile' => $run->target_profile,
                 'discovered' => $run->discovered,
                 'imported' => $run->imported,
@@ -162,13 +163,26 @@ class ImportController extends Controller
     {
         \Illuminate\Support\Facades\DB::transaction(function () use ($run) {
             $current = ImportRun::lockForUpdate()->findOrFail($run->id);
-            abort_unless(in_array($current->status, ['failed', 'partial'], true), 409);
+            abort_unless(in_array($current->status, ['failed', 'partial', 'cancelled'], true), 409);
             $current->update(['status' => 'queued', 'error' => null, 'notes' => [], 'started_at' => null,
-                'finished_at' => null, 'discovered' => 0, 'imported' => 0, 'skipped' => 0, 'progress' => 0]);
+                'finished_at' => null, 'discovered' => 0, 'imported' => 0, 'skipped' => 0, 'progress' => []]);
             dispatch((new \App\Jobs\ImportArchive($current->id))->afterCommit());
         });
         $audit->record('import.retried', (string) $run->id);
         return response()->json(['status' => 'queued', 'import_id' => $run->id]);
+    }
+
+    public function stop(ImportRun $run, Audit $audit)
+    {
+        $status = \Illuminate\Support\Facades\DB::transaction(function () use ($run) {
+            $current = ImportRun::lockForUpdate()->findOrFail($run->id);
+            abort_unless(in_array($current->status, ['queued', 'running', 'stop_requested', 'cancelled'], true), 409);
+            if ($current->status === 'queued') $current->update(['status' => 'cancelled', 'finished_at' => now()]);
+            elseif ($current->status === 'running') $current->update(['status' => 'stop_requested']);
+            return $current->status;
+        });
+        $audit->record('import.stop_requested', (string) $run->id);
+        return response()->json(['status' => $status, 'import_id' => $run->id]);
     }
 
     private function supportsSource(string $source): bool

@@ -36,9 +36,11 @@ class LocalFolderAdapter implements ImportAdapter
     }
     public function importDirectory(ImportRun $run, string $root): void
     {
+        app(ImportProgress::class)->checkpoint($run, 'files');
         $inbox = realpath($this->inboxRoot);
         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS));
         foreach ($iterator as $file) {
+            app(ImportProgress::class)->checkpoint($run);
             if (! $file->isFile() || $file->isLink()) continue;
             if (str_starts_with($file->getFilename(), '.') || preg_match('/\.(part|ytdl|tmp)$/i', $file->getFilename())) continue;
             $absolute = ImportPath::resolve($root, $file->getPathname());
@@ -62,6 +64,7 @@ class LocalFolderAdapter implements ImportAdapter
             }
         }
         if (! $run->fresh()->discovered) $run->update(['notes' => ['No files found.']]);
+        app(ImportProgress::class)->checkpoint($run, 'metadata');
         app(ContentMetadataImporter::class)->scan($run, $root);
     }
 }

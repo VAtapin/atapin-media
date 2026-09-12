@@ -10,10 +10,23 @@ use Illuminate\Bus\Queueable;
 class ImportArchive implements ShouldQueue
 {
     use InteractsWithQueue, Queueable, SerializesModels;
+    public int $timeout = 3600;
+    public int $tries = 1;
+    public bool $failOnTimeout = true;
     public function __construct(private string $runId){}
     public function handle(ImportCenter $center):void
     {
         $run = ImportRun::findOrFail($this->runId);
         $center->run($run);
+    }
+    public function failed(?\Throwable $exception): void
+    {
+        \Illuminate\Support\Facades\DB::transaction(function () {
+            $run = ImportRun::lockForUpdate()->find($this->runId);
+            if (! $run || ! in_array($run->status, ['running', 'stop_requested'], true)) return;
+            $cancelled = $run->status === 'stop_requested';
+            $run->update(['status' => $cancelled ? 'cancelled' : 'failed', 'finished_at' => now(),
+                'error' => $cancelled ? null : __('imports.worker_stopped')]);
+        });
     }
 }

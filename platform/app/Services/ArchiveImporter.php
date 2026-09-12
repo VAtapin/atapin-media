@@ -13,8 +13,9 @@ class ArchiveImporter
     {
         $this->run=$run; $root=realpath(config('platform.'.$run->source.'_root'));
         if (!$root || !is_dir($root)) throw new \RuntimeException('Configured archive directory is missing.');
-        $this->root=$root; $run->update(['status'=>'running']);
+        $this->root=$root; $this->notes=[]; app(\App\Services\Importing\ImportProgress::class)->checkpoint($run, 'files'); $run->update(['status'=>'running']);
         if ($run->source==='intake') $this->intake(); else $this->youtube();
+        app(\App\Services\Importing\ImportProgress::class)->checkpoint($run);
         $run->update(['status'=>$this->notes?'partial':'complete','notes'=>$this->notes]);
     }
 
@@ -26,9 +27,9 @@ class ArchiveImporter
             throw new \RuntimeException('Configured archive directory is missing.');
         }
         $this->root = $root;
-        $run->update(['status'=>'running']);
+        $this->notes=[]; app(\App\Services\Importing\ImportProgress::class)->checkpoint($run, 'files');
         $this->intake();
-        $run->update(['status'=>$this->notes?'partial':'complete','notes'=>$this->notes]);
+        $run->update(['notes'=>$this->notes]);
     }
 
     public function runYoutube(ImportRun $run): void
@@ -39,9 +40,9 @@ class ArchiveImporter
             throw new \RuntimeException('Configured archive directory is missing.');
         }
         $this->root = $root;
-        $run->update(['status'=>'running']);
+        $this->notes=[]; app(\App\Services\Importing\ImportProgress::class)->checkpoint($run, 'metadata');
         $this->youtube();
-        $run->update(['status'=>$this->notes?'partial':'complete','notes'=>$this->notes]);
+        $run->update(['notes'=>$this->notes]);
     }
     private function path(string $relative):string
     {
@@ -59,7 +60,9 @@ class ArchiveImporter
     }
     private function attempt(string $label,callable $fn):void
     {
+        app(\App\Services\Importing\ImportProgress::class)->checkpoint($this->run);
         try {$fn();} catch(\Throwable $e) {
+            if ($e instanceof \App\Services\Importing\ImportStopped) throw $e;
             if(count($this->notes)<100)$this->notes[]=$label.': '.$e->getMessage();
             $this->run->increment('skipped');
         }

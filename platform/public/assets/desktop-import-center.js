@@ -85,15 +85,15 @@
       fileInput.files = event.dataTransfer.files; setMethod('computer');
     });
     const date = value => value ? new Intl.DateTimeFormat(document.documentElement.lang, {dateStyle:'medium',timeStyle:'short'}).format(new Date(value)) : '—';
-    const runHtml = run => '<article class="import-center-run"><div class="import-run-heading"><strong>' + escape(t['source_' + run.source] || run.source) + '</strong><span class="media-library-status status-' + escape(run.status) + '">' + escape(t['run_' + run.status] || run.status) + '</span></div>' + (run.source_ref ? '<p>' + escape(run.source_ref) + '</p>' : '') + '<dl><dt>' + escape(t.result_added) + '</dt><dd>' + Number(run.imported || 0) + '</dd><dt>' + escape(t.result_found) + '</dt><dd>' + Number(run.discovered || 0) + '</dd><dt>' + escape(t.result_skipped) + '</dt><dd>' + Number(run.skipped || 0) + '</dd><dt>' + escape(t.updated) + '</dt><dd>' + escape(date(run.updated_at)) + '</dd></dl>' + (run.skipped ? '<small>' + escape(t.skipped_hint) + '</small>' : '') + (run.error || run.notes?.length ? '<p class="is-error">' + escape(run.error || run.notes.join(' / ')) + '</p>' : '') + '<div class="import-run-actions"><button type="button" class="desktop-button" data-open-app="media">' + escape(t.view_library) + '</button>' + (['failed','partial'].includes(run.status) ? '<button type="button" class="desktop-button" data-import-retry="' + escape(run.id) + '">' + escape(t.retry) + '</button>' : '') + '</div></article>';
+    const runHtml = run => '<article class="import-center-run"><div class="import-run-heading"><strong>' + escape(t['source_' + run.source] || run.source) + '</strong><span class="media-library-status status-' + escape(run.status) + '">' + escape(t['run_' + run.status] || run.status) + '</span></div>' + (['running','stop_requested'].includes(run.status) && run.progress?.stage ? '<p>' + escape(t['stage_' + run.progress.stage] || run.progress.stage) + '</p>' : '') + (run.status === 'stop_requested' ? '<small>' + escape(t.stop_pending_hint) + '</small>' : '') + (run.source_ref ? '<p>' + escape(run.source_ref) + '</p>' : '') + '<dl><dt>' + escape(t.result_added) + '</dt><dd>' + Number(run.imported || 0) + '</dd><dt>' + escape(t.result_found) + '</dt><dd>' + Number(run.discovered || 0) + '</dd><dt>' + escape(t.result_skipped) + '</dt><dd>' + Number(run.skipped || 0) + '</dd><dt>' + escape(t.updated) + '</dt><dd>' + escape(date(run.updated_at)) + '</dd></dl>' + (run.skipped ? '<small>' + escape(t.skipped_hint) + '</small>' : '') + (run.error || run.notes?.length ? '<p class="is-error">' + escape(run.error || run.notes.join(' / ')) + '</p>' : '') + '<div class="import-run-actions"><button type="button" class="desktop-button" data-open-app="media">' + escape(t.view_library) + '</button>' + (['failed','partial','cancelled'].includes(run.status) ? '<button type="button" class="desktop-button" data-import-retry="' + escape(run.id) + '">' + escape(t.retry) + '</button>' : '') + (['queued','running'].includes(run.status) ? '<button type="button" class="desktop-button" data-import-stop="' + escape(run.id) + '">' + escape(t.stop_import) + '</button>' : '') + '</div></article>';
     const loadRuns = async (number = runPage) => {
       const data = await request(root.dataset.importsUrl + '?page=' + number);
       if (!root.isConnected) return;
       runPage = data.meta.current_page;
-      if (data.data.some(run => ['complete','partial'].includes(run.status) && previousStatuses.get(run.id) !== run.status)) document.dispatchEvent(new Event('desktop-media-changed'));
+      if (data.data.some(run => ['complete','partial','cancelled'].includes(run.status) && previousStatuses.get(run.id) !== run.status)) document.dispatchEvent(new Event('desktop-media-changed'));
       previousStatuses = new Map(data.data.map(run => [run.id,run.status]));
       list.innerHTML = data.data.length ? data.data.map(runHtml).join('') : '<p class="import-center-empty">' + escape(t.no_runs) + '</p>';
-      const active = data.data.filter(run => ['queued','running'].includes(run.status)).length;
+      const active = data.data.filter(run => ['queued','running','stop_requested'].includes(run.status)).length;
       root.querySelector('[data-import-status]').textContent = data.meta.total + ' ' + t.run_history + ' · ' + active + ' ' + t.active_on_page;
       root.querySelector('[data-import-pages]').innerHTML = '<button type="button" data-import-page="' + (runPage - 1) + '" ' + (runPage <= 1 ? 'disabled' : '') + '>‹</button><span>' + runPage + ' / ' + data.meta.last_page + '</span><button type="button" data-import-page="' + (runPage + 1) + '" ' + (runPage >= data.meta.last_page ? 'disabled' : '') + '>›</button>';
     };
@@ -126,9 +126,11 @@
     root.querySelector('[data-import-refresh]').addEventListener('click', () => loadRuns().catch(error => showMessage(error.message, true)));
     root.querySelector('[data-import-pages]').addEventListener('click', event => {const button = event.target.closest('[data-import-page]'); if (button) loadRuns(Number(button.dataset.importPage)).catch(error => showMessage(error.message, true));});
     list.addEventListener('click', async event => {
-      const button = event.target.closest('[data-import-retry]'); if (!button) return;
+      const button = event.target.closest('[data-import-retry], [data-import-stop]'); if (!button) return;
+      const stopping = Boolean(button.dataset.importStop);
+      if (stopping && !window.confirm(t.stop_import_confirm)) return;
       button.disabled = true;
-      try {await request(root.dataset.importsUrl + '/' + button.dataset.importRetry + '/retry', {method:'POST'}); await loadRuns();}
+      try {await request(root.dataset.importsUrl + '/' + (button.dataset.importStop || button.dataset.importRetry) + (stopping ? '/stop' : '/retry'), {method:'POST'}); await loadRuns();}
       catch (error) {showMessage(error.message, true); button.disabled = false;}
     });
     request(root.dataset.importsOptionsUrl).then(data => {
