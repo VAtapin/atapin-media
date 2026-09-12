@@ -56,13 +56,30 @@
       app.querySelector('[data-role-create-form]').hidden = false;
       createRole.hidden = true;
     });
+    const closeUserForm = form => {
+      if (!form) return;
+      form.reset();
+      form.hidden = true;
+      setDirty(false, form);
+    };
+    const rememberUserEdit = form => form.querySelectorAll('input, select, textarea').forEach(field => {
+      if (field.type === 'password') { field.value = ''; field.defaultValue = ''; return; }
+      if (field instanceof HTMLSelectElement) {
+        [...field.options].forEach(option => option.defaultSelected = option.selected);
+        return;
+      }
+      if (['checkbox', 'radio'].includes(field.type)) field.defaultChecked = field.checked;
+      else field.defaultValue = field.value;
+    });
     app.querySelector('[data-user-create]')?.addEventListener('click', () => {
       app.querySelector('[data-user-create-form]').hidden = false;
     });
+    app.querySelector('[data-user-create-cancel]')?.addEventListener('click', () => closeUserForm(app.querySelector('[data-user-create-form]')));
     app.querySelectorAll('[data-user-edit]').forEach(button => button.addEventListener('click', () => {
       app.querySelectorAll('[data-user-edit-form]').forEach(form => form.hidden = true);
       app.querySelector(`[data-user-edit-form="${button.dataset.userEdit}"]`).hidden = false;
     }));
+    app.querySelectorAll('[data-user-cancel]').forEach(button => button.addEventListener('click', () => closeUserForm(app.querySelector(`[data-user-edit-form="${button.dataset.userCancel}"]`))));
     app.querySelector('[data-profile-form] [name="avatar"]')?.addEventListener('change', event => {
       const file = event.target.files?.[0];
       if (!file) return;
@@ -210,6 +227,8 @@
           const summary = app.querySelector(`[data-user-summary="${payload.user_id}"]`);
           if (summary) { summary.querySelector('strong').textContent = payload.name; summary.querySelector('small').textContent = payload.email; }
         }
+        if (form.dataset.userEditForm) rememberUserEdit(form);
+        if (form.matches('[data-user-create-form], [data-user-edit-form]')) closeUserForm(form);
         showNotice('Gespeichert.');
         post('atapin.settings.saved', appearance({ section:payload.section }));
       } catch (_) {
