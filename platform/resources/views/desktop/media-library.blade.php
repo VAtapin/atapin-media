@@ -1,7 +1,11 @@
 <section class="desktop-media-library" data-media-library data-library-url="{{ route('media.library') }}">
     <header class="media-library-header">
         <div><span>Archiv</span><h2>Media Library</h2><p>Alle Originale, Importe und verbundenen Medien an einem geschützten Ort.</p></div>
-        <button type="button" class="media-library-primary" data-media-upload disabled title="Der Upload folgt im nächsten Schritt">Hochladen</button>
+        <div class="media-library-upload">
+            <button type="button" class="media-library-primary" data-media-upload data-media-upload-label>Hochladen</button>
+            <input type="file" data-media-upload-input multiple hidden>
+            <p data-media-upload-message class="media-library-upload-message" aria-live="polite" role="status" hidden></p>
+        </div>
     </header>
     <form class="media-library-toolbar" data-library-filter>
         <label class="media-library-search"><span class="sr-only">Suchen</span><input name="q" type="search" maxlength="120" placeholder="Medien durchsuchen"></label>

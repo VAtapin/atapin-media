@@ -3,6 +3,8 @@ namespace App\Http\Controllers;
 use App\Models\Media;
 use App\Services\MediaLibrary;
 use App\Services\Audit;
+use App\Services\ResumableMediaUploadService;
+use App\Models\ResumableMediaUpload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 class MediaController extends Controller
@@ -59,6 +61,36 @@ class MediaController extends Controller
         $media = $library->upload($request->file('file'), $request->user()->id);
         if ($request->expectsJson()) return response()->json(['status'=>'saved','media_id'=>$media->id]);
         return back()->with('status', __('ui.uploaded'));
+    }
+    public function uploadStart(Request $request, ResumableMediaUploadService $uploads)
+    {
+        $request->validate([
+            'request_key' => 'required|uuid',
+            'name' => 'required|string|max:255',
+            'size' => 'required|integer|min:1|max:' . config('platform.media_upload_max_bytes'),
+        ]);
+        $upload = $uploads->start($request->only('request_key', 'name', 'size'), $request->user()->id);
+        return response()->json(['id'=>$upload->id, 'offset'=>$upload->offset, 'chunk_size'=>ResumableMediaUploadService::CHUNK_SIZE]);
+    }
+    public function uploadChunk(Request $request, ResumableMediaUpload $upload, ResumableMediaUploadService $uploads)
+    {
+        abort_unless($upload->user_id === $request->user()->id, 404);
+        $rawOffset = (string) $request->header('X-Upload-Offset');
+        $sha = (string) $request->header('X-Chunk-SHA256');
+        if (!preg_match('/^[a-f0-9]{64}$/i', $sha)) {
+            abort(422, 'Invalid chunk checksum.');
+        }
+        if (!preg_match('/^\d+$/', $rawOffset)) {
+            abort(422, 'Invalid chunk offset.');
+        }
+        $upload = $uploads->append($upload, (int) $rawOffset, $request->getContent(), $sha);
+        return response()->json(['id'=>$upload->id, 'offset'=>$upload->offset]);
+    }
+    public function uploadFinish(Request $request, ResumableMediaUpload $upload, ResumableMediaUploadService $uploads)
+    {
+        abort_unless($upload->user_id === $request->user()->id, 404);
+        $media = $uploads->finish($upload);
+        return response()->json(['status'=>'saved','media_id'=>$media->id]);
     }
     public function update(Request $request, Media $media, Audit $audit)
     {

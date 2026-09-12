@@ -5,6 +5,10 @@ return [
     'timezone' => env('PLATFORM_TIMEZONE', 'Europe/Berlin'),
     'locales' => ['de', 'en'],
     'media_disk' => env('MEDIA_DISK', 'local'),
+    'media_upload_max_bytes' => (int) env('MEDIA_UPLOAD_MAX_BYTES', 20 * 1024 * 1024 * 1024),
+    'media_upload_max_archive_bytes' => (int) env('MEDIA_UPLOAD_MAX_ARCHIVE_BYTES', 100 * 1024 * 1024 * 1024),
+    'media_upload_reserve_free_bytes' => (int) env('MEDIA_UPLOAD_RESERVE_FREE_BYTES', 5 * 1024 * 1024 * 1024),
+    'media_upload_max_pending_uploads' => (int) env('MEDIA_UPLOAD_MAX_PENDING_UPLOADS', 10000),
     'intake_root' => env('INTAKE_ROOT', dirname(base_path(), 2).'/private/manna-intake'),
     'youtube_root' => env('YOUTUBE_ROOT', dirname(base_path(), 2).'/private/manna-youtube'),
 ];

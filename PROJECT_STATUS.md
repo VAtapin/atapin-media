@@ -8,6 +8,7 @@
 - Media Library теперь открывается как native-приложение внутри Media Desktop: приватный пагинируемый список поддерживает поиск, фильтры по источнику/типу/статусу, сортировку, детали записи и защищённое скачивание. Интерфейс показывает реальные записи intake и YouTube после запуска существующего Import Center.
 - Детали Media Library безопасно показывают inline preview изображений, MP3/OGG, MP4/WebM и PDF только через авторизованный private-media route. Неподдерживаемые форматы сохраняют только детали и защищённое скачивание; preview-ответы запрещают активный контент через CSP sandbox.
 - Защищённый resumable upload в `intake/` и сборщик публичного YouTube-архива в `youtube/`.
+- Собственный resumable upload Media Library доехал до production-ready состояния: добавлены endpoints `/desktop/media/uploads` (start/chunk/finish), сервис сборки чанков с дедупликацией и проверкой SHA-256, модель и миграции для инвентаризации сессий и чанков, запись в `media` с `source='upload'`, статус `unsorted`, и интеграция в UI Media Library (кнопка, drag-нейтральный input, прогресс + ошибки).
 - Оболочка Media Desktop с меню Start, ярлыками, панелью задач и пустыми окнами программ.
 - Окна поддерживают фокус, закрепление, сворачивание, разворачивание, полноэкранный режим и изменение размера за края и углы.
 - Snap Layouts содержат готовые схемы для 2–6 окон, включая крупное центральное окно с четырьмя вспомогательными.
@@ -48,17 +49,18 @@
 - Production работает через Plesk; document root — `httpdocs/platform/public`.
 - Стандартное production-обновление platform выполняется из `/var/www/vhosts/mannavomhimmel.de/httpdocs` через `git pull --ff-only` и только необходимые `config:clear`/`view:clear` c `/opt/plesk/php/8.4/bin/php`; без PATH exports и maintenance-скрипта.
 - Публичный YouTube-сборщик сохранил частичный архив в `private/manna-youtube` (около 3.9 GB); полный личный архив владелец скачивает отдельно и хранит в `private/manna-youtube-manual/<дата-выгрузки>`. Текущий Import Center принимает структурированный архив сборщика; для YouTube Studio/Google Takeout нужен отдельный адаптер ручного формата. Полная инструкция: `youtube/MANUAL_ARCHIVE_IMPORT.md`.
+- Миграция статуса: для Media Library первично добавлен собственный загрузочный путь на платформе; временно внешний `/upload/`-инструмент продолжает работать для существующих кейсов и будет выключен после приемки новой пайплайна.
 
 ## Известные ограничения
 
 - Для Media Library, Projekte, Aufgaben, Kalender, Import Center, Shop и Benutzer ещё требуется отдельная разработка native-интерфейсов внутри Desktop.
-- Для Media Library ещё не реализованы grid-представление, запуск AI-классификации, собственный resumable upload и отключение временного `/upload/` после production-проверки новой загрузки.
+- Для Media Library пока не реализованы: режимы сеточного просмотра, AI-классификация и ручная сортировка/нормализация, а также автоматическое отключение временного `/upload/` после согласования и production-проверки нового роута загрузки.
 - Public Website начат, но ещё не завершён.
 - Импорт произвольной ручной выгрузки YouTube Studio/Google Takeout ещё не реализован; до создания адаптера её нельзя вручную смешивать с `private/manna-youtube`.
 
 ## Рекомендуемый следующий этап
 
-- Реализовать AI-классификацию и собственную resumable upload-передачу в Media Library, после production-проверки отключить временный `/upload/`.
+- Довести текущий медиапоток: включить автоматическую AI-классификацию и группировку/ручную доразметку `unsorted`, затем отключить временный `/upload/` и в интерфейсе оставить только новый путь.
 - После получения личной выгрузки YouTube реализовать адаптер ручного архива по `youtube/MANUAL_ARCHIVE_IMPORT.md`, затем запустить импорт через Import Center.
 
 ## Проверки
@@ -85,7 +87,10 @@
 - Проверены зависимости всех окон Desktop: `settings-content.blade.php` и его стили удалены; в runtime-исходниках отсутствуют legacy layouts, iframe, `embed=1`, `postMessage` и прямые legacy links.
 - Пройден `node --check` для исправленного `desktop-shortcuts.js`; browser-сценарий теперь требует все 19 начальных ярлыков, включая Einstellungen. Полный Laravel/Playwright-сценарий локально не запускался: PHP отсутствует в Windows PATH.
 - Пройдены `node --check` для `desktop-shortcuts.js`, `desktop-os.js`, `settings-tabs.js` и browser-сценариев; `git diff --check` пройден. Полный Laravel/Playwright-сценарий локально не запускался: PHP отсутствует в Windows PATH.
+- Пройден `node --check` для `platform/public/assets/desktop-media-library.js`; `git diff --check`/`git diff --stat` на текущем этапе без ошибок.
+- Проверка Laravel/PHP тестов на текущем окружении невозможна: `php`/`/opt/plesk/php/8.4/bin/php` недоступны в PATH.
 
 ## Последний связанный commit
 
-- `Add desktop shortcut layout modes`
+- `Implement resumable Media Library uploads` (`ca6f974`)
+
