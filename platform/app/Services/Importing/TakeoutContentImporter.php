@@ -14,7 +14,7 @@ class TakeoutContentImporter
     private array $assets=[];
     private ImportRun $run;
 
-    public function import(ImportRun $run,array $roots): void
+    public function import(ImportRun $run,array $roots,string $disk='import-inbox',?string $storageRoot=null): void
     {
         $this->run=$run; $this->files=$this->videos=$this->playlists=$this->assets=[];
         foreach($roots as $root) {
@@ -23,8 +23,8 @@ class TakeoutContentImporter
                 if(!$file->isFile()||$file->isLink())continue;
                 $path=ImportPath::resolve($root,$file->getPathname());
                 $entry=str_replace('\\','/',substr($path,strlen(realpath($root))+1));
-                $relative=str_replace('\\','/',substr($path,strlen(realpath(config('platform.import_inbox_root')))+1));
-                $original=MediaOriginal::where('disk','import-inbox')->where('path',$relative)->first();
+                $relative=str_replace('\\','/',substr($path,strlen(realpath($storageRoot??config('platform.import_inbox_root')))+1));
+                $original=MediaOriginal::where('disk',$disk)->where('path',$relative)->first();
                 $this->files[]=['path'=>$path,'entry'=>$entry,'media_id'=>$original?->media_id];
             }
         }
@@ -54,13 +54,21 @@ class TakeoutContentImporter
             // GPS/video recording coordinates, channel settings and viewing history remain private originals.
             app(ImportJournal::class)->record($run,'unsupported:'.$file['path'],$file['entry'],'metadata','unsupported',$file['media_id'],['reason'=>'No supported content schema; original retained.']);
         }
-        foreach(SourceRecord::where('source','youtube')->whereIn('source_id',array_keys($this->videos))->cursor() as $record)app(LocalMediaLinks::class)->repair($record);
+        foreach(SourceRecord::where('source','youtube')->whereIn('source_id',array_keys($this->videos))->cursor() as $record) {
+            $key='takeout-repair:'.$record->id;
+            if(app(ImportJournal::class)->done($run,$key))continue;
+            app(ImportWorkBudget::class)->boundary($run);
+            app(LocalMediaLinks::class)->repair($record);
+            app(ImportJournal::class)->record($run,$key,$record->title,'checkpoint','complete');
+        }
     }
     private function isCsv(array $file,string $directory,string $name): bool
     {
+        $directories=['videometadaten'=>['videometadaten','videometadata'],'beitrage'=>['beitrage','posts'],'kommentare'=>['kommentare','comments']][$directory]??[$directory];
+        $names=['videotexte'=>['videotexte','videotexts'],'beitrage'=>['beitrage','posts'],'kommentare'=>['kommentare','comments']][$name]??[$name];
         return strtolower(pathinfo($file['entry'],PATHINFO_EXTENSION))==='csv'
-            && str_contains(TakeoutCsv::key(dirname($file['entry'])),$directory)
-            && preg_replace('/\d+$/','',TakeoutCsv::key(pathinfo($file['entry'],PATHINFO_FILENAME)))===$name;
+            && collect($directories)->contains(fn($dir)=>str_contains(TakeoutCsv::key(dirname($file['entry'])),$dir))
+            && in_array(preg_replace('/\d+$/','',TakeoutCsv::key(pathinfo($file['entry'],PATHINFO_FILENAME))),$names,true);
     }
     private function videoTitle(array $row,string $id): string {return $row['videotiteloriginal']??$row['videotitleoriginal']??$row['title']??$id;}
     private function matchVideos(): void
@@ -87,6 +95,7 @@ class TakeoutContentImporter
     {
         $key='takeout-video:'.$id.':'.hash('sha256',json_encode([$row,$this->assets[$id]??[]]));
         if(app(ImportJournal::class)->done($this->run,$key))return;
+        app(ImportWorkBudget::class)->boundary($this->run);
         app(ImportProgress::class)->checkpoint($this->run);
         $tags=[]; foreach($row as $column=>$value)if(preg_match('/^tag\d+$/',$column)&&$value!=='')$tags[]=$value;
         $existing=SourceRecord::where('source','youtube')->where('source_id',$id)->first();
@@ -114,16 +123,17 @@ class TakeoutContentImporter
                 app(ImportProgress::class)->checkpoint($this->run);
                 $key='csv:'.$file['path'].':'.$index.':'.hash('sha256',json_encode($row));
                 if(!$replay && app(ImportJournal::class)->done($this->run,$key))continue;
+                if(!$replay)app(ImportWorkBudget::class)->boundary($this->run);
                 try {
                     $ok=$handler($row);
                     app(ImportJournal::class)->record($this->run,$key,$file['entry'].' #'.($index+1),$ok?'checkpoint':'metadata',$ok?'complete':'unsupported',null,$ok?[]:['reason'=>__('imports.takeout_row_id')]);
-                } catch(ImportStopped $e){throw $e;} catch(\Throwable $e) {
+                } catch(ImportStopped|ImportYielded $e){throw $e;} catch(\Throwable $e) {
                     app(ImportJournal::class)->record($this->run,$key,$file['entry'].' #'.($index+1),'metadata','failed',null,['error'=>$e->getMessage()]);
                 }
             }
             if(app(ImportJournal::class)->item($this->run,'csv-error:'.$file['path']))
                 app(ImportJournal::class)->record($this->run,'csv-error:'.$file['path'],$file['entry'],'checkpoint','complete');
-        } catch(ImportStopped $e){throw $e;} catch(\Throwable $e) {
+        } catch(ImportStopped|ImportYielded $e){throw $e;} catch(\Throwable $e) {
             app(ImportJournal::class)->record($this->run,'csv-error:'.$file['path'],$file['entry'],'metadata','failed',null,['error'=>$e->getMessage()]);
         }
     }
@@ -140,7 +150,7 @@ class TakeoutContentImporter
         $id=$row['beitragsid']??$row['postid']??''; if(!$id)return false;
         $text=$row['textdesbeitrags']??$row['posttext']??''; $images=[]; $options=[];
         foreach($row as $key=>$value) {
-            if(preg_match('/^namefurbild\d+$/',$key))$images=[...$images,...$this->image($value)];
+            if(preg_match('/^(?:namefurbild|imagename)\d+$/',$key))$images=[...$images,...$this->image($value)];
             if(preg_match('/^textderantwortoption(\d+)furumfragequiz$/',$key,$m)&&$value!=='') {
                 $n=$m[1]; $options[]=['text'=>$value,'id'=>$row['idderantwortoption'.$n.'furumfragequiz']??null,
                     'media_ids'=>$this->image($row['bildnamefuroption'.$n.'derumfrage']??''),'is_correct'=>($row['richtigeantwortoption1furquiz']??'')===$n];
@@ -153,7 +163,7 @@ class TakeoutContentImporter
     }
     private function comment(array $row): bool
     {
-        $id=$row['kommentarid']??$row['commentid']??''; $parent=$row['videoid']??''; $parent=$parent?:($row['beitragsid']??'');
+        $id=$row['kommentarid']??$row['commentid']??''; $parent=$row['videoid']??''; $parent=$parent?:($row['beitragsid']??$row['postid']??'');
         if(!$id||!$parent)return false;
         $text=$row['kommentartext']??$row['commenttext']??'';
         $this->record('comment:'.$parent.':'.$id,'comment',mb_substr($text,0,120)?:$id,$text,['parent_source_id'=>$parent,
@@ -182,6 +192,7 @@ class TakeoutContentImporter
                 'description'=>$row['playlistbeschreibungoriginal']??'','ordered_items'=>$members[$id]];
             $key='playlist:'.$id.':'.hash('sha256',json_encode([$row,$data]));
             if(app(ImportJournal::class)->done($this->run,$key))continue;
+            app(ImportWorkBudget::class)->boundary($this->run);
             $existing=\App\Models\Collection::where('source','youtube')->where('source_id',$id)->exists();
             $collection=app(ContentMetadataImporter::class)->playlist('youtube',$data,['import_id'=>$this->run->id,'raw_takeout'=>$row,'takeout'=>true]);
             app(ImportJournal::class)->record($this->run,$key,$data['title'],'playlist',$existing?'merged':'added',(string)$collection->id);

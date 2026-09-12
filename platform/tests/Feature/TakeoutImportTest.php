@@ -101,4 +101,88 @@ class TakeoutImportTest extends TestCase
         $this->zip(1,['../../../../escape.txt'=>'Unsafe']);$this->zip(2,['placeholder.txt'=>'Safe placeholder']);
         $this->expectException(\RuntimeException::class);$this->runImport();
     }
+    private function report(array $paths): string
+    {
+        $folders=[];
+        foreach($paths as $path)$folders[dirname($path)][]=basename($path);
+        $html='<html><head><meta charset="UTF-8"></head><body><div id="service-details-YOUTUBE"><div class="service_name"><h1>YouTube und YouTube Music</h1></div><div class="extracted-list">';
+        foreach($folders as $folder=>$files) {
+            $html.='<div class="table-row"><button class="extracted-folder"><div class="extracted-folder-name">'.htmlspecialchars($folder).'</div></button>';
+            foreach($files as $file)$html.='<div class="extracted-child"><div class="file-leaf"><div class="extracted-file-name"> '.htmlspecialchars($file).'</div></div></div>';
+            $html.='</div>';
+        }
+        $html.='</div></div><script>throw new Error("must never execute");</script></body></html>';
+        $zip=new ZipArchive;$path=$this->root.'/zips/takeout-20260911T193951Z-001.zip';$zip->open($path,ZipArchive::CREATE);$zip->addFromString('Takeout/archive_browser.html',$html);$zip->close();return $path;
+    }
+    public function test_manifest_is_preferred_but_missing_report_keeps_the_csv_import(): void
+    {
+        $this->fixture();$this->report(['Video-Metadaten/Videos.csv','Videos/Fixture Video.mp4']);
+        $batch=app(TakeoutArchiveAdapter::class)->inventory()['batches'][0];$this->assertNotNull($batch['report']);
+        $run=$this->runImport();$item=app(\App\Services\Importing\ImportJournal::class)->item($run,'takeout-manifest');
+        $this->assertSame('linked',$item->outcome);$this->assertSame(2,$item->metadata['expected_files']);$this->assertSame(0,$item->metadata['missing_files']);
+        unlink($this->root.'/zips/takeout-20260911T193951Z-001.zip');$fallback=$this->runImport();
+        $item=app(\App\Services\Importing\ImportJournal::class)->item($fallback,'takeout-manifest');
+        $this->assertSame('unsupported',$item->outcome);$this->assertFalse($item->metadata['manifest_available']);
+        $this->assertSame(1,SourceRecord::where('source_id','abcdefghijk')->count());
+    }
+    public function test_manifest_missing_files_are_reported_without_discarding_available_content(): void
+    {
+        $this->fixture();$this->report(['Videos/Fixture Video.mp4','Videos/Missing video.mp4']);$run=$this->runImport();
+        $this->assertSame(1,ImportItem::where('import_run_id',$run->id)->where('type','manifest-file')->where('outcome','missing')->count());
+        $this->assertNotNull(SourceRecord::where('source_id','abcdefghijk')->first());
+        $this->report(['Videos/Fixture Video.mp4']);$run->update(['status'=>'queued']);app(ImportCenter::class)->run($run);
+        $this->assertSame(0,ImportItem::where('import_run_id',$run->id)->where('type','manifest-file')->count());
+    }
+    public function test_unreadable_optional_report_does_not_block_import_and_retry_clears_its_error(): void
+    {
+        $this->fixture();file_put_contents($this->root.'/zips/takeout-20260911T193951Z-001.zip','Not a ZIP');$run=$this->runImport();
+        $journal=app(\App\Services\Importing\ImportJournal::class);$this->assertSame('failed',$journal->item($run,'takeout-report')->outcome);
+        $this->assertSame(1,SourceRecord::where('source_id','abcdefghijk')->count());
+        unlink($this->root.'/zips/takeout-20260911T193951Z-001.zip');$this->report(['Videos/Fixture Video.mp4']);
+        $run->update(['status'=>'queued']);app(ImportCenter::class)->run($run);$this->assertSame('complete',$journal->item($run,'takeout-report')->outcome);
+    }
+    public function test_english_directory_and_basic_csv_aliases_use_the_same_content_importer(): void
+    {
+        $this->zip(1,[
+            'Video-Metadata/Videos.csv'=>$this->csv(['Video ID','Video title (original)','Video description (original)'],[['abcdefghijk','English video','Original description']]),
+            'Posts/Posts.csv'=>$this->csv(['Post ID','Post text','Image name 1'],[['UgEnglish','Original post','UgEnglish_image.png']]),
+            'Comments/Comments.csv'=>$this->csv(['Comment ID','Post ID','Comment text'],[['CEnglish','UgEnglish','Original comment']]),
+        ]);
+        $this->zip(2,['Videos/English video.mp4'=>pack('N',24).'ftypisom'.str_repeat("\0",12),'Posts/UgEnglish_image.png'=>base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jvyoAAAAASUVORK5CYII=')]);
+        $this->runImport();$this->assertSame('Original description',SourceRecord::where('source_id','abcdefghijk')->firstOrFail()->body);
+        $this->assertCount(1,SourceRecord::where('source_id','UgEnglish')->firstOrFail()->metadata['media_ids']);
+        $this->assertSame('Original comment',SourceRecord::where('source_id','comment:UgEnglish:CEnglish')->firstOrFail()->body);
+    }
+    public function test_prepared_multipart_folder_imports_in_place_with_optional_report(): void
+    {
+        $this->fixture();$report=$this->report(['Videos/Fixture Video.mp4']);
+        $folder=$this->root.'/zips/prepared';mkdir($folder);
+        foreach([1,2] as $n) {
+            mkdir($folder.'/part-'.$n);$zip=new ZipArchive;$zip->open($this->root.'/zips/'.$this->batch.'-'.sprintf('%03d',$n).'.zip');$zip->extractTo($folder.'/part-'.$n);$zip->close();
+        }
+        $zip=new ZipArchive;$zip->open($report);$zip->extractTo($folder.'/report');$zip->close();
+        config(['filesystems.disks.takeout.root'=>$this->root.'/zips']);Storage::forgetDisk('takeout');
+        $input=app(ImportCenter::class)->prepareInput('youtube-takeout',['batch'=>'folder:prepared']);
+        $run=ImportRun::create([...$input,'status'=>'queued']);app(ImportCenter::class)->run($run);
+        $video=SourceRecord::where('source_id','abcdefghijk')->firstOrFail();$this->assertCount(1,$video->metadata['media_ids']);
+        $media=Media::findOrFail($video->metadata['media_ids'][0]);$this->assertSame('takeout',$media->disk);
+        $this->assertFileExists(Storage::disk('takeout')->path($media->path));$this->assertDirectoryDoesNotExist($this->root.'/inbox/archives');
+        $this->assertTrue(app(\App\Services\Importing\ImportJournal::class)->item($run,'takeout-manifest')->metadata['manifest_available']);
+        app(ImportCenter::class)->run($run->fresh());$this->assertSame(1,SourceRecord::where('source_id','abcdefghijk')->count());
+    }
+    public function test_short_queue_slices_resume_without_reextracting_or_duplicate_content(): void
+    {
+        \Illuminate\Support\Facades\Queue::fake();$this->fixture();
+        app()->instance(\App\Services\Importing\ImportWorkBudget::class,new \App\Services\Importing\ImportWorkBudget(0));
+        $run=ImportRun::create(['source'=>'youtube-takeout','source_options'=>['batch'=>$this->batch,'expected_parts'=>2]]);
+        $started=null;$slices=0;
+        do {
+            app(ImportCenter::class)->run($run->fresh());$run->refresh();$started??=$run->started_at;
+            $this->assertTrue($started->equalTo($run->started_at));$this->assertNull($run->error);$slices++;
+        } while($run->status==='queued' && $slices<50);
+        $this->assertLessThan(50,$slices);$this->assertGreaterThan(2,$slices);$this->assertSame('partial',$run->status);
+        $this->assertSame(1,SourceRecord::where('source_id','abcdefghijk')->count());$this->assertSame(2,SourceRecord::where('kind','comment')->count());
+        $this->assertSame(2,Collection::firstOrFail()->items()->count());
+        \Illuminate\Support\Facades\Queue::assertPushed(\App\Jobs\ImportArchive::class,$slices-1);
+    }
 }

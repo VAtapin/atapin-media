@@ -156,7 +156,7 @@
         } else if (activeMethod === 'link') {
           payload.source_ref = link.value.trim(); payload.source = sourceFromLink(payload.source_ref);
           if (!payload.source) throw new Error(t.supported_links);
-        } else if (activeMethod === 'takeout') {payload.source='youtube-takeout'; payload.batch=root.querySelector('[data-takeout-batch]').value; payload.expected_parts=Number(root.querySelector('[data-takeout-parts]').value);}
+        } else if (activeMethod === 'takeout') {payload.source='youtube-takeout'; payload.batch=root.querySelector('[data-takeout-batch]').value; if(!payload.batch.startsWith('folder:'))payload.expected_parts=Number(root.querySelector('[data-takeout-parts]').value);}
         else if (activeMethod === 'existing') payload.source = root.querySelector('[data-import-existing]').value;
         else {if (!selection) throw new Error(t.select_folder_hint); Object.assign(payload, selection);}
         start.disabled = true; showMessage(t.starting);

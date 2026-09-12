@@ -11,8 +11,18 @@ try {
  const page=await browser.newPage({viewport:{width:1672,height:941}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:8792/login');await page.locator('[name=email]').fill('test@example.com');await page.locator('[name=password]').fill('kurz5');await page.locator('form button').click();await page.waitForURL('**/desktop');console.log('Workflow logged in.');
  await page.locator('[data-close-all]').click();await page.locator('[data-open-app=imports]').first().click();
- const imports=page.locator('.os-window[data-app-id=imports]');await imports.locator('[name=method][value=takeout]').check();await imports.locator('[data-takeout-message]').waitFor();
+ // Inventory fixture tests the UI only; PHP feature tests exercise real ZIP/folder discovery and parsing.
+ await page.route('**/desktop/imports/takeout',route=>route.fulfill({json:{available:true,reports:['takeout-fixture-report.zip'],batches:[
+  {id:'takeout-fixture',layout:'zip',report:'takeout-fixture-report.zip',parts:Array.from({length:8},(_,i)=>({number:i+1,bytes:1024,name:`part-${i}.zip`}))},
+  {id:'folder:prepared-fixture',layout:'folder',name:'prepared-fixture',parts:[],report:null},
+  {id:'takeout-without-report',layout:'zip',parts:[{number:1,bytes:1024}],report:null}
+ ]}}));
+ const imports=page.locator('.os-window[data-app-id=imports]');await imports.locator('[name=method][value=takeout]').check();
+ await imports.locator('[data-takeout-message]').getByText('Mit HTML-Dateikatalog',{exact:false}).waitFor();
  assert.equal(await imports.locator('[data-takeout-parts]').inputValue(),'8');
+ await imports.locator('[data-takeout-batch]').selectOption('folder:prepared-fixture');assert(await imports.locator('[data-takeout-parts]').isDisabled());assert(await imports.locator('[data-takeout-parts]').isHidden());
+ await imports.locator('[data-takeout-batch]').selectOption('takeout-without-report');assert(await imports.locator('[data-takeout-parts]').isEnabled());assert.equal(await imports.locator('[data-takeout-parts]').inputValue(),'1');
+ assert((await imports.locator('[data-takeout-message]').textContent()).includes('optional'));
  const record=await page.evaluate(async()=>{
   const canvas=document.createElement('canvas');canvas.width=160;canvas.height=90;const ctx=canvas.getContext('2d');
   const stream=canvas.captureStream(10),recorder=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp8'}),chunks=[];
@@ -27,7 +37,7 @@ try {
  });
  const queued=page.waitForResponse(reply=>reply.url().endsWith('/imports/video-check')&&reply.request().method()==='POST');await imports.locator('[data-local-video-check]').click();const run=(await (await queued).json()).import_id;
  execFileSync(php,['tests/browser-video-audit.php',run],{env:process.env});
- const box=page.locator('dialog.import-report-dialog');await box.locator('[data-refresh]').click();
+ const box=page.locator('dialog.import-report-dialog:not(.import-history-dialog)');await box.locator('[data-refresh]').click();
  await box.locator('[data-play-all]').waitFor({state:'visible'});
  // Filter down to the synthetic video; inspect report over the authenticated browser session.
  const item=await page.evaluate(async({run,record})=>{let n=1;for(;;){const data=await(await fetch(`/desktop/imports/${run}/report?type=video-check&page=${n}`,{headers:{Accept:'application/json'}})).json();const item=data.data.find(x=>x.subject_id===record);if(item)return item;if(n>=data.meta.last_page)throw new Error('fixture not reported');n++;}},{run,record});

@@ -17,12 +17,12 @@ class LocalVideoAuditAdapter implements ImportAdapter
         foreach(Media::where('kind','video')->with('originals')->orderBy('id')->cursor() as $media) {
             app(ImportProgress::class)->checkpoint($run,'video_check');
             $key='video-check:'.$media->id; if($journal->done($run,$key))continue;
-            $location=app(MediaOriginalLocator::class)->find($media);
             $outcome='available'; $data=['browser_status'=>'not_checked','preview_url'=>route('media.preview',$media,false),'download_url'=>route('media.download',$media,false)];
             try {
+                $location=app(MediaOriginalLocator::class)->find($media);
                 if(!$location){$outcome='missing';$data['reason']=__('imports.audit_missing');}
                 else {
-                    $disk=Storage::disk($location['disk']); $bytes=$disk->size($location['path']);
+                    $disk=Storage::disk($location['disk']); $bytes=config('filesystems.disks.'.$location['disk'].'.driver')==='local'?filesize(app(MediaOriginalLocator::class)->path($location)):$disk->size($location['path']);
                     $data=[...$data,...$location,'bytes'=>$bytes,'expected_bytes'=>$media->bytes];
                     if($bytes!==$media->bytes)throw new \RuntimeException(__('imports.audit_size'));
                     if(!in_array($media->mime,['video/mp4','video/webm'],true)){$outcome='unsupported';$data['reason']=__('imports.audit_format');}

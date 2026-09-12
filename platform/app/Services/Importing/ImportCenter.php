@@ -61,17 +61,28 @@ class ImportCenter
         $claimed = \Illuminate\Support\Facades\DB::transaction(function () use ($run) {
             $current = ImportRun::lockForUpdate()->findOrFail($run->id);
             if ($current->status !== 'queued') return false;
-            $current->update(['status' => 'running', 'started_at' => now(), 'progress' => ['stage' => 'prepare']]);
+            $current->update(['status' => 'running', 'started_at' => $current->started_at ?? now(), 'progress' => $current->progress ?: ['stage' => 'prepare']]);
             return true;
         });
         if (! $claimed) return;
         $run->refresh();
+        app(ImportWorkBudget::class)->begin($run);
         try {
             app(ImportProgress::class)->checkpoint($run);
             $this->adapter($run->source)->import($run);
             $summary=app(ImportJournal::class)->summary($run);
             $warnings=array_sum(array_intersect_key($summary,array_flip(['failed','unsupported','ambiguous','unmatched','missing'])));
             $this->finish($run, ($run->fresh()->notes || $warnings) ? 'partial' : 'complete');
+        } catch (ImportYielded) {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($run) {
+                $current = ImportRun::lockForUpdate()->findOrFail($run->id);
+                if ($current->status === 'stop_requested') {
+                    $current->update(['status' => 'cancelled', 'finished_at' => now()]);
+                    return;
+                }
+                $current->update(['status' => 'queued', 'progress' => $run->progress, 'error' => null]);
+                dispatch(new ImportArchive($run->id))->afterCommit();
+            });
         } catch (ImportStopped) {
             $this->finish($run, 'cancelled');
         } catch (Throwable $e) {
@@ -79,7 +90,7 @@ class ImportCenter
             $run->increment('skipped');
             $this->finish($run, 'failed', $e->getMessage());
             throw $e;
-        }
+        } finally { app(ImportWorkBudget::class)->end(); }
     }
 
     private function finish(ImportRun $run, string $status, ?string $error = null): void

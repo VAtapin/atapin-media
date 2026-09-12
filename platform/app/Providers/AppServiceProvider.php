@@ -22,6 +22,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(\App\Services\Importing\ImportWorkBudget::class);
         $this->app->bind(SearchProviderInterface::class, DatabaseSearch::class);
         $this->app->bind(ImportCenter::class, function ($app) {
             return new ImportCenter([

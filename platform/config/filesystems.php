@@ -42,6 +42,10 @@ return [
             'root'=>env('IMPORT_INBOX_ROOT', dirname(base_path(),2).'/private/import-inbox'),
             'throw'=>true, 'serve'=>false,
         ],
+        'takeout' => [
+            'driver'=>'local', 'root'=>env('TAKEOUT_ROOT', dirname(base_path(),2).'/private/youtube_zip_alle'),
+            'throw'=>true, 'serve'=>false,
+        ],
 
         'local' => [
             'driver' => 'local',

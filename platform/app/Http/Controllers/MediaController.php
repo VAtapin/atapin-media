@@ -161,6 +161,8 @@ class MediaController extends Controller
     public function download(Media $media)
     {
         $location=app(\App\Services\MediaOriginalLocator::class)->find($media); abort_unless($location,404);
+        if(config('filesystems.disks.'.$location['disk'].'.driver')==='local')return response()->download(app(\App\Services\MediaOriginalLocator::class)->path($location),$media->original_name,
+            ['Content-Type'=>'application/octet-stream','X-Content-Type-Options'=>'nosniff','Cache-Control'=>'private, no-store']);
         return Storage::disk($location['disk'])->download($location['path'], $media->original_name,
             ['Content-Type' => 'application/octet-stream', 'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store']);
     }
@@ -170,7 +172,7 @@ class MediaController extends Controller
         $location=app(\App\Services\MediaOriginalLocator::class)->find($media); abort_unless($location,404);
         $disk=Storage::disk($location['disk']);
         $headers=['Content-Type'=>$media->mime,'X-Content-Type-Options'=>'nosniff','Cache-Control'=>'private, no-store','Content-Security-Policy'=>"sandbox; default-src 'none';"];
-        if(config('filesystems.disks.'.$location['disk'].'.driver')==='local')return response()->file($disk->path($location['path']),$headers);
+        if(config('filesystems.disks.'.$location['disk'].'.driver')==='local')return response()->file(app(\App\Services\MediaOriginalLocator::class)->path($location),$headers);
         return $disk->response($location['path'],null,$headers);
     }
 }

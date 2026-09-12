@@ -93,6 +93,7 @@ class LocalArchiveAdapter implements ImportAdapter
                     if (str_ends_with($entry['name'], '/')) continue;
                     $key='extract:'.$root.'/'.$entry['name']; $signature=['size'=>$entry['size'],'crc'=>$entry['crc']];
                     if (app(ImportJournal::class)->done($run,$key,$signature) && is_file($root.'/'.$entry['name']) && filesize($root.'/'.$entry['name'])===$entry['size']) continue;
+                    app(ImportWorkBudget::class)->boundary($run);
                     $stream = $zip->getStream($entry['name']);
                     if (! $stream) throw new RuntimeException('Cannot read archive entry.');
                     try { $this->write($stream, $root, $entry['name'], (int) $entry['size'],$run,$processed); } finally { fclose($stream); }

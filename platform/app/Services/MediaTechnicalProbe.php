@@ -1,7 +1,6 @@
 <?php
 namespace App\Services;
 use App\Models\Media;
-use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Process\Process;
 class MediaTechnicalProbe
 {
@@ -10,7 +9,7 @@ class MediaTechnicalProbe
     {
         $location=app(MediaOriginalLocator::class)->find($media);
         if(!$location)throw new \RuntimeException(__('imports.unavailable'));
-        $path=Storage::disk($location['disk'])->path($location['path']);
+        $path=app(MediaOriginalLocator::class)->path($location);
         if(!is_file($path)) throw new \RuntimeException(__('imports.unavailable'));
         if($media->kind==='image') {
             $size=getimagesize($path);if(!$size) throw new \RuntimeException(__('imports.probe_failed'));

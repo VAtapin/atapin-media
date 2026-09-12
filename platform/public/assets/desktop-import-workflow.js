@@ -15,9 +15,15 @@
     const select=root.querySelector('[data-takeout-batch]'),message=root.querySelector('[data-takeout-message]');
     try {
       const data=await api(root.dataset.takeoutUrl);const selected=select.value;select.replaceChildren(new Option(t().takeout_select,''));
-      data.batches.forEach(batch=>select.append(new Option(`${batch.id} · ${batch.parts.length} ${t().takeout_parts_short} · ${(batch.parts.reduce((sum,p)=>sum+p.bytes,0)/1024**3).toFixed(2)} GB`,batch.id)));
+      data.batches.forEach(batch=>select.append(new Option(batch.layout==='folder'?`${t().takeout_folder}: ${batch.name}`:`${batch.id} · ${batch.parts.length} ${t().takeout_parts_short} · ${(batch.parts.reduce((sum,p)=>sum+p.bytes,0)/1024**3).toFixed(2)} GB${batch.report?' · '+t().takeout_manifest_preferred:''}`,batch.id)));
       select.value=selected||data.batches[0]?.id||'';
-      message.textContent=!data.available?t().takeout_unavailable:!data.batches.length?t().takeout_empty:`${t().takeout_reports}: ${data.reports.join(', ')||'—'}`;
+      const update=()=>{
+        const batch=data.batches.find(b=>b.id===select.value),parts=root.querySelector('[data-takeout-parts]');
+        parts.disabled=batch?.layout==='folder';parts.closest('label').hidden=parts.disabled;
+        if(batch?.parts.length)parts.value=batch.parts.length;
+        message.textContent=!data.available?t().takeout_unavailable:!data.batches.length?t().takeout_empty:batch?.report?`${t().takeout_manifest_preferred}: ${batch.report}`:t().takeout_manifest_optional;
+      };
+      select.onchange=update;update();
     }catch(e){message.textContent=e.message;}
   };
   // Confirm decoding, seeking, HTTP range support and actual playback in THIS browser, not merely file existence.
@@ -51,6 +57,10 @@
       data=await api(url+'?'+new URLSearchParams({page,outcome:body.querySelector('[data-outcome]').value}));if(!box.isConnected)return;
       message.textContent=(t()['run_'+data.status]||data.status)+' · '+Object.entries(data.summary).map(([key,count])=>`${t()['outcome_'+key]||key}: ${count}`).join(' · ');
       items.innerHTML=data.data.map(item=>`<li><strong>${esc(item.label)}</strong><p>${esc(t()['outcome_'+item.outcome]||item.outcome)}${item.metadata?.browser_status?' · '+esc(t()['browser_'+item.metadata.browser_status]||item.metadata.browser_status):''}</p>${item.metadata?.reason||item.metadata?.error?`<p>${esc(item.metadata.reason||item.metadata.error)}</p>`:''}${item.metadata?.browser_reason?`<p>${esc(item.metadata.browser_reason)}</p>`:''}${item.metadata?.candidate_ids?.length?`<p>${esc(t().report_candidates)}: ${esc(item.metadata.candidate_ids.join(', '))}</p>`:''}${item.metadata?.technical?`<small>${esc(JSON.stringify(item.metadata.technical))}</small>`:''}${item.metadata?.preview_url?`<button type="button" class="desktop-button" data-play="${item.id}">${esc(t().audit_preview)}</button>`:''}${item.browser_url?`<button type="button" class="desktop-button" data-check="${item.id}">${esc(t().audit_browser_one)}</button>`:''}${item.open_url?`<button type="button" class="desktop-button" data-inspect="${item.id}">${esc(t().open_content)}</button>`:''}${item.outcome==='failed'?`<button type="button" class="desktop-button" data-retry="${item.id}">${esc(t().retry)}</button>`:''}</li>`).join('');
+      items.querySelectorAll('li').forEach((row,index)=>{
+        const m=data.data[index].metadata;if(m?.manifest_available===undefined)return;
+        const info=document.createElement('p');info.textContent=`${t().takeout_expected_files}: ${m.manifest_available?m.expected_files:'—'} · ${t().takeout_available_files}: ${m.available_files}${m.manifest_available?` · ${t().takeout_missing_files}: ${m.missing_files} · ${t().takeout_extra_files}: ${m.extra_files}`:''}`;row.append(info);
+      });
       body.querySelector('[data-pages]').innerHTML=`<button type="button" class="desktop-button" data-page="${page-1}" ${page<=1?'disabled':''}>‹</button><span>${page}/${data.meta.last_page}</span><button type="button" class="desktop-button" data-page="${page+1}" ${page>=data.meta.last_page?'disabled':''}>›</button>`;
       if(audit && !controller)body.querySelector('[data-play-all]').disabled=['queued','running','stop_requested'].includes(data.status);
     };

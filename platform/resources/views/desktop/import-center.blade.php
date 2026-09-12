@@ -38,7 +38,7 @@
         <div class="import-method-panel" data-import-panel="takeout" hidden>
             <p>{{ __('imports.takeout_hint') }}</p>
             <label><span>{{ __('imports.takeout_batch') }}</span><select data-takeout-batch></select></label>
-            <label><span>{{ __('imports.takeout_parts') }}</span><input type="number" min="1" max="100" value="8" data-takeout-parts></label>
+            <label><span>{{ __('imports.takeout_parts') }}</span><input type="number" min="1" max="100" value="1" data-takeout-parts></label>
             <button type="button" class="desktop-button" data-takeout-refresh>{{ __('imports.refresh') }}</button><p data-takeout-message role="status"></p>
         </div>
         <details class="import-advanced">

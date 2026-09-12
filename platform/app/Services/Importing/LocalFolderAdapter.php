@@ -11,7 +11,7 @@ use FilesystemIterator;
 
 class LocalFolderAdapter implements ImportAdapter
 {
-    public function __construct(private ?string $inboxRoot = null)
+    public function __construct(private ?string $inboxRoot = null, private string $disk = 'import-inbox')
     {
         $this->inboxRoot ??= config('platform.import_inbox_root');
     }
@@ -48,6 +48,7 @@ class LocalFolderAdapter implements ImportAdapter
             $journal=app(ImportJournal::class); $key='file:'.$relative;
             $signature=['bytes'=>$file->getSize(),'mtime'=>$file->getMTime()];
             if($journal->done($run,$key,$signature)) continue;
+            app(ImportWorkBudget::class)->boundary($run);
             if(! $journal->item($run,$key)) $run->increment('discovered');
             try {
                 $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($absolute) ?: 'application/octet-stream';
@@ -56,7 +57,7 @@ class LocalFolderAdapter implements ImportAdapter
                 $media = app(ImportedMediaRegistry::class)->register(['source' => $run->source, 'source_id' => hash('sha256', $relative.'|'.$hash),
                     'title' => mb_substr($file->getFilename(), 0, 255), 'original_name' => mb_substr($file->getFilename(), 0, 255),
                     'kind' => MediaLibrary::kind($mime), 'mime' => $mime, 'bytes' => $file->getSize(),
-                    'disk' => 'import-inbox', 'path' => $relative, 'sha256' => $hash, 'status' => 'unsorted',
+                    'disk' => $this->disk, 'path' => $relative, 'sha256' => $hash, 'status' => 'unsorted',
                     'user_id' => $run->user_id, 'metadata' => ['relative_path' => $relative, 'import_id' => $run->id,
                         'target_profile' => $run->target_profile ?? 'mixed'],
                 ]);
