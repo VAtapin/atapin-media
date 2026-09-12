@@ -106,6 +106,7 @@
         <dt>Notiz</dt><dd>${escape(Array.isArray(run.notes) && run.notes.length ? run.notes.join(' / ') : run.error || '—')}</dd>
         <dt>Aktualisiert</dt><dd>${escape(run.updated_at || '—')}</dd>
       </dl>
+      ${['failed','partial'].includes(run.status) ? `<button type="button" class="media-library-primary" data-import-retry="${escape(run.id)}">${escape(window.desktopImportLabels.retry)}</button>` : ''}
     </article>`;
 
   const renderStatus = (runList) => {
@@ -245,5 +246,11 @@
       setFormMessage(message, 'Optionen konnten nicht geladen werden.', true);
     });
     refreshButton?.addEventListener('click', () => loadRuns());
+    list.addEventListener('click', async event => {
+      const button = event.target.closest('[data-import-retry]'); if (!button) return;
+      button.disabled = true;
+      try {await requestJson(`${startUrl}/${button.dataset.importRetry}/retry`,{method:'POST'}); await loadRuns();}
+      catch (error) {setFormMessage(message,error.message,true); button.disabled = false;}
+    });
   };
 })();

@@ -11,6 +11,8 @@ header('Cache-Control: no-store, private');
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: no-referrer');
 header('X-Robots-Tag: noindex, nofollow, noarchive');
+require_once __DIR__.'/../src/retirement.php';
+if (intake_retired()) intake_json(['error' => 'media_library_required', 'desktop_url' => '/desktop'], 410);
 
 try {
     $config = intake_config();

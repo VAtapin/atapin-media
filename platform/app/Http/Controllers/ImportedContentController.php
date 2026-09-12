@@ -24,6 +24,14 @@ class ImportedContentController extends Controller
         ]), 'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total()]]);
     }
 
+    public function update(Request $request, SourceRecord $record, \App\Services\Importing\ContentAssignment $assignment)
+    {
+        $assignment->record($record, $request->validate(['title' => 'required|string|max:255', 'body' => 'nullable|string|max:1000000',
+            'kind' => 'required|in:video,short,post,poll,comment', 'status' => 'required|in:unsorted,ready,needs_attention',
+            'tags' => 'nullable|array|max:30', 'tags.*' => 'string|max:100']));
+        return response()->json(['status' => 'saved']);
+    }
+
     public function show(SourceRecord $record)
     {
         $metadata = $record->metadata;
@@ -32,7 +40,7 @@ class ImportedContentController extends Controller
         return response()->json(['id' => $record->id, 'title' => $record->title, 'body' => $record->body,
             'kind' => $record->kind, 'source' => $record->source, 'source_id' => $record->source_id, 'status' => $record->status,
             'parent_source_id' => $metadata['parent_source_id'] ?? null, 'poll' => $metadata['poll'] ?? null,
-            'author' => $metadata['author'] ?? null,
+            'author' => $metadata['author'] ?? null, 'tags' => $metadata['tags'] ?? [], 'classification' => $metadata['classification'] ?? null,
             'assets' => Media::whereIn('id', array_unique($ids))->get()->map(fn ($media) => [
                 'title' => $media->title, 'kind' => $media->kind, 'mime' => $media->mime,
                 'download_url' => route('media.download', $media),

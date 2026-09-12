@@ -1,5 +1,11 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/../src/retirement.php';
+if (intake_retired()) {
+    header('Cache-Control: no-store');
+    header('Location: /desktop', true, 303);
+    exit;
+}
 // Also reject PHP's development-server PATH_INFO fallback for nonexistent paths.
 $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $scriptPath = $_SERVER['SCRIPT_NAME'] ?? '/index.php';

@@ -1,5 +1,11 @@
 <?php
 return [
+    'title'=>'Title', 'body'=>'Original text', 'kind'=>'Content type', 'status'=>'Status', 'target_profile'=>'Destination',
+    'tags'=>'Tags', 'tags_hint'=>'Comma separated', 'save'=>'Save', 'saved'=>'Saved', 'retry'=>'Retry',
+    'needs_attention'=>'Review required', 'media_library'=>'Media Library', 'videos'=>'Videos', 'shorts'=>'Shorts', 'posts'=>'Posts',
+    'ai_classify'=>'Classify with AI', 'ai_batch'=>'AI: up to 100 unsorted items', 'ai_queued'=>'Background AI classification queued',
+    'ai_unavailable'=>'Enable AI and configure an OpenAI model/API key in Settings.', 'ai_error'=>'AI classification failed.',
+    'ai_auto'=>'Automatically classify new unsorted content with AI', 'ai_confidence'=>'AI confidence',
     'select_server' => 'Choose a server file or folder', 'open_folder' => 'Open folder',
     'content_type' => 'Content type', 'all_types' => 'All types', 'all_status' => 'All statuses',
     'kind_video' => 'Video', 'kind_short' => 'Short', 'kind_post' => 'Post', 'kind_poll' => 'Poll', 'kind_comment' => 'Comment',

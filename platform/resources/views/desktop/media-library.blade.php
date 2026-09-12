@@ -1,8 +1,9 @@
-<section class="desktop-media-library" data-media-library data-user-id="{{ auth()->id() }}" data-library-url="{{ route('media.library') }}">
+<section class="desktop-media-library" data-media-library data-can-edit="{{ auth()->user()->hasPermission('media.edit') ? 'true' : 'false' }}" data-user-id="{{ auth()->id() }}" data-library-url="{{ route('media.library') }}">
     <div class="media-library-toolbar-row">
         <button type="button" class="media-library-primary" data-library-content-toggle>{{ __('imports.content') }}</button>
         <button type="button" class="media-library-primary" data-library-grid>{{ __('imports.grid') }}</button>
         @can('imports.manage')<button type="button" class="media-library-primary" data-library-import-existing>{{ __('imports.import_existing') }}</button>@endcan
+        @can('content.edit')<button type="button" class="media-library-primary" data-classify-batch="media">{{ __('imports.ai_batch') }}</button>@endcan
         <button type="button" class="media-library-primary" data-media-upload data-media-upload-label>Hochladen</button>
         <input type="file" data-media-upload-input multiple hidden>
         <p data-media-upload-message class="media-library-upload-message" aria-live="polite" role="status" hidden></p>

@@ -171,6 +171,19 @@ class ImportController extends Controller
         return back()->with('status', __('ui.import_queued'));
     }
 
+    public function retry(ImportRun $run, Audit $audit)
+    {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($run) {
+            $current = ImportRun::lockForUpdate()->findOrFail($run->id);
+            abort_unless(in_array($current->status, ['failed', 'partial'], true), 409);
+            $current->update(['status' => 'queued', 'error' => null, 'notes' => [], 'started_at' => null,
+                'finished_at' => null, 'discovered' => 0, 'imported' => 0, 'skipped' => 0, 'progress' => 0]);
+            dispatch((new \App\Jobs\ImportArchive($current->id))->afterCommit());
+        });
+        $audit->record('import.retried', (string) $run->id);
+        return response()->json(['status' => 'queued', 'import_id' => $run->id]);
+    }
+
     private function supportsSource(string $source): bool
     {
         $supported = array_column(self::SOURCES, 'id');

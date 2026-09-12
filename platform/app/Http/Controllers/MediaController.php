@@ -45,6 +45,8 @@ class MediaController extends Controller
                 'formatted_size' => $media->formattedSize(),
                 'source' => $media->source,
                 'status' => $media->status,
+                'target_profile' => $media->metadata['target_profile'] ?? 'media_library',
+                'classification_confidence' => $media->classification_confidence,
                 'created_at' => $media->created_at?->toIso8601String(),
                 'tags' => $media->tags->pluck('name')->values(),
                 'asset_count' => $media->assets->count(),
@@ -61,6 +63,7 @@ class MediaController extends Controller
     {
         $request->validate(['file' => 'required|file|max:102400']);
         $media = $library->upload($request->file('file'), $request->user()->id);
+        app(\App\Services\MediaUploadCutover::class)->confirm();
         if ($request->expectsJson()) return response()->json(['status'=>'saved','media_id'=>$media->id]);
         return back()->with('status', __('ui.uploaded'));
     }
@@ -92,11 +95,15 @@ class MediaController extends Controller
     {
         abort_unless($upload->user_id === $request->user()->id, 404);
         $media = $uploads->finish($upload);
+        app(\App\Services\MediaUploadCutover::class)->confirm();
         return response()->json(['status'=>'saved','media_id'=>$media->id]);
     }
     public function update(Request $request, Media $media, Audit $audit)
     {
-        $media->update($request->validate(['title' => 'required|string|max:255']));
+        app(\App\Services\Importing\ContentAssignment::class)->media($media, $request->validate([
+            'title' => 'required|string|max:255', 'status' => 'nullable|in:unsorted,ready,needs_attention',
+            'target_profile' => 'nullable|in:media_library,videos,shorts,posts', 'tags' => 'nullable|array|max:30', 'tags.*' => 'string|max:100',
+        ]));
         $audit->record('media.updated', $media->id);
         if ($request->expectsJson()) return response()->json(['status'=>'saved','media_id'=>$media->id]);
         return back()->with('status', __('ui.saved'));

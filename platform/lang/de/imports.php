@@ -1,5 +1,11 @@
 <?php
 return [
+    'title'=>'Titel', 'body'=>'Originaltext', 'kind'=>'Inhaltstyp', 'status'=>'Status', 'target_profile'=>'Zielbereich',
+    'tags'=>'Tags', 'tags_hint'=>'Mit Komma trennen', 'save'=>'Speichern', 'saved'=>'Gespeichert', 'retry'=>'Erneut versuchen',
+    'needs_attention'=>'Prüfung erforderlich', 'media_library'=>'Media Library', 'videos'=>'Videos', 'shorts'=>'Shorts', 'posts'=>'Beiträge',
+    'ai_classify'=>'Mit KI einordnen', 'ai_batch'=>'KI: bis 100 unsortierte Inhalte', 'ai_queued'=>'KI-Einordnung im Hintergrund gestartet',
+    'ai_unavailable'=>'Bitte KI aktivieren und OpenAI-Modell/API-Schlüssel in Einstellungen konfigurieren.', 'ai_error'=>'KI-Einordnung fehlgeschlagen.',
+    'ai_auto'=>'Neue unsortierte Inhalte automatisch mit KI einordnen', 'ai_confidence'=>'KI-Sicherheit',
     'select_server' => 'Server-Datei oder Ordner wählen', 'open_folder' => 'Ordner öffnen',
     'content_type' => 'Inhaltstyp', 'all_types' => 'Alle Typen', 'all_status' => 'Alle Status',
     'kind_video' => 'Video', 'kind_short' => 'Short', 'kind_post' => 'Beitrag', 'kind_poll' => 'Umfrage', 'kind_comment' => 'Kommentar',

@@ -49,6 +49,20 @@ class ArchiveImportTest extends TestCase
         $collection=Collection::firstOrFail();$this->assertSame([$id,null,$id],$collection->items->pluck('source_id')->all());
         $this->assertSame([1,2,3],$collection->items->pluck('position')->all());
     }
+    public function test_later_archive_media_attaches_without_overwriting_reviewed_content(): void
+    {
+        $id = 'abcdefghijk';
+        $this->write('items/'.$id.'/metadata.json',['sources'=>[],'youtube'=>['title'=>'Original','description'=>'Description']]);
+        $this->write('items/'.$id.'/state.json',['state'=>'partial','phases'=>[]]);
+        $this->runArchive('youtube');
+        $record = SourceRecord::firstOrFail(); $record->update(['title'=>'Reviewed','status'=>'ready']);
+        $this->write('items/'.$id.'/video.mp4','video bytes');
+        $this->write('items/'.$id.'/state.json',['state'=>'complete','phases'=>['video'=>['state'=>'complete','files'=>[['path'=>'video.mp4','bytes'=>11]]]]]);
+        $this->runArchive('youtube');
+        $this->assertSame('Reviewed',$record->fresh()->title); $this->assertSame('ready',$record->fresh()->status);
+        $this->assertCount(1,$record->fresh()->metadata['media']['video']); $this->assertDatabaseCount('source_records',1);
+    }
+
     public function test_escape_paths_and_size_mismatch_are_not_registered():void
     {
         $this->write('wrong.txt','short');

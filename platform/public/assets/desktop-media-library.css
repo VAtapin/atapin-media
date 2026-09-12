@@ -22,11 +22,20 @@
 
 .desktop-media-library [hidden]{display:none!important}
 .media-library-toolbar-row{flex-wrap:wrap}
+.content-assignment{display:grid;gap:12px;margin-top:20px;padding-top:16px;border-top:1px solid var(--desktop-border, #ddd)}
+.content-assignment label{display:grid;gap:6px}
+.content-assignment input,.content-assignment select,.content-assignment textarea{width:100%;min-width:0;box-sizing:border-box}
 .desktop-media-library [data-library-content-container]{flex:1;min-height:0}
 .desktop-media-library [data-library-content-container] .desktop-content-library{padding:0}
 .desktop-content-library .content-original-text{white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;overflow:auto}
 .media-library-list.is-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));align-content:start;gap:10px}
-.media-library-list.is-grid .media-library-item{height:100%;flex-direction:column;align-items:stretch}
+.media-library-list.is-grid .media-library-item{display:flex;height:100%;flex-direction:column;align-items:stretch}
+.desktop-content-library .media-library-item{grid-template-columns:minmax(0,1fr) auto}
+.desktop-content-library .media-library-item-main{grid-area:auto}
+.desktop-content-library .media-library-toolbar{display:flex;flex-wrap:wrap;align-items:center;flex-shrink:0}
+.desktop-content-library .media-library-toolbar input,.desktop-content-library .media-library-toolbar select{width:auto;max-width:100%}
+.desktop-content-library .media-library-search{flex:1;min-width:140px}
+.desktop-content-library .media-library-search input{width:100%}
 .media-library-thumbnail{width:64px;height:48px;object-fit:cover;border-radius:6px}
 .media-library-list.is-grid .media-library-thumbnail{width:100%;height:110px}
 
@@ -74,7 +83,10 @@
 }
 
 .media-library-toolbar input,
-.media-library-toolbar select{
+.media-library-toolbar select,
+.content-assignment input,
+.content-assignment select,
+.content-assignment textarea{
     width:100%;
     min-height:34px;
     margin:0;
@@ -107,7 +119,7 @@
     grid-template-columns:minmax(340px,1.7fr) minmax(240px,.8fr);
     gap:12px;
     min-height:0;
-    min-height:380px
+    flex:1
 }
 
 .media-library-list,

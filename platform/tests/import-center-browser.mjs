@@ -29,9 +29,22 @@ try {
   await media.locator('[data-library-list]').getByText('browser-original.txt').waitFor();
   await media.locator('[data-library-list]').getByText('browser-original.txt').click();
   await media.locator('[data-library-details] .media-library-download').waitFor();
+  const assignment = media.locator('[data-library-details] .content-assignment');
+  await assignment.locator('[name=title]').fill('Browser reviewed original');
+  await assignment.locator('[name=tags]').fill('Browser, Original');
+  await assignment.locator('[name=target_profile]').selectOption('posts');
+  await assignment.locator('button[type=submit]').click();
+  await media.locator('[data-library-list]').getByText('Browser reviewed original').waitFor();
   await media.locator('[data-library-grid]').click(); assert(await media.locator('[data-library-list]').evaluate(el => el.classList.contains('is-grid')));
   await media.locator('[data-library-content-toggle]').click();
   await media.locator('[data-content-summary]').getByText('Inhalte').waitFor();
+  await media.locator('[data-content-list]').getByText('Browser reviewed original').first().click();
+  const contentAssignment = media.locator('[data-content-details] .content-assignment');
+  await contentAssignment.locator('[name=title]').fill('Browser reviewed post');
+  await contentAssignment.locator('[name=body]').fill('Original post text');
+  await contentAssignment.locator('[name=status]').selectOption('ready');
+  await contentAssignment.locator('button[type=submit]').click();
+  await media.locator('[data-content-list]').getByText('Browser reviewed post').first().waitFor();
   await fs.mkdir('tests/artifacts',{recursive:true});
   await page.screenshot({path:'tests/artifacts/import-library-desktop.png'});
   await media.locator('[data-window-action="close"]').click();
@@ -53,7 +66,7 @@ try {
   }
   await page.setViewportSize({width:390,height:844});
   await page.locator('[data-open-app="media"]').first().click();
-  await page.locator('.os-window[data-app-id="media"] [data-library-list]').getByText('browser-original.txt').first().waitFor();
+  await page.locator('.os-window[data-app-id="media"] [data-library-list]').getByText('Browser reviewed original').first().waitFor();
   await page.screenshot({path:'tests/artifacts/import-library-mobile.png'});
   assert.deepEqual(errors,[]);
   console.log('Import Center browser workflow passed.');

@@ -16,7 +16,8 @@ const port = socket.address().port;
 await new Promise(resolve => socket.close(resolve));
 const origin = `http://127.0.0.1:${port}`;
 const config = join(scratch, 'config.php');
-const env = { ...process.env, INTAKE_CONFIG: config, INTAKE_ALLOW_LOCAL_HTTP: '1' };
+const marker = join(scratch, 'intake-retired.json');
+const env = { ...process.env, INTAKE_CONFIG: config, INTAKE_ALLOW_LOCAL_HTTP: '1', INTAKE_PLATFORM_READY: marker };
 const setupOutput = execFileSync('php', ['intake/bin/setup.php', `--storage=${storage}`, `--origin=${origin}`, '--max-file-gb=1', '--quota-gb=2'], { env, encoding: 'utf8' });
 const password = setupOutput.match(/Password: ([a-z0-9]+)/)[1];
 assert.equal(password.length, 6, 'generated password is short');
@@ -110,6 +111,13 @@ try {
   assert.equal(limited.status, 429, 'password attempts are limited, even for correct password');
   assert.equal(limited.headers.get('retry-after'), '900');
   assert.equal((await api('overview')).status, 200, 'throttle does not block authenticated uploads');
+  writeFileSync(marker, JSON.stringify({schema:'atapin-library-cutover/v1',completed_at:new Date().toISOString()}));
+  const retired = await fetch(origin, {redirect:'manual'});
+  assert.equal(retired.status,303); assert.equal(retired.headers.get('location'),'/desktop');
+  assert.equal((await api('start',{request_key:randomUUID(),name:'blocked.txt',size:1,modified:0})).status,410);
+  assert.equal((await api('overview')).status,410);
+  assert(existsArchiveOriginal(), 'cutover preserves archive originals');
+  function existsArchiveOriginal() { return allFiles(storage).includes(join(storage,manifest.stored_path)); }
   console.log('HTTP checks passed: shared password, API protection, signed cookie, brute-force limits, real transfer, resume, checksums, private storage and integrity verification.');
 } finally {
   server.kill();

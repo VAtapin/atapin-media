@@ -9,7 +9,7 @@
 - В окне Media Library обновлён presentation layer под единый визуальный язык Media Desktop: цвета, типографика, радиусы, кнопки, поля, карточки и отступы; убран встроенный повторный заголовок `ARCHIV` и заголовок окна.
 - Детали Media Library безопасно показывают inline preview изображений, MP3/OGG, MP4/WebM и PDF только через авторизованный private-media route. Неподдерживаемые форматы сохраняют только детали и защищённое скачивание; preview-ответы запрещают активный контент через CSP sandbox.
 - Защищённый resumable upload в `intake/` и сборщик публичного YouTube-архива в `youtube/`.
-- Собственный resumable upload Media Library доехал до production-ready состояния: добавлены endpoints `/desktop/media/uploads` (start/chunk/finish), сервис сборки чанков с дедупликацией и проверкой SHA-256, модель и миграции для инвентаризации сессий и чанков, запись в `media` с `source='upload'`, статус `unsorted`, и интеграция в UI Media Library (кнопка, drag-нейтральный input, прогресс + ошибки).
+- Собственный resumable upload Media Library реализован и локально проверен (production-проверка ещё нужна): добавлены endpoints `/desktop/media/uploads` (start/chunk/finish), сервис сборки чанков с дедупликацией и проверкой SHA-256, модель и миграции для инвентаризации сессий и чанков, запись в `media` с `source='upload'`, статус `unsorted`, и интеграция в UI Media Library (кнопка, drag-нейтральный input, прогресс + ошибки).
 - Оболочка Media Desktop с меню Start, ярлыками, панелью задач и пустыми окнами программ.
 - Окна поддерживают фокус, закрепление, сворачивание, разворачивание, полноэкранный режим и изменение размера за края и углы.
 - Snap Layouts содержат готовые схемы для 2–6 окон, включая крупное центральное окно с четырьмя вспомогательными.
@@ -57,53 +57,33 @@
 - UI Import Center в десктопе использует общий layout-макет без повторяющихся заголовков окон, с формой запуска и списком последних запусков.
 - Этап 4: Media Library показывает файлы и отдельные Beiträge/metadata, поддерживает список/сетку с protected thumbnails, выбор серверных папок и запуск регистрации существующих intake/YouTube archives из UI. Окна Videos, Beiträge и Community получили native-просмотр соответствующих imported SourceRecords, текста, опросов, комментариев и связанных originals; импорт остаётся private/unsorted. Обновление списков после завершения импорта; pagination ограничена предыдущей/следующей страницей.
 
+- Этап 5: native-формы ручной разметки файлов и SourceRecords, tags/status/раздел, reuse original без публикации; retry failed/partial imports. Фоновая OpenAI Responses-классификация новых unsorted записей и batch до 100 старых, строгий schema validation, confidence/история/аудит, защита конкурентных ручных правок. Первая успешно завершённая Desktop-загрузка создаёт private marker, который закрывает старый intake API (410) и перенаправляет страницу на Desktop. Поздние media в повторном YouTube archive attach к reviewed записи без потери правок.
+
 ## Известные ограничения
 
 - Для Projekte, Aufgaben, Kalender и Shop ещё требуется отдельная разработка native-интерфейсов внутри Desktop.
-- Для Media Library ещё требуются AI-классификация и ручная сортировка/нормализация, а также отключение временного `/upload/` после production-проверки новой загрузки.
+- Production ещё не обновлён/проверен: реальные service downloads, OpenAI-запросы, 10–20 GB transfer и automatic intake cutover локальными тестами не подтверждены. Классификация видео/аудио без транскрипции остаётся needs_attention; поддержан только OpenAI.
 - Public Website начат, но ещё не завершён.
 - Для ручных YouTube выгрузок поддержаны ZIP/TAR и распознаваемые JSON/видео CSV. Произвольные варианты Takeout, экспортные HTML и неизвестные schemas ещё требуют отдельного разбора; нельзя выдавать их регистрацию файлами за полный импорт содержания.
 
 ## Рекомендуемый следующий этап
 
-- Довести текущий медиапоток: включить автоматическую AI-классификацию и ручную доразметку `unsorted`, затем закрыть поддержку заглушечных импорт-адаптеров и подключить реальные API-коннекторы для TikTok/Instagram/Facebook.
+- После backup базы в Plesk обновить production, выполнить migration/config:clear/view:clear и проверить реальную загрузку/импорт и доступность service runtime. В библиотеке нажать «Vorhandene Archive einlesen», чтобы зарегистрировать имеющиеся intake/YouTube originals.
 - После получения личной выгрузки YouTube реализовать адаптер ручного архива по `youtube/MANUAL_ARCHIVE_IMPORT.md`, затем запустить импорт через Import Center.
 
 ## Проверки
 
-- Этап 4: 17 целевых Laravel tests / 103 assertions, view:cache, route:cache и JS syntax прошли. Edge browser workflow реально прошёл: upload файла, список/детали/скачивание, сетка, metadata toggle, запуск YouTube archive без ID, открытие Videos/Beiträge/Community, отсутствие JS errors; desktop 1672x941/mobile 390x844 screenshots проверены. Полный suite выявил отдельную старую проблему повторного profile update (unique user_profiles.user_id); проверка removed apps уточнена до каталога приложений.
+- Этап 5: 27 целевых Laravel tests / 129 assertions прошли; 7 новых tests покрывают ручную разметку, retry, конфигурацию/permissions, AI success/error/concurrent edits и недостаточные данные. Проверен путь ZIP upload → Import Center → readable originals и Beiträge.
+- Edge browser workflow прошёл: upload, ручное редактирование файла/Beitrag/tags/status, сетка, content sections, queue existing YouTube archive; screenshots desktop 1672x941/mobile 390x844 проверены.
+- Intake: реальный HTTP workflow с cutover redirect/API 410 прошёл, archive 33 checks и auth прошли, JS/PHP/shell syntax проверены. Plesk-subfolder workflow недоступен в Windows/Git Bash из-за несовместимого преобразования путей; нужен Linux CI.
+- Этапы 2–4: upload/archive/content tests, view:cache/route:cache и JS checks прошли. Python YouTube suite: 10 passed / 1 skipped (нет ffmpeg); service_import --help прошёл, реальный массовый сбор не запускался.
+- Полный Laravel suite выявил старую отдельную ошибку повторного profile update: unique user_profiles.user_id. Это не исправлялось в задаче импортов; полный suite не считается зелёным.
+- MySQL, реальные OpenAI/service requests и production не проверялись.
 
-- Этап 3: 12 целевых Laravel tests / 42 assertions и PHP syntax прошли; YouTube unittest: 10 passed, 1 skipped (локально нет ffmpeg). service_import.py --help и git diff --check прошли. Реальная загрузка из внешних сервисов не запускалась; runtime/доступность проверяются на сервере.
+## Последние связанные commits
 
-- Этап 2: локальный PHP 8.4 подготовлен в игнорируемой .local; 12 целевых Laravel tests / 50 assertions прошли, view:cache, node --check трёх media/import scripts и git diff --check прошли. MySQL и production не проверялись.
-
-- Пройден локальный browser-сценарий: открытие и фокус окон, resize, Snap Layouts, закрепление, сворачивание и мобильная компоновка.
-- Пройден целевой browser-сценарий: заполнение свободных Snap-зон, перенос между зонами, восстановление после F5, явное закрытие окна и закрытие всех окон с очисткой состояния.
-- Целевой browser-сценарий проверяет отсутствие оставшейся Snap-подсветки после Drop, сворачивания, закрытия и F5.
-- Целевой browser-сценарий проверяет объединение двух вертикальных зон закреплённым окном, резервирование обеих ячеек, восстановление объединения и сброс схемы после закрытия последнего окна.
-- Целевой browser-сценарий проверяет, что небольшое движение закреплённого окна не вызывает повторный Snap.
-- Пройден `node --check` для `platform/public/assets/desktop-os.js`.
-- Пройден локальный Edge browser-сценарий для 19 ярлыков Manna Vom Himmel: перенос, отмена, удаление, восстановление, Start, контекстные меню, keyboard и mobile; сценарий также проверяет изоляцию состояния между пользователями.
-- Пройден `node --check` для `desktop-os.js` и `desktop-shortcuts.js`; проверено наличие 19 PNG в каждом наборе.
-- Проверены изображения всех четырёх наборов и двух approved-обоев: 78 публичных PNG и 76 исходных Button PNG успешно читаются.
-- Browser-проверка платформы расширена новым сценарием; локальный запуск Laravel-варианта недоступен, поскольку PHP отсутствует в Windows PATH.
-- Пройден `node --check` для Desktop JavaScript; проверены целостность Blade-директив и `git diff --check`. Laravel Feature tests добавлены для настроек и шифрования секретов, но локально не запускались из-за отсутствия PHP.
-- Пройден `node --check` для обновлённого Desktop JavaScript, `git diff --check` и проверка состава 19 ярлыков. Laravel Feature tests обновлены, но локально не запускались из-за отсутствия PHP.
-- Проверено отсутствие legacy-shell селекторов и разметки; Feature test добавлен, но локально не запускался из-за отсутствия PHP.
-- Пройден `node --check` для `settings-tabs.js`; проверено отсутствие anchor-навигации и наличие семи вкладок/панелей. Laravel Feature test обновлён, но локально не запускался из-за отсутствия PHP.
-- Пройден `node --check` для `desktop-os.js`, `settings-tabs.js` и `browser.mjs`, а также `git diff --check`. Browser-сценарий расширен проверкой live preview и отмены несохранённых изменений; локальный запуск Laravel/browser suite недоступен из-за отсутствия PHP.
-- Пройден `node --check` для обновлённого `settings-tabs.js` и `desktop-os.js`, а также `git diff --check`. Feature tests расширены для provider-конфигураций, шифрования credentials, пользователей и раздельных юридических текстов, но локально не запускались из-за отсутствия PHP.
-- Пройден `node --check` для расширенных Settings и Desktop scripts, а также `git diff --check`. Feature и browser tests расширены для собственного профиля, редактирования пользователя и открытия профиля через Start; локально Laravel/browser suite недоступен из-за отсутствия PHP.
-- Пройден `node --check` для `settings-tabs.js` и `browser.mjs`, а также `git diff --check`. Browser-сценарий расширен отменой и автоматическим закрытием форм пользователей; локально Laravel/browser suite недоступен из-за отсутствия PHP.
-- Проверено отсутствие iframe, `embed=1`, `postMessage`, legacy routes и legacy Blade layouts в исходниках платформы. Laravel Feature tests обновлены для прямого Settings UI и удаления старых GET-маршрутов, но локально не запускались из-за отсутствия PHP.
-- Проверены зависимости всех окон Desktop: `settings-content.blade.php` и его стили удалены; в runtime-исходниках отсутствуют legacy layouts, iframe, `embed=1`, `postMessage` и прямые legacy links.
-- Пройден `node --check` для исправленного `desktop-shortcuts.js`; browser-сценарий теперь требует все 19 начальных ярлыков, включая Einstellungen. Полный Laravel/Playwright-сценарий локально не запускался: PHP отсутствует в Windows PATH.
-- Пройдены `node --check` для `desktop-shortcuts.js`, `desktop-os.js`, `settings-tabs.js` и browser-сценариев; `git diff --check` пройден. Полный Laravel/Playwright-сценарий локально не запускался: PHP отсутствует в Windows PATH.
-- Пройден `node --check` для `platform/public/assets/desktop-media-library.js`; `git diff --check`/`git diff --stat` на текущем этапе без ошибок.
-- Пройден `git diff --check` для финальных UI-изменений Media Library (blade + css + template-cache refresh).
-- Проверка Laravel/PHP тестов на текущем окружении невозможна: `php`/`/opt/plesk/php/8.4/bin/php` недоступны в PATH.
-
-## Последний связанный commit
-
-- Этапы 2/3: f55f340, 7d787a3. Текущий этап: `Show imported content across desktop libraries` (hash — git log для содержащего эту запись commit).
+- Этап 2: f55f340 — Fix archive imports and add resumable desktop intake.
+- Этап 3: 7d787a3 — Import service links and structured archive content.
+- Этап 4: dc6a618 — Show imported content across desktop libraries.
+- Этап 5: Add reviewed content assignment and automatic AI classification (hash — git log commit, содержащего эту запись).
 

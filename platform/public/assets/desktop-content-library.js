@@ -45,6 +45,7 @@
         const item = await get(url);
         details.innerHTML = `<h3>${escape(item.title)}</h3><p>${escape(text[`kind_${item.kind}`])} · ${escape(item.source)} · ${escape(item.source_id)}</p><p class="content-original-text">${escape(item.body)}</p>${item.author ? `<p>${escape(item.author)}</p>` : ''}${item.parent_source_id ? `<p>${escape(text.parent)}: ${escape(item.parent_source_id)}</p>` : ''}${item.poll ? `<pre class="content-original-text">${escape(JSON.stringify(item.poll,null,2))}</pre>` : ''}${item.assets.map(asset => `${preview(asset)}<p><a class="media-library-download" href="${escape(asset.download_url)}">${escape(asset.title)}</a></p>`).join('')}<small>${escape(text.private)}</small>`;
         details.dataset.recordId = item.id;
+        if (root.dataset.canEdit === 'true') window.appendContentAssignment?.(details, 'record', item);
         details.dispatchEvent(new CustomEvent('content-selected', { bubbles: true, detail: item }));
       } catch (error) { details.textContent = error.message; }
     });

@@ -60,6 +60,7 @@
             <form class="desktop-settings-form" method="post" action="{{ route('settings') }}">@csrf @method('PUT')<input type="hidden" name="section" value="ai">
                 <div class="desktop-settings-grid two"><label>{{ __('ui.provider') }}<select name="ai_provider">@foreach(['none'=>'—','openai'=>'OpenAI','anthropic'=>'Anthropic','azure'=>'Azure OpenAI'] as $key=>$label)<option value="{{ $key }}" @selected(old('ai_provider',$settings['ai_provider'] ?? 'none')===$key)>{{ $label }}</option>@endforeach</select></label><label>{{ __('ui.model') }}<input name="ai_model" maxlength="120" value="{{ old('ai_model',$settings['ai_model'] ?? '') }}"></label></div>
                 <label>{{ __('ui.api_key') }} @if($secretStatus['ai_api_key'])<small>{{ __('ui.secret_saved') }}</small>@endif<input name="ai_api_key" type="password" autocomplete="new-password" placeholder="{{ __('ui.leave_empty_to_keep') }}"></label>
+                <label class="desktop-settings-check"><input type="checkbox" name="ai_auto_classify" value="1" @checked(old('ai_auto_classify',$settings['ai_auto_classify'] ?? true))><span>{{ __('imports.ai_auto') }}</span></label>
                 <label class="desktop-settings-check"><input type="checkbox" name="ai_enabled" value="1" @checked(old('ai_enabled',$settings['ai_enabled'] ?? false))><span>{{ __('ui.enable_ai') }}</span></label><div class="desktop-settings-actions"><button class="desktop-settings-primary" data-settings-save>{{ __('ui.save') }}</button></div>
             </form>
         </section>

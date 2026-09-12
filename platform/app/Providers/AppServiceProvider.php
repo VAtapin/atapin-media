@@ -44,5 +44,13 @@ class AppServiceProvider extends ServiceProvider
     {
         foreach (Access::PERMISSIONS as $permission) Gate::define($permission, fn ($user) => $user->hasPermission($permission));
         Paginator::defaultView('components.pagination');
+        foreach ([\App\Models\Media::class => 'media', \App\Models\SourceRecord::class => 'record'] as $model => $type) {
+            $model::created(function ($item) use ($type) {
+                if ($item->status === 'unsorted' && app(\App\Services\Settings::class)->get('ai_auto_classify', true)
+                    && app(\App\Services\Importing\AiContentClassifier::class)->available()) {
+                    dispatch((new \App\Jobs\ClassifyImportedContent($type, (string) $item->id))->afterCommit());
+                }
+            });
+        }
     }
 }

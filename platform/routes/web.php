@@ -7,6 +7,7 @@ use App\Http\Controllers\MediaController;
 use App\Http\Controllers\SettingsController;
 
 Route::get('/', fn () => view('home'))->name('home');
+Route::get('/upload/{path?}', fn () => redirect('/desktop', 303))->where('path', '.*');
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class,'create'])->name('login');
     Route::post('/login', [AuthController::class,'store']);
@@ -27,6 +28,7 @@ Route::middleware('auth')->group(function () {
         Route::get('imports/options', [\App\Http\Controllers\ImportController::class, 'options'])->name('imports.options');
         Route::get('imports/files', [\App\Http\Controllers\ImportController::class, 'files'])->name('imports.files');
         Route::post('imports', [\App\Http\Controllers\ImportController::class,'store'])->name('imports.store');
+        Route::post('imports/{run}/retry', [\App\Http\Controllers\ImportController::class,'retry'])->name('imports.retry');
     });
     Route::middleware('can:projects.manage')->prefix('desktop')->group(function () {
         Route::post('projects', [\App\Http\Controllers\ProjectController::class,'store'])->name('projects.store');
@@ -37,6 +39,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/desktop/media/library', [MediaController::class,'library'])->middleware('can:media.view')->name('media.library');
     Route::get('/desktop/content', [\App\Http\Controllers\ImportedContentController::class,'index'])->middleware('can:media.view')->name('content.index');
     Route::get('/desktop/content/{record}', [\App\Http\Controllers\ImportedContentController::class,'show'])->middleware('can:media.view')->name('content.show');
+    Route::patch('/desktop/content/{record}', [\App\Http\Controllers\ImportedContentController::class,'update'])->middleware('can:content.edit')->name('content.update');
+    Route::post('/desktop/content/classify', [\App\Http\Controllers\ContentClassificationController::class,'store'])->middleware(['can:media.edit', 'can:content.edit', 'throttle:30,1'])->name('content.classify');
     Route::post('/desktop/media/uploads', [MediaController::class,'uploadStart'])->middleware('can:media.upload')->name('media.uploads.start');
     Route::post('/desktop/media/uploads/{upload}/chunk', [MediaController::class,'uploadChunk'])->middleware('can:media.upload')->name('media.uploads.chunk');
     Route::post('/desktop/media/uploads/{upload}/finish', [MediaController::class,'uploadFinish'])->middleware('can:media.upload')->name('media.uploads.finish');

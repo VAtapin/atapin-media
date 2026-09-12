@@ -195,6 +195,7 @@
       </dl>
       ${tags.length ? `<p class="media-library-tags">${tags.map(tag => `<span>${escape(tag)}</span>`).join('')}</p>` : ''}
       <a class="media-library-download" href="${escape(item.download_url)}">Herunterladen</a>`;
+      if (root.dataset.canEdit === 'true') window.appendContentAssignment?.(details, 'media', item);
     };
 
     const render = payload => {
