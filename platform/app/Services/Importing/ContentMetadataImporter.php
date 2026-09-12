@@ -12,10 +12,16 @@ class ContentMetadataImporter
 {
     public function record(string $source, string $id, string $kind, string $title, string $body, array $metadata): SourceRecord
     {
+        $run=isset($metadata['import_id']) ? ImportRun::find($metadata['import_id']) : null;
+        $key='record:'.$source.':'.$id.':'.hash('sha256',json_encode([$kind,$title,$body,$metadata]));
+        $journal=app(ImportJournal::class);
+        if($run && $journal->done($run,$key) && ($existing=SourceRecord::where('source',$source)->where('source_id',$id)->first())) return $existing;
+        $before=SourceRecord::where('source',$source)->where('source_id',$id)->first();
         $record = app(ImportedRecordMerger::class)->merge($source,$id,$kind,$title,$body,$metadata);
         $created=$record->wasRecentlyCreated;
         app(LocalMediaLinks::class)->repair($record);
         $record->refresh(); $record->wasRecentlyCreated=$created;
+        if($run) $journal->record($run,$key,$title,$kind,$created?'added':(($before && $before->metadata===$record->metadata && $before->body===$record->body)?'duplicate':'merged'),(string)$record->id);
         return $record;
     }
 
@@ -41,13 +47,18 @@ class ContentMetadataImporter
             if (! $file->isFile() || $file->isLink()) continue;
             $extension = strtolower($file->getExtension());
             if ($file->getSize() > 64 * 1024 * 1024) continue;
+            $journal=app(ImportJournal::class);$key='metadata-file:'.$file->getPathname();
+            $signature=['bytes'=>$file->getSize(),'mtime'=>$file->getMTime()];
+            if($journal->done($run,$key,$signature))continue;
             try {
                 if ($extension === 'csv' && str_contains(strtolower($file->getFilename()), 'video')) {
-                    $this->csv($run, $file->getPathname()); continue;
+                    $this->csv($run, $file->getPathname());
+                    $journal->record($run,$key,$file->getFilename(),'checkpoint','complete',null,['signature'=>$signature]);continue;
                 }
                 if ($extension !== 'json') continue;
                 $data = json_decode(file_get_contents(ImportPath::resolve($root, $file->getPathname())), true, 512, JSON_THROW_ON_ERROR);
                 if (! is_array($data)) continue;
+                $supported=true;
                 if (isset($data['id'], $data['ordered_items']) || (($data['_type']??'') === 'playlist' && isset($data['id'], $data['entries']))) {
                     $source = $data['source'] ?? ($run->source === 'youtube-service' || isset($data['ordered_items']) || str_starts_with(strtolower($data['extractor_key']??''),'youtube') ? 'youtube' : $run->source);
                     $this->playlist($source, $data, ['import_id'=>$run->id]);
@@ -64,9 +75,11 @@ class ContentMetadataImporter
                 } elseif (isset($data['id'], $data['text']) && (isset($data['raw']) || $file->getFilename() === 'post.json')) {
                     $this->normalized($run, ['source' => 'youtube', 'id' => $data['id'], 'kind' => 'post',
                         'title' => mb_substr($data['text'], 0, 120), 'body' => $data['text'], 'metadata' => $data], $root, dirname($file->getPathname()));
-                }
+                } else $supported=false;
+                $journal->record($run,$key,$file->getFilename(),$supported?'checkpoint':'metadata',$supported?'complete':'unsupported',null,['signature'=>$signature]);
             } catch (\Throwable $error) {
                 if ($error instanceof ImportStopped) throw $error;
+                $journal->record($run,$key,$file->getFilename(),'metadata','failed',null,['signature'=>$signature,'error'=>$error->getMessage()]);
                 $notes = $run->fresh()->notes ?? [];
                 if (count($notes) < 100) $notes[] = $file->getFilename().': '.$error->getMessage();
                 $run->update(['notes' => $notes]);
@@ -77,13 +90,19 @@ class ContentMetadataImporter
     public function playlist(string $source, array $data, array $metadata = []): Collection
     {
         if (count($data['ordered_items']??$data['entries']??[]) > 100000) throw new \RuntimeException('Playlist exceeds 100000 positions.');
-        return DB::transaction(function () use ($source, $data, $metadata) {
+        $run=isset($metadata['import_id']) && !($metadata['takeout']??false) ? ImportRun::find($metadata['import_id']) : null;
+        $key='playlist:'.$source.':'.$data['id'].':'.hash('sha256',json_encode([$data,$metadata]));
+        $before=Collection::where('source',$source)->where('source_id',(string)$data['id'])->first();
+        if($run && $before && app(ImportJournal::class)->done($run,$key))return $before;
+        $collection=DB::transaction(function () use ($source, $data, $metadata) {
             $collection = Collection::firstOrCreate(['source'=>$source,'source_id'=>(string) $data['id']],
                 ['title'=>mb_substr($data['title']??$data['id'],0,255),'description'=>$data['description']??'', 'metadata'=>[...$metadata,'raw'=>$data]]);
             if($collection->metadata['manual_playlist']??false) {
                 $collection->update(['metadata'=>[...($collection->metadata??[]),'latest_import'=>[...$metadata,'raw'=>$data]]]);
                 return $collection;
             }
+            $collection->update(['description'=>mb_strlen($data['description']??'')>mb_strlen($collection->description??'')?$data['description']:($collection->description??''),
+                'metadata'=>[...($collection->metadata??[]),...$metadata,'latest_import'=>['raw'=>$data]]]);
             $collection->items()->delete();
             foreach ($data['ordered_items'] ?? $data['entries'] ?? [] as $index => $item) $collection->items()->create([
                 'position'=>(int) ($item['position']??$index+1), 'source_id'=>$item['id']??null,
@@ -91,6 +110,8 @@ class ContentMetadataImporter
             ]);
             return $collection;
         });
+        if($run)app(ImportJournal::class)->record($run,$key,$collection->title,'playlist',!$before?'added':($before->metadata===$collection->metadata?'duplicate':'merged'),(string)$collection->id);
+        return $collection;
     }
 
     private function assets(string $directory, string $root, ?string $name = null): array

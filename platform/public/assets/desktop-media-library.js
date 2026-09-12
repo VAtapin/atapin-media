@@ -114,7 +114,7 @@
       const show = contentContainer.hidden;
       contentContainer.hidden = !show;
       organization?.reset();
-      for (const button of root.querySelectorAll('[data-library-grid], [data-classify-batch="media"]')) button.hidden = show;
+      for (const button of root.querySelectorAll('[data-library-grid], [data-library-collections], [data-library-select], [data-classify-batch="media"]')) button.hidden = show;
       [...root.children].filter(child => child.matches('[data-library-filter], [data-library-summary], .media-library-layout, [data-library-pagination]')).forEach(child => { child.hidden = show; });
       event.target.textContent = window.desktopImportLabels[show ? 'files' : 'content'];
       if (show) window.initializeContentLibrary?.(contentContainer.querySelector('[data-content-library]'));
@@ -136,6 +136,7 @@
     let lastPayload = null;
     let uploading = false;
     let loadGeneration = 0;
+    let receiptId=null;
 
     const setUploadMessage = (text, isError = false) => {
       if (!uploadMessage) return;
@@ -168,6 +169,7 @@
     const uploadSelectedFiles = async files => {
       if (!files?.length) return;
       if (uploading) return;
+      if(!contentContainer.hidden)root.querySelector('[data-library-content-toggle]').click();
       setUploading(true);
       uploadControl = window.createDesktopUploadControl(); paused = false;
       const control = uploadControl;
@@ -176,24 +178,27 @@
       if (folderInput) folderInput.disabled = true;
       queueItems.innerHTML = files.map((file, index) => `<li data-upload-row="${index}"><strong>${escape(file.webkitRelativePath || file.name)}</strong><progress value="0" max="${file.size}"></progress><small>${escape(window.desktopImportLabels.upload_waiting)}</small></li>`).join('');
       setUploadMessage(window.desktopImportLabels.upload_running);
-      let cursor = 0, succeeded = 0, failed = 0;
+      let cursor = 0, succeeded = 0, failed = 0,received=[];
       const worker = async () => {
         while (cursor < files.length) {
           const index = cursor++, file = files[index], row = queueItems.querySelector(`[data-upload-row="${index}"]`);
           try {
             await control.checkpoint();
-            await window.uploadDesktopMedia(file, root.dataset.userId, (offset, total) => {
+            const id=await window.uploadDesktopMedia(file, root.dataset.userId, (offset, total) => {
               row.querySelector('progress').value = offset;
               row.querySelector('small').textContent = `${prettyBytes(offset)} / ${prettyBytes(total)}`;
             }, control);
+            received.push(id);
             row.querySelector('small').textContent = window.desktopImportLabels.upload_done; succeeded++;
           } catch (error) {failed++; row.querySelector('small').textContent = control.signal.aborted ? window.desktopImportLabels.upload_stopped : error.message;}
         }
       };
       try {
         await Promise.all([worker(), worker()]);
+        if(received.length===1 && details.dataset.dirty!=='true'){receiptId=received[0];selected={id:receiptId};}
         await load(1);
         setUploadMessage(`${succeeded} ${window.desktopImportLabels.upload_done}${failed ? ` · ${failed} ${window.desktopImportLabels.upload_not_done}` : ''}`, failed > 0);
+        if(receiptId){const all=document.createElement('button');all.type='button';all.className='desktop-button';all.textContent=window.desktopImportLabels.receipt_all;uploadMessage.append(' ',all);all.onclick=()=>{receiptId=null;setUploadMessage('');load(1);};}
       } catch (error) {
         setUploadMessage(error.message || 'Upload fehlgeschlagen.', true);
       } finally {
@@ -206,6 +211,7 @@
     };
 
     const query = page => {
+      if(receiptId)return `${root.dataset.libraryUrl}?id=${encodeURIComponent(receiptId)}&archive=all`;
       const params = new URLSearchParams(new FormData(form));
       if (page > 1) params.set('page', page);
       [...params.entries()].filter(([, value]) => !value).forEach(([key]) => params.delete(key));
@@ -227,7 +233,7 @@
       <p>${escape(item.original_name)}</p>
       <dl>
         <div><dt>Typ</dt><dd>${escape(labels[item.kind] || item.kind)}</dd></div>
-        <div><dt>Quelle</dt><dd>${escape(labels[item.source] || item.source)}</dd></div>
+        <div><dt>Quelle</dt><dd>${escape(labels[item.source] || window.desktopImportLabels['source_'+item.source] || item.source)}</dd></div>
         <div><dt>Status</dt><dd>${escape(labels[item.status] || item.status)}</dd></div>
         <div><dt>Größe</dt><dd>${escape(prettyBytes(item.bytes))}</dd></div>
         <div><dt>Hinzugefügt</dt><dd>${prettyDate(item.created_at)}</dd></div>
@@ -247,7 +253,7 @@
       if (selected) selected = current.find(item => item.id === selected.id) || (details.dataset.dirty === 'true' ? selected : null);
       list.innerHTML = current.length
         ? current
-          .map(item => `<li><button type="button" class="media-library-item ${selected?.id === item.id ? 'is-selected' : ''}" data-media-id="${escape(item.id)}">${item.thumbnail_url ? `<img class="media-library-thumbnail" src="${escape(item.thumbnail_url)}" alt="" loading="lazy">` : `<span class="media-library-file-icon" aria-hidden="true">${icon(item.kind)}</span>`}<span class="media-library-item-main"><strong>${escape(item.title)}</strong><small>${escape(labels[item.source] || item.source)} · ${escape(prettyBytes(item.bytes))} · ${prettyDate(item.created_at)}</small></span><span class="media-library-status status-${escape(item.status)}">${escape(labels[item.status] || item.status)}</span></button></li>`)
+          .map(item => `<li><button type="button" class="media-library-item ${selected?.id === item.id ? 'is-selected' : ''}" data-media-id="${escape(item.id)}">${item.thumbnail_url ? `<img class="media-library-thumbnail" src="${escape(item.thumbnail_url)}" alt="" loading="lazy">` : `<span class="media-library-file-icon" aria-hidden="true">${icon(item.kind)}</span>`}<span class="media-library-item-main"><strong>${escape(item.title)}</strong><small>${escape(labels[item.source] || window.desktopImportLabels['source_'+item.source] || item.source)} · ${escape(prettyBytes(item.bytes))} · ${prettyDate(item.created_at)}</small></span><span class="media-library-status status-${escape(item.status)}">${escape(labels[item.status] || item.status)}</span></button></li>`)
           .join('')
         : '<li class="media-library-empty">Keine Medien für diese Auswahl.</li>';
       summary.textContent = `${payload.meta.total} Medien im Archiv`;
@@ -274,8 +280,8 @@
       }
     };
 
-    form.addEventListener('input', () => load(1));
-    form.addEventListener('change', () => load(1));
+    form.addEventListener('input', () => {receiptId=null;load(1);});
+    form.addEventListener('change', () => {receiptId=null;load(1);});
     list.addEventListener('click', event => {
       const id = event.target.closest('[data-media-id]')?.dataset.mediaId;
       if (!id) return;
@@ -310,6 +316,8 @@
     };
     document.addEventListener('desktop-media-changed', changed);
     const organization = window.initializeMediaOrganization?.(root, () => current);
+    list.classList.add('is-grid');
     load(1);
+    root.querySelector('[data-library-content-toggle]')?.click();
   };
 })();

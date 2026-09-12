@@ -34,7 +34,7 @@ class LocalFolderAdapter implements ImportAdapter
         if (! is_dir($root)) throw new \RuntimeException('Import source is not a folder.');
         $this->importDirectory($run, $root);
     }
-    public function importDirectory(ImportRun $run, string $root): void
+    public function importDirectory(ImportRun $run, string $root,bool $scanMetadata=true): void
     {
         app(ImportProgress::class)->checkpoint($run, 'files');
         $inbox = realpath($this->inboxRoot);
@@ -45,7 +45,10 @@ class LocalFolderAdapter implements ImportAdapter
             if (str_starts_with($file->getFilename(), '.') || preg_match('/\.(part|ytdl|tmp)$/i', $file->getFilename())) continue;
             $absolute = ImportPath::resolve($root, $file->getPathname());
             $relative = str_replace(DIRECTORY_SEPARATOR, '/', substr($absolute, strlen($inbox) + 1));
-            $run->increment('discovered');
+            $journal=app(ImportJournal::class); $key='file:'.$relative;
+            $signature=['bytes'=>$file->getSize(),'mtime'=>$file->getMTime()];
+            if($journal->done($run,$key,$signature)) continue;
+            if(! $journal->item($run,$key)) $run->increment('discovered');
             try {
                 $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($absolute) ?: 'application/octet-stream';
                 $hash = hash_file('sha256', $absolute);
@@ -57,7 +60,10 @@ class LocalFolderAdapter implements ImportAdapter
                         'target_profile' => $run->target_profile ?? 'mixed'],
                 ]);
                 $run->increment($media->wasRecentlyCreated ? 'imported' : 'skipped');
+                $journal->record($run,$key,$relative,'file',$media->wasRecentlyCreated?'added':'duplicate',(string)$media->id,['signature'=>$signature]);
             } catch (\Throwable $error) {
+                if ($error instanceof ImportStopped) throw $error;
+                $journal->record($run,$key,$relative,'file','failed',null,['signature'=>$signature,'error'=>$error->getMessage()]);
                 $notes = $run->fresh()->notes ?? [];
                 if (count($notes) < 100) $notes[] = $relative.': '.$error->getMessage();
                 $run->update(['notes' => $notes]); $run->increment('skipped');
@@ -65,6 +71,6 @@ class LocalFolderAdapter implements ImportAdapter
         }
         if (! $run->fresh()->discovered) $run->update(['notes' => ['No files found.']]);
         app(ImportProgress::class)->checkpoint($run, 'metadata');
-        app(ContentMetadataImporter::class)->scan($run, $root);
+        if($scanMetadata) app(ContentMetadataImporter::class)->scan($run, $root);
     }
 }

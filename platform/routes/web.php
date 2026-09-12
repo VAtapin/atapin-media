@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DesktopController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\ImportController;
 
 Route::get('/', fn () => view('home'))->name('home');
 Route::get('/upload/{path?}', fn () => redirect('/desktop', 303))->where('path', '.*');
@@ -24,8 +25,16 @@ Route::middleware('auth')->group(function () {
         Route::patch('users/{user}', [\App\Http\Controllers\UserController::class,'update'])->name('users.update');
     });
     Route::middleware('can:imports.manage')->prefix('desktop')->group(function () {
+        Route::get('/imports/takeout',[ImportController::class,'takeout'])->name('imports.takeout');
+        Route::post('/imports/video-check',[\App\Http\Controllers\LocalVideoAuditController::class,'store'])->middleware('can:media.edit')->name('imports.video-check');
+        Route::post('/imports/{run}/items/{item}/browser',[\App\Http\Controllers\LocalVideoAuditController::class,'browser'])->middleware('can:media.edit');
+        Route::get('/imports/catalog-reset',[\App\Http\Controllers\CatalogResetController::class,'preview'])->middleware('can:content.edit');
+        Route::post('/imports/catalog-reset',[\App\Http\Controllers\CatalogResetController::class,'store'])->middleware('can:content.edit');
+        Route::post('/imports/catalog-restore',[\App\Http\Controllers\CatalogResetController::class,'restore'])->middleware('can:content.edit');
         Route::get('imports', [\App\Http\Controllers\ImportController::class, 'index'])->name('imports.index');
         Route::get('imports/options', [\App\Http\Controllers\ImportController::class, 'options'])->name('imports.options');
+        Route::get('imports/{run}/report', [\App\Http\Controllers\ImportController::class,'report'])->name('imports.report');
+        Route::post('imports/{run}/items/{item}/retry',[ImportController::class,'retryItem'])->name('imports.item.retry');
         Route::get('imports/files', [\App\Http\Controllers\ImportController::class, 'files'])->name('imports.files');
         Route::post('imports', [\App\Http\Controllers\ImportController::class,'store'])->name('imports.store');
         Route::post('imports/{run}/retry', [\App\Http\Controllers\ImportController::class,'retry'])->name('imports.retry');
@@ -58,6 +67,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/desktop/content/{record}/imports/{snapshot}', [\App\Http\Controllers\ImportedContentController::class,'importVersion'])->middleware('can:media.view')->name('content.import-version');
     Route::get('/desktop/content/playlists', [\App\Http\Controllers\ImportedContentController::class,'playlists'])->middleware('can:media.view')->name('content.playlists');
     Route::get('/desktop/content/playlists/{collection}', [\App\Http\Controllers\ImportedContentController::class,'playlist'])->middleware('can:media.view')->name('content.playlist');
+    Route::get('/desktop/content/{record}/children', [\App\Http\Controllers\ImportedContentController::class,'children'])->middleware('can:media.view')->name('content.children');
     Route::get('/desktop/content/{record}', [\App\Http\Controllers\ImportedContentController::class,'show'])->middleware('can:media.view')->name('content.show');
     Route::patch('/desktop/content/{record}', [\App\Http\Controllers\ImportedContentController::class,'update'])->middleware('can:content.edit')->name('content.update');
     Route::post('/desktop/content/{record}/classifications/{classification}/undo', [\App\Http\Controllers\ContentClassificationController::class,'undoRecord'])->middleware(['can:media.edit','can:content.edit'])->name('content.classification.undo');

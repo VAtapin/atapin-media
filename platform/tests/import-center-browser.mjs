@@ -26,11 +26,12 @@ try {
   await page.locator('[data-close-all]').click();
   await page.locator('[data-open-app="media"]').first().click();
   const media = page.locator('.os-window[data-app-id="media"]');
+  await media.locator('[data-library-content-toggle]').click(); // Explicit raw-file view; library now starts with complete content.
   const stamp = Date.now(); const fileName = `browser-original-${stamp}.txt`; const reviewedFile = `Browser reviewed original ${stamp}`; const reviewedPost = `Browser reviewed post ${stamp}`;
   const coverName = `browser-cover-${stamp}.png`;
   await media.locator('[data-media-upload-input]').setInputFiles({name:coverName,mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==','base64')});
   await media.locator('[data-media-upload-queue]').waitFor({state:'hidden'});
-  await media.locator('[data-library-list]').getByText(coverName).click();
+  await media.locator('[data-library-details][data-current-id]').waitFor();
   const coverPanel = media.locator('[data-library-details] details').filter({has:page.locator('[data-cover-results]')});
   await coverPanel.locator('summary').click();
   await coverPanel.locator('[name=q]').fill('Browser playlist video');
@@ -74,8 +75,8 @@ try {
   await content.locator('[name=q]').fill('');
   await media.locator('[data-library-content-toggle]').click();
   await media.locator('[data-media-upload-input]').setInputFiles({name:fileName,mimeType:'text/plain',buffer:Buffer.from('Original from browser')});
-  await media.locator('[data-library-list]').getByText(fileName).waitFor();
-  await media.locator('[data-library-list]').getByText(fileName).click();
+  await media.locator('[data-media-upload-queue]').waitFor({state:'hidden'});
+  await media.locator('[data-library-details][data-current-id]').waitFor();
   await media.locator('[data-library-details] .media-library-download').waitFor();
   const assignment = media.locator('[data-library-details] .content-assignment');
   await assignment.locator('[name=title]').fill(reviewedFile);
@@ -89,7 +90,8 @@ try {
   await assignment.locator('button[type=submit]').click();
   const saved = await saveResponse; assert(saved.ok(), await saved.text());
   assert.equal(saved.request().postDataJSON().title, reviewedFile);
-  const libraryData = await page.evaluate(async () => (await (await fetch('/desktop/media/library', {headers:{Accept:'application/json'}})).json()));
+  const receipt=await media.locator('[data-library-details]').getAttribute('data-current-id');
+  const libraryData = await page.evaluate(async id => (await (await fetch('/desktop/media/library?id='+id, {headers:{Accept:'application/json'}})).json()),receipt);
   assert(libraryData.data.some(item => item.title === reviewedFile), JSON.stringify(libraryData.data.map(item => item.title)));
   await media.locator('[data-library-list]').getByText(reviewedFile).waitFor();
   const collectionTitle = 'Browser collection ' + stamp;
@@ -110,7 +112,10 @@ try {
   await media.locator('.media-library-actions summary').click();
   await media.locator('[data-library-select]').click();
   await media.locator('.media-library-actions summary').click();
-  await media.locator('[data-library-grid]').click(); assert(await media.locator('[data-library-list]').evaluate(el => el.classList.contains('is-grid')));
+  assert(await media.locator('[data-library-list]').evaluate(el => el.classList.contains('is-grid')));
+  await media.locator('[data-library-grid]').click(); assert(!await media.locator('[data-library-list]').evaluate(el => el.classList.contains('is-grid')));
+  await media.locator('.media-library-actions summary').click();
+  await media.locator('[data-library-grid]').click();
   await media.locator('[data-library-content-toggle]').click();
   await media.locator('[data-content-summary]').getByText('Inhalte').waitFor();
   await media.locator('[data-content-list]').getByText(reviewedFile).click();
@@ -159,7 +164,7 @@ try {
   await queuedRun.locator('[data-import-retry]').waitFor();
   await imports.locator('[data-window-action="help"]').click();
   const help = page.locator('.os-window[data-app-id="help-imports"]');
-  await help.locator('.desktop-help').getByText('Wählen Sie zuerst einen von vier Wegen:', {exact:false}).waitFor();
+  await help.locator('.desktop-help').getByText('Wählen Sie zuerst einen von fünf Wegen:', {exact:false}).waitFor();
   assert(await imports.isVisible());
   await help.locator('[data-window-action="close"]').click();
   await imports.locator('[name=method][value=server]').check();
@@ -184,6 +189,8 @@ try {
   }
   await page.setViewportSize({width:390,height:844});
   await page.locator('[data-open-app="media"]').first().click();
+  await page.locator('.os-window[data-app-id="media"] [data-library-content-toggle]').click();
+  await page.locator('.os-window[data-app-id="media"] [data-library-filter] [name=q]').fill(reviewedFile);
   await page.locator('.os-window[data-app-id="media"] [data-library-list]').getByText(reviewedFile).waitFor();
   await page.screenshot({path:'tests/artifacts/import-library-mobile.png'});
   assert.deepEqual(errors,[]);

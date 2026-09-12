@@ -13,6 +13,7 @@ class ImportController extends Controller
     private const SOURCES = [
         ['id' => 'intake', 'label' => 'Intake'],
         ['id' => 'youtube', 'label' => 'YouTube-Archiv'],
+        ['id' => 'youtube-takeout', 'label' => 'Google Takeout'],
         ['id' => 'local-folder', 'label' => 'Lokaler Ordner'],
         ['id' => 'local-archive', 'label' => 'Lokales Archiv (zip/tar/gz/tgz)'],
         ['id' => 'youtube-service', 'label' => 'YouTube (Link/Channel/Playlist)'],
@@ -58,6 +59,7 @@ class ImportController extends Controller
 
         $runs = $query->paginate(20)->withQueryString();
         $items = $runs->getCollection()->map(function (ImportRun $run) {
+            $summary=app(\App\Services\Importing\ImportJournal::class)->summary($run);
             return [
                 'id' => $run->id,
                 'source' => $run->source,
@@ -65,10 +67,12 @@ class ImportController extends Controller
                 'source_ref' => $run->source_ref,
                 'status' => $run->status,
                 'progress' => $run->progress,
+                'summary'=>$summary,
+                'report_url'=>route('imports.report',$run),
                 'target_profile' => $run->target_profile,
-                'discovered' => $run->discovered,
-                'imported' => $run->imported,
-                'skipped' => $run->skipped,
+                'discovered' => $summary ? array_sum($summary) : $run->discovered,
+                'imported' => $summary ? ($summary['added']??0) : $run->imported,
+                'skipped' => $summary ? ($summary['duplicate']??0) : $run->skipped,
                 'notes' => $run->notes,
                 'error' => $run->error,
                 'created_at' => $run->created_at?->toIso8601String(),
@@ -121,6 +125,7 @@ class ImportController extends Controller
             'playlist_id' => 'nullable|string|max:255',
             'only_unsorted' => 'nullable|boolean',
             'notes' => 'nullable|string|max:2000',
+            'batch'=>'nullable|string|max:100','expected_parts'=>'nullable|integer|min:1|max:100',
         ]);
 
         $source = trim((string) $data['source']);
@@ -141,6 +146,7 @@ class ImportController extends Controller
             'only_unsorted',
             'notes',
             'target_profile',
+            'batch','expected_parts',
         ]));
 
         $audit->record('import.queued', $run->id, [
@@ -165,7 +171,7 @@ class ImportController extends Controller
             $current = ImportRun::lockForUpdate()->findOrFail($run->id);
             abort_unless(in_array($current->status, ['failed', 'partial', 'cancelled'], true), 409);
             $current->update(['status' => 'queued', 'error' => null, 'notes' => [], 'started_at' => null,
-                'finished_at' => null, 'discovered' => 0, 'imported' => 0, 'skipped' => 0, 'progress' => []]);
+                'finished_at' => null, 'progress' => $current->progress??[]]);
             dispatch((new \App\Jobs\ImportArchive($current->id))->afterCommit());
         });
         $audit->record('import.retried', (string) $run->id);
@@ -189,5 +195,31 @@ class ImportController extends Controller
     {
         $supported = array_column(self::SOURCES, 'id');
         return in_array($source, $supported, true);
+    }
+    public function report(Request $request,ImportRun $run)
+    {
+        $data=$request->validate(['page'=>'nullable|integer|min:1','outcome'=>'nullable|string|max:32','type'=>'nullable|string|max:32']);
+        $query=\App\Models\ImportItem::where('import_run_id',$run->id)->whereNotIn('type',['archive-entry','checkpoint'])->orderBy('id');
+        foreach(['outcome','type'] as $key)if($data[$key]??'')$query->where($key,$data[$key]);
+        $page=$query->paginate(30);
+        $items=$page->getCollection()->map(function($item)use($run) {
+            $data=$item->toArray();
+            $data['browser_url']=$item->type==='video-check'?url('/desktop/imports/'.$run->id.'/items/'.$item->id.'/browser'):null;
+            if($item->subject_id && in_array($item->type,['file','connection','video-check'],true))$data['open_url']=route('media.details',$item->subject_id);
+            elseif($item->subject_id && in_array($item->type,['video','short','post','poll','comment','content-check'],true))$data['open_url']=route('content.show',$item->subject_id);
+            elseif($item->subject_id && $item->type==='playlist')$data['open_url']=route('content.playlist',$item->subject_id);
+            return $data;
+        });
+        return response()->json(['data'=>$items,'summary'=>app(\App\Services\Importing\ImportJournal::class)->summary($run),
+            'status'=>$run->status,'meta'=>['current_page'=>$page->currentPage(),'last_page'=>$page->lastPage(),'total'=>$page->total()]]);
+    }
+    public function takeout(\App\Services\Importing\TakeoutArchiveAdapter $adapter)
+    {
+        return response()->json($adapter->inventory());
+    }
+    public function retryItem(ImportRun $run,\App\Models\ImportItem $item,Audit $audit)
+    {
+        abort_unless($item->import_run_id===$run->id && $item->outcome==='failed',404);
+        return $this->retry($run,$audit);
     }
 }

@@ -157,7 +157,8 @@ class ResumableMediaUploadService
         $upload = $upload->fresh();
 
         if ($upload->status === ResumableMediaUpload::STATUS_COMPLETE) {
-            $media = Media::where('source', 'upload')->where('source_id', $upload->id)->first();
+            $original=\App\Models\MediaOriginal::where('source','upload')->where('source_id',$upload->id)->first();
+            $media = $original ? Media::find($original->media_id) : Media::where('source', 'upload')->where('source_id', $upload->id)->first();
             if (!$media) {
                 abort(500, 'Upload finished without media record.');
             }
@@ -212,7 +213,7 @@ class ResumableMediaUploadService
 
         try {
             return DB::transaction(function () use ($upload, $destination, $mime): Media {
-                $media = Media::create([
+                $media = app(\App\Services\Importing\ImportedMediaRegistry::class)->register([
                     'id' => (string) Str::uuid(),
                     'title' => $upload->original_name,
                     'original_name' => $upload->original_name,

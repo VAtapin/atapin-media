@@ -29,6 +29,8 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(YoutubeArchiveAdapter::class),
                 $app->make(LocalFolderAdapter::class),
                 $app->make(LocalArchiveAdapter::class),
+                $app->make(\App\Services\Importing\TakeoutArchiveAdapter::class),
+                $app->make(\App\Services\Importing\LocalVideoAuditAdapter::class),
                 $app->make(ServiceLinkAdapter::class, ['source' => 'youtube-service']),
                 $app->make(ServiceLinkAdapter::class, ['source' => 'tiktok']),
                 $app->make(ServiceLinkAdapter::class, ['source' => 'instagram']),
@@ -46,7 +48,7 @@ class AppServiceProvider extends ServiceProvider
         Paginator::defaultView('components.pagination');
         foreach ([\App\Models\Media::class => 'media', \App\Models\SourceRecord::class => 'record'] as $model => $type) {
             $model::created(function ($item) use ($type) {
-                if ($item->status === 'unsorted' && app(\App\Services\Settings::class)->get('ai_auto_classify', true)
+                if ($item->source!=='youtube-takeout' && !($item->metadata['takeout']??false) && $item->status === 'unsorted' && app(\App\Services\Settings::class)->get('ai_auto_classify', true)
                     && app(\App\Services\Importing\AiContentClassifier::class)->available()) {
                     dispatch((new \App\Jobs\ClassifyImportedContent($type, (string) $item->id))->afterCommit());
                 }

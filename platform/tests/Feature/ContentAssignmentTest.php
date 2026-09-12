@@ -70,7 +70,7 @@ class ContentAssignmentTest extends TestCase
         $media = $this->media(); Queue::assertPushed(ClassifyImportedContent::class);
         $this->classify($media);
         $this->assertSame('ready',$media->fresh()->status); $this->assertSame('ai',$media->fresh()->classification_origin);
-        $this->assertSame('applied',$media->classifications()->first()->status); $this->assertSame('post',SourceRecord::first()->kind);
+        $this->assertSame('applied',$media->classifications()->first()->status); $this->assertDatabaseCount('source_records',0);
         Http::assertSent(fn ($request) => $request['store'] === false && $request['text']['format']['strict'] === true && $request['model'] === 'configured-model');
     }
     public function test_filename_only_media_is_not_marked_understood(): void
@@ -103,7 +103,9 @@ class ContentAssignmentTest extends TestCase
         $this->assertStringContainsString('Bereits vorhandene Untertitel',$input['evidence']['body']);
         $this->assertStringNotContainsString('ausführlicher Beitrag',$input['evidence']['body']);
         $this->assertNull($input['image']);
-        $this->classify($media); $this->assertSame('videos',$media->fresh()->metadata['target_profile']);
+        $this->classify($media); $this->assertSame('media_library',$media->fresh()->metadata['target_profile']);
+        $this->assertDatabaseCount('source_records',1);
+        $this->assertSame('Vorhandene Beschreibung',SourceRecord::where('source_id','source-video')->first()->body);
     }
 
     public function test_ai_undo_restores_state_without_deleting_originals_or_overwriting_manual_edits(): void
@@ -112,7 +114,7 @@ class ContentAssignmentTest extends TestCase
         $media = $this->media(); $this->classify($media); $log = $media->classifications()->first();
         $this->postJson('/desktop/media/'.$media->id.'/classifications/'.$log->id.'/undo')->assertOk();
         $this->assertSame('Original',$media->fresh()->title); $this->assertSame('unsorted',$media->fresh()->status);
-        $this->assertDatabaseCount('source_records',1); $this->getJson('/desktop/content?section=posts')->assertOk()->assertJsonCount(0,'data');
+        $this->assertDatabaseCount('source_records',0); $this->getJson('/desktop/content?section=posts')->assertOk()->assertJsonCount(0,'data');
         $this->assertTrue(Storage::disk('local')->exists('original'));
         $this->assertSame('undone',$log->fresh()->status);
         $this->classify($media); $latest = $media->classifications()->latest('id')->first();

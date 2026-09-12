@@ -1,4 +1,6 @@
-<section class="desktop-import-center" data-import-center data-user-id="{{ auth()->id() }}" data-imports-url="{{ route('imports.index') }}" data-imports-options-url="{{ route('imports.options') }}" data-import-files-url="{{ route('imports.files') }}">
+<section class="desktop-import-center" data-import-center data-user-id="{{ auth()->id() }}" data-imports-url="{{ route('imports.index') }}" data-imports-options-url="{{ route('imports.options') }}" data-import-files-url="{{ route('imports.files') }}" data-takeout-url="{{ route('imports.takeout') }}">
+    <div class="media-library-toolbar-row">@can('media.edit')<button type="button" class="desktop-button" data-local-video-check>{{ __('imports.audit_start') }}</button>@endcan
+    @can('content.edit')<button type="button" class="desktop-button" data-catalog-reset>{{ __('imports.reset_start') }}</button>@endcan</div>
     <form class="import-center-form" data-import-form>
         <fieldset class="import-methods">
             <legend>{{ __('imports.choose_method') }}</legend>
@@ -8,6 +10,7 @@
             <label><input type="radio" name="method" value="link" @cannot('media.upload') checked @endcannot><strong>{{ __('imports.method_link') }}</strong><small>{{ __('imports.method_link_hint') }}</small></label>
             <label><input type="radio" name="method" value="existing"><strong>{{ __('imports.method_existing') }}</strong><small>{{ __('imports.method_existing_hint') }}</small></label>
             <label><input type="radio" name="method" value="server"><strong>{{ __('imports.method_server') }}</strong><small>{{ __('imports.method_server_hint') }}</small></label>
+            <label><input type="radio" name="method" value="takeout"><strong>{{ __('imports.method_takeout') }}</strong><small>{{ __('imports.takeout_hint') }}</small></label>
         </fieldset>
         @can('media.upload')
         <div class="import-method-panel" data-import-panel="computer">
@@ -29,6 +32,12 @@
             <p data-import-browser-message role="status"></p>
             <button type="button" class="desktop-button" data-import-use-folder disabled>{{ __('imports.use_folder') }}</button>
             <p class="import-selection" data-import-selection role="status"></p>
+        </div>
+        <div class="import-method-panel" data-import-panel="takeout" hidden>
+            <p>{{ __('imports.takeout_hint') }}</p>
+            <label><span>{{ __('imports.takeout_batch') }}</span><select data-takeout-batch></select></label>
+            <label><span>{{ __('imports.takeout_parts') }}</span><input type="number" min="1" max="100" value="8" data-takeout-parts></label>
+            <button type="button" class="desktop-button" data-takeout-refresh>{{ __('imports.refresh') }}</button><p data-takeout-message role="status"></p>
         </div>
         <details class="import-advanced">
             <summary>{{ __('imports.advanced_options') }}</summary>

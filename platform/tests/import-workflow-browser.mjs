@@ -1,0 +1,41 @@
+import {chromium} from '../../.local/node_modules/playwright/index.mjs';
+import {spawn,execFileSync} from 'node:child_process';
+import assert from 'node:assert/strict';
+const php=process.env.PHP_BINARY||'php';
+const server=spawn(php,['-S','127.0.0.1:8792','-t','.','../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php'],{stdio:'pipe',cwd:'public'});
+let output='';server.stdout.on('data',v=>output+=v);server.stderr.on('data',v=>output+=v);
+let browser;
+try {
+ let ready=false;for(let n=0;n<30;n++){try{if((await fetch('http://127.0.0.1:8792/login',{signal:AbortSignal.timeout(1000)})).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,200));}assert(ready,output);console.log('Workflow server ready.');
+ browser=await chromium.launch({headless:true,...(process.env.BROWSER_CHANNEL?{channel:process.env.BROWSER_CHANNEL}:{})});
+ const page=await browser.newPage({viewport:{width:1672,height:941}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:8792/login');await page.locator('[name=email]').fill('test@example.com');await page.locator('[name=password]').fill('kurz5');await page.locator('form button').click();await page.waitForURL('**/desktop');console.log('Workflow logged in.');
+ await page.locator('[data-close-all]').click();await page.locator('[data-open-app=imports]').first().click();
+ const imports=page.locator('.os-window[data-app-id=imports]');await imports.locator('[name=method][value=takeout]').check();await imports.locator('[data-takeout-message]').waitFor();
+ assert.equal(await imports.locator('[data-takeout-parts]').inputValue(),'8');
+ const record=await page.evaluate(async()=>{
+  const canvas=document.createElement('canvas');canvas.width=160;canvas.height=90;const ctx=canvas.getContext('2d');
+  const stream=canvas.captureStream(10),recorder=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp8'}),chunks=[];
+  recorder.ondataavailable=e=>chunks.push(e.data);const finished=new Promise(r=>recorder.onstop=r);recorder.start();
+  for(let n=0;n<15;n++){ctx.fillStyle=n%2?'#102f52':'#d5a13c';ctx.fillRect(0,0,160,90);await new Promise(r=>setTimeout(r,100));}recorder.stop();await finished;stream.getTracks().forEach(track=>track.stop());
+  const bytes=new Uint8Array(await new Blob(chunks,{type:'video/webm'}).arrayBuffer()),csrf=document.querySelector('meta[name=csrf-token]').content;
+  const send=async(url,body,headers={})=>{const reply=await fetch(url,{method:'POST',body,headers:{Accept:'application/json','X-CSRF-TOKEN':csrf,...headers}});if(!reply.ok)throw new Error(await reply.text());return reply.json();};
+  const upload=await send('/desktop/media/uploads',JSON.stringify({request_key:crypto.randomUUID(),name:'Playback fixture '+Date.now()+'.webm',size:bytes.length}),{'Content-Type':'application/json'});
+  const sha=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),n=>n.toString(16).padStart(2,'0')).join('');
+  await send(`/desktop/media/uploads/${upload.id}/chunk`,bytes,{'Content-Type':'application/octet-stream','X-Upload-Offset':'0','X-Chunk-SHA256':sha});
+  const done=await send(`/desktop/media/uploads/${upload.id}/finish`,'{}',{'Content-Type':'application/json'});return done.media_id;
+ });
+ const queued=page.waitForResponse(reply=>reply.url().endsWith('/imports/video-check')&&reply.request().method()==='POST');await imports.locator('[data-local-video-check]').click();const run=(await (await queued).json()).import_id;
+ execFileSync(php,['tests/browser-video-audit.php',run],{env:process.env});
+ const box=page.locator('dialog.import-report-dialog');await box.locator('[data-refresh]').click();
+ await box.locator('[data-play-all]').waitFor({state:'visible'});
+ // Filter down to the synthetic video; inspect report over the authenticated browser session.
+ const item=await page.evaluate(async({run,record})=>{let n=1;for(;;){const data=await(await fetch(`/desktop/imports/${run}/report?type=video-check&page=${n}`,{headers:{Accept:'application/json'}})).json();const item=data.data.find(x=>x.subject_id===record);if(item)return item;if(n>=data.meta.last_page)throw new Error('fixture not reported');n++;}},{run,record});
+ const fixturePage=await page.evaluate(async({run,id})=>{let n=1;for(;;){const data=await(await fetch(`/desktop/imports/${run}/report?page=${n}`,{headers:{Accept:'application/json'}})).json();if(data.data.some(x=>x.id===id))return n;n++;}},{run,id:item.id});
+ for(let n=1;n<fixturePage;n++)await box.locator('[data-page]').last().click();
+ await box.locator(`[data-check="${item.id}"]`).click();
+ await box.locator('[data-items] li').filter({has:page.locator(`[data-check="${item.id}"]`)}).getByText('In diesem Browser abgespielt',{exact:false}).waitFor({timeout:25000});
+ const saved=await page.evaluate(async({run,id})=>{let n=1;for(;;){const data=await(await fetch(`/desktop/imports/${run}/report?page=${n}`,{headers:{Accept:'application/json'}})).json();const item=data.data.find(x=>x.id===id);if(item)return item.metadata.browser_status;n++;}},{run,id:item.id});assert.equal(saved,'playable');
+ await page.setViewportSize({width:390,height:844});assert(await box.evaluate(el=>el.getBoundingClientRect().width<=innerWidth));
+ await box.locator('[data-close]').click();assert.deepEqual(errors,[]);console.log('New import workflow passed: Takeout fields, local HTTP 206, decoded WebM frame, seek, actual browser playback and persisted outcome.');
+}finally{await browser?.close();server.kill();}

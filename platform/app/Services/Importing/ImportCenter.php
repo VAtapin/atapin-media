@@ -69,7 +69,9 @@ class ImportCenter
         try {
             app(ImportProgress::class)->checkpoint($run);
             $this->adapter($run->source)->import($run);
-            $this->finish($run, $run->fresh()->notes ? 'partial' : 'complete');
+            $summary=app(ImportJournal::class)->summary($run);
+            $warnings=array_sum(array_intersect_key($summary,array_flip(['failed','unsupported','ambiguous','unmatched','missing'])));
+            $this->finish($run, ($run->fresh()->notes || $warnings) ? 'partial' : 'complete');
         } catch (ImportStopped) {
             $this->finish($run, 'cancelled');
         } catch (Throwable $e) {

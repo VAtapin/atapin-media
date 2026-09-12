@@ -11,7 +11,7 @@ class ImportedContentController extends Controller
         $data = $request->validate(['q' => 'nullable|string|max:120', 'kind' => 'nullable|in:video,short,post,poll,comment',
             'section' => 'nullable|in:videos,posts,community', 'status' => 'nullable|in:unsorted,review,ready,needs_attention',
             'source' => 'nullable|string|max:32', 'page' => 'nullable|integer|min:1']);
-        $query = SourceRecord::query()->latest();
+        $query = SourceRecord::query()->where('source','!=','catalog-reset')->latest();
         $kinds = match ($data['section'] ?? '') { 'videos' => ['video', 'short'], 'posts' => ['post'], 'community' => ['poll', 'comment'], default => [] };
         if ($kinds) $query->whereIn('kind', $kinds)->where(fn ($q) => $q->whereNull('metadata->library_only')->orWhere('metadata->library_only', false));
         foreach (['kind', 'source', 'status'] as $field) if ($data[$field] ?? '') $query->where($field, $data[$field]);
@@ -36,7 +36,7 @@ class ImportedContentController extends Controller
     public function playlists(Request $request)
     {
         $data = $request->validate(['q'=>'nullable|string|max:120','page'=>'nullable|integer|min:1']);
-        $query = \App\Models\Collection::withCount('items')->latest();
+        $query = \App\Models\Collection::withCount('items')->where('source','!=','catalog-reset')->latest();
         if ($data['q']??'') $query->where('title','like','%'.$data['q'].'%');
         $page = $query->paginate(30);
         return response()->json(['data'=>$page->getCollection()->map(fn ($item)=>[
@@ -55,7 +55,7 @@ class ImportedContentController extends Controller
         $byItem = $items->mapWithKeys(fn($item)=>[$item->id=>$item->source_record_id ? ($explicit[$item->source_record_id]??null) : ($records[$item->source_id??'']??null)]);
         $records=$records->merge($explicit)->filter();
         $ids = $records->flatMap(fn ($record) => app(\App\Services\Importing\LocalMediaLinks::class)->ids($record))->unique();
-        $videoIds = Media::whereIn('id', $ids)->where('kind', 'video')->get()->filter(fn ($media) => \Illuminate\Support\Facades\Storage::disk($media->disk)->exists($media->path))->pluck('id')->all();
+        $videoIds = Media::whereIn('id', $ids)->where('kind', 'video')->get()->filter(fn ($media) => app(\App\Services\MediaOriginalLocator::class)->find($media))->pluck('id')->all();
         return response()->json(['id'=>$collection->id,'title'=>$collection->title,'body'=>$collection->description,'kind'=>'playlist',
             'source'=>$collection->source,'source_id'=>$collection->source_id,'status'=>'','assets'=>[],'private'=>true,
             'external_url' => $presentation->externalUrl($collection->metadata ?? [], $collection->source ?? '', $collection->source_id, 'playlist'),
@@ -93,5 +93,12 @@ class ImportedContentController extends Controller
     {
         abort_unless($snapshot->source_record_id === $record->id,404);
         return response()->json(['title'=>$snapshot->title,'body'=>$snapshot->body,'kind'=>$snapshot->kind,'metadata'=>$snapshot->metadata]);
+    }
+    public function children(Request $request,SourceRecord $record)
+    {
+        $request->validate(['page'=>'nullable|integer|min:1']);
+        $page=SourceRecord::where('source',$record->source)->where('metadata->parent_source_id',$record->source_id)->whereIn('kind',['comment','poll'])->orderBy('id')->paginate(30);
+        return response()->json(['data'=>$page->getCollection()->map(fn($child)=>['id'=>$child->id,'kind'=>$child->kind,'body'=>$child->body,'author'=>$child->metadata['author']??null,
+            'poll'=>$child->metadata['poll']??null,'detail_url'=>route('content.show',$child)]),'meta'=>['current_page'=>$page->currentPage(),'last_page'=>$page->lastPage(),'total'=>$page->total()]]);
     }
 }

@@ -8,7 +8,9 @@ class MediaTechnicalProbe
     protected function process(array $arguments): Process {return new Process($arguments,timeout:60);}
     public function inspect(Media $media): array
     {
-        $path=Storage::disk($media->disk)->path($media->path);
+        $location=app(MediaOriginalLocator::class)->find($media);
+        if(!$location)throw new \RuntimeException(__('imports.unavailable'));
+        $path=Storage::disk($location['disk'])->path($location['path']);
         if(!is_file($path)) throw new \RuntimeException(__('imports.unavailable'));
         if($media->kind==='image') {
             $size=getimagesize($path);if(!$size) throw new \RuntimeException(__('imports.probe_failed'));

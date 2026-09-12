@@ -61,16 +61,23 @@ class ArchiveImporter
     private function attempt(string $label,callable $fn):void
     {
         app(\App\Services\Importing\ImportProgress::class)->checkpoint($this->run);
-        try {$fn();} catch(\Throwable $e) {
+        try {
+            $fn();
+            if($item=app(\App\Services\Importing\ImportJournal::class)->item($this->run,'archive-error:'.$label))$item->update(['type'=>'checkpoint','outcome'=>'complete']);
+        } catch(\Throwable $e) {
             if ($e instanceof \App\Services\Importing\ImportStopped) throw $e;
             if(count($this->notes)<100)$this->notes[]=$label.': '.$e->getMessage();
+            app(\App\Services\Importing\ImportJournal::class)->record($this->run,'archive-error:'.$label,$label,'metadata','failed',null,['error'=>$e->getMessage()]);
             $this->run->increment('skipped');
         }
     }
     private function media(string $relative,string $id,string $name,?int $bytes=null,?string $sha=null,array $metadata=[]):Media
     {
         $path=$this->path($relative); $size=filesize($path);
-        $this->run->increment('discovered');
+        $journal=app(\App\Services\Importing\ImportJournal::class);$key='archive-file:'.$relative;
+        $signature=['bytes'=>$size,'mtime'=>filemtime($path),'manifest_sha'=>$sha];
+        if($journal->done($this->run,$key,$signature) && ($item=$journal->item($this->run,$key)) && ($existing=Media::find($item->subject_id)))return $existing;
+        if(!$journal->item($this->run,$key))$this->run->increment('discovered');
         if($bytes!==null && $size!==$bytes)throw new \RuntimeException('Archive file size differs from its manifest.');
         $mime=(new \finfo(FILEINFO_MIME_TYPE))->file($path)?:'application/octet-stream';
         $metadata['target_profile'] = $this->run->target_profile ?: $this->defaultTargetProfile();
@@ -80,6 +87,7 @@ class ArchiveImporter
             'title'=>mb_substr($name,0,255),'original_name'=>mb_substr(basename($name),0,255),'kind'=>MediaLibrary::kind($mime),
             'mime'=>$mime,'bytes'=>$size,'disk'=>$this->run->source,'path'=>$relative,'sha256'=>$actualHash,'asset_role'=>$metadata['role']??null,
             'metadata'=>$metadata,'status'=>'unsorted','user_id'=>$this->run->user_id]);
+        $journal->record($this->run,$key,$name,'file',$media->wasRecentlyCreated?'added':'duplicate',(string)$media->id,['signature'=>$signature]);
         $this->run->increment($media->wasRecentlyCreated?'imported':'skipped');return $media;
     }
     private function intake():void
@@ -150,7 +158,7 @@ class ArchiveImporter
             $relative='playlists/'.basename($file);
             $this->attempt($relative,function()use($relative){
                 $playlist=$this->json($relative);$id=$playlist['id']??null;if(!$id)return;
-                app(ContentMetadataImporter::class)->playlist('youtube',$playlist,['archive_path'=>$relative,'cover_file'=>$playlist['cover_file']??null]);
+                app(ContentMetadataImporter::class)->playlist('youtube',$playlist,['archive_path'=>$relative,'cover_file'=>$playlist['cover_file']??null,'import_id'=>$this->run->id]);
             });
         }
         if(is_file($this->root.'/report.json')){

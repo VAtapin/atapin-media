@@ -2,6 +2,9 @@
     <div class="media-library-toolbar-row">
         <button type="button" class="media-library-primary" data-library-content-toggle>{{ __('imports.content') }}</button>
         @can('imports.manage')<button type="button" class="desktop-button" data-open-app="imports">{{ __('imports.import_action') }}</button>@endcan
+        @can('imports.manage')
+        @can('media.edit')<button type="button" class="desktop-button" data-local-video-check>{{ __('imports.audit_start') }}</button>@endcan
+        @endcan
         <details class="media-library-actions"><summary>{{ __('imports.more_actions') }}</summary><div class="media-library-toolbar-row">
         <button type="button" class="media-library-primary" data-library-grid>{{ __('imports.grid') }}</button>
         <button type="button" class="desktop-button" data-library-collections>{{ __('imports.collections') }}</button>
@@ -49,6 +52,7 @@
             <option value="">Alle Quellen</option>
             <option value="intake">Dateien des Eigentümers</option>
             <option value="youtube">YouTube-Archiv</option>
+            <option value="youtube-takeout">{{ __('imports.source_youtube-takeout') }}</option>
             <option value="upload">Media-Library-Upload</option>
             <option value="local-folder">{{ __('imports.server_folder') }}</option>
             <option value="local-archive">{{ __('imports.upload_archive') }}</option>

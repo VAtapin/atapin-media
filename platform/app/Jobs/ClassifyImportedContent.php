@@ -22,7 +22,7 @@ class ClassifyImportedContent implements ShouldQueue, ShouldBeUnique
     {
         $model = $this->type === 'media' ? Media::class : SourceRecord::class;
         $item = $model::findOrFail($this->id);
-        if ($item->status !== 'unsorted' || ! $classifier->available()) return;
+        if ($item->source==='catalog-reset' || $item->status !== 'unsorted' || ! $classifier->available()) return;
         $version = $this->version($item); $log = null;
         if(isset($this->expectedVersion) && $version!==$this->expectedVersion)return;
         $state = app(\App\Services\Importing\ContentState::class);

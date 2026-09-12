@@ -10,6 +10,9 @@
         <select name="status" aria-label="Status"><option value="">{{ __('imports.all_status') }}</option><option value="unsorted">{{ __('imports.unsorted') }}</option><option value="review">{{ __('ui.import_review') }}</option><option value="ready">{{ __('imports.ready') }}</option><option value="needs_attention">{{ __('imports.needs_attention') }}</option></select>
         <button type="submit" class="media-library-primary">{{ __('imports.refresh') }}</button>
         @can('media.edit')<button type="button" class="media-library-primary" data-classify-batch="record">{{ __('imports.ai_batch') }}</button>@endcan
+        @can('imports.manage')
+        @can('media.edit')<button type="button" class="desktop-button" data-local-video-check>{{ __('imports.audit_start') }}</button>@endcan
+        @endcan
     </form>
     <div class="media-library-summary" data-content-summary></div>
     <div class="media-library-layout">

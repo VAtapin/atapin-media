@@ -14,8 +14,9 @@ class MediaController extends Controller
     public function library(Request $request)
     {
         $filters = $request->validate([
+            'id'=>'nullable|uuid',
             'q' => 'nullable|string|max:120',
-            'source' => 'nullable|in:intake,youtube,upload,local-folder,local-archive,youtube-service,tiktok,instagram,facebook-video',
+            'source' => 'nullable|in:intake,youtube,upload,local-folder,local-archive,youtube-takeout,youtube-service,tiktok,instagram,facebook-video',
             'kind' => 'nullable|in:video,audio,image,document,pdf,other',
             'status' => 'nullable|in:unsorted,processing,ready,needs_attention,failed',
             'sort' => 'nullable|in:newest,oldest,name,size',
@@ -23,6 +24,7 @@ class MediaController extends Controller
             'archive' => 'nullable|in:active,archived,all',
         ]);
         $query = Media::query()->with(['tags:id,name', 'assets:id,parent_id,asset_role,mime']);
+        if($filters['id']??null)$query->where('id',$filters['id']);
         if (($filters['archive'] ?? 'active') !== 'all') {
             if (($filters['archive'] ?? 'active') === 'archived') $query->whereNotNull('archived_at');
             else $query->whereNull('archived_at');
@@ -81,7 +83,7 @@ class MediaController extends Controller
             foreach (['media_ids','images','media->video','media->thumbnail','media->subtitles'] as $key) $query->orWhereJsonContains('metadata->'.$key, $media->id);
             $query->orWhere('metadata->cover_media_id', $media->id);
         })->limit(30)->get();
-        $records = $records->merge($linked)->unique('id');
+        $records = $records->merge($linked)->unique('id')->filter(fn($record)=>$record->source!=='catalog-reset');
         $version = app(\App\Services\Importing\ContentState::class)->version($media);
         return response()->json(['id' => $media->id, 'summary' => $media->metadata['summary'] ?? '', 'client_relative_path' => $media->metadata['client_relative_path'] ?? null,
             'external_url' => $presentation->externalUrl($media->metadata ?? [], $media->source ?? '', $media->source_id, $media->kind),
@@ -158,15 +160,17 @@ class MediaController extends Controller
     }
     public function download(Media $media)
     {
-        abort_unless(Storage::disk($media->disk)->exists($media->path), 404);
-        return Storage::disk($media->disk)->download($media->path, $media->original_name,
+        $location=app(\App\Services\MediaOriginalLocator::class)->find($media); abort_unless($location,404);
+        return Storage::disk($location['disk'])->download($location['path'], $media->original_name,
             ['Content-Type' => 'application/octet-stream', 'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store']);
     }
     public function preview(Media $media)
     {
         abort_unless(in_array($media->mime, self::PREVIEW_MIMES, true), 415);
-        abort_unless(Storage::disk($media->disk)->exists($media->path), 404);
-        return Storage::disk($media->disk)->response($media->path, null,
-            ['Content-Type' => $media->mime, 'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store', 'Content-Security-Policy' => "sandbox; default-src 'none';"]);
+        $location=app(\App\Services\MediaOriginalLocator::class)->find($media); abort_unless($location,404);
+        $disk=Storage::disk($location['disk']);
+        $headers=['Content-Type'=>$media->mime,'X-Content-Type-Options'=>'nosniff','Cache-Control'=>'private, no-store','Content-Security-Policy'=>"sandbox; default-src 'none';"];
+        if(config('filesystems.disks.'.$location['disk'].'.driver')==='local')return response()->file($disk->path($location['path']),$headers);
+        return $disk->response($location['path'],null,$headers);
     }
 }

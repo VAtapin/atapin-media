@@ -63,6 +63,7 @@
       start.textContent = value === 'existing' ? t.register_existing : t.start;
       showMessage('');
       if (value === 'server') loadFolder(folder);
+      if (value === 'takeout') window.loadTakeoutInventory?.(root);
     };
     up.addEventListener('click', () => {if (parent !== null) loadFolder(parent);});
     root.querySelector('[data-import-reload]').addEventListener('click', () => loadFolder(folder));
@@ -85,7 +86,7 @@
       fileInput.files = event.dataTransfer.files; setMethod('computer');
     });
     const date = value => value ? new Intl.DateTimeFormat(document.documentElement.lang, {dateStyle:'medium',timeStyle:'short'}).format(new Date(value)) : '—';
-    const runHtml = run => '<article class="import-center-run"><div class="import-run-heading"><strong>' + escape(t['source_' + run.source] || run.source) + '</strong><span class="media-library-status status-' + escape(run.status) + '">' + escape(t['run_' + run.status] || run.status) + '</span></div>' + (['running','stop_requested'].includes(run.status) && run.progress?.stage ? '<p>' + escape(t['stage_' + run.progress.stage] || run.progress.stage) + '</p>' : '') + (run.status === 'stop_requested' ? '<small>' + escape(t.stop_pending_hint) + '</small>' : '') + (run.source_ref ? '<p>' + escape(run.source_ref) + '</p>' : '') + '<dl><dt>' + escape(t.result_added) + '</dt><dd>' + Number(run.imported || 0) + '</dd><dt>' + escape(t.result_found) + '</dt><dd>' + Number(run.discovered || 0) + '</dd><dt>' + escape(t.result_skipped) + '</dt><dd>' + Number(run.skipped || 0) + '</dd><dt>' + escape(t.updated) + '</dt><dd>' + escape(date(run.updated_at)) + '</dd></dl>' + (run.skipped ? '<small>' + escape(t.skipped_hint) + '</small>' : '') + (run.error || run.notes?.length ? '<p class="is-error">' + escape(run.error || run.notes.join(' / ')) + '</p>' : '') + '<div class="import-run-actions"><button type="button" class="desktop-button" data-open-app="media">' + escape(t.view_library) + '</button>' + (['failed','partial','cancelled'].includes(run.status) ? '<button type="button" class="desktop-button" data-import-retry="' + escape(run.id) + '">' + escape(t.retry) + '</button>' : '') + (['queued','running'].includes(run.status) ? '<button type="button" class="desktop-button" data-import-stop="' + escape(run.id) + '">' + escape(t.stop_import) + '</button>' : '') + '</div></article>';
+    const runHtml = run => '<article class="import-center-run" data-import-run="\' + escape(run.id) + \'"><div class="import-run-heading"><strong>' + escape(t['source_' + run.source] || run.source) + '</strong><span class="media-library-status status-' + escape(run.status) + '">' + escape(t['run_' + run.status] || run.status) + '</span></div>' + (['running','stop_requested'].includes(run.status) && run.progress?.stage ? '<p>' + escape(t['stage_' + run.progress.stage] || run.progress.stage) + '</p>' : '') + (run.status === 'stop_requested' ? '<small>' + escape(t.stop_pending_hint) + '</small>' : '') + (run.source_ref ? '<p>' + escape(run.source_ref) + '</p>' : '') + '<dl><dt>' + escape(t.result_added) + '</dt><dd>' + Number(run.imported || 0) + '</dd><dt>' + escape(t.result_found) + '</dt><dd>' + Number(run.discovered || 0) + '</dd><dt>' + escape(t.result_skipped) + '</dt><dd>' + Number(run.skipped || 0) + '</dd><dt>' + escape(t.updated) + '</dt><dd>' + escape(date(run.updated_at)) + '</dd></dl>' + (run.skipped ? '<small>' + escape(t.skipped_hint) + '</small>' : '') + (run.error || run.notes?.length ? '<p class="is-error">' + escape(run.error || run.notes.join(' / ')) + '</p>' : '') + '<div class="import-run-actions"><button type="button" class="desktop-button" data-open-app="media">' + escape(t.view_library) + '</button>' + (['failed','partial','cancelled'].includes(run.status) ? '<button type="button" class="desktop-button" data-import-retry="' + escape(run.id) + '">' + escape(t.retry) + '</button>' : '') + (['queued','running'].includes(run.status) ? '<button type="button" class="desktop-button" data-import-stop="' + escape(run.id) + '">' + escape(t.stop_import) + '</button>' : '') + '</div></article>';
     const loadRuns = async (number = runPage) => {
       const data = await request(root.dataset.importsUrl + '?page=' + number);
       if (!root.isConnected) return;
@@ -93,6 +94,7 @@
       if (data.data.some(run => ['complete','partial','cancelled'].includes(run.status) && previousStatuses.get(run.id) !== run.status)) document.dispatchEvent(new Event('desktop-media-changed'));
       previousStatuses = new Map(data.data.map(run => [run.id,run.status]));
       list.innerHTML = data.data.length ? data.data.map(runHtml).join('') : '<p class="import-center-empty">' + escape(t.no_runs) + '</p>';
+      root.dispatchEvent(new CustomEvent('import-runs-loaded',{bubbles:true,detail:data.data}));
       const active = data.data.filter(run => ['queued','running','stop_requested'].includes(run.status)).length;
       root.querySelector('[data-import-status]').textContent = data.meta.total + ' ' + t.run_history + ' · ' + active + ' ' + t.active_on_page;
       root.querySelector('[data-import-pages]').innerHTML = '<button type="button" data-import-page="' + (runPage - 1) + '" ' + (runPage <= 1 ? 'disabled' : '') + '>‹</button><span>' + runPage + ' / ' + data.meta.last_page + '</span><button type="button" data-import-page="' + (runPage + 1) + '" ' + (runPage >= data.meta.last_page ? 'disabled' : '') + '>›</button>';
@@ -114,7 +116,8 @@
         } else if (activeMethod === 'link') {
           payload.source_ref = link.value.trim(); payload.source = sourceFromLink(payload.source_ref);
           if (!payload.source) throw new Error(t.supported_links);
-        } else if (activeMethod === 'existing') payload.source = root.querySelector('[data-import-existing]').value;
+        } else if (activeMethod === 'takeout') {payload.source='youtube-takeout'; payload.batch=root.querySelector('[data-takeout-batch]').value; payload.expected_parts=Number(root.querySelector('[data-takeout-parts]').value);}
+        else if (activeMethod === 'existing') payload.source = root.querySelector('[data-import-existing]').value;
         else {if (!selection) throw new Error(t.select_folder_hint); Object.assign(payload, selection);}
         start.disabled = true; showMessage(t.starting);
         await request(root.dataset.importsUrl, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});

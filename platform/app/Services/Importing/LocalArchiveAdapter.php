@@ -33,13 +33,24 @@ class LocalArchiveAdapter implements ImportAdapter
     {
         app(ImportProgress::class)->checkpoint($run, 'prepare');
         if ($id = $run->source_options['media_id'] ?? null) {
-            $media = Media::where('user_id', $run->user_id)->where('source', 'upload')->findOrFail($id);
-            $archive = Storage::disk($media->disk)->path($media->path); $name = $media->original_name;
+            $original=\App\Models\MediaOriginal::where('media_id',$id)->where('source','upload')->get()->first(fn($original)=>\App\Models\ResumableMediaUpload::where('id',$original->source_id)->where('user_id',$run->user_id)->where('status','complete')->exists());
+            $media=Media::findOrFail($id);
+            abort_unless($original || ((string)$media->user_id===(string)$run->user_id && $media->source==='upload'),403);
+            $location=$original??$media;
+            $archive = Storage::disk($location->disk)->path($location->path); $name = $location->original_name;
         } else {
             $archive = ImportPath::resolve($this->inboxRoot, $run->source_options['path'] ?? ''); $name = $archive;
         }
+        (new LocalFolderAdapter($this->inboxRoot))->importDirectory($run,$this->expandFile($run,$archive,$name));
+    }
+    public function expandFile(ImportRun $run,string $archive,string $name): string
+    {
         if (! is_file($archive)) throw new RuntimeException('Archive is unavailable.');
-        $hash = hash_file('sha256', $archive);
+        $journal=app(ImportJournal::class); $key='archive:'.$archive;
+        $signature=['bytes'=>filesize($archive),'mtime'=>filemtime($archive)];
+        $item=$journal->item($run,$key);
+        $hash=($item && ($item->metadata['signature']??null)===$signature) ? $item->metadata['sha256'] : hash_file('sha256',$archive);
+        $journal->record($run,$key,basename($archive),'archive-entry','pending',null,['signature'=>$signature,'sha256'=>$hash]);
         $root = rtrim($this->inboxRoot, '/\\').'/archives/'.$hash;
         if (! is_dir($root) && ! mkdir($root, 0700, true) && ! is_dir($root)) throw new RuntimeException('Storage unavailable.');
         $lock = fopen($root.'/.extract.lock', 'c+b');
@@ -52,7 +63,8 @@ class LocalArchiveAdapter implements ImportAdapter
                 app(ImportProgress::class)->checkpoint($run, 'extract');
                 $this->extract($archive, $name, $data, $run); touch($root.'/.complete');
             }
-            (new LocalFolderAdapter($this->inboxRoot))->importDirectory($run, $data);
+            $journal->record($run,$key,basename($archive),'archive-entry','complete',null,['signature'=>$signature,'sha256'=>$hash]);
+            return $data;
         } finally { flock($lock, LOCK_UN); fclose($lock); }
     }
     private function extract(string $archive, string $name, string $root, ImportRun $run): void
@@ -62,20 +74,28 @@ class LocalArchiveAdapter implements ImportAdapter
             $zip = new ZipArchive;
             if ($zip->open($archive) !== true) throw new RuntimeException('Cannot open ZIP archive.');
             try {
+                $pending=0;
                 for ($i = 0; $i < $zip->numFiles; $i++) {
                     app(ImportProgress::class)->checkpoint($run);
                     $entry = $zip->statIndex($i); ImportPath::entry($entry['name']);
                     $zip->getExternalAttributesIndex($i, $os, $attributes);
                     if ($os === ZipArchive::OPSYS_UNIX && (($attributes >> 16) & 0170000) === 0120000) throw new RuntimeException('Archive links are not supported.');
-                    $this->limit($bytes, $count, (int) $entry['size']);
+                    $this->limit($bytes, $count, (int) $entry['size'],false);
+                    $destination=$root.'/'.$entry['name'];$signature=['size'=>$entry['size'],'crc'=>$entry['crc']];
+                    if(!app(ImportJournal::class)->done($run,'extract:'.$destination,$signature) || !is_file($destination) || filesize($destination)!==$entry['size'])$pending+=$entry['size'];
                 }
+                $free=disk_free_space($this->inboxRoot);
+                if($free===false || $free-$pending<config('platform.media_upload_reserve_free_bytes'))throw new RuntimeException('Not enough storage to extract archive.');
                 for ($i = 0; $i < $zip->numFiles; $i++) {
                     app(ImportProgress::class)->checkpoint($run);
                     $entry = $zip->statIndex($i);
                     if (str_ends_with($entry['name'], '/')) continue;
+                    $key='extract:'.$root.'/'.$entry['name']; $signature=['size'=>$entry['size'],'crc'=>$entry['crc']];
+                    if (app(ImportJournal::class)->done($run,$key,$signature) && is_file($root.'/'.$entry['name']) && filesize($root.'/'.$entry['name'])===$entry['size']) continue;
                     $stream = $zip->getStream($entry['name']);
                     if (! $stream) throw new RuntimeException('Cannot read archive entry.');
-                    try { $this->write($stream, $root, $entry['name'], (int) $entry['size']); } finally { fclose($stream); }
+                    try { $this->write($stream, $root, $entry['name'], (int) $entry['size'],$run); } finally { fclose($stream); }
+                    app(ImportJournal::class)->record($run,$key,$entry['name'],'archive-entry','complete',null,['signature'=>$signature]);
                 }
             } finally { $zip->close(); }
             return;
@@ -99,17 +119,24 @@ class LocalArchiveAdapter implements ImportAdapter
             $entry = substr($file->getPathname(), strlen('phar://'.str_replace('\\', '/', $alias).'/'));
             $stream = fopen($file->getPathname(), 'rb');
             if (! $stream) throw new RuntimeException('Cannot read archive entry.');
-            try { $this->write($stream, $root, $entry, $file->getSize()); } finally { fclose($stream); }
+            $key='extract:'.$root.'/'.$entry; $signature=['size'=>$file->getSize()];
+            try {
+                if (! app(ImportJournal::class)->done($run,$key,$signature) || ! is_file($root.'/'.$entry)) {
+                    $this->write($stream,$root,$entry,$file->getSize(),$run);
+                    app(ImportJournal::class)->record($run,$key,$entry,'archive-entry','complete',null,['signature'=>$signature]);
+                }
+            } finally { fclose($stream); }
         }
     }
-    private function limit(int &$bytes, int &$count, int $size): void
+    private function limit(int &$bytes, int &$count, int $size,bool $checkStorage=true): void
     {
         $bytes += $size; $count++;
         if ($count > 100000 || $bytes > config('platform.media_upload_max_archive_bytes')) throw new RuntimeException('Archive extraction limit exceeded.');
+        if(!$checkStorage)return;
         $free = disk_free_space($this->inboxRoot);
         if ($free === false || $free - $bytes < config('platform.media_upload_reserve_free_bytes')) throw new RuntimeException('Not enough storage to extract archive.');
     }
-    private function write($stream, string $root, string $entry, int $size): void
+    private function write($stream, string $root, string $entry, int $size,ImportRun $run): void
     {
         $destination = $root.'/'.ImportPath::entry($entry);
         if (! is_dir(dirname($destination))) mkdir(dirname($destination), 0700, true);
@@ -117,7 +144,18 @@ class LocalArchiveAdapter implements ImportAdapter
         if (is_link($destination) || is_link($destination.'.part')) throw new RuntimeException('Unsafe destination.');
         $output = fopen($destination.'.part', 'wb');
         if (! $output) throw new RuntimeException('Storage unavailable.');
-        try { $written = stream_copy_to_stream($stream, $output, $size + 1); } finally { fclose($output); }
+        $written=0;
+        try {
+            while (! feof($stream)) {
+                app(ImportProgress::class)->checkpoint($run);
+                $chunk=fread($stream,8*1024*1024);
+                if ($chunk===false) throw new RuntimeException('Cannot read archive entry.');
+                $length=strlen($chunk); $offset=0;
+                while($offset<$length) { $n=fwrite($output,substr($chunk,$offset)); if(!$n) throw new RuntimeException('Storage unavailable.'); $offset+=$n; }
+                $written+=$length;
+                if($written>$size) throw new RuntimeException('Archive entry exceeds its declared size.');
+            }
+        } finally { fclose($output); }
         if ($written !== $size || ! rename($destination.'.part', $destination)) throw new RuntimeException('Archive entry is incomplete.');
     }
 }

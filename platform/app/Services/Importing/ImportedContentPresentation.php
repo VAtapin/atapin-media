@@ -19,7 +19,7 @@ class ImportedContentPresentation
     public function assets(SourceRecord $record): \Illuminate\Support\Collection
     {
         return Media::whereIn('id', app(LocalMediaLinks::class)->ids($record))->get()->map(function ($media) {
-            $available = Storage::disk($media->disk)->exists($media->path);
+            $available = (bool)app(\App\Services\MediaOriginalLocator::class)->find($media);
             return ['id' => $media->id, 'title' => $media->title, 'kind' => $media->kind, 'mime' => $media->mime,
                 'role' => $media->asset_role, 'available' => $available, 'bytes' => $media->bytes,
                 'download_url' => $available ? route('media.download', $media) : null,

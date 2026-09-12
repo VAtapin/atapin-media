@@ -45,6 +45,8 @@
 .content-assignment input,.content-assignment select,.content-assignment textarea{width:100%;min-width:0;box-sizing:border-box}
 .desktop-media-library [data-library-content-container]{flex:1;min-height:0}
 .desktop-media-library [data-library-content-container] .desktop-content-library{padding:0}
+.desktop-media-library [data-library-content-container] [data-local-video-check]{display:none}
+.desktop-content-library>.media-library-pagination{flex-shrink:0}
 .desktop-content-library .content-original-text{white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;overflow:auto}
 .content-playlist-items{padding-left:24px}.content-playlist-items li{padding:10px 0;border-bottom:1px solid var(--ml-line)}
 .content-playlist-items .content-playlist-title{display:block;font-weight:600;font-size:13px;overflow-wrap:anywhere}

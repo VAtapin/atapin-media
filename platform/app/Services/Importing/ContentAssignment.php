@@ -14,7 +14,8 @@ class ContentAssignment
         DB::transaction(function () use ($media, $data, $origin) {
             $metadata = $media->metadata ?? [];
             $metadata['target_profile'] = $data['target_profile'] ?? $metadata['target_profile'] ?? 'media_library';
-            if ($origin === 'ai' && $media->parent_id) $metadata['target_profile'] = 'media_library';
+            // A classified file is not a reconstructed post/video. Importers own complete content records.
+            if ($origin === 'ai') $metadata['target_profile'] = 'media_library';
             if (isset($data['summary'])) $metadata['summary'] = $data['summary'];
             $media->update(['title' => $data['title'] ?? $media->title, 'status' => $data['status'] ?? 'ready',
                 'metadata' => $metadata, 'classification_origin' => $origin, 'classified_at' => now()]);
@@ -59,6 +60,7 @@ class ContentAssignment
         if ($origin === 'manual' && isset($data['target_profile'])) $metadata['library_only'] = $data['target_profile']==='media_library';
         elseif ($origin === 'manual' && !isset($metadata['library_only'])) $metadata['library_only']=false;
         $kind=match($data['target_profile']??'') {'videos'=>'video','shorts'=>'short','posts'=>'post','polls'=>'poll','comments'=>'comment',default=>$data['kind']??$record->kind};
+        if($origin==='ai' && ($metadata['takeout']??false))$kind=$record->kind;
         if (isset($data['summary'])) $metadata['summary'] = $data['summary'];
         if (isset($data['tags'])) $metadata['tags'] = $data['tags'];
         $record->update(['title' => $data['title'] ?? $record->title, 'body' => array_key_exists('body', $data) ? ($data['body'] ?? '') : $record->body,

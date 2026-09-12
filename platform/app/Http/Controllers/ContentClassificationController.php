@@ -15,7 +15,7 @@ class ContentClassificationController extends Controller
         $model = $data['type'] === 'media' ? Media::class : SourceRecord::class;
         $previousState=null;
         if ($data['batch'] ?? false) {
-            $query = $model::where('status', 'unsorted');
+            $query = $model::where('status', 'unsorted')->where('source','!=','catalog-reset');
             if ($data['type'] === 'media') $query->whereNull('archived_at');
             $items = $query->oldest()->limit(100)->get();
         } else {

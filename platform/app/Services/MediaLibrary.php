@@ -24,7 +24,7 @@ class MediaLibrary
             return DB::transaction(function () use ($file, $user, $disk, $id, $path) {
                 $mime = $file->getMimeType() ?: 'application/octet-stream';
                 $name = mb_substr(basename(str_replace('\\', '/', $file->getClientOriginalName())), 0, 255);
-                $media = Media::create(['id' => $id, 'title' => $name, 'original_name' => $name,
+                $media = app(\App\Services\Importing\ImportedMediaRegistry::class)->register(['id' => $id, 'title' => $name, 'original_name' => $name,
                     'kind' => self::kind($mime), 'mime' => $mime, 'bytes' => $file->getSize(), 'disk' => $disk,
                     'path' => $path, 'sha256' => hash_file('sha256', $file->getRealPath()), 'status' => 'unsorted', 'user_id' => $user,
                     'source' => 'upload', 'source_id' => $id]);
