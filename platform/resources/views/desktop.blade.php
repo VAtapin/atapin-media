@@ -22,6 +22,9 @@ $programs = [
 ];
 $desktopAppearance = $desktopAppearance ?? ['icon_set' => 'manna', 'wallpaper' => 'mountains', 'accent' => 'gold'];
 $iconSet = config('desktop.icon_sets.'.$desktopAppearance['icon_set'], config('desktop.icon_sets.manna'));
+$wallpaper = config('desktop.wallpapers.'.$desktopAppearance['wallpaper']);
+$wallpaperUrl = is_array($wallpaper) ? ($wallpaper['path'] ?? null) : null;
+$wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppearance['custom_wallpaper']) ? route('desktop.wallpaper') : null;
 @endphp
 <!doctype html>
 <html lang="de">
@@ -29,13 +32,14 @@ $iconSet = config('desktop.icon_sets.'.$desktopAppearance['icon_set'], config('d
     <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Desktop · {{ config('platform.brand') }}</title>
     <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/desktop-os.css?v=3"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3">
-    <link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=2">
+    <link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3">
     <script src="/assets/desktop-shortcuts.js?v=1" defer></script>
     <script src="/assets/desktop-os.js?v=8" defer></script>
 </head>
 <body class="os-body">
 <main class="os-desktop" data-desktop data-storage-key="atapin.desktop.{{ auth()->id() }}.v1"
-      data-wallpaper="{{ $desktopAppearance['wallpaper'] }}" data-accent="{{ $desktopAppearance['accent'] }}">
+      data-wallpaper="{{ $desktopAppearance['wallpaper'] }}" data-accent="{{ $desktopAppearance['accent'] }}"
+      @if($wallpaperUrl) style="--desktop-wallpaper: url('{{ $wallpaperUrl }}')" @endif>
     <nav class="os-shortcuts" tabindex="0" aria-label="{{ __('ui.desktop_shortcuts') }}">
         @foreach($programs as $program)
             <button class="os-shortcut" type="button" data-open-app="{{ $program['id'] }}" data-app-name="{{ $program['name'] }}" data-app-icon="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}">

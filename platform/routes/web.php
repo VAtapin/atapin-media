@@ -32,6 +32,7 @@ Route::middleware('auth')->group(function () {
     });
     Route::post('/logout', [AuthController::class,'destroy'])->name('logout');
     Route::get('/desktop', DesktopController::class)->middleware('can:desktop.view')->name('desktop');
+    Route::get('/desktop/wallpaper', [SettingsController::class, 'wallpaper'])->middleware('can:desktop.view')->name('desktop.wallpaper');
     Route::get('/desktop/media', [MediaController::class,'index'])->middleware('can:media.view')->name('media.index');
     Route::post('/desktop/media', [MediaController::class,'store'])->middleware('can:media.upload')->name('media.store');
     Route::get('/desktop/media/{media}', [MediaController::class,'show'])->middleware('can:media.view')->name('media.show');

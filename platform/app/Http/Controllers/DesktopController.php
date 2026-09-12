@@ -21,6 +21,7 @@ class DesktopController extends Controller
                 'icon_set' => $settings->get('desktop_icon_set', 'manna'),
                 'wallpaper' => $settings->get('desktop_wallpaper', 'mountains'),
                 'accent' => $settings->get('desktop_accent', 'gold'),
+                'custom_wallpaper' => $settings->get('desktop_custom_wallpaper'),
             ],
         ]);
     }

@@ -76,6 +76,25 @@ class FoundationTest extends TestCase
             ->assertSee('data-wallpaper="navy"', false)
             ->assertSee('/assets/brand/owner/desktop/standard/Videos.png', false);
     }
+    public function test_custom_desktop_wallpaper_is_validated_and_served_to_desktop_users(): void
+    {
+        Storage::fake('local');
+        $this->actingAs($this->user('Owner'))->put('/desktop/settings',[
+            'site_name'=>'Manna Vom Himmel', 'desktop_icon_set'=>'green', 'desktop_wallpaper'=>'custom', 'desktop_accent'=>'gold',
+        ])->assertSessionHasErrors('desktop_custom_wallpaper');
+        $file = UploadedFile::fake()->createWithContent('wallpaper.png', file_get_contents(public_path('assets/brand/owner/desktop/wallpapers/desktop1.png')));
+        $this->actingAs($this->user('Owner'))->put('/desktop/settings',[
+            'site_name'=>'Manna Vom Himmel', 'desktop_icon_set'=>'sol', 'desktop_wallpaper'=>'custom', 'desktop_accent'=>'sky',
+            'desktop_custom_wallpaper'=>$file,
+        ])->assertRedirect();
+        $path = app(Settings::class)->get('desktop_custom_wallpaper');
+        Storage::disk('local')->assertExists($path);
+        $this->get('/desktop/wallpaper')->assertOk()->assertHeader('X-Content-Type-Options','nosniff');
+        $this->get('/desktop')->assertOk()
+            ->assertSee('data-wallpaper="custom"', false)
+            ->assertSee('/desktop/wallpaper', false)
+            ->assertSee('/assets/brand/owner/desktop/sol/Videos.png', false);
+    }
     public function test_foundation_screens_render_without_translation_keys(): void
     {
         $this->get('/login')->assertOk()->assertSee('Anmelden')->assertDontSee('ui.login');

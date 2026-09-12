@@ -1,4 +1,5 @@
 .os-shortcuts{inset:0;display:block;pointer-events:none}
+.os-desktop::before{background:linear-gradient(rgba(10,42,72,.2),rgba(4,22,38,.28)),var(--desktop-wallpaper,url('/assets/ui/photos/start-live.png')) center/cover no-repeat}
 .os-shortcuts:focus-visible{outline:2px solid var(--gold);outline-offset:-3px}
 .os-shortcut{position:absolute;width:96px;min-height:96px;pointer-events:auto;touch-action:none;user-select:none;overflow-wrap:anywhere}
 .os-shortcut-icon{width:68px;height:68px;background:none;box-shadow:none;border-radius:0}
