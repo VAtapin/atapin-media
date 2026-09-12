@@ -214,6 +214,7 @@
 
     const renderDetails = item => {
       if (details.dataset.dirty === 'true' && details.dataset.currentId === item?.id) return;
+      const opened = details.dataset.currentId === item?.id ? [...details.querySelectorAll('details[open] > summary')].map(summary => summary.textContent) : [];
       details.dataset.currentId = item?.id || '';
       const tags = Array.isArray(item?.tags) ? item.tags : [];
       if (!item) {
@@ -237,6 +238,7 @@
       if (root.dataset.canEdit === 'true') window.appendContentAssignment?.(details, 'media', item);
       window.appendMediaInspector?.(details, item);
       window.appendMediaCover?.(details, item);
+      for (const panel of details.querySelectorAll('details')) if (opened.includes(panel.querySelector('summary')?.textContent)) panel.open=true;
     };
 
     const render = payload => {

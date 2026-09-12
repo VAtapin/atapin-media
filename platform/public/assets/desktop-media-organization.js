@@ -132,6 +132,16 @@
       try {
         const data = await request(item.detail_url);
         node.innerHTML = (data.summary ? '<p class="content-original-text">' + escape(data.summary) + '</p>' : '') + '<h4>' + escape(t.storage_location) + '</h4><p>' + escape(data.storage.disk) + ' / ' + escape(data.storage.path) + '</p>' + (data.storage.sha256 ? '<small>SHA-256: ' + escape(data.storage.sha256) + '</small>' : '') + (data.external_url ? '<p><a class="desktop-button" href="' + escape(data.external_url) + '" target="_blank" rel="noopener noreferrer">' + escape(t.open_external) + ' ↗</a></p>' : '') + '<h4>' + escape(t.related_files) + '</h4>' + [...(data.parent ? [data.parent] : []), ...data.assets].map(asset => '<p><a class="desktop-button" href="' + escape(asset.download_url) + '">' + escape(asset.title) + '</a></p>').join('') + '<h4>' + escape(t.collections) + '</h4><p>' + escape(data.collections.map(collection => collection.title).join(', ') || '—') + '</p><h4>' + escape(t.used_in) + '</h4><p>' + escape(data.usages.map(usage => usage.title).join(', ') || '—') + '</p><h4>' + escape(t.ai_history) + '</h4>' + data.classifications.map(log => '<p>' + escape(log.provider) + ' · ' + escape(log.model) + ' · ' + escape(t['ai_log_' + log.status] || log.status) + (log.confidence !== null ? ' · ' + Math.round(log.confidence * 100) + ' %' : '') + '</p>' + (log.proposal ? '<p>' + escape(log.proposal.title) + '<br>' + escape(log.proposal.summary) + '<br>' + escape((log.proposal.tags || []).join(', ')) + '</p>' : '') + (details.closest('[data-media-library]')?.dataset.canUndo === 'true' && log.undo_url ? '<button type="button" class="desktop-button" data-media-undo="' + escape(log.undo_url) + '">' + escape(t.undo_ai) + '</button>' : '')).join('');
+        node.querySelectorAll('a[target="_blank"]').forEach(link => link.closest('p').remove());
+        const usageList = [...node.querySelectorAll('h4')].find(heading => heading.textContent === t.used_in)?.nextElementSibling;
+        if (usageList && data.usages.length) {
+          usageList.replaceChildren();
+          for (const usage of data.usages) {
+            const button=document.createElement('button'); button.type='button'; button.className='desktop-button';
+            button.dataset.openLocalContent=usage.detail_url; button.textContent=usage.title; usageList.append(button);
+          }
+        }
+        node.dispatchEvent(new CustomEvent('media-inspector-loaded',{bubbles:true,detail:{data,item}}));
       } catch (error) {node.textContent = error.message; delete inspector.dataset.loaded;}
     });
   };

@@ -2,6 +2,8 @@
 
 ## Реализовано
 
+- Media Library, пункты 1/5/7: локальные assets находятся по существующим metadata/usages и точным YouTube IDs без угадывания названия; фоновая проверка восстанавливает связи и parent/cover, новые импорты используют тот же механизм. Есть ручное подключение зарегистрированного video original без потери прежних files/text. Usage references открывают локальный материал внутри Desktop, внешние кнопки inspector скрыты. Header-only image data и ffprobe format/stream data читаются локальным queue job без ИИ, сеть ffprobe запрещена; inspector показывает duration/resolution/format/codec и ошибки.
+
 - Безопасное повторное чтение импортов: одинаковые originals сопоставляются по SHA-256/размеру/MIME, альтернативные private storage locations сохраняются отдельно без удаления файлов. SourceRecords объединяются по source/id: недостающие связи и metadata дополняются, более полное исходное описание сохраняется, ручные/ИИ-принятые title/body не заменяются. Исходные версии доступны в раскрываемой панели «Import-Versionen». Повторный идентичный импорт не создаёт лишние версии и не запускает повторный платный ИИ для уже существующего файла. Навигация и просмотр материалов/playlist positions не предлагают внешние кнопки; адреса источников остаются provenance, local media используют защищённый плеер.
 
 - Привязка обложек: в деталях image можно раскрыть «Als Video-Cover zuordnen», найти video/short с pagination и выбрать конкретный SourceRecord, даже без локального video original. Выбранное cover используется для video-file thumbnail; originals/описания не копируются и не перезаписываются, чужой parent блокирует ошибочную привязку. Inspector учитывает прямые metadata-связи, не только usages. ИИ больше не создаёт самостоятельный материал из известного thumbnail без parent.
@@ -90,6 +92,8 @@
 
 ## Проверки
 
+- Локальные связи/технические данные: 9 целевых tests / 71 assertions для links/content/merge и 2 tests / 11 assertions для image headers, metadata preservation, video normalization и permissions прошли; JS syntax/Blade compilation и Edge workflow (queue probe, usage navigation, links repair) прошли. Реальный ffprobe на production и наличие файлов на сервере ещё не подтверждены. Техническая обработка не вызывает платный provider.
+
 - Повторные импорты: 15 целевых ImportMerge/LocalImport/ArchiveImport tests / 72 assertions прошли; существующие описания/субтитры проверены отдельным тестом. JS syntax, Blade compilation и Edge workflow (включая исходные версии, отсутствие внешних кнопок и сохранность форм) прошли. Полные suite, реальные provider requests и production не запускались. Реальные 8 Takeout ZIP прочитаны локально только для структуры/малых CSV, без распаковки 55 GB: 244 video originals, 242 однозначных сопоставления по исходному названию, 2 неоднозначных требуют безопасного отчёта, а не автоматического угадывания. Отдельный takeout-20260911T193951Z-001.zip — отчёт, не часть видеоархива.
 
 - Обложки: 3 целевых Laravel tests / 22 assertions, JS syntax/Blade compilation и Edge workflow ручного выбора cover прошли. Проверены отсутствие video original, связь с local video, thumbnail selection, сохранность originals/описаний и permissions/conflicting parent. Платные ИИ-запросы не запускались.
@@ -121,7 +125,8 @@
 - Экономная ИИ-разметка: 76fd699 — Preserve manual edits and safely undo economical AI classification.
 - Фоновые импорты: 4d92c41 — Stop background imports safely and show processing stages.
 - Обложки: 9606bd5 — Link image covers to specific video content.
-- Текущий этап: Merge imported originals and preserve richer source versions (commit с этой записью).
+- Обогащение: 8e8f0d7 — Merge imported originals and preserve richer source versions.
+- Текущий этап: Connect local video assets and expose technical file data (commit с этой записью).
 
 - Этап 2: f55f340 — Fix archive imports and add resumable desktop intake.
 - Этап 3: 7d787a3 — Import service links and structured archive content.

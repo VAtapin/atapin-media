@@ -46,8 +46,8 @@
       if (asset.mime === 'application/pdf') return `<iframe class="media-library-preview pdf" src="${url}" title="PDF" sandbox></iframe>`;
       return '';
     };
-    root.addEventListener('click', async event => {
-      const url = event.target.closest('[data-content-detail]')?.dataset.contentDetail;
+    const selectContent = async event => {
+      const url = event.detail?.url || event.target.closest('[data-content-detail]')?.dataset.contentDetail;
       if (!url) return;
       if (details.dataset.dirty === 'true' && !window.confirm(text.discard_edits)) return;
       delete details.dataset.dirty;
@@ -67,7 +67,9 @@
         if (root.dataset.canEdit === 'true' && item.kind !== 'playlist') window.appendContentAssignment?.(details, 'record', item);
         details.dispatchEvent(new CustomEvent('content-selected', { bubbles: true, detail: item }));
       } catch (error) { if (generation === detailGeneration && root.isConnected) details.textContent = error.message; }
-    });
+    };
+    root.addEventListener('click', selectContent);
+    root.addEventListener('local-content-open', selectContent);
     form.addEventListener('submit', event => { event.preventDefault(); load(); });
     form.addEventListener('change', () => load());
     let debounce;

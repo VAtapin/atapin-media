@@ -12,7 +12,11 @@ class ContentMetadataImporter
 {
     public function record(string $source, string $id, string $kind, string $title, string $body, array $metadata): SourceRecord
     {
-        return app(ImportedRecordMerger::class)->merge($source,$id,$kind,$title,$body,$metadata);
+        $record = app(ImportedRecordMerger::class)->merge($source,$id,$kind,$title,$body,$metadata);
+        $created=$record->wasRecentlyCreated;
+        app(LocalMediaLinks::class)->repair($record);
+        $record->refresh(); $record->wasRecentlyCreated=$created;
+        return $record;
     }
 
     public function comments(string $source, string $parent, array $comments, array $metadata = []): void

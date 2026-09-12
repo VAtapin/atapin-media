@@ -45,9 +45,12 @@ Route::middleware('auth')->group(function () {
     Route::patch('/desktop/media/collections/{collection}', [\App\Http\Controllers\MediaCollectionController::class,'update'])->middleware('can:media.edit');
     Route::patch('/desktop/media/collections/{collection}/members/{media}', [\App\Http\Controllers\MediaCollectionController::class,'member'])->middleware('can:media.edit');
     Route::get('/desktop/media/{media}/details', [MediaController::class,'details'])->middleware('can:media.view')->name('media.details');
+    Route::post('/desktop/media/{media}/technical', [\App\Http\Controllers\MediaTechnicalController::class,'store'])->middleware(['can:media.edit','throttle:30,1']);
     Route::post('/desktop/media/{media}/cover', [\App\Http\Controllers\MediaCoverController::class,'store'])->middleware(['can:media.edit','can:content.edit'])->name('media.cover');
     Route::post('/desktop/media/{media}/classifications/{classification}/undo', [\App\Http\Controllers\ContentClassificationController::class,'undo'])->middleware(['can:media.edit', 'can:content.edit'])->name('media.classification.undo');
     Route::get('/desktop/content', [\App\Http\Controllers\ImportedContentController::class,'index'])->middleware('can:media.view')->name('content.index');
+    Route::post('/desktop/content/local-links', [\App\Http\Controllers\LocalMediaLinkController::class,'repair'])->middleware(['can:media.edit','can:content.edit','throttle:5,1']);
+    Route::post('/desktop/content/{record}/local-video', [\App\Http\Controllers\LocalMediaLinkController::class,'attach'])->middleware(['can:media.edit','can:content.edit']);
     Route::get('/desktop/content/{record}/imports/{snapshot}', [\App\Http\Controllers\ImportedContentController::class,'importVersion'])->middleware('can:media.view')->name('content.import-version');
     Route::get('/desktop/content/playlists', [\App\Http\Controllers\ImportedContentController::class,'playlists'])->middleware('can:media.view')->name('content.playlists');
     Route::get('/desktop/content/playlists/{collection}', [\App\Http\Controllers\ImportedContentController::class,'playlist'])->middleware('can:media.view')->name('content.playlist');

@@ -1,4 +1,5 @@
 <section class="desktop-media-library desktop-content-library" data-content-library data-can-edit="{{ auth()->user()->hasPermission('content.edit') ? 'true' : 'false' }}" data-content-url="{{ route('content.index') }}">
+    @can('content.edit')<details class="media-inspector"><summary>{{ __('imports.local_connections') }}</summary><p>{{ __('imports.local_connections_hint') }}</p><button type="button" class="desktop-button" data-repair-local-links>{{ __('imports.repair_connections') }}</button><p role="status"></p></details>@endcan
     <form class="media-library-toolbar" data-content-filter>
         <label class="media-library-search"><span class="sr-only">{{ __('ui.search') }}</span><input type="search" name="q" maxlength="120" placeholder="{{ __('ui.search') }}"></label>
         <select name="kind" aria-label="{{ __('imports.content_type') }}">

@@ -87,6 +87,7 @@ class MediaController extends Controller
             'external_url' => $presentation->externalUrl($media->metadata ?? [], $media->source ?? '', $media->source_id, $media->kind),
             'storage' => ['disk' => $media->disk, 'path' => $media->path, 'sha256' => $media->sha256],
             'technical' => array_intersect_key($media->metadata['technical'] ?? [], array_flip(['duration', 'width', 'height', 'format', 'codec'])),
+            'technical_status' => $media->metadata['technical_status'] ?? null,
             'parent' => $media->parent ? $asset($media->parent) : null,
             'assets' => $media->assets->map($asset), 'collections' => $media->collections->map(fn ($item) => ['id' => $item->id, 'title' => $item->title]),
             'cover_url' => route('media.cover', $media),

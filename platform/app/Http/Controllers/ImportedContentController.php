@@ -50,13 +50,13 @@ class ImportedContentController extends Controller
         $page = $collection->items()->paginate(100);
         $items = $page->getCollection();
         $records = SourceRecord::where('source',$collection->source)->whereIn('source_id',$items->pluck('source_id')->filter())->get()->keyBy('source_id');
-        $ids = $records->flatMap(fn ($record) => $presentation->mediaIds($record->metadata ?? []))->unique();
+        $ids = $records->flatMap(fn ($record) => app(\App\Services\Importing\LocalMediaLinks::class)->ids($record))->unique();
         $videoIds = Media::whereIn('id', $ids)->where('kind', 'video')->get()->filter(fn ($media) => \Illuminate\Support\Facades\Storage::disk($media->disk)->exists($media->path))->pluck('id')->all();
         return response()->json(['id'=>$collection->id,'title'=>$collection->title,'body'=>$collection->description,'kind'=>'playlist',
             'source'=>$collection->source,'source_id'=>$collection->source_id,'status'=>'','assets'=>[],'private'=>true,
             'external_url' => $presentation->externalUrl($collection->metadata ?? [], $collection->source ?? '', $collection->source_id, 'playlist'),
             'items'=>$items->map(fn ($item)=>['position'=>$item->position,'title'=>$item->title,'source_id'=>$item->source_id,
-                'has_local_video' => isset($records[$item->source_id ?? '']) && (bool) array_intersect($presentation->mediaIds($records[$item->source_id]->metadata ?? []), $videoIds),
+                'has_local_video' => isset($records[$item->source_id ?? '']) && (bool) array_intersect(app(\App\Services\Importing\LocalMediaLinks::class)->ids($records[$item->source_id]), $videoIds),
                 'external_url' => $presentation->externalUrl([], $collection->source ?? '', $item->source_id, 'video'),
                 'availability'=>$item->availability,'detail_url'=>isset($records[$item->source_id??'']) ? route('content.show',$records[$item->source_id]) : null]),
             'previous_url'=>$page->previousPageUrl(),'next_url'=>$page->nextPageUrl(),
