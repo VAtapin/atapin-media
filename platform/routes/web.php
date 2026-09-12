@@ -41,5 +41,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/desktop/media/{media}/preview', [MediaController::class,'preview'])->middleware('can:media.view')->name('media.preview');
     Route::get('/desktop/settings', [SettingsController::class,'edit'])->middleware('can:settings.manage')->name('settings');
     Route::put('/desktop/settings', [SettingsController::class,'update'])->middleware('can:settings.manage');
+    Route::post('/desktop/settings/roles', [SettingsController::class,'storeRole'])->middleware('can:users.manage')->name('settings.roles.store');
+    Route::put('/desktop/settings/roles/{role}', [SettingsController::class,'updateRole'])->middleware('can:users.manage')->name('settings.roles.update');
     Route::get('/desktop/audit', [DesktopController::class,'audit'])->middleware('can:audit.view')->name('audit');
 });

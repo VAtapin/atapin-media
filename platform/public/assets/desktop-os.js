@@ -275,6 +275,10 @@
   };
 
   const openProgram = (trigger, saved = null) => {
+    if (!saved && trigger.dataset.appUrl) {
+      window.location.assign(trigger.dataset.appUrl);
+      return null;
+    }
     hideSnap();
     stateWasCleared = false;
     const appId = trigger.dataset.openApp;

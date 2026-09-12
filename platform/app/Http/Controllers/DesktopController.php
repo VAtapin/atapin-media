@@ -22,6 +22,8 @@ class DesktopController extends Controller
                 'wallpaper' => $settings->get('desktop_wallpaper', 'mountains'),
                 'accent' => $settings->get('desktop_accent', 'gold'),
                 'custom_wallpaper' => $settings->get('desktop_custom_wallpaper'),
+                'density' => $settings->get('desktop_density', 'comfortable'),
+                'effects' => $settings->get('desktop_effects', true),
             ],
         ]);
     }

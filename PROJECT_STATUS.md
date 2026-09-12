@@ -15,6 +15,8 @@
 - Рабочий стол занимает весь viewport до нижней панели задач; доступ к аккаунту находится в меню Start.
 - Start содержит постоянный каталог из 19 программ; Desktop хранит только пользовательские ярлыки, которые можно перемещать, удалять и вновь добавлять из Start или контекстного меню.
 - Для Desktop подключены четыре полных approved-набора из 19 PNG: Manna Vom Himmel, Standard, Grün и Sol. В системных настройках выбираются набор значков, approved-фон, пользовательский фон и акцентный цвет без изменения ярлыков, окон или их расположения.
+- `Einstellungen` является центральным разделом настроек: Desktop & Design, KI, Social Media, Publishing, Integrationen, Benutzer & Rechte и System. Настройки хранятся в таблице `settings`; API-ключи и токены хранятся там же в зашифрованном виде и никогда не возвращаются в форму.
+- Пользовательские язык, timezone и branding применяются на уровне запроса из БД. Настройка Desktop из Start ведёт на реальную страницу Einstellungen, а не открывает пустое окно.
 
 ## Текущее состояние и решения
 
@@ -28,6 +30,7 @@
 - Наборы значков и approved-обои описаны в `platform/config/desktop.php`; новый клиентский набор добавляется как запись конфигурации и папка с теми же 19 именами файлов.
 - Оформление Desktop — общая настройка рабочей области, а позиции ярлыков и состояние окон — отдельные browser-настройки каждого пользователя.
 - Загруженный пользовательский фон хранится на private disk и отдаётся только авторизованным пользователям с доступом к Desktop; принимаются PNG, JPEG и WebP до 10 MB.
+- Реальные OAuth-авторизации и публикация во внешние сервисы пока не реализованы: разделы Social Media и Integrationen сохраняют безопасную конфигурацию и credentials как основу для их отдельных адаптеров.
 - Production работает через Plesk; document root — `httpdocs/platform/public`.
 - Стандартное production-обновление platform выполняется из `/var/www/vhosts/mannavomhimmel.de/httpdocs` через `git pull --ff-only` и только необходимые `config:clear`/`view:clear` c `/opt/plesk/php/8.4/bin/php`; без PATH exports и maintenance-скрипта.
 
@@ -52,7 +55,8 @@
 - Пройден `node --check` для `desktop-os.js` и `desktop-shortcuts.js`; проверено наличие 19 PNG в каждом наборе.
 - Проверены изображения всех четырёх наборов и двух approved-обоев: 78 публичных PNG и 76 исходных Button PNG успешно читаются.
 - Browser-проверка платформы расширена новым сценарием; локальный запуск Laravel-варианта недоступен, поскольку PHP отсутствует в Windows PATH.
+- Пройден `node --check` для Desktop JavaScript; проверены целостность Blade-директив и `git diff --check`. Laravel Feature tests добавлены для настроек и шифрования секретов, но локально не запускались из-за отсутствия PHP.
 
 ## Последний связанный commit
 
-- `Remember minimal platform deployment workflow`
+- `Centralize platform settings`

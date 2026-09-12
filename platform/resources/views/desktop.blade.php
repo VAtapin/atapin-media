@@ -18,7 +18,7 @@ $programs = [
     ['id'=>'imports','name'=>'Import Center','icon'=>'ImportCenter'],
     ['id'=>'files','name'=>'Dateien','icon'=>'Dateien'],
     ['id'=>'integrations','name'=>'Integrationen','icon'=>'Integrationen'],
-    ['id'=>'settings','name'=>'Einstellungen','icon'=>'Einstellungen'],
+    ['id'=>'settings','name'=>'Einstellungen','icon'=>'Einstellungen','url'=>route('settings')],
 ];
 $desktopAppearance = $desktopAppearance ?? ['icon_set' => 'manna', 'wallpaper' => 'mountains', 'accent' => 'gold'];
 $iconSet = config('desktop.icon_sets.'.$desktopAppearance['icon_set'], config('desktop.icon_sets.manna'));
@@ -39,10 +39,11 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
 <body class="os-body">
 <main class="os-desktop" data-desktop data-storage-key="atapin.desktop.{{ auth()->id() }}.v1"
       data-wallpaper="{{ $desktopAppearance['wallpaper'] }}" data-accent="{{ $desktopAppearance['accent'] }}"
+      data-density="{{ $desktopAppearance['density'] }}" data-effects="{{ $desktopAppearance['effects'] ? 'on' : 'off' }}"
       @if($wallpaperUrl) style="--desktop-wallpaper: url('{{ $wallpaperUrl }}')" @endif>
     <nav class="os-shortcuts" tabindex="0" aria-label="{{ __('ui.desktop_shortcuts') }}">
         @foreach($programs as $program)
-            <button class="os-shortcut" type="button" data-open-app="{{ $program['id'] }}" data-app-name="{{ $program['name'] }}" data-app-icon="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}">
+            <button class="os-shortcut" type="button" data-open-app="{{ $program['id'] }}" @isset($program['url']) data-app-url="{{ $program['url'] }}" @endisset data-app-name="{{ $program['name'] }}" data-app-icon="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}">
                 <span class="os-shortcut-icon"><img src="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}" alt=""></span><span>{{ $program['name'] }}</span>
             </button>
         @endforeach
@@ -55,7 +56,7 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
         <header><img src="/assets/brand/owner/logo-mark.png" alt=""><div><strong>Manna Media</strong><span>Programme</span></div></header>
         <div class="os-program-grid">
             @foreach($programs as $program)
-            <button type="button" data-open-app="{{ $program['id'] }}" data-app-name="{{ $program['name'] }}" data-app-icon="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}"><img src="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}" alt=""><span>{{ $program['name'] }}</span></button>
+            <button type="button" data-open-app="{{ $program['id'] }}" @isset($program['url']) data-app-url="{{ $program['url'] }}" @endisset data-app-name="{{ $program['name'] }}" data-app-icon="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}"><img src="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}" alt=""><span>{{ $program['name'] }}</span></button>
             @endforeach
         </div>
         <footer><span>{{ auth()->user()->name }}</span><form method="post" action="{{ route('logout') }}">@csrf<button type="submit">Abmelden</button></form></footer>

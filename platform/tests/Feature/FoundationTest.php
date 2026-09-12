@@ -110,6 +110,18 @@ class FoundationTest extends TestCase
         $this->assertTrue($editor->hasPermission('content.publish'));
         $this->assertFalse($editor->hasPermission('users.manage'));
     }
+    public function test_settings_sections_store_runtime_values_and_encrypt_secrets(): void
+    {
+        $this->actingAs($this->user('Owner'));
+        $this->put('/desktop/settings', ['section'=>'ai','ai_provider'=>'openai','ai_model'=>'gpt-test','ai_enabled'=>'1','ai_api_key'=>'secret-value'])->assertRedirect();
+        $this->assertSame('openai', app(Settings::class)->get('ai_provider'));
+        $this->assertSame('secret-value', app(Settings::class)->secret('ai_api_key'));
+        $this->assertDatabaseMissing('settings', ['key'=>'secret.ai_api_key','value'=>json_encode('secret-value')]);
+        $this->put('/desktop/settings', ['section'=>'publishing','publishing_default_visibility'=>'internal','publishing_default_timezone'=>'Europe/Berlin','publishing_approval_required'=>'1'])->assertRedirect();
+        $this->assertTrue(app(Settings::class)->get('publishing_approval_required'));
+        $this->get('/desktop/settings')->assertOk()->assertSee('Desktop & Design')->assertSee('Social Media')->assertSee('Benutzer & Rechte');
+        $this->get('/desktop')->assertOk()->assertSee('data-app-url="http://localhost/desktop/settings"', false);
+    }
     public function test_last_owner_cannot_be_demoted_and_short_password_account_can_be_created():void
     {
         $owner=$this->user('Owner');$this->actingAs($owner);$role=Role::where('name','Editor')->firstOrFail();

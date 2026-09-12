@@ -8,3 +8,4 @@
 
 
 .login-card>.kit-brand{margin-bottom:24px;--brand-width:330px}
+.settings-nav{display:flex;gap:8px;overflow:auto;margin:-8px 0 24px;padding-bottom:8px}.settings-nav a{white-space:nowrap;padding:8px 12px;border:1px solid var(--border);border-radius:20px;background:#fff;color:var(--navy);font-size:.875rem}.settings-section{max-width:1040px}.settings-section .panel-heading>div>p{margin:6px 0 0}.button-row{display:flex;gap:12px;flex-wrap:wrap}.role-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.role-card{border:1px solid var(--border);border-radius:8px;padding:16px}.permission-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 16px;margin:0 0 16px}.permission-list .checkbox{margin:0;font-size:.8rem}hr{border:0;border-top:1px solid var(--border);margin:28px 0}@media(max-width:760px){.role-grid,.permission-list{grid-template-columns:1fr}}
