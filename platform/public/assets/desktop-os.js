@@ -52,7 +52,7 @@
   const layoutById = id => layouts.find(layout => layout.id === id);
   const taskButtonFor = appId => document.querySelector(`.os-task-app[data-app-id="${CSS.escape(appId)}"]`);
   const windowFor = appId => document.querySelector(`.os-window[data-app-id="${CSS.escape(appId)}"]`);
-  const programTrigger = appId => document.querySelector(`[data-open-app="${CSS.escape(appId)}"]`);
+  const programTrigger = appId => startMenu.querySelector(`[data-open-app="${CSS.escape(appId)}"]`);
 
   const focusWindow = windowElement => {
     document.querySelectorAll('.os-task-app').forEach(button => button.classList.toggle('is-active', button.dataset.appId === windowElement.dataset.appId));
@@ -468,7 +468,10 @@
     hideSnap();
   };
 
-  document.querySelectorAll('[data-open-app]').forEach(button => button.addEventListener('click', () => openProgram(button)));
+  desktop.addEventListener('click', event => {
+    const button = event.target.closest('[data-open-app]');
+    if (button) openProgram(button);
+  });
   startButton.addEventListener('click', event => {
     event.stopPropagation();
     startMenu.hidden = !startMenu.hidden;

@@ -4,9 +4,10 @@ use App\Models\Media;
 use App\Models\AuditEvent;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use App\Services\Settings;
 class DesktopController extends Controller
 {
-    public function __invoke()
+    public function __invoke(Settings $settings)
     {
         $canMedia = Gate::allows('media.view');
         return view('desktop', [
@@ -16,6 +17,11 @@ class DesktopController extends Controller
             'bytes' => $canMedia ? Media::sum('bytes') : null,
             'queued' => Gate::allows('settings.manage') ? DB::table('jobs')->count() : null,
             'failed' => Gate::allows('settings.manage') ? DB::table('failed_jobs')->count() : null,
+            'desktopAppearance' => [
+                'icon_set' => $settings->get('desktop_icon_set', 'manna'),
+                'wallpaper' => $settings->get('desktop_wallpaper', 'mountains'),
+                'accent' => $settings->get('desktop_accent', 'gold'),
+            ],
         ]);
     }
     public function audit() { return view('audit', ['events' => AuditEvent::latest('id')->paginate(40)]); }

@@ -57,9 +57,24 @@ class FoundationTest extends TestCase
     {
         $settings=app(Settings::class); $settings->all();
         $this->actingAs($this->user('Owner'))->put('/desktop/settings',[
-            'site_name'=>'<script>bad()</script>','site_description'=>'Text','contact_email'=>'owner@example.com'])->assertRedirect();
+            'site_name'=>'<script>bad()</script>','site_description'=>'Text','contact_email'=>'owner@example.com',
+            'desktop_icon_set'=>'manna','desktop_wallpaper'=>'mountains','desktop_accent'=>'gold'])->assertRedirect();
         $this->assertSame('<script>bad()</script>',$settings->get('site_name'));
+        $this->assertSame('manna',$settings->get('desktop_icon_set'));
         $this->get('/')->assertOk()->assertSee('&lt;script&gt;bad()&lt;/script&gt;',false)->assertDontSee('<script>bad()</script>',false);
+    }
+    public function test_desktop_appearance_requires_known_options(): void
+    {
+        $this->actingAs($this->user('Owner'))->put('/desktop/settings',[
+            'site_name'=>'Manna Vom Himmel', 'desktop_icon_set'=>'unknown', 'desktop_wallpaper'=>'space', 'desktop_accent'=>'red',
+        ])->assertSessionHasErrors(['desktop_icon_set','desktop_wallpaper','desktop_accent']);
+        $this->actingAs($this->user('Owner'))->put('/desktop/settings',[
+            'site_name'=>'Manna Vom Himmel', 'desktop_icon_set'=>'standard', 'desktop_wallpaper'=>'navy', 'desktop_accent'=>'sky',
+        ])->assertRedirect();
+        $this->assertSame('standard', app(Settings::class)->get('desktop_icon_set'));
+        $this->get('/desktop')->assertOk()
+            ->assertSee('data-wallpaper="navy"', false)
+            ->assertSee('/assets/brand/owner/desktop/standard/Videos.png', false);
     }
     public function test_foundation_screens_render_without_translation_keys(): void
     {

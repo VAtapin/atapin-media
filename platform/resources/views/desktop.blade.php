@@ -1,45 +1,57 @@
 @php
 $programs = [
-    ['id'=>'videos','name'=>'Videos','icon'=>'/assets/brand/owner/icon-play.png','shortcut'=>true],
-    ['id'=>'posts','name'=>'Beiträge','icon'=>'/assets/ui/icons/article.png','shortcut'=>true],
-    ['id'=>'images','name'=>'Bilder','icon'=>'/assets/ui/sidebar-icons/media.png','shortcut'=>true],
-    ['id'=>'audio','name'=>'Audio','icon'=>'/assets/ui/icons/podcast.png','shortcut'=>true],
-    ['id'=>'books','name'=>'Bücher','icon'=>'/assets/brand/owner/icon-book.png','shortcut'=>true],
-    ['id'=>'media','name'=>'Media Library','icon'=>'/assets/ui/sidebar-icons/files.png','shortcut'=>false],
-    ['id'=>'projects','name'=>'Projekte','icon'=>'/assets/ui/sidebar-icons/projects.png','shortcut'=>false],
-    ['id'=>'tasks','name'=>'Aufgaben','icon'=>'/assets/ui/sidebar-icons/tasks.png','shortcut'=>true],
-    ['id'=>'calendar','name'=>'Kalender','icon'=>'/assets/ui/sidebar-icons/calendar.png','shortcut'=>false],
-    ['id'=>'community','name'=>'Community','icon'=>'/assets/ui/sidebar-icons/community.png','shortcut'=>true],
-    ['id'=>'statistics','name'=>'Statistiken','icon'=>'/assets/ui/sidebar-icons/analytics.png','shortcut'=>true],
-    ['id'=>'imports','name'=>'Import Center','icon'=>'/assets/ui/sidebar-icons/imports.png','shortcut'=>false],
-    ['id'=>'settings','name'=>'Einstellungen','icon'=>'/assets/brand/owner/icon-settings.png','shortcut'=>true],
+    ['id'=>'videos','name'=>'Videos','icon'=>'Videos'],
+    ['id'=>'posts','name'=>'Beiträge','icon'=>'Beitraege'],
+    ['id'=>'images','name'=>'Bilder','icon'=>'Bilder'],
+    ['id'=>'audio','name'=>'Audio','icon'=>'Audio'],
+    ['id'=>'books','name'=>'Bücher','icon'=>'Buecher'],
+    ['id'=>'media','name'=>'Media Library','icon'=>'MediaLibrary'],
+    ['id'=>'projects','name'=>'Projekte','icon'=>'Projekte'],
+    ['id'=>'tasks','name'=>'Aufgaben','icon'=>'Aufgaben'],
+    ['id'=>'calendar','name'=>'Kalender','icon'=>'Kalender'],
+    ['id'=>'community','name'=>'Community','icon'=>'Community'],
+    ['id'=>'subscribers','name'=>'Subscribers','icon'=>'Subscribers'],
+    ['id'=>'live-studio','name'=>'Live Studio','icon'=>'LiveStudio'],
+    ['id'=>'publishing','name'=>'Publishing','icon'=>'Publishing'],
+    ['id'=>'ai-assistant','name'=>'KI-Assistent','icon'=>'KI-Assistent'],
+    ['id'=>'analytics','name'=>'Analytics','icon'=>'Analytics'],
+    ['id'=>'imports','name'=>'Import Center','icon'=>'ImportCenter'],
+    ['id'=>'files','name'=>'Dateien','icon'=>'Dateien'],
+    ['id'=>'integrations','name'=>'Integrationen','icon'=>'Integrationen'],
+    ['id'=>'settings','name'=>'Einstellungen','icon'=>'Einstellungen'],
 ];
+$desktopAppearance = $desktopAppearance ?? ['icon_set' => 'manna', 'wallpaper' => 'mountains', 'accent' => 'gold'];
+$iconSet = config('desktop.icon_sets.'.$desktopAppearance['icon_set'], config('desktop.icon_sets.manna'));
 @endphp
 <!doctype html>
 <html lang="de">
 <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Desktop · {{ config('platform.brand') }}</title>
-    <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/desktop-os.css?v=2"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3">
-    <script src="/assets/desktop-os.js?v=6" defer></script>
+    <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/desktop-os.css?v=3"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3">
+    <link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=2">
+    <script src="/assets/desktop-shortcuts.js?v=1" defer></script>
+    <script src="/assets/desktop-os.js?v=8" defer></script>
 </head>
 <body class="os-body">
-<main class="os-desktop" data-desktop data-storage-key="atapin.desktop.{{ auth()->id() }}.v1">
-    <nav class="os-shortcuts" aria-label="Programme auf dem Desktop">
+<main class="os-desktop" data-desktop data-storage-key="atapin.desktop.{{ auth()->id() }}.v1"
+      data-wallpaper="{{ $desktopAppearance['wallpaper'] }}" data-accent="{{ $desktopAppearance['accent'] }}">
+    <nav class="os-shortcuts" tabindex="0" aria-label="{{ __('ui.desktop_shortcuts') }}">
         @foreach($programs as $program)
-            @if($program['shortcut'])
-            <button class="os-shortcut" type="button" data-open-app="{{ $program['id'] }}" data-app-name="{{ $program['name'] }}" data-app-icon="{{ $program['icon'] }}">
-                <span class="os-shortcut-icon"><img src="{{ $program['icon'] }}" alt=""></span><span>{{ $program['name'] }}</span>
+            <button class="os-shortcut" type="button" data-open-app="{{ $program['id'] }}" data-app-name="{{ $program['name'] }}" data-app-icon="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}">
+                <span class="os-shortcut-icon"><img src="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}" alt=""></span><span>{{ $program['name'] }}</span>
             </button>
-            @endif
         @endforeach
     </nav>
+
+    <div class="os-shortcut-menu" data-shortcut-menu role="menu" aria-label="{{ __('ui.shortcut_menu') }}"
+         data-add-label="{{ __('ui.add_shortcut') }}" data-remove-label="{{ __('ui.remove_shortcut') }}" hidden></div>
 
     <section class="os-start-menu" data-start-menu hidden>
         <header><img src="/assets/brand/owner/logo-mark.png" alt=""><div><strong>Manna Media</strong><span>Programme</span></div></header>
         <div class="os-program-grid">
             @foreach($programs as $program)
-            <button type="button" data-open-app="{{ $program['id'] }}" data-app-name="{{ $program['name'] }}" data-app-icon="{{ $program['icon'] }}"><img src="{{ $program['icon'] }}" alt=""><span>{{ $program['name'] }}</span></button>
+            <button type="button" data-open-app="{{ $program['id'] }}" data-app-name="{{ $program['name'] }}" data-app-icon="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}"><img src="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}" alt=""><span>{{ $program['name'] }}</span></button>
             @endforeach
         </div>
         <footer><span>{{ auth()->user()->name }}</span><form method="post" action="{{ route('logout') }}">@csrf<button type="submit">Abmelden</button></form></footer>
