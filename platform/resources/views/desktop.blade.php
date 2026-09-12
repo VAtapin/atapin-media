@@ -33,10 +33,10 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
 <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Desktop · {{ config('platform.brand') }}</title>
-    <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=3"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3"><link rel="stylesheet" href="/assets/desktop-settings.css?v=2">
+    <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=4"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3"><link rel="stylesheet" href="/assets/desktop-settings.css?v=3">
     <link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3">
     <script src="/assets/desktop-shortcuts.js?v=1" defer></script>
-    <script src="/assets/desktop-os.js?v=9" defer></script><script src="/assets/settings-tabs.js?v=3" defer></script>
+    <script src="/assets/desktop-os.js?v=10" defer></script><script src="/assets/settings-tabs.js?v=4" defer></script>
 </head>
 <body class="os-body">
 <main class="os-desktop" data-desktop data-storage-key="atapin.desktop.{{ auth()->id() }}.v1"
@@ -61,15 +61,13 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
             <button type="button" data-open-app="{{ $program['id'] }}" data-app-name="{{ $program['name'] }}" data-app-icon="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}"><img src="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}" alt=""><span>{{ $program['name'] }}</span></button>
             @endforeach
         </div>
-        <footer><span>{{ auth()->user()->name }}</span><form method="post" action="{{ route('logout') }}">@csrf<button type="submit">Abmelden</button></form></footer>
+        <footer><button type="button" class="os-account-button" data-open-app="settings" data-settings-section="profile" data-app-name="Einstellungen" data-app-icon="{{ $iconSet['path'].'/Einstellungen.png' }}"><span data-account-name>{{ auth()->user()->name }}</span></button><form method="post" action="{{ route('logout') }}">@csrf<button type="submit">Abmelden</button></form></footer>
     </section>
 
 
-    @if($canManageSettings)
     <template id="settings-app-template">
         @include('desktop.settings', $settingsPageData)
     </template>
-    @endif
 
     <template id="os-window-template">
         <article class="os-window" tabindex="-1">

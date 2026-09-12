@@ -18,6 +18,7 @@
 - `Einstellungen` является центральным разделом настроек: Desktop & Design, KI, Social Media, Publishing, Integrationen, Benutzer & Rechte и System. Настройки хранятся в таблице `settings`; API-ключи и токены хранятся там же в зашифрованном виде и никогда не возвращаются в форму.
 - Social Media и Integrationen не показывают пустые поля: пользователь добавляет конкретный provider и получает только подходящую заготовку. Для Social Media доступны YouTube, Facebook, Instagram, TikTok, Telegram, LinkedIn и X; для Integrationen — Stripe, Google Drive, Google Calendar, Google Analytics, Mailchimp, Zapier и Webhook. Публичные ссылки и IDs хранятся отдельно от зашифрованных credentials.
 - Benutzer & Rechte показывает пользователей, позволяет создать пользователя и сменить его роль, сохраняя существующие RBAC-защиты. В System есть отдельный выбор языка для Impressum, Datenschutz и редакционных текстов с визуальным редактором; каждый язык хранится отдельно в БД.
+- Settings использует всю доступную ширину развёрнутого окна. У каждого пользователя есть отдельный профиль: фотография, имя, e-mail, телефон, место, описание, личный сайт и персональные ссылки на соцсети. Он открывается по имени в Start и не смешивается с официальными подключениями проекта. Администратор может открыть `Bearbeiten` у любого пользователя, изменить имя, e-mail, роль и при необходимости сбросить пароль.
 - Einstellungen внутри Desktop использует компактные вкладки: одновременно видна только одна панель. В Benutzer & Rechte роль выбирается отдельно, а её права и форма создания роли раскрываются по запросу.
 - Встроенные Einstellungen начинаются с вкладок без повторного branding/title/introduction. Форма использует плотную Desktop-компоновку; персональный масштаб 90–130 % применяется к Media Desktop и сохраняется в browser storage только после явного сохранения.
 - Пользовательские язык, timezone и branding применяются на уровне запроса из БД. Einstellungen открывается внутри стандартного окна Media Desktop как чистое встроенное приложение без старой sidebar/header-оболочки. Desktop & Design даёт live preview обоев, набора значков, акцента, плотности, эффектов и масштаба; закрытие с несохранёнными изменениями запрашивает подтверждение и восстанавливает сохранённое состояние.
@@ -37,6 +38,7 @@
 - Наборы значков и approved-обои описаны в `platform/config/desktop.php`; новый клиентский набор добавляется как запись конфигурации и папка с теми же 19 именами файлов.
 - Оформление Desktop — общая настройка рабочей области, а позиции ярлыков и состояние окон — отдельные browser-настройки каждого пользователя.
 - Загруженный пользовательский фон хранится на private disk и отдаётся только авторизованным пользователям с доступом к Desktop; принимаются PNG, JPEG и WebP до 10 MB.
+- Профили пользователей находятся в отдельной таблице `user_profiles`; фотографии хранятся на private disk и доступны только владельцу профиля через авторизованный route.
 - Publishing содержит только общие правила workflow: видимость по умолчанию, timezone для публикаций, обязательное подтверждение и автоматизацию. Реальные OAuth-авторизации и публикация во внешние сервисы пока не реализованы: разделы Social Media и Integrationen сохраняют безопасную конфигурацию и credentials как основу для их отдельных адаптеров. Podcast и Themen/Kategorien пока не имеют backend-модулей в Laravel; их ярлыки подготовлены для предусмотренных модулей.
 - Production работает через Plesk; document root — `httpdocs/platform/public`.
 - Стандартное production-обновление platform выполняется из `/var/www/vhosts/mannavomhimmel.de/httpdocs` через `git pull --ff-only` и только необходимые `config:clear`/`view:clear` c `/opt/plesk/php/8.4/bin/php`; без PATH exports и maintenance-скрипта.
@@ -71,9 +73,10 @@
 - Пройден `node --check` для `settings-tabs.js`; проверено отсутствие anchor-навигации и наличие семи вкладок/панелей. Laravel Feature test обновлён, но локально не запускался из-за отсутствия PHP.
 - Пройден `node --check` для `desktop-os.js`, `settings-tabs.js` и `browser.mjs`, а также `git diff --check`. Browser-сценарий расширен проверкой live preview и отмены несохранённых изменений; локальный запуск Laravel/browser suite недоступен из-за отсутствия PHP.
 - Пройден `node --check` для обновлённого `settings-tabs.js` и `desktop-os.js`, а также `git diff --check`. Feature tests расширены для provider-конфигураций, шифрования credentials, пользователей и раздельных юридических текстов, но локально не запускались из-за отсутствия PHP.
+- Пройден `node --check` для расширенных Settings и Desktop scripts, а также `git diff --check`. Feature и browser tests расширены для собственного профиля, редактирования пользователя и открытия профиля через Start; локально Laravel/browser suite недоступен из-за отсутствия PHP.
 - Проверено отсутствие iframe, `embed=1`, `postMessage`, legacy routes и legacy Blade layouts в исходниках платформы. Laravel Feature tests обновлены для прямого Settings UI и удаления старых GET-маршрутов, но локально не запускались из-за отсутствия PHP.
 - Проверены зависимости всех окон Desktop: `settings-content.blade.php` и его стили удалены; в runtime-исходниках отсутствуют legacy layouts, iframe, `embed=1`, `postMessage` и прямые legacy links.
 
 ## Последний связанный commit
 
-- `Organize desktop settings connections`
+- `Expand desktop user profiles`

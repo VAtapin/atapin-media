@@ -15,6 +15,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class,'destroy'])->name('logout');
     Route::get('/desktop', DesktopController::class)->middleware('can:desktop.view')->name('desktop');
     Route::get('/desktop/wallpaper', [SettingsController::class, 'wallpaper'])->middleware('can:desktop.view')->name('desktop.wallpaper');
+    Route::patch('/desktop/profile', [\App\Http\Controllers\UserController::class,'updateProfile'])->name('profile.update');
+    Route::get('/desktop/profile/avatar', [\App\Http\Controllers\UserController::class,'avatar'])->name('profile.avatar');
 
     Route::middleware('can:users.manage')->prefix('desktop')->group(function () {
         Route::post('users', [\App\Http\Controllers\UserController::class,'store'])->name('users.store');

@@ -28,7 +28,7 @@ class FoundationTest extends TestCase
         $user = $this->user('Moderator');
         $this->actingAs($user)->get('/desktop')->assertOk()
             ->assertDontSee('jobs_waiting')
-            ->assertDontSee('settings-app-template', false);
+            ->assertSee('settings-app-template', false)->assertSee('Mein Profil');
         $this->put('/desktop/settings',['site_name'=>'changed'])->assertForbidden();
     }
     public function test_short_password_login_logout_and_throttling(): void
@@ -145,16 +145,32 @@ class FoundationTest extends TestCase
         $this->get('/desktop/shop')->assertStatus(405);
         $desktop = $this->get('/desktop')->assertOk();
         foreach (['Videos','Beiträge','Bücher & PDF','Podcast','Live Studio','Media Library','Projekte','Aufgaben','Kalender','Community','Newsletter','Themen & Kategorien','Publishing','Shop & Verkäufe','KI-Assistent','Analytics','Import Center','Integrationen','Einstellungen'] as $name) $desktop->assertSee($name);
-        $desktop->assertSee('desktop-settings', false)->assertSee('/assets/desktop-settings.css?v=2', false)
+        $desktop->assertSee('desktop-settings', false)->assertSee('/assets/desktop-settings.css?v=3', false)
             ->assertSee($owner->email)->assertDontSee('/assets/app.css', false)->assertDontSee('<iframe', false);
         $desktop->assertDontSee('>Subscribers<', false)->assertDontSee('>Bilder<', false)->assertDontSee('>Audio<', false)->assertDontSee('>Dateien<', false);
     }
     public function test_last_owner_cannot_be_demoted_and_short_password_account_can_be_created():void
     {
         $owner=$this->user('Owner');$this->actingAs($owner);$role=Role::where('name','Editor')->firstOrFail();
-        $this->patch('/desktop/users/'.$owner->id,['role_id'=>$role->id])->assertSessionHasErrors('role_id');
+        $this->patch('/desktop/users/'.$owner->id,['name'=>$owner->name,'email'=>$owner->email,'role_id'=>$role->id])->assertSessionHasErrors('role_id');
         $this->assertTrue($owner->fresh()->hasPermission('users.manage'));
         $this->post('/desktop/users',['name'=>'Editor','email'=>'editor@example.com','password'=>'12345','role_id'=>$role->id])->assertRedirect();
         $this->assertTrue(User::where('email','editor@example.com')->first()->hasPermission('content.edit'));
+    }
+    public function test_user_can_update_personal_profile_without_changing_project_social_connections(): void
+    {
+        $user = $this->user('Owner'); $this->actingAs($user);
+        $this->patchJson('/desktop/profile', ['name'=>'Oleg','email'=>'oleg@example.com','phone'=>'+49 123','location'=>'Berlin',
+            'website'=>'https://oleg.example','bio'=>'Profiltext','personal_youtube'=>'https://youtube.com/@oleg','personal_instagram'=>'https://instagram.com/oleg'])
+            ->assertOk()->assertJson(['status'=>'saved','name'=>'Oleg']);
+        $this->assertDatabaseHas('user_profiles',['user_id'=>$user->id,'phone'=>'+49 123','location'=>'Berlin']);
+        $this->assertSame('https://youtube.com/@oleg', $user->fresh()->profile->social_links['youtube']);
+        $this->assertNull(app(Settings::class)->get('social_connections'));
+        $this->patchJson('/desktop/profile', ['name'=>'Oleg','email'=>'oleg@example.com','current_password'=>'wrong','password'=>'neu123','password_confirmation'=>'neu123'])
+            ->assertUnprocessable()->assertJsonValidationErrors('current_password');
+        $this->patchJson('/desktop/profile', ['name'=>'Oleg','email'=>'oleg@example.com','current_password'=>'kurz5','password'=>'neu123','password_confirmation'=>'neu123'])
+            ->assertOk();
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('neu123', $user->fresh()->password));
+        $this->assertSame('https://youtube.com/@oleg', $user->fresh()->profile->social_links['youtube']);
     }
 }

@@ -33,6 +33,7 @@
       });
     };
     tabs.forEach(tab => tab.addEventListener('click', () => show(tab.dataset.settingsTab)));
+    app.addEventListener('atapin.settings.navigate', event => show(event.detail?.section));
     show(app.dataset.activeSection || 'desktop_design');
 
     const setDirty = (value, form = null) => {
@@ -57,6 +58,17 @@
     });
     app.querySelector('[data-user-create]')?.addEventListener('click', () => {
       app.querySelector('[data-user-create-form]').hidden = false;
+    });
+    app.querySelectorAll('[data-user-edit]').forEach(button => button.addEventListener('click', () => {
+      app.querySelectorAll('[data-user-edit-form]').forEach(form => form.hidden = true);
+      app.querySelector(`[data-user-edit-form="${button.dataset.userEdit}"]`).hidden = false;
+    }));
+    app.querySelector('[data-profile-form] [name="avatar"]')?.addEventListener('change', event => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.addEventListener('load', () => { app.querySelector('[data-profile-avatar]').src = reader.result; });
+      reader.readAsDataURL(file);
     });
     const templates = {
       social: {
@@ -186,6 +198,17 @@
           legalDocuments[legalLocale.value] = Object.fromEntries([...form.querySelectorAll('[data-rich-editor]')]
             .map(editor => [editor.dataset.richEditor, editor.innerHTML]));
           legalLocale.dataset.legalDocuments = JSON.stringify(legalDocuments);
+        }
+        if (form.matches('[data-profile-form]')) {
+          form.querySelectorAll('input[type="password"]').forEach(input => input.value = '');
+          document.querySelectorAll('[data-account-name]').forEach(name => name.textContent = payload.name);
+          const summary = app.querySelector(`[data-user-summary="${payload.user_id}"]`);
+          if (summary) { summary.querySelector('strong').textContent = payload.name; summary.querySelector('small').textContent = payload.email; }
+          if (payload.avatar_url) app.querySelector('[data-profile-avatar]').src = payload.avatar_url;
+        }
+        if (form.dataset.userEditForm) {
+          const summary = app.querySelector(`[data-user-summary="${payload.user_id}"]`);
+          if (summary) { summary.querySelector('strong').textContent = payload.name; summary.querySelector('small').textContent = payload.email; }
         }
         showNotice('Gespeichert.');
         post('atapin.settings.saved', appearance({ section:payload.section }));

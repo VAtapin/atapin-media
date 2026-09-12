@@ -44,6 +44,11 @@ try {
   } });
   const shortcutStorage = await page.locator('[data-desktop]').getAttribute('data-storage-key');
   const savedShortcuts = await page.evaluate(key => localStorage.getItem(`${key}.shortcuts`), shortcutStorage);
+  await page.locator('[data-start-button]').click();
+  await page.locator('[data-account-name]').click();
+  const profileWindow = page.locator('.os-window[data-app-id="settings"]');
+  await profileWindow.locator('[data-settings-panel="profile"]').waitFor({state:'visible'});
+  await profileWindow.locator('[data-window-action="close"]').click();
   await page.locator('[data-open-app="settings"]').first().click();
   const settingsWindow = page.locator('.os-window[data-app-id="settings"]');
   const settingsFrame = settingsWindow.locator('[data-settings-app]');

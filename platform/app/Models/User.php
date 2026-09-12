@@ -15,6 +15,7 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     public function roles() { return $this->belongsToMany(Role::class); }
+    public function profile() { return $this->hasOne(UserProfile::class); }
     public function hasPermission(string $permission): bool
     {
         return $this->roles()->whereHas('permissions', fn ($q) => $q->where('name', $permission))->exists();

@@ -13,9 +13,11 @@ class SettingsController extends Controller
 
     public function pageData(Settings $settings): array
     {
-        return ['settings' => $settings->all(), 'roles' => Role::with('permissions')->orderBy('name')->get(),
-            'users' => User::with('roles')->orderBy('name')->get(),
-            'permissions' => Permission::orderBy('name')->get(), 'secretStatus' => [
+        $canManageUsers = Gate::allows('users.manage');
+        return ['settings' => $settings->all(), 'currentUser' => auth()->user()?->load('profile'),
+            'roles' => $canManageUsers ? Role::with('permissions')->orderBy('name')->get() : collect(),
+            'users' => $canManageUsers ? User::with('roles')->orderBy('name')->get() : collect(),
+            'permissions' => $canManageUsers ? Permission::orderBy('name')->get() : collect(), 'secretStatus' => [
                 'ai_api_key' => $settings->hasSecret('ai_api_key'),
             ]];
     }

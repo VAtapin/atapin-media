@@ -18,7 +18,7 @@ class DesktopController extends Controller
             'queued' => $canManageSettings ? DB::table('jobs')->count() : null,
             'failed' => $canManageSettings ? DB::table('failed_jobs')->count() : null,
             'canManageSettings' => $canManageSettings,
-            'settingsPageData' => $canManageSettings ? $settingsController->pageData($settings) : null,
+            'settingsPageData' => $settingsController->pageData($settings),
             'desktopAppearance' => [
                 'icon_set' => $settings->get('desktop_icon_set', 'manna'),
                 'wallpaper' => $settings->get('desktop_wallpaper', 'mountains'),

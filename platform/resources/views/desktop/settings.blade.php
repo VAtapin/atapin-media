@@ -1,7 +1,10 @@
 <section class="desktop-settings" data-settings-app data-settings-direct data-active-section="desktop_design">
     <aside class="desktop-settings-nav" aria-label="{{ __('ui.settings') }}">
+        <button type="button" data-settings-tab="profile"><span aria-hidden="true">●</span>Mein Profil</button>
+        @can('settings.manage')
         <button type="button" data-settings-tab="desktop_design"><span aria-hidden="true">◈</span>Desktop &amp; Design</button>
         <button type="button" data-settings-tab="ai"><span aria-hidden="true">✦</span>KI</button>
+        @endcan
         @can('integrations.manage')
         <button type="button" data-settings-tab="social"><span aria-hidden="true">◌</span>Social Media</button>
         <button type="button" data-settings-tab="integrations"><span aria-hidden="true">⌘</span>Integrationen</button>
@@ -12,12 +15,25 @@
         @can('users.manage')
         <button type="button" data-settings-tab="users"><span aria-hidden="true">♙</span>Benutzer &amp; Rechte</button>
         @endcan
+        @can('settings.manage')
         <button type="button" data-settings-tab="system"><span aria-hidden="true">⚙</span>System</button>
+        @endcan
     </aside>
 
     <div class="desktop-settings-workspace">
         <div class="desktop-settings-notice" data-settings-notice hidden role="status"></div>
 
+        <section class="desktop-settings-panel" data-settings-panel="profile" hidden>
+            <header class="desktop-settings-heading"><div><span>Konto</span><h2>Mein Profil</h2><p>Persönliche Angaben und Links. Diese Daten sind unabhängig von den offiziellen Kanälen des Projekts.</p></div></header>
+            @php($profile = $currentUser->profile)
+            @php($profileLinks = $profile?->social_links ?? [])
+            <form class="desktop-settings-form" data-profile-form method="post" action="{{ route('profile.update') }}" enctype="multipart/form-data">@csrf @method('PATCH')
+                <div class="desktop-settings-profile-header"><img data-profile-avatar src="{{ $profile?->avatar_path ? route('profile.avatar').'?v='.$profile->updated_at->timestamp : '/assets/brand/owner/logo-mark.png' }}" alt=""><label>Profilfoto<input name="avatar" type="file" accept="image/png,image/jpeg,image/webp"><small>PNG, JPEG oder WebP, maximal 4 MB.</small></label></div>
+                <div class="desktop-settings-grid two"><label>{{ __('ui.name') }}<input name="name" required maxlength="255" value="{{ old('name', $currentUser->name) }}"></label><label>{{ __('ui.email') }}<input name="email" type="email" required maxlength="255" value="{{ old('email', $currentUser->email) }}"></label><label>Telefon<input name="phone" maxlength="80" value="{{ old('phone', $profile?->phone) }}"></label><label>Ort<input name="location" maxlength="120" value="{{ old('location', $profile?->location) }}"></label></div><label>Persönliche Website<input name="website" type="url" maxlength="1000" value="{{ old('website', $profile?->website) }}"></label><label>Über mich<textarea name="bio" rows="4" maxlength="3000">{{ old('bio', $profile?->bio) }}</textarea></label><div class="desktop-settings-divider">Meine persönlichen Social-Media-Links</div><div class="desktop-settings-grid three"><label>YouTube<input name="personal_youtube" type="url" value="{{ old('personal_youtube', $profileLinks['youtube'] ?? '') }}"></label><label>Facebook<input name="personal_facebook" type="url" value="{{ old('personal_facebook', $profileLinks['facebook'] ?? '') }}"></label><label>Instagram<input name="personal_instagram" type="url" value="{{ old('personal_instagram', $profileLinks['instagram'] ?? '') }}"></label><label>TikTok<input name="personal_tiktok" type="url" value="{{ old('personal_tiktok', $profileLinks['tiktok'] ?? '') }}"></label><label>Telegram<input name="personal_telegram" type="url" value="{{ old('personal_telegram', $profileLinks['telegram'] ?? '') }}"></label><label>LinkedIn<input name="personal_linkedin" type="url" value="{{ old('personal_linkedin', $profileLinks['linkedin'] ?? '') }}"></label></div><div class="desktop-settings-divider">Passwort ändern</div><div class="desktop-settings-grid three"><label>Aktuelles Passwort<input name="current_password" type="password" autocomplete="current-password"></label><label>Neues Passwort<input name="password" type="password" minlength="5" autocomplete="new-password"></label><label>Neues Passwort wiederholen<input name="password_confirmation" type="password" minlength="5" autocomplete="new-password"></label></div><div class="desktop-settings-actions"><button class="desktop-settings-primary" data-settings-save>{{ __('ui.save') }}</button></div>
+            </form>
+        </section>
+
+        @can('settings.manage')
         <section class="desktop-settings-panel" data-settings-panel="desktop_design">
             <header class="desktop-settings-heading"><div><span>Desktop</span><h2>Desktop &amp; Design</h2><p>{{ __('ui.desktop_appearance_hint') }}</p></div></header>
             <form class="desktop-settings-form" method="post" action="{{ route('settings') }}" enctype="multipart/form-data">
@@ -46,6 +62,7 @@
                 <label class="desktop-settings-check"><input type="checkbox" name="ai_enabled" value="1" @checked(old('ai_enabled',$settings['ai_enabled'] ?? false))><span>{{ __('ui.enable_ai') }}</span></label><div class="desktop-settings-actions"><button class="desktop-settings-primary" data-settings-save>{{ __('ui.save') }}</button></div>
             </form>
         </section>
+        @endcan
 
         @can('integrations.manage')
         <section class="desktop-settings-panel" data-settings-panel="social" hidden>
@@ -84,7 +101,7 @@
         @can('users.manage')
         <section class="desktop-settings-panel" data-settings-panel="users" hidden>
             <header class="desktop-settings-heading"><div><span>Zugriff</span><h2>Benutzer &amp; Rechte</h2><p>{{ __('ui.users_hint') }}</p></div></header>
-            <div class="desktop-settings-user-list"><div class="desktop-settings-subheading"><strong>Benutzer</strong><button type="button" class="desktop-settings-secondary" data-user-create>Benutzer hinzufügen</button></div>@foreach($users as $user)<form class="desktop-settings-user" method="post" action="{{ route('users.update', $user) }}">@csrf @method('PATCH')<span><strong>{{ $user->name }}</strong><small>{{ $user->email }}</small></span><select name="role_id">@foreach($roles as $role)<option value="{{ $role->id }}" @selected($user->roles->contains('id', $role->id))>{{ $role->name }}</option>@endforeach</select><button class="desktop-settings-secondary" data-settings-save>Speichern</button></form>@endforeach</div>
+            <div class="desktop-settings-user-list"><div class="desktop-settings-subheading"><strong>Benutzer</strong><button type="button" class="desktop-settings-secondary" data-user-create>Benutzer hinzufügen</button></div>@foreach($users as $user)<div class="desktop-settings-user" data-user-summary="{{ $user->id }}"><span><strong>{{ $user->name }}</strong><small>{{ $user->email }}</small></span><small>{{ $user->roles->first()?->name }}</small><button type="button" class="desktop-settings-secondary" data-user-edit="{{ $user->id }}">Bearbeiten</button></div><form class="desktop-settings-form desktop-settings-user-edit" data-user-edit-form="{{ $user->id }}" method="post" action="{{ route('users.update', $user) }}" hidden>@csrf @method('PATCH')<div class="desktop-settings-grid three"><label>{{ __('ui.name') }}<input name="name" required maxlength="255" value="{{ $user->name }}"></label><label>{{ __('ui.email') }}<input name="email" type="email" required maxlength="255" value="{{ $user->email }}"></label><label>{{ __('ui.role') }}<select name="role_id">@foreach($roles as $role)<option value="{{ $role->id }}" @selected($user->roles->contains('id', $role->id))>{{ $role->name }}</option>@endforeach</select></label></div><div class="desktop-settings-grid two"><label>Neues Passwort <small>optional</small><input name="password" type="password" minlength="5" autocomplete="new-password"></label><label>Neues Passwort wiederholen<input name="password_confirmation" type="password" minlength="5" autocomplete="new-password"></label></div><div class="desktop-settings-actions"><button class="desktop-settings-primary" data-settings-save>{{ __('ui.save') }}</button></div></form>@endforeach</div>
             <form class="desktop-settings-form desktop-settings-user-create" data-user-create-form method="post" action="{{ route('users.store') }}" hidden>@csrf<div class="desktop-settings-grid three"><label>{{ __('ui.name') }}<input name="name" required></label><label>{{ __('ui.email') }}<input name="email" type="email" required></label><label>{{ __('ui.password') }}<input name="password" type="password" required minlength="5"></label></div><label>{{ __('ui.role') }}<select name="role_id">@foreach($roles as $role)<option value="{{ $role->id }}">{{ $role->name }}</option>@endforeach</select></label><div class="desktop-settings-actions"><button class="desktop-settings-primary" data-settings-save>Benutzer erstellen</button></div></form>
             <div class="desktop-settings-role-picker"><label>{{ __('ui.role') }}<select data-role-picker><option value="">{{ __('ui.select_role') }}</option>@foreach($roles as $role)<option value="{{ $role->id }}">{{ $role->name }}</option>@endforeach</select></label><button type="button" class="desktop-settings-secondary" data-role-create>{{ __('ui.new_role') }}</button></div>
             @foreach($roles as $role)
@@ -94,11 +111,13 @@
         </section>
         @endcan
 
+        @can('settings.manage')
         <section class="desktop-settings-panel" data-settings-panel="system" hidden>
             <header class="desktop-settings-heading"><div><span>Plattform</span><h2>System</h2><p>{{ __('ui.system_hint') }}</p></div></header>
             <form class="desktop-settings-form" method="post" action="{{ route('settings') }}">@csrf @method('PUT')<input type="hidden" name="section" value="system">
                 <div class="desktop-settings-grid two"><label>{{ __('ui.site_name') }}<input name="site_name" required maxlength="120" value="{{ old('site_name',$settings['site_name'] ?? config('platform.brand')) }}"></label><label>{{ __('ui.contact_email') }}<input name="contact_email" type="email" value="{{ old('contact_email',$settings['contact_email'] ?? '') }}"></label></div><label>{{ __('ui.site_description') }}<textarea name="site_description" rows="3" maxlength="500">{{ old('site_description',$settings['site_description'] ?? '') }}</textarea></label><div class="desktop-settings-grid three"><label>{{ __('ui.language') }}<select name="system_locale">@foreach(config('platform.locales') as $locale)<option value="{{ $locale }}" @selected(old('system_locale',$settings['system_locale'] ?? config('app.locale'))===$locale)>{{ strtoupper($locale) }}</option>@endforeach</select></label><label>{{ __('ui.timezone') }}<input name="system_timezone" value="{{ old('system_timezone',$settings['system_timezone'] ?? config('platform.timezone')) }}"></label><label>{{ __('ui.branding') }}<input name="system_branding_name" maxlength="120" value="{{ old('system_branding_name',$settings['system_branding_name'] ?? '') }}"></label></div><div class="desktop-settings-divider">Impressum, Datenschutz &amp; Redaktion</div>@php($legalDocuments = $settings['legal_documents'] ?? [])<label>Sprache dieser Inhalte<select name="legal_locale" data-legal-locale data-legal-documents="{{ e(json_encode($legalDocuments, JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_TAG)) }}">@foreach(config('platform.locales') as $locale)<option value="{{ $locale }}">{{ strtoupper($locale) }}</option>@endforeach</select></label><div class="desktop-settings-editor"><label>Impressum<div class="desktop-settings-editor-tools"><button type="button" data-editor-command="bold"><b>Fett</b></button><button type="button" data-editor-command="italic"><i>Kursiv</i></button><button type="button" data-editor-command="insertUnorderedList">Liste</button></div><div contenteditable="true" data-rich-editor="impressum"></div><textarea name="impressum" hidden></textarea></label><label>Datenschutz<div class="desktop-settings-editor-tools"><button type="button" data-editor-command="bold"><b>Fett</b></button><button type="button" data-editor-command="italic"><i>Kursiv</i></button><button type="button" data-editor-command="insertUnorderedList">Liste</button></div><div contenteditable="true" data-rich-editor="privacy_policy"></div><textarea name="privacy_policy" hidden></textarea></label><label>Redaktionelle Hinweise<div class="desktop-settings-editor-tools"><button type="button" data-editor-command="bold"><b>Fett</b></button><button type="button" data-editor-command="italic"><i>Kursiv</i></button><button type="button" data-editor-command="insertUnorderedList">Liste</button></div><div contenteditable="true" data-rich-editor="editorial_policy"></div><textarea name="editorial_policy" hidden></textarea></label></div><div class="desktop-settings-actions"><button class="desktop-settings-primary" data-settings-save>{{ __('ui.save') }}</button></div>
             </form>
         </section>
+        @endcan
     </div>
 </section>

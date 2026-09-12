@@ -417,6 +417,11 @@
       focusWindow(windowElement);
       saveState();
     }
+    if (appId === 'settings' && trigger.dataset.settingsSection) {
+      windowElement.querySelector('[data-settings-app]')?.dispatchEvent(new CustomEvent('atapin.settings.navigate', {
+        detail:{ section:trigger.dataset.settingsSection },
+      }));
+    }
     startMenu.hidden = true;
     startButton.setAttribute('aria-expanded', 'false');
     return windowElement;
