@@ -103,6 +103,12 @@ class FoundationTest extends TestCase
             $this->get($url)->assertOk()->assertDontSee('ui.')->assertHeader('X-Robots-Tag','noindex, nofollow');
         }
     }
+    public function test_module_pages_have_no_legacy_workspace_shell(): void
+    {
+        $this->actingAs($this->user('Owner'))
+            ->get('/desktop/media')->assertOk()->assertDontSee('class="sidebar"', false)
+            ->assertDontSee('class="topbar"', false)->assertDontSee('class="breadcrumb"', false);
+    }
     public function test_role_seeding_is_idempotent(): void
     {
         app(Access::class)->seed(); $this->assertDatabaseCount('roles',6);

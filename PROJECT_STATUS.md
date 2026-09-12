@@ -17,6 +17,7 @@
 - Для Desktop подключены четыре полных approved-набора из 19 PNG: Manna Vom Himmel, Standard, Grün и Sol. В системных настройках выбираются набор значков, approved-фон, пользовательский фон и акцентный цвет без изменения ярлыков, окон или их расположения.
 - `Einstellungen` является центральным разделом настроек: Desktop & Design, KI, Social Media, Publishing, Integrationen, Benutzer & Rechte и System. Настройки хранятся в таблице `settings`; API-ключи и токены хранятся там же в зашифрованном виде и никогда не возвращаются в форму.
 - Пользовательские язык, timezone и branding применяются на уровне запроса из БД. Einstellungen открывается внутри стандартного окна Media Desktop как чистое встроенное приложение без старой sidebar/header-оболочки.
+- Устаревшая Laravel workspace-оболочка удалена: общий layout больше не содержит sidebar, topbar, breadcrumbs или старую навигацию; страницы сохранившихся модулей выводят только собственное содержимое.
 - Каталог Start/Desktop содержит 19 программ: Media Library объединяет Bilder, Audio и Dateien; Newsletter включает Subscribers. Добавлены Podcast, Themen & Kategorien и Shop & Verkäufe. Shop имеет базовые таблицы товаров и продаж без фиктивного payment provider.
 
 ## Текущее состояние и решения
@@ -58,7 +59,8 @@
 - Browser-проверка платформы расширена новым сценарием; локальный запуск Laravel-варианта недоступен, поскольку PHP отсутствует в Windows PATH.
 - Пройден `node --check` для Desktop JavaScript; проверены целостность Blade-директив и `git diff --check`. Laravel Feature tests добавлены для настроек и шифрования секретов, но локально не запускались из-за отсутствия PHP.
 - Пройден `node --check` для обновлённого Desktop JavaScript, `git diff --check` и проверка состава 19 ярлыков. Laravel Feature tests обновлены, но локально не запускались из-за отсутствия PHP.
+- Проверено отсутствие legacy-shell селекторов и разметки; Feature test добавлен, но локально не запускался из-за отсутствия PHP.
 
 ## Последний связанный commit
 
-- `Embed settings and add shop workspace`
+- `Remove legacy workspace shell`

@@ -134,9 +134,7 @@ try {
   await page.setViewportSize({width:390,height:844});
   await page.reload();
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Mobile overflow');
-  await page.locator('.menu-toggle').click();assert.equal(await page.locator('.menu-toggle').getAttribute('aria-expanded'),'true');
-  await page.keyboard.press('Escape');
   await page.screenshot({path:'tests/artifacts/mobile.png',fullPage:true});
   assert.deepEqual(errors,[]);
-  console.log('Browser: desktop persistence, upload, rename, download, responsive navigation OK');
+  console.log('Browser: desktop persistence, upload, rename, download, responsive module view OK');
 } finally {await browser?.close();try{process.kill(-server.pid,'SIGTERM');}catch{}server.stdout.destroy();server.stderr.destroy();server.unref();}
