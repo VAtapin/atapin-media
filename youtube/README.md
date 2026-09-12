@@ -2,6 +2,11 @@
 
 Канал: https://www.youtube.com/@MannaVomHimmel — `UC32nXxuzjY7ExrDgzSAQNXQ`.
 
+Полная личная выгрузка владельца из YouTube Studio или Google Takeout
+хранится отдельно от этого публичного снимка. Правило хранения и план
+последующего импорта зафиксированы в
+[`MANUAL_ARCHIVE_IMPORT.md`](./MANUAL_ARCHIVE_IMPORT.md).
+
 Сбор выполняется **на сервере**, без API-ключа, логина, cookies аккаунта и обработки содержимого. Используются Python и yt-dlp; Node 22 из Plesk нужен загрузчику для работы с YouTube, FFmpeg — для соединения видео и звука без перекодирования. PHP сайта и страница `/upload/` продолжают работать независимо.
 
 ## Установка и запуск в Debian/Plesk

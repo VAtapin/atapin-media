@@ -37,15 +37,18 @@
 - Реальные OAuth-авторизации и публикация во внешние сервисы пока не реализованы: разделы Social Media и Integrationen сохраняют безопасную конфигурацию и credentials как основу для их отдельных адаптеров. Podcast и Themen/Kategorien пока не имеют backend-модулей в Laravel; их ярлыки подготовлены для предусмотренных модулей.
 - Production работает через Plesk; document root — `httpdocs/platform/public`.
 - Стандартное production-обновление platform выполняется из `/var/www/vhosts/mannavomhimmel.de/httpdocs` через `git pull --ff-only` и только необходимые `config:clear`/`view:clear` c `/opt/plesk/php/8.4/bin/php`; без PATH exports и maintenance-скрипта.
+- Публичный YouTube-сборщик сохранил частичный архив в `private/manna-youtube` (около 3.9 GB); полный личный архив владелец скачивает отдельно и хранит в `private/manna-youtube-manual/<дата-выгрузки>`. Текущий Import Center принимает структурированный архив сборщика; для YouTube Studio/Google Takeout нужен отдельный адаптер ручного формата. Полная инструкция: `youtube/MANUAL_ARCHIVE_IMPORT.md`.
 
 ## Известные ограничения
 
 - Программы рабочего стола ещё не наполнены функциональными интерфейсами модулей.
 - Public Website начат, но ещё не завершён.
+- Импорт произвольной ручной выгрузки YouTube Studio/Google Takeout ещё не реализован; до создания адаптера её нельзя вручную смешивать с `private/manna-youtube`.
 
 ## Рекомендуемый следующий этап
 
 - Выбрать первую программу рабочего стола и подключить к её окну существующий функциональный модуль, сохраняя общий оконный менеджер.
+- После получения личной выгрузки YouTube реализовать адаптер ручного архива по `youtube/MANUAL_ARCHIVE_IMPORT.md`, затем запустить импорт через Import Center.
 
 ## Проверки
 
@@ -67,4 +70,4 @@
 
 ## Последний связанный commit
 
-- `Save desktop settings preview explicitly`
+- `Document manual YouTube archive import`
