@@ -116,11 +116,25 @@ class FoundationTest extends TestCase
         $this->assertSame('openai', app(Settings::class)->get('ai_provider'));
         $this->assertSame('secret-value', app(Settings::class)->secret('ai_api_key'));
         $this->assertDatabaseMissing('settings', ['key'=>'secret.ai_api_key','value'=>json_encode('secret-value')]);
+        $this->putJson('/desktop/settings', ['section'=>'social','provider'=>'youtube','public_url'=>'https://youtube.com/@manna','external_id'=>'manna','api_key'=>'youtube-secret'])
+            ->assertOk()->assertJson(['status'=>'saved','section'=>'social','provider'=>'youtube']);
+        $this->assertSame('https://youtube.com/@manna', app(Settings::class)->get('social_connections')['youtube']['public_url']);
+        $this->assertStringContainsString('youtube-secret', app(Settings::class)->secret('social_youtube'));
+        $this->putJson('/desktop/settings', ['section'=>'integrations','provider'=>'stripe','account_id'=>'acct_123','api_key'=>'stripe-secret'])
+            ->assertOk()->assertJson(['status'=>'saved','section'=>'integrations','provider'=>'stripe']);
+        $this->assertSame('acct_123', app(Settings::class)->get('integration_connections')['stripe']['external_id']);
         $this->put('/desktop/settings', ['section'=>'publishing','publishing_default_visibility'=>'internal','publishing_default_timezone'=>'Europe/Berlin','publishing_approval_required'=>'1'])->assertRedirect();
         $this->assertTrue(app(Settings::class)->get('publishing_approval_required'));
         $this->putJson('/desktop/settings', ['section'=>'desktop_design','desktop_icon_set'=>'manna','desktop_wallpaper'=>'navy','desktop_accent'=>'gold','desktop_density'=>'comfortable','desktop_effects'=>true])
             ->assertOk()->assertJson(['status'=>'saved','section'=>'desktop_design']);
         $this->assertSame('navy', app(Settings::class)->get('desktop_wallpaper'));
+        $this->putJson('/desktop/settings', ['section'=>'system','site_name'=>'Manna','system_locale'=>'de','system_timezone'=>'Europe/Berlin','legal_locale'=>'de','impressum'=>'<p onclick="alert(1)">Impressum</p><script>alert(1)</script>','privacy_policy'=>'<p>Datenschutz</p>','editorial_policy'=>'<p>Redaktion</p>'])
+            ->assertOk()->assertJson(['status'=>'saved','section'=>'system']);
+        $this->assertSame('<p>Impressum</p>', app(Settings::class)->get('legal_documents')['de']['impressum']);
+        $this->putJson('/desktop/settings', ['section'=>'system','site_name'=>'Manna','system_locale'=>'de','system_timezone'=>'Europe/Berlin','legal_locale'=>'en','impressum'=>'<p>Imprint</p>'])
+            ->assertOk()->assertJson(['status'=>'saved','section'=>'system']);
+        $this->assertSame('<p>Impressum</p>', app(Settings::class)->get('legal_documents')['de']['impressum']);
+        $this->assertSame('<p>Imprint</p>', app(Settings::class)->get('legal_documents')['en']['impressum']);
         $this->get('/desktop')->assertOk()->assertSee('desktop-settings', false)
             ->assertDontSee('/assets/app.css', false)->assertDontSee('<iframe', false);
     }
@@ -131,8 +145,8 @@ class FoundationTest extends TestCase
         $this->get('/desktop/shop')->assertStatus(405);
         $desktop = $this->get('/desktop')->assertOk();
         foreach (['Videos','Beiträge','Bücher & PDF','Podcast','Live Studio','Media Library','Projekte','Aufgaben','Kalender','Community','Newsletter','Themen & Kategorien','Publishing','Shop & Verkäufe','KI-Assistent','Analytics','Import Center','Integrationen','Einstellungen'] as $name) $desktop->assertSee($name);
-        $desktop->assertSee('desktop-settings', false)->assertSee('/assets/desktop-settings.css?v=1', false)
-            ->assertDontSee('/assets/app.css', false)->assertDontSee('<iframe', false);
+        $desktop->assertSee('desktop-settings', false)->assertSee('/assets/desktop-settings.css?v=2', false)
+            ->assertSee($owner->email)->assertDontSee('/assets/app.css', false)->assertDontSee('<iframe', false);
         $desktop->assertDontSee('>Subscribers<', false)->assertDontSee('>Bilder<', false)->assertDontSee('>Audio<', false)->assertDontSee('>Dateien<', false);
     }
     public function test_last_owner_cannot_be_demoted_and_short_password_account_can_be_created():void
