@@ -2,6 +2,8 @@
 
 ## Реализовано
 
+- Привязка обложек: в деталях image можно раскрыть «Als Video-Cover zuordnen», найти video/short с pagination и выбрать конкретный SourceRecord, даже без локального video original. Выбранное cover используется для video-file thumbnail; originals/описания не копируются и не перезаписываются, чужой parent блокирует ошибочную привязку. Inspector учитывает прямые metadata-связи, не только usages. ИИ больше не создаёт самостоятельный материал из известного thumbnail без parent.
+
 - Этап фоновых импортов: история показывает реальные processing stages, queued задания отменяются сразу, running переходят через stop_requested в cancelled. Downloads прерываются через Process stop, archive/file/metadata обработка проверяет остановку между операциями; originals не удаляются. Cancelled import можно повторить со стабильным ID/options, сохранённые файлы перечитываются. Worker claim защищён от повторного запуска, timeout/failure hook снимает running state. Progress исправлен на array, без выдуманного общего процента.
 
 - Этап экономной ИИ-разметки: используются существующие descriptions/текстовые файлы/готовые SRT/VTT, без чтения audio/video originals; filename-only не вызывает provider. Для новых классификаций Media сохраняются before/after snapshots, доступна безопасная отмена без удаления originals и связанных материалов; последующие ручные изменения блокируют отмену. Незавершённая ручная форма сохраняется при обновлении списка и требует подтверждения при смене записи. Архивные файлы исключены из batch. Возврат собственных file-generated материалов в Media Library скрывает их в разделах, сохраняя данные; дочерние assets не назначаются ИИ как отдельные Beiträge.
@@ -86,6 +88,8 @@
 
 ## Проверки
 
+- Обложки: 3 целевых Laravel tests / 22 assertions, JS syntax/Blade compilation и Edge workflow ручного выбора cover прошли. Проверены отсутствие video original, связь с local video, thumbnail selection, сохранность originals/описаний и permissions/conflicting parent. Платные ИИ-запросы не запускались.
+
 - Этап фонового управления: 4 ImportControl tests / 25 assertions, 2 целевых folder/ZIP regression tests / 7 assertions и 4 archive tests / 18 assertions прошли. Проверены stop queued/running, сохранность accepted data, retry options, duplicate claim, worker failure, Process stop (unit mock), permissions; Edge workflow кнопки остановки/повторного запуска и JS/Blade checks прошли. Реальный yt-dlp stop и production не проверялись.
 
 - Этап ИИ/сохранности правок: 9 целевых Laravel tests / 48 assertions прошли (нет provider call по имени, готовые subtitles/descriptions, undo и concurrent manual edits). JS syntax, Blade compilation и Edge workflow сохранения незавершённой формы при refresh прошли. Full suite и платные provider requests не запускались.
@@ -111,7 +115,8 @@
 - Организация: 08c1c59 — Organize library files with collections and reversible archiving.
 - Загрузка: 43bb6c8 — Add pausable parallel uploads and client folder intake.
 - Экономная ИИ-разметка: 76fd699 — Preserve manual edits and safely undo economical AI classification.
-- Текущий этап: Stop background imports safely and show processing stages (commit с этой записью).
+- Фоновые импорты: 4d92c41 — Stop background imports safely and show processing stages.
+- Текущий этап: Link image covers to specific video content (commit с этой записью).
 
 - Этап 2: f55f340 — Fix archive imports and add resumable desktop intake.
 - Этап 3: 7d787a3 — Import service links and structured archive content.

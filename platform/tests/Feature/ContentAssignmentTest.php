@@ -80,6 +80,15 @@ class ContentAssignmentTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_known_cover_is_not_created_as_a_standalone_content_record(): void
+    {
+        $this->ai(); Http::fake(['api.openai.com/*'=>Http::response($this->response())]);
+        $media = $this->media(); $media->update(['asset_role'=>'thumbnail']);
+        $this->classify($media);
+        $this->assertSame('media_library',$media->fresh()->metadata['target_profile']);
+        $this->assertDatabaseCount('source_records',0);
+    }
+
     public function test_existing_descriptions_and_subtitles_are_used_without_reading_video(): void
     {
         $this->ai(); Http::fake(['api.openai.com/*'=>Http::response($this->response())]);

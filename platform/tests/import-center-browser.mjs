@@ -27,6 +27,17 @@ try {
   await page.locator('[data-open-app="media"]').first().click();
   const media = page.locator('.os-window[data-app-id="media"]');
   const stamp = Date.now(); const fileName = `browser-original-${stamp}.txt`; const reviewedFile = `Browser reviewed original ${stamp}`; const reviewedPost = `Browser reviewed post ${stamp}`;
+  const coverName = `browser-cover-${stamp}.png`;
+  await media.locator('[data-media-upload-input]').setInputFiles({name:coverName,mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==','base64')});
+  await media.locator('[data-library-list]').getByText(coverName).click();
+  const coverPanel = media.locator('[data-library-details] details').filter({has:page.locator('[data-cover-results]')});
+  await coverPanel.locator('summary').click();
+  await coverPanel.locator('[name=q]').fill('Browser playlist video');
+  await coverPanel.locator('button[type=submit]').click();
+  const coverResponse = page.waitForResponse(response => response.url().endsWith('/cover') && response.request().method() === 'POST');
+  page.once('dialog', dialog => dialog.accept());
+  await coverPanel.locator('[data-cover-record]').filter({hasText:'Browser playlist video'}).click();
+  assert((await coverResponse).ok());
   await media.locator('[data-media-upload-input]').setInputFiles({name:fileName,mimeType:'text/plain',buffer:Buffer.from('Original from browser')});
   await media.locator('[data-library-list]').getByText(fileName).waitFor();
   await media.locator('[data-library-list]').getByText(fileName).click();

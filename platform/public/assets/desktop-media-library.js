@@ -236,6 +236,7 @@
       <a class="media-library-download" href="${escape(item.download_url)}">Herunterladen</a>`;
       if (root.dataset.canEdit === 'true') window.appendContentAssignment?.(details, 'media', item);
       window.appendMediaInspector?.(details, item);
+      window.appendMediaCover?.(details, item);
     };
 
     const render = payload => {

@@ -43,6 +43,8 @@ IMPORT_PYTHON и IMPORT_NODE переопределяют пути runtime и Pl
 
 ## Разметка и ИИ
 
+Обложки: в деталях изображения раскрыть «Als Video-Cover zuordnen», найти конкретное video/short и подтвердить выбор. Связь создаётся с SourceRecord даже без локального video original; при наличии video file выбранное изображение используется как его thumbnail. Оригиналы и исходное описание не перезаписываются. Изображение с другим parent не переносится молча. Zielbereich Videos сам по себе не является cover linkage. Known thumbnails не создаются ИИ как отдельные материалы.
+
 Media Library: дополнительные действия/фильтры раскрываются отдельно. Выбор до 100 файлов позволяет добавлять теги без потери существующих, менять status/target_profile, добавлять в собственную Collection и archive/restore. Оригиналы и usage references не удаляются. Фильтры поддерживают tag, collection, archive и все источники сервисов. Собственные Collections (source=local) имеют title/description, pagination, перестановку соседних файлов и удаление только membership. Они явно отделены от импортированных YouTube Playlists: редактирование внешней последовательности пока не реализовано. В раскрываемом inspector доступны storage location, parent/assets, collections, usage names и последние AI proposals. Новые журналы Media имеют snapshots и кнопку отмены: later edits блокируют её, originals и связанные материалы не удаляются. Старые журналы без snapshots и AI-разметка SourceRecords пока не отменяются.
 
 Детали файла позволяют менять title, status, tags и целевой раздел (Videos/Shorts/Beiträge). Создаётся ссылка на оригинал, а не копия и не public-публикация. В деталях SourceRecord редактируются оригинальный текст, тип, title, status и tags. Повторные импорты сохраняют ручные правки.

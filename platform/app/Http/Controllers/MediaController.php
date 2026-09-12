@@ -61,7 +61,7 @@ class MediaController extends Controller
                 'tags' => $media->tags->pluck('name')->values(),
                 'asset_count' => $media->assets->count(),
                 'thumbnail_url' => str_starts_with($media->mime, 'image/') && in_array($media->mime, self::PREVIEW_MIMES, true)
-                    ? route('media.preview', $media) : (($thumbnail = $media->assets->first(fn ($asset) => in_array($asset->mime, ['image/jpeg','image/png','image/webp','image/gif'], true))) ? route('media.preview', $thumbnail) : null),
+                    ? route('media.preview', $media) : (($thumbnail = $media->assets->firstWhere('id', $media->metadata['cover_media_id'] ?? '') ?? $media->assets->first(fn ($asset) => in_array($asset->mime, ['image/jpeg','image/png','image/webp','image/gif'], true))) ? route('media.preview', $thumbnail) : null),
                 'download_url' => route('media.download', $media),
                 'preview_url' => in_array($media->mime, self::PREVIEW_MIMES, true) ? route('media.preview', $media) : null,
             ]),
@@ -76,6 +76,11 @@ class MediaController extends Controller
             'role' => $item->asset_role, 'download_url' => route('media.download', $item),
             'preview_url' => in_array($item->mime, self::PREVIEW_MIMES, true) ? route('media.preview', $item) : null];
         $records = \App\Models\SourceRecord::whereIn('id', $media->usages->where('subject_type', \App\Models\SourceRecord::class)->pluck('subject_id'))->get();
+        $linked = \App\Models\SourceRecord::where(function ($query) use ($media) {
+            foreach (['media_ids','images','media->video','media->thumbnail','media->subtitles'] as $key) $query->orWhereJsonContains('metadata->'.$key, $media->id);
+            $query->orWhere('metadata->cover_media_id', $media->id);
+        })->limit(30)->get();
+        $records = $records->merge($linked)->unique('id');
         $version = app(\App\Services\Importing\ContentState::class)->version($media);
         return response()->json(['id' => $media->id, 'summary' => $media->metadata['summary'] ?? '', 'client_relative_path' => $media->metadata['client_relative_path'] ?? null,
             'external_url' => $presentation->externalUrl($media->metadata ?? [], $media->source ?? '', $media->source_id, $media->kind),
@@ -83,6 +88,7 @@ class MediaController extends Controller
             'technical' => array_intersect_key($media->metadata['technical'] ?? [], array_flip(['duration', 'width', 'height', 'format', 'codec'])),
             'parent' => $media->parent ? $asset($media->parent) : null,
             'assets' => $media->assets->map($asset), 'collections' => $media->collections->map(fn ($item) => ['id' => $item->id, 'title' => $item->title]),
+            'cover_url' => route('media.cover', $media),
             'usages' => $records->map(fn ($item) => ['title' => $item->title, 'kind' => $item->kind, 'detail_url' => route('content.show', $item)]),
             'classifications' => $media->classifications()->latest()->limit(20)->get()->map(fn ($log) => [
                 'id'=>$log->id, 'provider'=>$log->provider, 'model'=>$log->model, 'status'=>$log->status, 'confidence'=>$log->confidence,

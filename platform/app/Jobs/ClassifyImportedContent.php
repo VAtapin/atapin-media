@@ -55,6 +55,7 @@ class ClassifyImportedContent implements ShouldQueue, ShouldBeUnique
                     }
                     if (! in_array($proposal['target_profile'], ['media_library','videos','shorts','posts'], true)) $proposal['target_profile'] = 'media_library';
                     if ($proposal['status'] !== 'ready') $proposal['target_profile'] = $current->metadata['target_profile'] ?? 'media_library';
+                    if ($current->asset_role === 'thumbnail' || ($current->metadata['role'] ?? null) === 'thumbnail') $proposal['target_profile'] = 'media_library';
                     if ($current->kind === 'video' && $proposal['target_profile'] === 'posts') $proposal['target_profile'] = 'videos';
                     $assignment->media($current, $proposal, 'ai');
                     $current->update(['classification_confidence' => $proposal['confidence'], 'classification_version' => 'v1']);

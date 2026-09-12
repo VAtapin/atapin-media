@@ -11,6 +11,7 @@ class ImportedContentPresentation
     public function mediaIds(array $metadata): array
     {
         $ids = array_merge($metadata['media_ids'] ?? [], $metadata['images'] ?? []);
+        if (isset($metadata['cover_media_id'])) $ids[] = $metadata['cover_media_id'];
         foreach ($metadata['media'] ?? [] as $group) if (is_array($group)) $ids = array_merge($ids, $group);
         return array_values(array_unique(array_filter($ids, 'is_string')));
     }

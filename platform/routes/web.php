@@ -45,6 +45,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/desktop/media/collections/{collection}', [\App\Http\Controllers\MediaCollectionController::class,'update'])->middleware('can:media.edit');
     Route::patch('/desktop/media/collections/{collection}/members/{media}', [\App\Http\Controllers\MediaCollectionController::class,'member'])->middleware('can:media.edit');
     Route::get('/desktop/media/{media}/details', [MediaController::class,'details'])->middleware('can:media.view')->name('media.details');
+    Route::post('/desktop/media/{media}/cover', [\App\Http\Controllers\MediaCoverController::class,'store'])->middleware(['can:media.edit','can:content.edit'])->name('media.cover');
     Route::post('/desktop/media/{media}/classifications/{classification}/undo', [\App\Http\Controllers\ContentClassificationController::class,'undo'])->middleware(['can:media.edit', 'can:content.edit'])->name('media.classification.undo');
     Route::get('/desktop/content', [\App\Http\Controllers\ImportedContentController::class,'index'])->middleware('can:media.view')->name('content.index');
     Route::get('/desktop/content/playlists', [\App\Http\Controllers\ImportedContentController::class,'playlists'])->middleware('can:media.view')->name('content.playlists');
