@@ -59,6 +59,8 @@
 
 - Этап 5: native-формы ручной разметки файлов и SourceRecords, tags/status/раздел, reuse original без публикации; retry failed/partial imports. Фоновая OpenAI Responses-классификация новых unsorted записей и batch до 100 старых, строгий schema validation, confidence/история/аудит, защита конкурентных ручных правок. Первая успешно завершённая Desktop-загрузка создаёт private marker, который закрывает старый intake API (410) и перенаправляет страницу на Desktop. Поздние media в повторном YouTube archive attach к reviewed записи без потери правок.
 
+- Доработан этап 3/4: collector/yt-dlp playlists импортируются в Collections и видны в native UI с pagination позиций и переходом к найденному SourceRecord. Неполный channel inventory больше не маскируется успешным сбором Beiträge. Structured exports поддерживают явные files без смешивания assets разных записей; service thumbnails/subtitles связываются с video parent.
+
 ## Известные ограничения
 
 - Для Projekte, Aufgaben, Kalender и Shop ещё требуется отдельная разработка native-интерфейсов внутри Desktop.
@@ -73,6 +75,8 @@
 
 ## Проверки
 
+- Доработка playlists: 30 целевых Laravel tests / 153 assertions прошли; native Edge browser workflow (playlist → найденный video/description) и desktop/mobile screenshots проверены. Проверяются отдельные asset links, video/thumbnail/subtitles roles и pagination после 100 позиций. Python: 12 passed / 1 skipped (ffmpeg), service_import --help прошёл.
+
 - Этап 5: 27 целевых Laravel tests / 129 assertions прошли; 7 новых tests покрывают ручную разметку, retry, конфигурацию/permissions, AI success/error/concurrent edits и недостаточные данные. Проверен путь ZIP upload → Import Center → readable originals и Beiträge.
 - Edge browser workflow прошёл: upload, ручное редактирование файла/Beitrag/tags/status, сетка, content sections, queue existing YouTube archive; screenshots desktop 1672x941/mobile 390x844 проверены.
 - Intake: реальный HTTP workflow с cutover redirect/API 410 прошёл, archive 33 checks и auth прошли, JS/PHP/shell syntax проверены. Plesk-subfolder workflow недоступен в Windows/Git Bash из-за несовместимого преобразования путей; нужен Linux CI.
@@ -85,5 +89,6 @@
 - Этап 2: f55f340 — Fix archive imports and add resumable desktop intake.
 - Этап 3: 7d787a3 — Import service links and structured archive content.
 - Этап 4: dc6a618 — Show imported content across desktop libraries.
-- Этап 5: Add reviewed content assignment and automatic AI classification (hash — git log commit, содержащего эту запись).
+- Этап 5: df9d5a0 — Add reviewed content assignment and automatic AI classification.
+- Доработка этапа 3/4: Preserve playlist structure and archive asset associations (hash — git log commit, содержащего эту запись).
 

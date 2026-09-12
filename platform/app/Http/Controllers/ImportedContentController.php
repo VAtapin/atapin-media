@@ -32,6 +32,32 @@ class ImportedContentController extends Controller
         return response()->json(['status' => 'saved']);
     }
 
+    public function playlists(Request $request)
+    {
+        $data = $request->validate(['q'=>'nullable|string|max:120','page'=>'nullable|integer|min:1']);
+        $query = \App\Models\Collection::withCount('items')->latest();
+        if ($data['q']??'') $query->where('title','like','%'.$data['q'].'%');
+        $page = $query->paginate(30);
+        return response()->json(['data'=>$page->getCollection()->map(fn ($item)=>[
+            'id'=>$item->id,'title'=>$item->title,'body'=>$item->items_count.' '.__('imports.playlist_items'),
+            'kind'=>'playlist','source'=>$item->source,'status'=>'', 'detail_url'=>route('content.playlist',$item),
+        ]),'meta'=>['current_page'=>$page->currentPage(),'last_page'=>$page->lastPage(),'total'=>$page->total()]]);
+    }
+
+    public function playlist(Request $request, \App\Models\Collection $collection)
+    {
+        $request->validate(['page'=>'nullable|integer|min:1']);
+        $page = $collection->items()->paginate(100);
+        $items = $page->getCollection();
+        $records = SourceRecord::where('source',$collection->source)->whereIn('source_id',$items->pluck('source_id')->filter())->get()->keyBy('source_id');
+        return response()->json(['id'=>$collection->id,'title'=>$collection->title,'body'=>$collection->description,'kind'=>'playlist',
+            'source'=>$collection->source,'source_id'=>$collection->source_id,'status'=>'','assets'=>[],'private'=>true,
+            'items'=>$items->map(fn ($item)=>['position'=>$item->position,'title'=>$item->title,'source_id'=>$item->source_id,
+                'availability'=>$item->availability,'detail_url'=>isset($records[$item->source_id??'']) ? route('content.show',$records[$item->source_id]) : null]),
+            'previous_url'=>$page->previousPageUrl(),'next_url'=>$page->nextPageUrl(),
+        ]);
+    }
+
     public function show(SourceRecord $record)
     {
         $metadata = $record->metadata;

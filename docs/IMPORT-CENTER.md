@@ -31,6 +31,8 @@ IMPORT_PYTHON и IMPORT_NODE переопределяют пути runtime и Pl
 
 Типы: video, short, post, poll, comment. Metadata и неизвестные поля сохраняются. Материалы остаются unsorted, их импорт не публикует на Website.
 
+Для точной привязки originals добавьте в запись `files: ["relative/path.mp4", "relative/thumbnail.png"]` — пути относительно корня импортируемой папки/распакованного архива. Для нескольких записей без files применяется только совпадение имени с ID/title, а не привязка всего архива ко всем записям. Collector/yt-dlp playlists сохраняют порядок, повторы и отсутствующие позиции в Collections; просмотр доступен через тип Playlist в Media Library/окне Videos. Список позиций разбит по 100. Обложки/субтитры из одного video directory получают parent/role и protected preview/download.
+
 Перед migration в production выполнить documented backup. Для ZIP PHP 8.4 должен иметь ZipArchive; для TAR — Phar. Очередь обслуживается существующей Plesk scheduled task, новые systemd/cron настройки не нужны.
 
 ## Разметка и ИИ

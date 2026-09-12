@@ -35,4 +35,19 @@ class ImportedContentTest extends TestCase
         $this->getJson('/desktop/content')->assertForbidden();
         $this->getJson('/desktop/imports/files')->assertForbidden();
     }
+
+    public function test_playlists_preserve_missing_positions_and_link_real_content(): void
+    {
+        $this->login();
+        $record = SourceRecord::create(['source'=>'youtube','source_id'=>'video-1','kind'=>'video','title'=>'Original','body'=>'Text','status'=>'unsorted','metadata'=>[]]);
+        $collection = app(\App\Services\Importing\ContentMetadataImporter::class)->playlist('youtube',['id'=>'PLtest','title'=>'Playlist','ordered_items'=>[
+            ['position'=>1,'id'=>'video-1','title'=>'Original'],['position'=>2,'id'=>null,'title'=>'Unavailable'],['position'=>3,'id'=>'foreign','title'=>'Other creator'],
+        ]]);
+        $this->getJson('/desktop/content/playlists')->assertOk()->assertJsonCount(1,'data')->assertJsonPath('data.0.kind','playlist');
+        $this->getJson('/desktop/content/playlists/'.$collection->id)->assertOk()->assertJsonCount(3,'items')
+            ->assertJsonPath('items.0.detail_url',route('content.show',$record))->assertJsonPath('items.1.detail_url',null)->assertJsonPath('items.2.detail_url',null);
+        for ($position=4;$position<=101;$position++) $collection->items()->create(['position'=>$position,'source_id'=>null,'title'=>'Unavailable']);
+        $this->getJson('/desktop/content/playlists/'.$collection->id)->assertOk()->assertJsonCount(100,'items');
+        $this->getJson('/desktop/content/playlists/'.$collection->id.'?page=2')->assertOk()->assertJsonCount(1,'items')->assertJsonPath('items.0.position',101);
+    }
 }

@@ -9,6 +9,7 @@
     const details = root.querySelector('[data-content-details]');
     const summary = root.querySelector('[data-content-summary]');
     const pagination = root.querySelector('[data-content-pagination]');
+    if (root.dataset.section && root.dataset.section !== 'videos') form.querySelector('[value="playlist"]').remove();
     let page = 1;
     let controller;
     const get = async url => {
@@ -23,7 +24,11 @@
       params.set('page', number);
       if (root.dataset.section) params.set('section', root.dataset.section);
       try {
-        const data = await get(`${root.dataset.contentUrl}?${params}`);
+        const playlist = params.get('kind') === 'playlist';
+        form.querySelector('[name="status"]').disabled = playlist;
+        const aiBatch = form.querySelector('[data-classify-batch]'); if (aiBatch) aiBatch.hidden = playlist;
+        if (playlist) params.delete('kind');
+        const data = await get(`${root.dataset.contentUrl}${playlist ? '/playlists' : ''}?${params}`);
         if (active.signal.aborted || !root.isConnected) return;
         page = data.meta.current_page;
         summary.textContent = `${data.meta.total} ${text.records}`;
@@ -38,14 +43,15 @@
       if (asset.kind === 'video' || asset.kind === 'audio') return `<${asset.kind} class="media-library-preview ${asset.kind}" controls preload="metadata" src="${url}"></${asset.kind}>`;
       return '';
     };
-    list.addEventListener('click', async event => {
+    root.addEventListener('click', async event => {
       const url = event.target.closest('[data-content-detail]')?.dataset.contentDetail;
       if (!url) return;
       try {
         const item = await get(url);
         details.innerHTML = `<h3>${escape(item.title)}</h3><p>${escape(text[`kind_${item.kind}`])} · ${escape(item.source)} · ${escape(item.source_id)}</p><p class="content-original-text">${escape(item.body)}</p>${item.author ? `<p>${escape(item.author)}</p>` : ''}${item.parent_source_id ? `<p>${escape(text.parent)}: ${escape(item.parent_source_id)}</p>` : ''}${item.poll ? `<pre class="content-original-text">${escape(JSON.stringify(item.poll,null,2))}</pre>` : ''}${item.assets.map(asset => `${preview(asset)}<p><a class="media-library-download" href="${escape(asset.download_url)}">${escape(asset.title)}</a></p>`).join('')}<small>${escape(text.private)}</small>`;
         details.dataset.recordId = item.id;
-        if (root.dataset.canEdit === 'true') window.appendContentAssignment?.(details, 'record', item);
+        if (item.items) details.insertAdjacentHTML('beforeend', `<ol class="content-playlist-items">${item.items.map(member=>`<li value="${escape(member.position)}">${member.detail_url ? `<button type="button" class="media-library-primary" data-content-detail="${escape(member.detail_url)}">${escape(member.title||member.source_id)}</button>` : `${escape(member.title||member.source_id||text.unavailable)} <small>${escape(member.availability||text.unavailable)}</small>`}</li>`).join('')}</ol>${item.previous_url ? `<button type="button" class="media-library-primary" data-content-detail="${escape(item.previous_url)}">‹</button>` : ''}${item.next_url ? `<button type="button" class="media-library-primary" data-content-detail="${escape(item.next_url)}">›</button>` : ''}`);
+        if (root.dataset.canEdit === 'true' && item.kind !== 'playlist') window.appendContentAssignment?.(details, 'record', item);
         details.dispatchEvent(new CustomEvent('content-selected', { bubbles: true, detail: item }));
       } catch (error) { details.textContent = error.message; }
     });

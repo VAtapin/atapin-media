@@ -1,5 +1,6 @@
 <?php
 return [
+    'kind_playlist'=>'Playlist','playlist_items'=>'Positionen','unavailable'=>'Original nicht vorhanden',
     'title'=>'Titel', 'body'=>'Originaltext', 'kind'=>'Inhaltstyp', 'status'=>'Status', 'target_profile'=>'Zielbereich',
     'tags'=>'Tags', 'tags_hint'=>'Mit Komma trennen', 'save'=>'Speichern', 'saved'=>'Gespeichert', 'retry'=>'Erneut versuchen',
     'needs_attention'=>'Prüfung erforderlich', 'media_library'=>'Media Library', 'videos'=>'Videos', 'shorts'=>'Shorts', 'posts'=>'Beiträge',

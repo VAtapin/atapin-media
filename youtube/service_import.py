@@ -27,11 +27,11 @@ def main():
         if not ident:
             raise RuntimeError('Channel identity is unavailable.')
         listing = inventory(backend, root, channel, ident)
-        partial = False
+        partial = any(tab['state'] not in ('complete', 'absent') for tab in listing['tabs'].values())
         try:
             report = collect_posts(backend, root, channel, ident, save)
             save(root / 'posts-report.json', report)
-            partial = report['state'] != 'complete'
+            partial = partial or report['state'] != 'complete'
         except Exception as error:
             save(root / 'posts-report.json', {'state': 'failed', 'error': str(error)})
             partial = True

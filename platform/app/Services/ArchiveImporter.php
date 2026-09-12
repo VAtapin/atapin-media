@@ -3,8 +3,6 @@ namespace App\Services;
 use App\Models\ImportRun;
 use App\Models\Media;
 use App\Models\SourceRecord;
-use App\Models\Collection;
-use Illuminate\Support\Facades\DB;
 use App\Services\Importing\ContentMetadataImporter;
 class ArchiveImporter
 {
@@ -155,15 +153,7 @@ class ArchiveImporter
             $relative='playlists/'.basename($file);
             $this->attempt($relative,function()use($relative){
                 $playlist=$this->json($relative);$id=$playlist['id']??null;if(!$id)return;
-                DB::transaction(function()use($playlist,$id,$relative){
-                    $collection=Collection::updateOrCreate(['source'=>'youtube','source_id'=>$id],[
-                        'title'=>mb_substr($playlist['title']??$id,0,255),'description'=>$playlist['description']??'',
-                        'metadata'=>['archive_path'=>$relative,'cover_file'=>$playlist['cover_file']??null]]);
-                    // Positions, including unavailable and repeated videos, are preserved exactly.
-                    $collection->items()->delete();
-                    foreach($playlist['ordered_items']??[] as $item)$collection->items()->create([
-                        'position'=>(int)$item['position'],'source_id'=>$item['id']??null,'title'=>$item['title']??null,'availability'=>$item['availability']??null]);
-                });
+                app(ContentMetadataImporter::class)->playlist('youtube',$playlist,['archive_path'=>$relative,'cover_file'=>$playlist['cover_file']??null]);
             });
         }
         if(is_file($this->root.'/report.json')){

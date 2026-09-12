@@ -38,6 +38,8 @@ Route::middleware('auth')->group(function () {
     });
     Route::get('/desktop/media/library', [MediaController::class,'library'])->middleware('can:media.view')->name('media.library');
     Route::get('/desktop/content', [\App\Http\Controllers\ImportedContentController::class,'index'])->middleware('can:media.view')->name('content.index');
+    Route::get('/desktop/content/playlists', [\App\Http\Controllers\ImportedContentController::class,'playlists'])->middleware('can:media.view')->name('content.playlists');
+    Route::get('/desktop/content/playlists/{collection}', [\App\Http\Controllers\ImportedContentController::class,'playlist'])->middleware('can:media.view')->name('content.playlist');
     Route::get('/desktop/content/{record}', [\App\Http\Controllers\ImportedContentController::class,'show'])->middleware('can:media.view')->name('content.show');
     Route::patch('/desktop/content/{record}', [\App\Http\Controllers\ImportedContentController::class,'update'])->middleware('can:content.edit')->name('content.update');
     Route::post('/desktop/content/classify', [\App\Http\Controllers\ContentClassificationController::class,'store'])->middleware(['can:media.edit', 'can:content.edit', 'throttle:30,1'])->name('content.classify');

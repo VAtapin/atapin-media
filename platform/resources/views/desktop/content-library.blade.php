@@ -3,6 +3,7 @@
         <label class="media-library-search"><span class="sr-only">{{ __('ui.search') }}</span><input type="search" name="q" maxlength="120" placeholder="{{ __('ui.search') }}"></label>
         <select name="kind" aria-label="{{ __('imports.content_type') }}">
             <option value="">{{ __('imports.all_types') }}</option>
+            <option value="playlist">{{ __('imports.kind_playlist') }}</option>
             @foreach(['video','short','post','poll','comment'] as $kind)<option value="{{ $kind }}">{{ __('imports.kind_'.$kind) }}</option>@endforeach
         </select>
         <select name="status" aria-label="Status"><option value="">{{ __('imports.all_status') }}</option><option value="unsorted">{{ __('imports.unsorted') }}</option><option value="review">{{ __('ui.import_review') }}</option><option value="ready">{{ __('imports.ready') }}</option><option value="needs_attention">{{ __('imports.needs_attention') }}</option></select>

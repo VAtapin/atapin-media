@@ -1,5 +1,6 @@
 <?php
 return [
+    'kind_playlist'=>'Playlist','playlist_items'=>'positions','unavailable'=>'Original unavailable',
     'title'=>'Title', 'body'=>'Original text', 'kind'=>'Content type', 'status'=>'Status', 'target_profile'=>'Destination',
     'tags'=>'Tags', 'tags_hint'=>'Comma separated', 'save'=>'Save', 'saved'=>'Saved', 'retry'=>'Retry',
     'needs_attention'=>'Review required', 'media_library'=>'Media Library', 'videos'=>'Videos', 'shorts'=>'Shorts', 'posts'=>'Posts',

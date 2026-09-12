@@ -79,6 +79,27 @@ class LocalImportTest extends TestCase
         $this->runImport('local-folder', 'export');
         $this->assertSame('Edited', $record->fresh()->title); $this->assertDatabaseCount('source_records', 3);
     }
+    public function test_shared_export_keeps_explicit_file_links_separate_and_imports_playlists(): void
+    {
+        mkdir($this->root.'/incoming');
+        file_put_contents($this->root.'/incoming/one.txt','First original'); file_put_contents($this->root.'/incoming/two.txt','Second original');
+        file_put_contents($this->root.'/incoming/content.json',json_encode(['schema'=>'atapin-content/v1','records'=>[
+            ['source'=>'youtube','id'=>'one','kind'=>'post','title'=>'One','body'=>'First','files'=>['one.txt']],
+            ['source'=>'youtube','id'=>'two','kind'=>'post','title'=>'Two','body'=>'Second','files'=>['two.txt']],
+        ]]));
+        file_put_contents($this->root.'/incoming/playlist.json',json_encode(['id'=>'PLfixture','title'=>'Ordered playlist','ordered_items'=>[
+            ['position'=>1,'id'=>'one','title'=>'One'],['position'=>2,'id'=>null,'title'=>'Unavailable'],['position'=>3,'id'=>'one','title'=>'Repeated'],
+        ]]));
+        $this->runImport('local-folder','incoming'); $this->runImport('local-folder','incoming');
+        foreach (['one','two'] as $id) {
+            $record = \App\Models\SourceRecord::where('source_id',$id)->firstOrFail();
+            $this->assertCount(1,$record->metadata['media_ids']);
+            $this->assertSame($id.'.txt',Media::findOrFail($record->metadata['media_ids'][0])->original_name);
+        }
+        $this->assertDatabaseCount('collections',1);
+        $this->assertSame(['one',null,'one'],\App\Models\Collection::firstOrFail()->items->pluck('source_id')->all());
+    }
+
     public function test_link_adapter_rejects_other_hosts_and_credentials(): void
     {
         $adapter = new \App\Services\Importing\ServiceLinkAdapter('youtube-service');
@@ -87,5 +108,21 @@ class LocalImportTest extends TestCase
             catch (\Illuminate\Validation\ValidationException $error) { $this->assertArrayHasKey('source_ref', $error->errors()); }
         }
         $this->assertSame('https://www.youtube.com/@MannaVomHimmel', $adapter->validate(['source_ref' => 'https://www.youtube.com/@MannaVomHimmel'])['source_ref']);
+    }
+
+    public function test_info_json_links_video_thumbnail_and_subtitles(): void
+    {
+        mkdir($this->root.'/incoming');
+        file_put_contents($this->root.'/incoming/item.mp4',"\x00\x00\x00\x18ftypmp42\x00\x00\x00\x00mp42isom");
+        file_put_contents($this->root.'/incoming/item.png',base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j0WQAAAAASUVORK5CYII='));
+        file_put_contents($this->root.'/incoming/item.de.vtt',"WEBVTT\n\n00:00.000 --> 00:02.000\nOriginal subtitle");
+        file_put_contents($this->root.'/incoming/item.info.json',json_encode(['id'=>'video-id','title'=>'Video','description'=>'Description','extractor_key'=>'Youtube']));
+        $this->runImport('local-folder','incoming');
+        $video = Media::where('original_name','item.mp4')->firstOrFail();
+        $this->assertSame('video',$video->kind);
+        $this->assertSame($video->id,Media::where('original_name','item.png')->firstOrFail()->parent_id);
+        $subtitle = Media::where('original_name','item.de.vtt')->firstOrFail();
+        $this->assertSame($video->id,$subtitle->parent_id); $this->assertSame('subtitles',$subtitle->asset_role);
+        $this->assertContains($subtitle->id,\App\Models\SourceRecord::where('source_id','video-id')->firstOrFail()->metadata['media_ids']);
     }
 }

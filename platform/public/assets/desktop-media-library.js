@@ -113,6 +113,7 @@
     root.querySelector('[data-library-content-toggle]')?.addEventListener('click', event => {
       const show = contentContainer.hidden;
       contentContainer.hidden = !show;
+      for (const button of root.querySelectorAll('[data-library-grid], [data-classify-batch="media"]')) button.hidden = show;
       [...root.children].filter(child => !child.matches('.media-library-toolbar-row, [data-library-content-container]')).forEach(child => { child.hidden = show; });
       event.target.textContent = window.desktopImportLabels[show ? 'files' : 'content'];
       if (show) window.initializeContentLibrary?.(contentContainer.querySelector('[data-content-library]'));
