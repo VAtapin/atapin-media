@@ -168,6 +168,8 @@ return [
     'content_loading' => 'Loading content …',
     'local_connections' => 'Local files and connections',
     'technical_data' => 'Technical file data',
+    'keep_section'=>'Keep current section', 'select_records'=>'Select content', 'selected_records'=>'items selected',
+    'edit_playlist'=>'Edit playlist', 'playlist_add'=>'Add video to playlist', 'playlist_remove_confirm'=>'Remove only this playlist connection? The original and content remain intact.',
     'technical_duration' => 'Duration', 'technical_width' => 'Width', 'technical_height' => 'Height', 'technical_format' => 'Format', 'technical_codec' => 'Codec',
     'probe_local' => 'Read file data locally',
     'probe_queued' => 'Reading in the background. Refresh afterwards. No AI request.',

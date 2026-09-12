@@ -49,6 +49,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/desktop/media/{media}/cover', [\App\Http\Controllers\MediaCoverController::class,'store'])->middleware(['can:media.edit','can:content.edit'])->name('media.cover');
     Route::post('/desktop/media/{media}/classifications/{classification}/undo', [\App\Http\Controllers\ContentClassificationController::class,'undo'])->middleware(['can:media.edit', 'can:content.edit'])->name('media.classification.undo');
     Route::get('/desktop/content', [\App\Http\Controllers\ImportedContentController::class,'index'])->middleware('can:media.view')->name('content.index');
+    Route::patch('/desktop/content/organize', [\App\Http\Controllers\RecordOrganizationController::class,'update'])->middleware('can:content.edit');
+    Route::patch('/desktop/content/playlists/{collection}', [\App\Http\Controllers\PlaylistEditorController::class,'update'])->middleware('can:content.edit');
+    Route::post('/desktop/content/playlists/{collection}/members', [\App\Http\Controllers\PlaylistEditorController::class,'add'])->middleware('can:content.edit');
+    Route::patch('/desktop/content/playlists/{collection}/members/{item}', [\App\Http\Controllers\PlaylistEditorController::class,'member'])->middleware('can:content.edit');
     Route::post('/desktop/content/local-links', [\App\Http\Controllers\LocalMediaLinkController::class,'repair'])->middleware(['can:media.edit','can:content.edit','throttle:5,1']);
     Route::post('/desktop/content/{record}/local-video', [\App\Http\Controllers\LocalMediaLinkController::class,'attach'])->middleware(['can:media.edit','can:content.edit']);
     Route::get('/desktop/content/{record}/imports/{snapshot}', [\App\Http\Controllers\ImportedContentController::class,'importVersion'])->middleware('can:media.view')->name('content.import-version');

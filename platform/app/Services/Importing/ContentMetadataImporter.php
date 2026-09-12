@@ -80,6 +80,10 @@ class ContentMetadataImporter
         return DB::transaction(function () use ($source, $data, $metadata) {
             $collection = Collection::firstOrCreate(['source'=>$source,'source_id'=>(string) $data['id']],
                 ['title'=>mb_substr($data['title']??$data['id'],0,255),'description'=>$data['description']??'', 'metadata'=>[...$metadata,'raw'=>$data]]);
+            if($collection->metadata['manual_playlist']??false) {
+                $collection->update(['metadata'=>[...($collection->metadata??[]),'latest_import'=>[...$metadata,'raw'=>$data]]]);
+                return $collection;
+            }
             $collection->items()->delete();
             foreach ($data['ordered_items'] ?? $data['entries'] ?? [] as $index => $item) $collection->items()->create([
                 'position'=>(int) ($item['position']??$index+1), 'source_id'=>$item['id']??null,

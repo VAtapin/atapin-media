@@ -168,6 +168,8 @@ return [
     'content_loading' => 'Inhalt wird geladen …',
     'local_connections' => 'Lokale Dateien und Verbindungen',
     'technical_data' => 'Technische Dateidaten',
+    'keep_section'=>'Bereich beibehalten', 'select_records'=>'Inhalte auswählen', 'selected_records'=>'Inhalte ausgewählt',
+    'edit_playlist'=>'Playlist bearbeiten', 'playlist_add'=>'Video zur Playlist hinzufügen', 'playlist_remove_confirm'=>'Nur diese Playlist-Verbindung entfernen? Original und Inhalt bleiben erhalten.',
     'technical_duration' => 'Dauer', 'technical_width' => 'Breite', 'technical_height' => 'Höhe', 'technical_format' => 'Format', 'technical_codec' => 'Codec',
     'probe_local' => 'Dateidaten lokal auslesen',
     'probe_queued' => 'Auslesen läuft im Hintergrund. Anschließend aktualisieren. Kein KI-Aufruf.',

@@ -2,6 +2,8 @@
 
 ## Реализовано
 
+- Media Library, пункты 2/3/4: импортированные playlists имеют редактор title/description, добавление зарегистрированных video/short (включая другой source), перемещение соседей и удаление только membership. Manual playlist layout сохраняется при reimport, новый export сохраняется отдельно в metadata. Массовые действия до 100 SourceRecords добавляют tags/status/раздел без изменения body/title и assets; Library-only записи остаются в общей библиотеке, возвращаются в разделы. Канонический imported video возвращается через file assignment без дубля и замены принятого текста.
+
 - Media Library, пункты 1/5/7: локальные assets находятся по существующим metadata/usages и точным YouTube IDs без угадывания названия; фоновая проверка восстанавливает связи и parent/cover, новые импорты используют тот же механизм. Есть ручное подключение зарегистрированного video original без потери прежних files/text. Usage references открывают локальный материал внутри Desktop, внешние кнопки inspector скрыты. Header-only image data и ffprobe format/stream data читаются локальным queue job без ИИ, сеть ffprobe запрещена; inspector показывает duration/resolution/format/codec и ошибки.
 
 - Безопасное повторное чтение импортов: одинаковые originals сопоставляются по SHA-256/размеру/MIME, альтернативные private storage locations сохраняются отдельно без удаления файлов. SourceRecords объединяются по source/id: недостающие связи и metadata дополняются, более полное исходное описание сохраняется, ручные/ИИ-принятые title/body не заменяются. Исходные версии доступны в раскрываемой панели «Import-Versionen». Повторный идентичный импорт не создаёт лишние версии и не запускает повторный платный ИИ для уже существующего файла. Навигация и просмотр материалов/playlist positions не предлагают внешние кнопки; адреса источников остаются provenance, local media используют защищённый плеер.
@@ -92,6 +94,8 @@
 
 ## Проверки
 
+- Организация текстов/playlist: 17 целевых PlaylistEditor/RecordOrganization/ImportedContent/ContentAssignment tests / 118 assertions, JS syntax, Blade compilation и Edge workflow (bulk tags, playlist reorder с обратным восстановлением) прошли. Проверены cross-source membership, порядок, reimport preservation, scoped IDs/permissions, атомарность bulk и обратное назначение canonical video. Production migration требует backup.
+
 - Локальные связи/технические данные: 9 целевых tests / 71 assertions для links/content/merge и 2 tests / 11 assertions для image headers, metadata preservation, video normalization и permissions прошли; JS syntax/Blade compilation и Edge workflow (queue probe, usage navigation, links repair) прошли. Реальный ffprobe на production и наличие файлов на сервере ещё не подтверждены. Техническая обработка не вызывает платный provider.
 
 - Повторные импорты: 15 целевых ImportMerge/LocalImport/ArchiveImport tests / 72 assertions прошли; существующие описания/субтитры проверены отдельным тестом. JS syntax, Blade compilation и Edge workflow (включая исходные версии, отсутствие внешних кнопок и сохранность форм) прошли. Полные suite, реальные provider requests и production не запускались. Реальные 8 Takeout ZIP прочитаны локально только для структуры/малых CSV, без распаковки 55 GB: 244 video originals, 242 однозначных сопоставления по исходному названию, 2 неоднозначных требуют безопасного отчёта, а не автоматического угадывания. Отдельный takeout-20260911T193951Z-001.zip — отчёт, не часть видеоархива.
@@ -126,7 +130,8 @@
 - Фоновые импорты: 4d92c41 — Stop background imports safely and show processing stages.
 - Обложки: 9606bd5 — Link image covers to specific video content.
 - Обогащение: 8e8f0d7 — Merge imported originals and preserve richer source versions.
-- Текущий этап: Connect local video assets and expose technical file data (commit с этой записью).
+- Локальные связи/технические данные: b222123 — Connect local video assets and expose technical file data.
+- Текущий этап: Edit local playlists and organize imported content in bulk (commit с этой записью).
 
 - Этап 2: f55f340 — Fix archive imports and add resumable desktop intake.
 - Этап 3: 7d787a3 — Import service links and structured archive content.

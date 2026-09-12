@@ -17,6 +17,12 @@
     }
     form.innerHTML = `<label>${escape(text.title)}<input name="title" required maxlength="255" value="${escape(item.title)}"></label>${type === 'record' ? `<label>${escape(text.body)}<textarea name="body" rows="5">${escape(item.body)}</textarea></label>${select('kind',['video','short','post','poll','comment'],item.kind)}` : select('target_profile',['media_library','videos','shorts','posts'],item.target_profile)}${select('status',['unsorted','ready','needs_attention'],item.status)}<label>${escape(text.tags)}<input name="tags" value="${escape((item.tags || []).join(', '))}" placeholder="${escape(text.tags_hint)}"></label><div class="media-library-toolbar-row"><button class="media-library-primary" type="submit">${escape(text.save)}</button><button class="media-library-primary" type="button" data-ai>${escape(text.ai_classify)}</button></div><p role="status" aria-live="polite"></p>`;
     const message = form.querySelector('[role=status]');
+    if(type==='record'){
+      const label=document.createElement('label');label.textContent=text.target_profile;
+      const destination=document.createElement('select');destination.name='target_profile';
+      for(const value of ['','media_library','videos','shorts','posts','polls','comments'])destination.append(new Option(value ? (text[value]||value) : text.keep_section,value));
+      label.append(destination);form.insertBefore(label,form.querySelector('.media-library-toolbar-row'));
+    }
     form.addEventListener('input', () => {details.dataset.dirty = 'true';});
     form.addEventListener('change', () => {details.dataset.dirty = 'true';});
     const perform = async operation => {
@@ -28,6 +34,7 @@
     form.addEventListener('submit', event => {
       event.preventDefault();
       const data = Object.fromEntries(new FormData(form)); data.tags = [...new Set(data.tags.split(',').map(tag => tag.trim()).filter(Boolean))];
+      if(data.target_profile==='')delete data.target_profile;
       perform(async () => {await request(`/desktop/${type === 'media' ? 'media' : 'content'}/${item.id}`,data,'PATCH'); message.textContent = text.saved;});
     });
     form.querySelector('[data-ai]').addEventListener('click', () => {
