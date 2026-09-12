@@ -13,13 +13,15 @@ $programs = [
     ['id'=>'newsletter','name'=>'Newsletter','icon'=>'Subscribers'],
     ['id'=>'topics','name'=>'Themen & Kategorien','icon'=>'Bilder'],
     ['id'=>'publishing','name'=>'Publishing','icon'=>'Publishing'],
-    ['id'=>'shop','name'=>'Shop & Verkäufe','icon'=>'Dateien','url'=>route('shop.index',['embed'=>1])],
+    ['id'=>'shop','name'=>'Shop & Verkäufe','icon'=>'Dateien'],
     ['id'=>'ai-assistant','name'=>'KI-Assistent','icon'=>'KI-Assistent'],
     ['id'=>'analytics','name'=>'Analytics','icon'=>'Analytics'],
     ['id'=>'imports','name'=>'Import Center','icon'=>'ImportCenter'],
     ['id'=>'integrations','name'=>'Integrationen','icon'=>'Integrationen'],
-    ['id'=>'settings','name'=>'Einstellungen','icon'=>'Einstellungen','url'=>route('settings',['embed'=>1])],
 ];
+if ($canManageSettings) {
+    $programs[] = ['id'=>'settings','name'=>'Einstellungen','icon'=>'Einstellungen'];
+}
 $desktopAppearance = $desktopAppearance ?? ['icon_set' => 'manna', 'wallpaper' => 'mountains', 'accent' => 'gold'];
 $iconSet = config('desktop.icon_sets.'.$desktopAppearance['icon_set'], config('desktop.icon_sets.manna'));
 $wallpaper = config('desktop.wallpapers.'.$desktopAppearance['wallpaper']);
@@ -31,10 +33,10 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
 <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Desktop · {{ config('platform.brand') }}</title>
-    <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/desktop-os.css?v=3"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3">
+    <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/app.css"><link rel="stylesheet" href="/assets/desktop-os.css?v=3"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3">
     <link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3">
     <script src="/assets/desktop-shortcuts.js?v=1" defer></script>
-    <script src="/assets/desktop-os.js?v=8" defer></script>
+    <script src="/assets/desktop-os.js?v=9" defer></script><script src="/assets/settings-tabs.js?v=2" defer></script>
 </head>
 <body class="os-body">
 <main class="os-desktop" data-desktop data-storage-key="atapin.desktop.{{ auth()->id() }}.v1"
@@ -43,7 +45,7 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
       @if($wallpaperUrl) style="--desktop-wallpaper: url('{{ $wallpaperUrl }}')" @endif>
     <nav class="os-shortcuts" tabindex="0" aria-label="{{ __('ui.desktop_shortcuts') }}">
         @foreach($programs as $program)
-            <button class="os-shortcut" type="button" data-open-app="{{ $program['id'] }}" @isset($program['url']) data-app-url="{{ $program['url'] }}" @endisset data-app-name="{{ $program['name'] }}" data-app-icon="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}">
+            <button class="os-shortcut" type="button" data-open-app="{{ $program['id'] }}" data-app-name="{{ $program['name'] }}" data-app-icon="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}">
                 <span class="os-shortcut-icon"><img src="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}" alt=""></span><span>{{ $program['name'] }}</span>
             </button>
         @endforeach
@@ -56,11 +58,23 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
         <header><img src="/assets/brand/owner/logo-mark.png" alt=""><div><strong>Manna Media</strong><span>Programme</span></div></header>
         <div class="os-program-grid">
             @foreach($programs as $program)
-            <button type="button" data-open-app="{{ $program['id'] }}" @isset($program['url']) data-app-url="{{ $program['url'] }}" @endisset data-app-name="{{ $program['name'] }}" data-app-icon="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}"><img src="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}" alt=""><span>{{ $program['name'] }}</span></button>
+            <button type="button" data-open-app="{{ $program['id'] }}" data-app-name="{{ $program['name'] }}" data-app-icon="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}"><img src="{{ $iconSet['path'].'/'.$program['icon'].'.png' }}" alt=""><span>{{ $program['name'] }}</span></button>
             @endforeach
         </div>
         <footer><span>{{ auth()->user()->name }}</span><form method="post" action="{{ route('logout') }}">@csrf<button type="submit">Abmelden</button></form></footer>
     </section>
+
+
+    @if($canManageSettings)
+    <template id="settings-app-template">
+        <section class="settings-app settings-desktop-app" data-settings-app data-settings-direct data-active-section="desktop_design">
+            <div class="settings-app-main">
+                <div class="notice" data-settings-notice hidden role="status"></div>
+                @include('settings-content', $settingsPageData)
+            </div>
+        </section>
+    </template>
+    @endif
 
     <template id="os-window-template">
         <article class="os-window" tabindex="-1">

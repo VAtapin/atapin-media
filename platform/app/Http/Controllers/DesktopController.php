@@ -1,22 +1,24 @@
 <?php
 namespace App\Http\Controllers;
 use App\Models\Media;
-use App\Models\AuditEvent;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use App\Services\Settings;
 class DesktopController extends Controller
 {
-    public function __invoke(Settings $settings)
+    public function __invoke(Settings $settings, SettingsController $settingsController)
     {
         $canMedia = Gate::allows('media.view');
+        $canManageSettings = Gate::allows('settings.manage');
         return view('desktop', [
             'project'=>Gate::allows('projects.manage') ? \App\Models\Project::where('status','!=','published')->latest('updated_at')->first() : null,
             'media' => $canMedia ? Media::latest()->limit(6)->get() : collect(),
             'count' => $canMedia ? Media::count() : null,
             'bytes' => $canMedia ? Media::sum('bytes') : null,
-            'queued' => Gate::allows('settings.manage') ? DB::table('jobs')->count() : null,
-            'failed' => Gate::allows('settings.manage') ? DB::table('failed_jobs')->count() : null,
+            'queued' => $canManageSettings ? DB::table('jobs')->count() : null,
+            'failed' => $canManageSettings ? DB::table('failed_jobs')->count() : null,
+            'canManageSettings' => $canManageSettings,
+            'settingsPageData' => $canManageSettings ? $settingsController->pageData($settings) : null,
             'desktopAppearance' => [
                 'icon_set' => $settings->get('desktop_icon_set', 'manna'),
                 'wallpaper' => $settings->get('desktop_wallpaper', 'mountains'),
@@ -27,5 +29,4 @@ class DesktopController extends Controller
             ],
         ]);
     }
-    public function audit() { return view('audit', ['events' => AuditEvent::latest('id')->paginate(40)]); }
 }

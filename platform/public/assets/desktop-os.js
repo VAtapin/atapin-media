@@ -96,21 +96,17 @@
     else if (values.wallpaper && values.wallpaper !== 'custom') desktop.style.removeProperty('--desktop-wallpaper');
     if (values.scale) uiScale = applyUiScale(values.scale);
   };
-  const settingsWindowFromSource = source => [...document.querySelectorAll('.os-window[data-app-id="settings"]')]
-    .find(windowElement => windowElement.querySelector('iframe')?.contentWindow === source);
-  window.addEventListener('message', event => {
-    if (event.origin !== window.location.origin || !event.data?.type) return;
-    const settingsWindow = settingsWindowFromSource(event.source);
-    if (event.data.type === 'atapin.settings.scale.request') event.source?.postMessage({ type:'atapin.settings.scale.value', value:uiScale }, event.origin);
-    if (event.data.type === 'atapin.settings.preview' && settingsWindow) {
+  const handleSettingsEvent = (data, settingsWindow) => {
+    if (!settingsWindow || !data?.type) return;
+    if (data.type === 'atapin.settings.preview') {
       settingsWindow._desktopPreviewDirty = true;
-      applySettingsPreview(event.data);
+      applySettingsPreview(data);
     }
-    if (event.data.type === 'atapin.settings.dirty' && settingsWindow) settingsWindow.dataset.settingsDirty = event.data.dirty ? 'true' : 'false';
-    if (event.data.type === 'atapin.settings.discard' && settingsWindow) restoreSettingsPreview(settingsWindow);
-    if (event.data.type === 'atapin.settings.saved' && settingsWindow) {
-      if (event.data.section === 'desktop_design') {
-        applySettingsPreview(event.data);
+    if (data.type === 'atapin.settings.dirty') settingsWindow.dataset.settingsDirty = data.dirty ? 'true' : 'false';
+    if (data.type === 'atapin.settings.discard') restoreSettingsPreview(settingsWindow);
+    if (data.type === 'atapin.settings.saved') {
+      if (data.section === 'desktop_design') {
+        applySettingsPreview(data);
         settingsWindow._settingsPreview = captureSettingsPreview(settingsWindow);
         settingsWindow._desktopPreviewDirty = false;
         savedUiScale = uiScale;
@@ -118,6 +114,10 @@
       }
       if (!settingsWindow._desktopPreviewDirty) settingsWindow.dataset.settingsDirty = 'false';
     }
+  };
+  desktop.addEventListener('atapin.settings', event => {
+    const settingsWindow = event.target.closest('.os-window[data-app-id="settings"]');
+    handleSettingsEvent(event.detail, settingsWindow);
   });
 
   const confirmSettingsClose = windowElement => {
@@ -381,13 +381,15 @@
       desktop.append(windowElement);
       bindWindow(windowElement);
       createTaskButton(windowElement, trigger);
-      if (appId === 'settings') windowElement._settingsPreview = captureSettingsPreview(windowElement);
-      if (trigger.dataset.appUrl) {
-        const frame = document.createElement('iframe');
-        frame.className = 'os-app-frame';
-        frame.src = trigger.dataset.appUrl;
-        frame.title = trigger.dataset.appName;
-        windowElement.querySelector('.os-window-content').append(frame);
+      if (appId === 'settings') {
+        windowElement._settingsPreview = captureSettingsPreview(windowElement);
+        const settingsTemplate = document.querySelector('#settings-app-template');
+        const settingsApp = settingsTemplate?.content.firstElementChild.cloneNode(true);
+        if (settingsApp) {
+          windowElement.querySelector('.os-window-content').append(settingsApp);
+          window.initializeDesktopSettings?.(settingsApp);
+        }
+
       }
 
       if (saved) {

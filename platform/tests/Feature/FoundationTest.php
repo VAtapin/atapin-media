@@ -26,8 +26,9 @@ class FoundationTest extends TestCase
     {
         $this->get('/desktop')->assertRedirect('/login');
         $user = $this->user('Moderator');
-        $this->actingAs($user)->get('/desktop')->assertOk()->assertDontSee('jobs_waiting');
-        $this->get('/desktop/media')->assertForbidden();
+        $this->actingAs($user)->get('/desktop')->assertOk()
+            ->assertDontSee('jobs_waiting')
+            ->assertDontSee('settings-app-template', false);
         $this->put('/desktop/settings',['site_name'=>'changed'])->assertForbidden();
     }
     public function test_short_password_login_logout_and_throttling(): void
@@ -49,8 +50,6 @@ class FoundationTest extends TestCase
         $this->get('/desktop/media/'.$media->id.'/preview')->assertStatus(415);
         $this->get('/desktop/media/'.$media->id.'/download')->assertOk()->assertDownload('Notizen.html');
         $this->patch('/desktop/media/'.$media->id,['title'=>'Hoffnung'])->assertRedirect();
-        $this->get('/desktop/media?q=Hoffnung')->assertOk()->assertSee('Hoffnung');
-        $this->get('/desktop/media?q=absent')->assertDontSee('Hoffnung');
         $this->assertDatabaseHas('audit_events',['action'=>'media.uploaded','subject'=>$media->id]);
     }
     public function test_settings_invalidate_cache_and_escape_public_text(): void
@@ -95,19 +94,13 @@ class FoundationTest extends TestCase
             ->assertSee('/desktop/wallpaper', false)
             ->assertSee('/assets/brand/owner/desktop/sol/Videos.png', false);
     }
-    public function test_foundation_screens_render_without_translation_keys(): void
+    public function test_desktop_is_the_only_internal_application_shell(): void
     {
         $this->get('/login')->assertOk()->assertSee('Anmelden')->assertDontSee('ui.login');
         $this->actingAs($this->user('Owner'));
-        foreach (['/desktop','/desktop/media','/desktop/settings','/desktop/audit'] as $url) {
-            $this->get($url)->assertOk()->assertDontSee('ui.')->assertHeader('X-Robots-Tag','noindex, nofollow');
-        }
-    }
-    public function test_module_pages_have_no_legacy_workspace_shell(): void
-    {
-        $this->actingAs($this->user('Owner'))
-            ->get('/desktop/media')->assertOk()->assertDontSee('class="sidebar"', false)
-            ->assertDontSee('class="topbar"', false)->assertDontSee('class="breadcrumb"', false);
+        $this->get('/desktop')->assertOk()->assertDontSee('<iframe', false);
+        foreach (['/desktop/media','/desktop/settings','/desktop/users','/desktop/projects','/desktop/tasks','/desktop/imports','/desktop/shop'] as $url) $this->get($url)->assertStatus(405);
+        foreach (['/desktop/calendar','/desktop/audit'] as $url) $this->get($url)->assertNotFound();
     }
     public function test_role_seeding_is_idempotent(): void
     {
@@ -125,18 +118,19 @@ class FoundationTest extends TestCase
         $this->assertDatabaseMissing('settings', ['key'=>'secret.ai_api_key','value'=>json_encode('secret-value')]);
         $this->put('/desktop/settings', ['section'=>'publishing','publishing_default_visibility'=>'internal','publishing_default_timezone'=>'Europe/Berlin','publishing_approval_required'=>'1'])->assertRedirect();
         $this->assertTrue(app(Settings::class)->get('publishing_approval_required'));
-        $this->get('/desktop/settings')->assertOk()->assertSee('Desktop & Design')->assertSee('Social Media')->assertSee('Benutzer & Rechte');
-        $this->get('/desktop')->assertOk()->assertSee('data-app-url="http://localhost/desktop/settings?embed=1"', false);
+        $this->putJson('/desktop/settings', ['section'=>'desktop_design','desktop_icon_set'=>'manna','desktop_wallpaper'=>'navy','desktop_accent'=>'gold','desktop_density'=>'comfortable','desktop_effects'=>true])
+            ->assertOk()->assertJson(['status'=>'saved','section'=>'desktop_design']);
+        $this->assertSame('navy', app(Settings::class)->get('desktop_wallpaper'));
+        $this->get('/desktop')->assertOk()->assertSee('settings-app-template', false)->assertDontSee('<iframe', false);
     }
-    public function test_settings_and_shop_open_as_embedded_desktop_apps(): void
+    public function test_desktop_includes_settings_directly(): void
     {
         $owner = $this->user('Owner'); $this->actingAs($owner);
-        $this->get('/desktop/settings?embed=1')->assertOk()->assertDontSee('sidebar')->assertSee('data-settings-tabs', false)
-            ->assertSee('data-settings-panel="desktop_design"', false)->assertSee('data-ui-scale', false)
-            ->assertDontSee('href="#desktop_design"', false)->assertDontSee('Zentrale Einstellungen für Desktop', false);
-        $this->get('/desktop/shop?embed=1')->assertOk()->assertSee('Shop & Verkäufe')->assertSee('Neues Produkt');
+        $this->get('/desktop/settings')->assertStatus(405);
+        $this->get('/desktop/shop')->assertStatus(405);
         $desktop = $this->get('/desktop')->assertOk();
         foreach (['Videos','Beiträge','Bücher & PDF','Podcast','Live Studio','Media Library','Projekte','Aufgaben','Kalender','Community','Newsletter','Themen & Kategorien','Publishing','Shop & Verkäufe','KI-Assistent','Analytics','Import Center','Integrationen','Einstellungen'] as $name) $desktop->assertSee($name);
+        $desktop->assertSee('settings-app-template', false)->assertDontSee('<iframe', false);
         $desktop->assertDontSee('>Subscribers<', false)->assertDontSee('>Bilder<', false)->assertDontSee('>Audio<', false)->assertDontSee('>Dateien<', false);
     }
     public function test_last_owner_cannot_be_demoted_and_short_password_account_can_be_created():void
@@ -146,6 +140,5 @@ class FoundationTest extends TestCase
         $this->assertTrue($owner->fresh()->hasPermission('users.manage'));
         $this->post('/desktop/users',['name'=>'Editor','email'=>'editor@example.com','password'=>'12345','role_id'=>$role->id])->assertRedirect();
         $this->assertTrue(User::where('email','editor@example.com')->first()->hasPermission('content.edit'));
-        $this->get('/desktop/users')->assertOk()->assertSee('editor@example.com');
     }
 }

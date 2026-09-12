@@ -9,15 +9,16 @@ use App\Models\Role;
 use Illuminate\Support\Facades\Gate;
 class SettingsController extends Controller
 {
-    public function edit(Request $request, Settings $settings) {
-        $data = ['embedded' => $request->boolean('embed'), 'settings' => $settings->all(), 'roles' => Role::with('permissions')->orderBy('name')->get(),
+
+    public function pageData(Settings $settings): array
+    {
+        return ['settings' => $settings->all(), 'roles' => Role::with('permissions')->orderBy('name')->get(),
             'permissions' => Permission::orderBy('name')->get(), 'secretStatus' => [
                 'ai_api_key' => $settings->hasSecret('ai_api_key'), 'youtube_api_key' => $settings->hasSecret('youtube_api_key'),
                 'facebook_access_token' => $settings->hasSecret('facebook_access_token'), 'instagram_access_token' => $settings->hasSecret('instagram_access_token'),
                 'tiktok_access_token' => $settings->hasSecret('tiktok_access_token'), 'telegram_bot_token' => $settings->hasSecret('telegram_bot_token'),
                 'integration_api_token' => $settings->hasSecret('integration_api_token'),
             ]];
-        return view($request->boolean('embed') ? 'settings-embed' : 'settings', $data);
     }
     public function update(Request $request, Settings $settings)
     {
@@ -50,13 +51,16 @@ class SettingsController extends Controller
         }
         $settings->update($values);
         $settings->updateSecrets($secrets);
+        if ($request->expectsJson()) return response()->json(['status' => 'saved', 'section' => $section]);
         return back()->with('status', __('ui.saved'))->with('saved_section', $section);
     }
     public function storeRole(Request $request, \App\Services\Audit $audit)
     {
         $data = $request->validate(['name' => 'required|string|max:80|unique:roles,name', 'permissions' => 'array', 'permissions.*' => 'integer|exists:permissions,id']);
         $role = Role::create(['name' => $data['name']]); $role->permissions()->sync($data['permissions'] ?? []);
-        $audit->record('role.created', (string) $role->id); return back()->with('status', __('ui.saved'));
+        $audit->record('role.created', (string) $role->id);
+        if ($request->expectsJson()) return response()->json(['status' => 'saved', 'section' => 'users']);
+        return back()->with('status', __('ui.saved'));
     }
     public function updateRole(Request $request, Role $role, \App\Services\Audit $audit)
     {
@@ -64,6 +68,7 @@ class SettingsController extends Controller
         $permissions = $data['permissions'] ?? [];
         if ($role->name === 'Owner') $permissions = Permission::pluck('id')->all();
         $role->permissions()->sync($permissions); $audit->record('role.permissions_updated', (string) $role->id);
+        if ($request->expectsJson()) return response()->json(['status' => 'saved', 'section' => 'users']);
         return back()->with('status', __('ui.saved'));
     }
     public function wallpaper(Settings $settings)

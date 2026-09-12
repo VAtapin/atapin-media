@@ -1,3 +1,0 @@
-@extends('layouts.app')
-@section('title',__('ui.playlists'))
-@section('content')<a class="back-link" href="{{ route('imports.index') }}">← {{ __('ui.import_center') }}</a><div class="page-heading"><h1>{{ $collection->title }}</h1></div><section class="panel"><p class="prose">{{ $collection->description }}</p><ol class="playlist-items">@foreach($collection->items as $item)<li value="{{ $item->position }}"><strong>{{ $item->title ?? $item->source_id ?? __('ui.unavailable') }}</strong><small>{{ $item->source_id }} · {{ $item->availability ?? '—' }}</small></li>@endforeach</ol></section>@endsection

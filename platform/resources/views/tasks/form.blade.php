@@ -1,5 +1,0 @@
-<form method="post" action="{{ route('tasks.store') }}">@csrf<input type="hidden" name="status" value="open"><label>{{ __('ui.title') }}<input name="title" value="{{ old('title') }}" required maxlength="255"></label>
-<div class="form-row">
-@if(isset($fixedProject))<input type="hidden" name="project_id" value="{{ $fixedProject->id }}">@else<label>{{ __('ui.projects') }}<select name="project_id"><option value="">—</option>@foreach($projects as $project)<option value="{{ $project->id }}" @selected(old('project_id')==$project->id)>{{ $project->title }}</option>@endforeach</select></label>@endif
-<label>{{ __('ui.assignee') }}<select name="assigned_to"><option value="">—</option>@foreach($users as $user)<option value="{{ $user->id }}" @selected(old('assigned_to')==$user->id)>{{ $user->name }}</option>@endforeach</select></label>
-<label>{{ __('ui.due_date') }}<input type="date" name="due_date" value="{{ old('due_date') }}"></label></div><label>{{ __('ui.description') }}<textarea name="description" rows="3" maxlength="20000">{{ old('description') }}</textarea></label><button class="button">{{ __('ui.add_task') }}</button></form>
