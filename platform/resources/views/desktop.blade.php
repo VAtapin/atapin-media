@@ -35,9 +35,9 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Desktop · {{ config('platform.brand') }}</title>
     <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=4"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3"><link rel="stylesheet" href="/assets/desktop-settings.css?v=3">
-    <link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=2">
+    <link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=3">
     <script src="/assets/desktop-shortcuts.js?v=3" defer></script>
-    <script src="/assets/desktop-os.js?v=11" defer></script><script src="/assets/settings-tabs.js?v=5" defer></script><script src="/assets/desktop-media-library.js?v=2" defer></script>
+    <script src="/assets/desktop-os.js?v=11" defer></script><script src="/assets/settings-tabs.js?v=5" defer></script><script src="/assets/desktop-media-library.js?v=3" defer></script>
 </head>
 <body class="os-body">
 <main class="os-desktop" data-desktop data-storage-key="atapin.desktop.{{ auth()->id() }}.v1"

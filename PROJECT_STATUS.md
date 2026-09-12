@@ -6,6 +6,7 @@
 - Media Library, импорт материалов, проекты, задачи и календарь.
 - Media Library получила расширенную основу для единого входящего архива: связи основного материала с дочерними assets, теги, коллекции, usage references, архивирование и журнал AI-классификаций. Новые ручные загрузки и архивные intake/YouTube-импорты по умолчанию получают статус `unsorted`; оригиналы остаются в соответствующих private archives.
 - Media Library теперь открывается как native-приложение внутри Media Desktop: приватный пагинируемый список поддерживает поиск, фильтры по источнику/типу/статусу, сортировку, детали записи и защищённое скачивание. Интерфейс показывает реальные записи intake и YouTube после запуска существующего Import Center.
+- В окне Media Library обновлён presentation layer под единый визуальный язык Media Desktop: цвета, типографика, радиусы, кнопки, поля, карточки и отступы; убран встроенный повторный заголовок `ARCHIV` и заголовок окна.
 - Детали Media Library безопасно показывают inline preview изображений, MP3/OGG, MP4/WebM и PDF только через авторизованный private-media route. Неподдерживаемые форматы сохраняют только детали и защищённое скачивание; preview-ответы запрещают активный контент через CSP sandbox.
 - Защищённый resumable upload в `intake/` и сборщик публичного YouTube-архива в `youtube/`.
 - Собственный resumable upload Media Library доехал до production-ready состояния: добавлены endpoints `/desktop/media/uploads` (start/chunk/finish), сервис сборки чанков с дедупликацией и проверкой SHA-256, модель и миграции для инвентаризации сессий и чанков, запись в `media` с `source='upload'`, статус `unsorted`, и интеграция в UI Media Library (кнопка, drag-нейтральный input, прогресс + ошибки).
@@ -36,7 +37,7 @@
 - Manna Vom Himmel — первый single-tenant deployment платформы.
 - Desktop реализован как адаптивная Blade/JavaScript-оболочка без обязательной Node-сборки.
 - Окна программ без нового native-интерфейса намеренно остаются пустыми; старый интерфейс не сохранён как fallback. Backend-операции модулей, защищённые загрузки, RBAC, settings, import jobs и workflow-сервисы сохранены для следующих native-интерфейсов.
-- Проверен весь Media Desktop: Settings — единственное окно с содержимым и оно использует только новый Desktop UI; остальные программы создаются оконным менеджером без module Blade/views, legacy CSS/JS, iframe или embed-вариантов.
+- Проверен весь Media Desktop на дублирующие заголовки: Settings — окно с контентом и без повторного названия приложения; Media Library очищено от повторяющегося заголовка приложения (и `ARCHIV`) и начинается с рабочих элементов.
 - Snap Layouts активируются курсором только в узкой зоне 14 px у верхней границы рабочего стола.
 - Синяя подсветка Snap-зоны является только временным drag-preview и очищается после Drop, отмены, сворачивания, закрытия и восстановления Desktop.
 - После закрытия последнего окна активная Snap-схема сбрасывается; свёрнутые окна продолжают удерживать схему и свои области.
@@ -88,9 +89,10 @@
 - Пройден `node --check` для исправленного `desktop-shortcuts.js`; browser-сценарий теперь требует все 19 начальных ярлыков, включая Einstellungen. Полный Laravel/Playwright-сценарий локально не запускался: PHP отсутствует в Windows PATH.
 - Пройдены `node --check` для `desktop-shortcuts.js`, `desktop-os.js`, `settings-tabs.js` и browser-сценариев; `git diff --check` пройден. Полный Laravel/Playwright-сценарий локально не запускался: PHP отсутствует в Windows PATH.
 - Пройден `node --check` для `platform/public/assets/desktop-media-library.js`; `git diff --check`/`git diff --stat` на текущем этапе без ошибок.
+- Пройден `git diff --check` для финальных UI-изменений Media Library (blade + css + template-cache refresh).
 - Проверка Laravel/PHP тестов на текущем окружении невозможна: `php`/`/opt/plesk/php/8.4/bin/php` недоступны в PATH.
 
 ## Последний связанный commit
 
-- `Implement resumable Media Library uploads` (`ca6f974`)
+- `Implement resumable Media Library uploads` (`b9ee689`)
 
