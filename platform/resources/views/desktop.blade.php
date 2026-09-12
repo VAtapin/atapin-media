@@ -85,6 +85,7 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <script src="/assets/desktop-media-organization.js?v=3" defer></script>
     <script src="/assets/desktop-media-cover.js?v=2" defer></script>
     <script src="/assets/desktop-import-versions.js?v=1" defer></script>
+    <script src="/assets/desktop-record-classifications.js?v=1" defer></script>
 
     <script src="/assets/desktop-media-upload.js?v=2" defer></script>
     @foreach($programs as $program)

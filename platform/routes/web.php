@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/desktop/content/playlists/{collection}', [\App\Http\Controllers\ImportedContentController::class,'playlist'])->middleware('can:media.view')->name('content.playlist');
     Route::get('/desktop/content/{record}', [\App\Http\Controllers\ImportedContentController::class,'show'])->middleware('can:media.view')->name('content.show');
     Route::patch('/desktop/content/{record}', [\App\Http\Controllers\ImportedContentController::class,'update'])->middleware('can:content.edit')->name('content.update');
+    Route::post('/desktop/content/{record}/classifications/{classification}/undo', [\App\Http\Controllers\ContentClassificationController::class,'undoRecord'])->middleware(['can:media.edit','can:content.edit'])->name('content.classification.undo');
     Route::post('/desktop/content/classify', [\App\Http\Controllers\ContentClassificationController::class,'store'])->middleware(['can:media.edit', 'can:content.edit', 'throttle:30,1'])->name('content.classify');
     Route::post('/desktop/media/uploads', [MediaController::class,'uploadStart'])->middleware('can:media.upload')->name('media.uploads.start');
     Route::post('/desktop/media/uploads/{upload}/chunk', [MediaController::class,'uploadChunk'])->middleware('can:media.upload')->name('media.uploads.chunk');

@@ -2,6 +2,8 @@
 
 ## Реализовано
 
+- Media Library, пункт 6: SourceRecord AI имеет собственный журнал running/applied/failed/insufficient/superseded, proposals и before/after snapshots; доступны просмотр и безопасная отмена в inspector. Отмена восстанавливает состояние до ручного запуска (включая прежний status), не удаляет originals и блокируется при последующих manual/import изменениях. Явно queued AI проверяет версию записи ещё до provider call, чтобы не заменить более новую правку. Старые AI результаты без snapshots нельзя откатить задним числом.
+
 - Media Library, пункты 2/3/4: импортированные playlists имеют редактор title/description, добавление зарегистрированных video/short (включая другой source), перемещение соседей и удаление только membership. Manual playlist layout сохраняется при reimport, новый export сохраняется отдельно в metadata. Массовые действия до 100 SourceRecords добавляют tags/status/раздел без изменения body/title и assets; Library-only записи остаются в общей библиотеке, возвращаются в разделы. Канонический imported video возвращается через file assignment без дубля и замены принятого текста.
 
 - Media Library, пункты 1/5/7: локальные assets находятся по существующим metadata/usages и точным YouTube IDs без угадывания названия; фоновая проверка восстанавливает связи и parent/cover, новые импорты используют тот же механизм. Есть ручное подключение зарегистрированного video original без потери прежних files/text. Usage references открывают локальный материал внутри Desktop, внешние кнопки inspector скрыты. Header-only image data и ffprobe format/stream data читаются локальным queue job без ИИ, сеть ffprobe запрещена; inspector показывает duration/resolution/format/codec и ошибки.
@@ -83,7 +85,7 @@
 
 - Для Projekte, Aufgaben, Kalender и Shop ещё требуется отдельная разработка native-интерфейсов внутри Desktop.
 - Production deployment/приёмка последних изменений не подтверждены: реальные service downloads, OpenAI-запросы, 10–20 GB transfer и automatic intake cutover локальными тестами не подтверждены. По решению владельца платное прослушивание/анализ аудио и видео не входит в ближайший план; ИИ использует имеющиеся тексты, метаданные, готовые субтитры и небольшие изображения; поддержан только OpenAI.
-- Media Library ещё требует редактора импортированных playlist positions, массовых действий для текстовых SourceRecords (массовые действия сейчас для файлов), полного обратного назначения canonical imported записей, переходов по usage references, истории/отмены ИИ для SourceRecords и локального технического processing. Отмена Media доступна только для новых журналов со snapshots, не для старых proposals. Import Center ещё требует полного адаптера личных YouTube exports и подробного per-item результата. Дедупликация используется при регистрации архивов/серверных папок; уже существующие дубли автоматически не удаляются, ручной upload пока имеет отдельный registry. Фоновый stop реализован, но текущая операция/hash/copy может завершиться до checkpoint; granular resume отсутствует, retry перечитывает сохранённые данные. Серверная приёмка не заменяется локальными тестами.
+- Семь согласованных пунктов Media Library реализованы в коде; нужна серверная приёмка с реальными registered originals. Автоматическая привязка использует точные IDs/metadata/usages, не похожие названия; неизвестные files можно связать вручную, Takeout требует отдельного адаптера. Technical audio/video data требуют установленного ffprobe (MEDIA_FFPROBE_BINARY), установка/проверка бинарника на production не выполнялась. Отмена AI доступна только для новых журналов со snapshots, не для старых proposals. Import Center ещё требует полного адаптера личных YouTube exports и подробного per-item результата. Дедупликация используется при регистрации архивов/серверных папок; уже существующие дубли автоматически не удаляются, ручной upload пока имеет отдельный registry. Фоновый stop реализован, но текущая операция/hash/copy может завершиться до checkpoint; granular resume отсутствует, retry перечитывает сохранённые данные. Серверная приёмка не заменяется локальными тестами.
 - Public Website начат, но ещё не завершён.
 - Для ручных YouTube выгрузок поддержаны ZIP/TAR и распознаваемые JSON/видео CSV. Произвольные варианты Takeout, экспортные HTML и неизвестные schemas ещё требуют отдельного разбора; нельзя выдавать их регистрацию файлами за полный импорт содержания.
 
@@ -93,6 +95,8 @@
 - После получения личной выгрузки YouTube реализовать адаптер ручного архива по `youtube/MANUAL_ARCHIVE_IMPORT.md`, затем запустить импорт через Import Center.
 
 ## Проверки
+
+- SourceRecord AI: 15 целевых RecordClassification/ContentAssignment/RecordOrganization tests / 92 assertions, JS syntax/Blade compilation и Edge workflow отмены с показом undone состояния прошли. Проверены восстановление pre-queue status/text/tags, scoped permissions, повторная отмена, intervening edits до provider call, отсутствие provider call при недостаточных данных и сохранность originals. Реальные платные запросы не выполнялись.
 
 - Организация текстов/playlist: 17 целевых PlaylistEditor/RecordOrganization/ImportedContent/ContentAssignment tests / 118 assertions, JS syntax, Blade compilation и Edge workflow (bulk tags, playlist reorder с обратным восстановлением) прошли. Проверены cross-source membership, порядок, reimport preservation, scoped IDs/permissions, атомарность bulk и обратное назначение canonical video. Production migration требует backup.
 
@@ -131,7 +135,8 @@
 - Обложки: 9606bd5 — Link image covers to specific video content.
 - Обогащение: 8e8f0d7 — Merge imported originals and preserve richer source versions.
 - Локальные связи/технические данные: b222123 — Connect local video assets and expose technical file data.
-- Текущий этап: Edit local playlists and organize imported content in bulk (commit с этой записью).
+- Плейлисты и массовая организация: 64a7a89 — Edit local playlists and organize imported content in bulk.
+- Текущий этап: Track and safely undo AI classification of imported records (commit с этой записью).
 
 - Этап 2: f55f340 — Fix archive imports and add resumable desktop intake.
 - Этап 3: 7d787a3 — Import service links and structured archive content.

@@ -5,4 +5,5 @@ class SourceRecord extends Model
 {
     protected $guarded=[];
     protected function casts():array{return ['metadata'=>'array'];}
+    public function classifications(){return $this->hasMany(RecordClassification::class);}
 }

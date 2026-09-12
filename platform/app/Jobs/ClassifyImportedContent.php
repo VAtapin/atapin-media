@@ -15,7 +15,7 @@ class ClassifyImportedContent implements ShouldQueue, ShouldBeUnique
     public int $timeout = 180;
     public int $tries = 1;
     public int $uniqueFor = 600;
-    public function __construct(public string $type, public string $id) {}
+    public function __construct(public string $type, public string $id, public ?array $previousState=null, public ?string $expectedVersion=null) {}
     public function uniqueId(): string { return $this->type.':'.$this->id; }
     private function version($item): string { return app(\App\Services\Importing\ContentState::class)->version($item); }
     public function handle(AiContentClassifier $classifier, ContentAssignment $assignment): void
@@ -24,12 +24,13 @@ class ClassifyImportedContent implements ShouldQueue, ShouldBeUnique
         $item = $model::findOrFail($this->id);
         if ($item->status !== 'unsorted' || ! $classifier->available()) return;
         $version = $this->version($item); $log = null;
+        if(isset($this->expectedVersion) && $version!==$this->expectedVersion)return;
         $state = app(\App\Services\Importing\ContentState::class);
-        $before = $state->snapshot($item);
+        $before = $this->previousState ?? $state->snapshot($item);
         $managed = $item instanceof Media ? SourceRecord::where('source_id','media:'.$item->id)->first() : null;
         $beforeRecord = $managed ? $state->snapshot($managed) : null;
         try {
-            if ($item instanceof Media) $log = $item->classifications()->create(['provider' => 'openai', 'model' => app(\App\Services\Settings::class)->get('ai_model'), 'status' => 'running']);
+            $log = $item->classifications()->create(['provider' => 'openai', 'model' => app(\App\Services\Settings::class)->get('ai_model'), 'status' => 'running']);
             $input = app(\App\Services\Importing\AiContentEvidence::class)->build($item);
             if (! $input['sufficient']) {
                 DB::transaction(function () use ($model, $item, $version, $log) {
@@ -66,6 +67,8 @@ class ClassifyImportedContent implements ShouldQueue, ShouldBeUnique
                 } else {
                     $assignment->record($current, $proposal, 'ai');
                     $meta = $current->metadata; $meta['classification'] = $proposal; $current->update(['metadata' => $meta]);
+                    $log->update(['status'=>'applied','confidence'=>$proposal['confidence'],'proposal'=>$proposal,
+                        'applied_changes'=>['before'=>$before,'after_version'=>$state->version($current)]]);
                 }
             });
         } catch (\Throwable $error) {

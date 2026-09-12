@@ -64,6 +64,13 @@ try {
   const localVideoPanel = content.locator('[data-content-details] details').filter({has:page.locator('[data-local-video-results]')});
   await localVideoPanel.locator('summary').click();
   await localVideoPanel.locator('[data-local-video-results]').waitFor();
+  await content.locator('[data-content-filter] [name=q]').fill('Browser AI history');
+  await content.locator('[data-content-filter]').dispatchEvent('submit');
+  await content.locator('[data-content-list]').getByText('Browser AI history').click();
+  const recordHistory=content.locator('[data-record-history]');
+  await recordHistory.locator('summary').click();
+  await recordHistory.locator('[data-record-undo]').click();
+  await recordHistory.getByText('Rückgängig gemacht',{exact:false}).waitFor();
   await content.locator('[name=q]').fill('');
   await media.locator('[data-library-content-toggle]').click();
   await media.locator('[data-media-upload-input]').setInputFiles({name:fileName,mimeType:'text/plain',buffer:Buffer.from('Original from browser')});

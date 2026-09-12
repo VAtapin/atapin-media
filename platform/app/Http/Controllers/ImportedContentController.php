@@ -71,6 +71,7 @@ class ImportedContentController extends Controller
     {
         $metadata = $record->metadata;
         $assets = $presentation->assets($record);
+        $version=app(\App\Services\Importing\ContentState::class)->version($record);
         return response()->json(['id' => $record->id, 'title' => $record->title, 'body' => $record->body,
             'kind' => $record->kind, 'source' => $record->source, 'source_id' => $record->source_id, 'status' => $record->status,
             'parent_source_id' => $metadata['parent_source_id'] ?? null, 'poll' => $metadata['poll'] ?? null,
@@ -78,6 +79,10 @@ class ImportedContentController extends Controller
             'target_profile'=>($metadata['library_only']??false) ? 'media_library' : match($record->kind){'video'=>'videos','short'=>'shorts','post'=>'posts','poll'=>'polls','comment'=>'comments'},
             'external_url' => $presentation->externalUrl($metadata ?? [], $record->source, $record->source_id, $record->kind),
             'has_local_video' => $assets->contains(fn ($asset) => $asset['kind'] === 'video' && $asset['available']),
+            'classifications'=>$record->classifications()->latest()->limit(20)->get()->map(fn($log)=>[
+                'id'=>$log->id,'provider'=>$log->provider,'model'=>$log->model,'status'=>$log->status,'confidence'=>$log->confidence,'proposal'=>$log->proposal,'created_at'=>$log->created_at,
+                'undo_url'=>$log->status==='applied'&&($log->applied_changes['after_version']??null)===$version ? route('content.classification.undo',[$record,$log]) : null,
+            ]),
             'import_enriched' => (bool) ($metadata['import_enriched'] ?? false),
             'import_versions' => \App\Models\SourceRecordSnapshot::where('source_record_id',$record->id)->latest()->limit(20)->get(['id','title','created_at'])
                 ->map(fn ($snapshot) => ['title'=>$snapshot->title,'created_at'=>$snapshot->created_at,'url'=>route('content.import-version',[$record,$snapshot])]),
