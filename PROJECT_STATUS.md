@@ -29,6 +29,7 @@
 - Оформление Desktop — общая настройка рабочей области, а позиции ярлыков и состояние окон — отдельные browser-настройки каждого пользователя.
 - Загруженный пользовательский фон хранится на private disk и отдаётся только авторизованным пользователям с доступом к Desktop; принимаются PNG, JPEG и WebP до 10 MB.
 - Production работает через Plesk; document root — `httpdocs/platform/public`.
+- Стандартное production-обновление platform выполняется из `/var/www/vhosts/mannavomhimmel.de/httpdocs` через `git pull --ff-only` и только необходимые `config:clear`/`view:clear` c `/opt/plesk/php/8.4/bin/php`; без PATH exports и maintenance-скрипта.
 
 ## Известные ограничения
 
@@ -54,4 +55,4 @@
 
 ## Последний связанный commit
 
-- `Expand desktop themes and wallpapers`
+- `Remember minimal platform deployment workflow`

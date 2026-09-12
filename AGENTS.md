@@ -256,6 +256,17 @@ bash -n youtube/bin/plesk.sh
 
 * Не менять Plesk, cron, ownership или production DB в обычной кодовой задаче.
 
+* Для обычного обновления `platform/` использовать только следующий минимальный workflow:
+
+```bash
+cd /var/www/vhosts/mannavomhimmel.de/httpdocs
+git pull --ff-only
+/opt/plesk/php/8.4/bin/php platform/artisan config:clear # только при изменении platform/config/
+/opt/plesk/php/8.4/bin/php platform/artisan view:clear   # только при изменении Blade
+```
+
+* Не добавлять в эту команду `export PATH`, Node.js, Composer, migrations, queue restart, `platform/bin/plesk.sh update` или `check`, если конкретная задача прямо не требует соответствующее действие. `platform/bin/plesk.sh` предназначен для документированных install/maintenance-операций, а не для обычного получения application-кода.
+
 * **После каждой завершённой задачи, для которой выполнены commit и push, в итоговом ответе обязательно дать конкретную команду для применения этого commit на production-сервере.**
 
 * Команда deployment должна соответствовать реально выполненным изменениям.
