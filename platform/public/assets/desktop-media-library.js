@@ -128,58 +128,9 @@
       if (uploadInput) uploadInput.disabled = state;
     };
 
-    const uploadFile = async file => {
-      const name = file?.name ?? 'Datei';
-      if (!name || file.size <= 0) {
-        throw new Error(`Datei ${escape(name)} kann nicht hochgeladen werden.`);
-      }
-      setUploadMessage(`Starte Upload von ${escape(name)} …`);
-      const session = await requestJson('/desktop/media/uploads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          request_key: randomRequestKey(),
-          name,
-          size: file.size,
-        }),
-      });
-
-      const chunkSize = Number(session.chunk_size || 4 * 1024 * 1024);
-      let offset = Number(session.offset || 0);
-      if (!Number.isSafeInteger(offset) || offset < 0) {
-        throw new Error('Ungültige Upload-Sitzung.');
-      }
-
-      while (offset < file.size) {
-        const nextOffset = Math.min(offset + chunkSize, file.size);
-        const chunk = file.slice(offset, nextOffset);
-        const hash = await sha256(chunk);
-        const uploaded = await requestJson(`/desktop/media/uploads/${encodeURIComponent(session.id)}/chunk`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/octet-stream',
-            'X-Upload-Offset': String(offset),
-            'X-Chunk-SHA256': hash,
-          },
-          body: chunk,
-        });
-        const newOffset = Number(uploaded.offset || 0);
-        if (!Number.isSafeInteger(newOffset) || newOffset < 0) {
-          throw new Error('Antwort der Upload-API ist ungültig.');
-        }
-        if (newOffset === offset) {
-          // idempotent retry at the same offset must still move progress forward in the client
-          offset = nextOffset;
-        } else {
-          offset = newOffset;
-        }
-        setUploadMessage(`Lade ${escape(name)} hoch (${prettyBytes(offset)} / ${prettyBytes(file.size)}) …`);
-      }
-
-      await requestJson(`/desktop/media/uploads/${encodeURIComponent(session.id)}/finish`, { method: 'POST' });
-      setUploadMessage(`${escape(name)} erfolgreich hochgeladen.`);
-      return session.id;
-    };
+    const uploadFile = file => window.uploadDesktopMedia(file, root.dataset.userId, (offset, total) => {
+      setUploadMessage(`${file.name}: ${prettyBytes(offset)} / ${prettyBytes(total)}`);
+    });
 
     const uploadSelectedFiles = async files => {
       if (!files?.length) return;

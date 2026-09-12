@@ -108,6 +108,7 @@ class ImportController extends Controller
             'source' => 'required|string',
             'target_profile' => 'nullable|string|max:64',
             'path' => 'nullable|string|max:255',
+            'media_id' => 'nullable|uuid',
             'source_ref' => 'nullable|string|max:255',
             'channel_id' => 'nullable|string|max:255',
             'playlist_id' => 'nullable|string|max:255',
@@ -126,6 +127,7 @@ class ImportController extends Controller
 
         $run = $center->queueRun((string) $request->user()->id, $source, Arr::only($data, [
             'source_ref',
+            'media_id',
             'path',
             'channel_id',
             'playlist_id',

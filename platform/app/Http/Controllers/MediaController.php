@@ -15,12 +15,12 @@ class MediaController extends Controller
     {
         $filters = $request->validate([
             'q' => 'nullable|string|max:120',
-            'source' => 'nullable|in:intake,youtube,upload',
-            'kind' => 'nullable|in:video,audio,image,document,other',
+            'source' => 'nullable|in:intake,youtube,upload,local-folder,local-archive,youtube-service,tiktok,instagram,facebook-video',
+            'kind' => 'nullable|in:video,audio,image,document,pdf,other',
             'status' => 'nullable|in:unsorted,processing,ready,needs_attention,failed',
             'sort' => 'nullable|in:newest,oldest,name,size',
         ]);
-        $query = Media::visibleLibrary()->with(['tags:id,name', 'assets:id,parent_id,asset_role'])->latest();
+        $query = Media::visibleLibrary()->with(['tags:id,name', 'assets:id,parent_id,asset_role']);
         if ($filters['q'] ?? null) {
             $term = $filters['q'];
             $query->where(fn ($items) => $items->where('title', 'like', "%{$term}%")->orWhere('original_name', 'like', "%{$term}%"));

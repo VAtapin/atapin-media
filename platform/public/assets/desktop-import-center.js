@@ -44,7 +44,7 @@
 
   const normalizeTarget = value => value && String(value).trim()
     ? String(value).trim()
-    : 'media_library';
+    : 'mixed';
 
   const buildPayload = (formData) => {
     const source = String(formData.source || '').trim();
@@ -169,18 +169,25 @@
       event.preventDefault();
       const formData = Object.fromEntries(new FormData(form).entries());
       const payload = buildPayload(formData);
+      const submit = form.querySelector('[type="submit"]');
+      if (submit.disabled) return;
+      submit.disabled = true;
       setFormMessage(message, 'Import wird gestartet ...');
       try {
+        const file = root.querySelector('[data-import-file]')?.files?.[0];
+        if (file) {
+          payload.source = 'local-archive';
+          delete payload.path;
+          delete payload.source_ref;
+          payload.media_id = await window.uploadDesktopMedia(file, root.dataset.userId, (bytes, total) => {
+            setFormMessage(message, `${file.name}: ${Math.floor(bytes / total * 100)} %`);
+          });
+        }
         if (!payload.source) {
           throw new Error('Bitte zuerst eine Quelle auswählen.');
         }
-        if (!payload.path && !payload.source_ref && ['local-folder', 'local-archive', 'youtube-service', 'tiktok', 'instagram', 'facebook-video'].includes(payload.source)) {
+        if (!payload.media_id && !payload.path && !payload.source_ref && ['local-folder', 'local-archive', 'youtube-service', 'tiktok', 'instagram', 'facebook-video'].includes(payload.source)) {
           throw new Error('Bitte Pfad oder URL angeben.');
-        }
-        if (!payload.path && !payload.source_ref && payload.source === 'youtube') {
-          if (!payload.channel_id && !payload.playlist_id) {
-            throw new Error('Für YouTube-Archiv bitte Channel-ID oder Playlist-ID angeben.');
-          }
         }
         const response = await requestJson(startUrl, {
           method: 'POST',
@@ -195,6 +202,8 @@
         await loadRuns();
       } catch (error) {
         setFormMessage(message, error.message || 'Import konnte nicht gestartet werden.', true);
+      } finally {
+        submit.disabled = false;
       }
     });
 
@@ -202,7 +211,10 @@
       if (sourceSelect.options.length > 1) sourceSelect.selectedIndex = 1;
       applyRunHints(sourceSelect, sourceSelect.value);
       loadRuns();
-      setInterval(loadRuns, 5000);
+      const timer = setInterval(() => {
+        if (!root.isConnected) { clearInterval(timer); return; }
+        loadRuns().catch(error => setFormMessage(message, error.message, true));
+      }, 5000);
     }).catch(() => {
       setFormMessage(message, 'Optionen konnten nicht geladen werden.', true);
     });

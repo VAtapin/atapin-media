@@ -1,5 +1,8 @@
-<section class="desktop-import-center" data-import-center data-imports-url="{{ route('imports.index') }}" data-imports-options-url="{{ route('imports.options') }}">
+<section class="desktop-import-center" data-import-center data-user-id="{{ auth()->id() }}" data-imports-url="{{ route('imports.index') }}" data-imports-options-url="{{ route('imports.options') }}">
     <form class="import-center-form" data-import-form>
+        @can('media.upload')
+        <label><span>{{ __('imports.upload_archive') }}</span><input type="file" data-import-file accept=".zip,.tar,.tar.gz,.tgz"><small>{{ __('imports.upload_hint') }}</small></label>
+        @endcan
         <label>
             <span>Quelle</span>
             <select name="source" data-import-source required>

@@ -1,4 +1,4 @@
-<section class="desktop-media-library" data-media-library data-library-url="{{ route('media.library') }}">
+<section class="desktop-media-library" data-media-library data-user-id="{{ auth()->id() }}" data-library-url="{{ route('media.library') }}">
     <div class="media-library-toolbar-row">
         <button type="button" class="media-library-primary" data-media-upload data-media-upload-label>Hochladen</button>
         <input type="file" data-media-upload-input multiple hidden>
@@ -22,6 +22,8 @@
             <option value="intake">Dateien des Eigentümers</option>
             <option value="youtube">YouTube-Archiv</option>
             <option value="upload">Media-Library-Upload</option>
+            <option value="local-folder">{{ __('imports.server_folder') }}</option>
+            <option value="local-archive">{{ __('imports.upload_archive') }}</option>
         </select>
         <select name="kind" aria-label="Dateityp">
             <option value="">Alle Typen</option>
@@ -29,6 +31,7 @@
             <option value="audio">Audio</option>
             <option value="image">Bilder</option>
             <option value="document">Dokumente</option>
+            <option value="pdf">PDF</option>
             <option value="other">Andere</option>
         </select>
         <select name="sort" aria-label="Sortierung"><option value="newest">Neueste zuerst</option><option value="oldest">Älteste zuerst</option><option value="name">Name</option><option value="size">Größe</option></select>

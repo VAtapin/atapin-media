@@ -29,7 +29,6 @@ class ResumableMediaUploadService
         return DB::transaction(function () use ($payload, $name, $size, $user, $id): ResumableMediaUpload {
             $existing = ResumableMediaUpload::query()
                 ->where('request_key', $payload['request_key'])
-                ->whereIn('status', [ResumableMediaUpload::STATUS_UPLOADING, ResumableMediaUpload::STATUS_FINALIZING])
                 ->lockForUpdate()
                 ->first();
             if ($existing) {
@@ -148,6 +147,13 @@ class ResumableMediaUploadService
 
     public function finish(ResumableMediaUpload $upload): Media
     {
+        $lock = $this->uploadLock($upload->id);
+        try { return $this->finalize($upload); }
+        finally { flock($lock, LOCK_UN); fclose($lock); }
+    }
+
+    private function finalize(ResumableMediaUpload $upload): Media
+    {
         $upload = $upload->fresh();
 
         if ($upload->status === ResumableMediaUpload::STATUS_COMPLETE) {
@@ -233,7 +239,7 @@ class ResumableMediaUploadService
             });
         } catch (\Throwable $error) {
             if (Storage::disk($this->disk())->exists($destination)) {
-                Storage::disk($this->disk())->delete($destination);
+                rename($destinationPath, $source);
             }
             ResumableMediaUpload::where('id', $upload->id)->update([
                 'status' => ResumableMediaUpload::STATUS_UPLOADING,

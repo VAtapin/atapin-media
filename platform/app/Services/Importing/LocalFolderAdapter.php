@@ -4,146 +4,62 @@ namespace App\Services\Importing;
 use App\Models\ImportRun;
 use App\Models\Media;
 use App\Services\MediaLibrary;
+use Illuminate\Validation\ValidationException;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use FilesystemIterator;
 
 class LocalFolderAdapter implements ImportAdapter
 {
-    private const SOURCE = 'local-folder';
-
     public function __construct(private ?string $inboxRoot = null)
     {
-        $this->inboxRoot = $inboxRoot ?? config('platform.import_inbox_root');
+        $this->inboxRoot ??= config('platform.import_inbox_root');
     }
-
-    public function source(): string
-    {
-        return self::SOURCE;
-    }
-
+    public function source(): string { return 'local-folder'; }
     public function validate(array $input): array
     {
-        if (empty($input['path']) || !is_string($input['path'])) {
-            throw new \InvalidArgumentException('Path is required for local folder import.');
+        if (empty($input['path']) || ! is_string($input['path'])) {
+            throw ValidationException::withMessages(['path' => __('imports.path_required')]);
         }
         return $input;
     }
-
     public function normalize(array $input): array
     {
-        return [
-            'source' => self::SOURCE,
-            'source_kind' => self::SOURCE,
-            'source_ref' => $input['path'],
-            'source_options' => ['path' => $input['path']],
-            'target_profile' => $input['target_profile'] ?? 'mixed',
-        ];
+        return ['source' => $this->source(), 'source_kind' => $this->source(), 'source_ref' => $input['path'],
+            'source_options' => ['path' => $input['path']], 'target_profile' => $input['target_profile'] ?? 'mixed'];
     }
-
     public function import(ImportRun $run): void
     {
-        $path = trim((string)($run->source_options['path'] ?? ''));
-        if ($path === '') {
-            throw new \InvalidArgumentException('Source path is empty.');
-        }
-
-        $root = $this->resolvePath($path);
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::LEAVES_ONLY
-        );
-
-        $found = 0;
-        $targetProfile = $run->target_profile ?? 'mixed';
-        $run->update(['discovered' => 0]);
-
+        $root = ImportPath::resolve($this->inboxRoot, $run->source_options['path'] ?? '');
+        if (! is_dir($root)) throw new \RuntimeException('Import source is not a folder.');
+        $this->importDirectory($run, $root);
+    }
+    public function importDirectory(ImportRun $run, string $root): void
+    {
+        $inbox = realpath($this->inboxRoot);
+        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS));
         foreach ($iterator as $file) {
-            if (!$file->isFile()) {
-                continue;
-            }
-            $relative = substr(str_replace('\\','/',$file->getPathname()), strlen($root)+1);
-            $found++;
+            if (! $file->isFile() || $file->isLink()) continue;
+            $absolute = ImportPath::resolve($root, $file->getPathname());
+            $relative = str_replace(DIRECTORY_SEPARATOR, '/', substr($absolute, strlen($inbox) + 1));
             $run->increment('discovered');
             try {
-                $media = $this->registerFile($relative, $file->getPathname(), $run->user_id, $targetProfile);
+                $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($absolute) ?: 'application/octet-stream';
+                $hash = hash_file('sha256', $absolute);
+                $media = Media::firstOrCreate(['source' => $run->source, 'source_id' => hash('sha256', $relative.'|'.$hash)], [
+                    'title' => mb_substr($file->getFilename(), 0, 255), 'original_name' => mb_substr($file->getFilename(), 0, 255),
+                    'kind' => MediaLibrary::kind($mime), 'mime' => $mime, 'bytes' => $file->getSize(),
+                    'disk' => 'import-inbox', 'path' => $relative, 'sha256' => $hash, 'status' => 'unsorted',
+                    'user_id' => $run->user_id, 'metadata' => ['relative_path' => $relative, 'import_id' => $run->id,
+                        'target_profile' => $run->target_profile ?? 'mixed'],
+                ]);
                 $run->increment($media->wasRecentlyCreated ? 'imported' : 'skipped');
             } catch (\Throwable $error) {
-                $notes = is_array($run->notes) ? $run->notes : [];
-                if (count($notes) < 150) {
-                    $notes[] = sprintf('%s: %s', $relative, $error->getMessage());
-                }
-                $run->update(['notes' => $notes]);
-                $run->increment('skipped');
+                $notes = $run->fresh()->notes ?? [];
+                if (count($notes) < 100) $notes[] = $relative.': '.$error->getMessage();
+                $run->update(['notes' => $notes]); $run->increment('skipped');
             }
         }
-
-        if ($found === 0) {
-            $run->increment('skipped');
-            $run->update(['status' => 'partial', 'notes' => ['No files found in source folder.']]);
-        }
-    }
-
-    private function resolvePath(string $path): string
-    {
-        $candidate = str_starts_with($path, '/') || preg_match('/^[a-zA-Z]:\\/', $path)
-            ? $path
-            : rtrim($this->inboxRoot, '/\\') . DIRECTORY_SEPARATOR . ltrim($path, '/\\');
-
-        $real = realpath($candidate);
-        $inbox = realpath($this->inboxRoot);
-        if (!$real || !$inbox || !str_starts_with($real, $inbox . DIRECTORY_SEPARATOR)) {
-            throw new \RuntimeException('Source path is outside permitted inbox directory.');
-        }
-        if (!is_dir($real)) {
-            throw new \RuntimeException('Source path is not a folder.');
-        }
-        return $real;
-    }
-
-    private function registerFile(string $relative, string $sourcePath, ?int $userId, string $targetProfile): Media
-    {
-        $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($sourcePath) ?: 'application/octet-stream';
-        $size = filesize($sourcePath);
-        $sourceId = 'local-folder:' . hash('sha256', $relative . '|' . $size . '|' . $sourcePath);
-        $name = basename($relative);
-
-        if ($size === 0) {
-            throw new \RuntimeException('Empty file.');
-        }
-
-        return Media::firstOrCreate([
-            'source' => 'local-folder',
-            'source_id' => $sourceId,
-        ], [
-            'title' => mb_substr($name, 0, 255),
-            'original_name' => mb_substr($name, 0, 255),
-            'kind' => MediaLibrary::kind($mime),
-            'mime' => $mime,
-            'bytes' => $size,
-            'disk' => 'import-inbox',
-            'path' => 'items/' . ltrim($relative, '/\\'),
-            'sha256' => hash_file('sha256', $sourcePath),
-            'metadata' => [
-            'target_profile' => $this->runProfileFromRef($targetProfile),
-                'source_path' => $sourcePath,
-                'relative_path' => ltrim($relative, '/\\'),
-            ],
-            'status' => 'unsorted',
-            'user_id' => $userId,
-        ]);
-    }
-
-    private function runProfileFromRef(?string $targetProfile): string
-    {
-        return match ($targetProfile) {
-            'media_library' => 'media_library',
-            'videos' => 'videos',
-            'posts' => 'posts',
-            'shorts' => 'shorts',
-            'comments' => 'comments',
-            'polls' => 'polls',
-            default => 'mixed',
-        };
+        if (! $run->fresh()->discovered) $run->update(['notes' => ['No files found.']]);
     }
 }

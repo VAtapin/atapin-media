@@ -76,6 +76,7 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
         @include('desktop.import-center')
     </template>
 
+    <script src="/assets/desktop-media-upload.js" defer></script>
     <template id="os-window-template">
         <article class="os-window" tabindex="-1">
             <header class="os-window-titlebar" data-drag-handle>

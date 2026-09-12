@@ -2,6 +2,7 @@
 namespace App\Services\Importing;
 
 use App\Models\ImportRun;
+use App\Jobs\ImportArchive;
 use RuntimeException;
 use Throwable;
 
@@ -51,7 +52,7 @@ class ImportCenter
         ];
 
         $run = ImportRun::create($payload);
-        ImportArchive::dispatch($run->id);
+        dispatch(new ImportArchive($run->id));
         return $run;
     }
 
@@ -68,7 +69,6 @@ class ImportCenter
             $run->increment('skipped');
             $run->update([
                 'status' => 'failed',
-                'source_kind' => $run->source,
                 'error' => $e->getMessage(),
                 'finished_at' => now(),
             ]);

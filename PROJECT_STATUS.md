@@ -53,7 +53,7 @@
 - Миграция статуса: для Media Library первично добавлен собственный загрузочный путь на платформе; временно внешний `/upload/`-инструмент продолжает работать для существующих кейсов и будет выключен после приемки новой пайплайна.
 - Запущен полноценный Import Center внутри Media Desktop: API `/desktop/imports`, список источников (intake, YouTube-архив, локальная папка/архив, YouTube/Instagram/TikTok/Facebook-заглушки), выбор целевого профиля (`media_library`, `videos`, `posts`, `shorts`, `comments`, `polls`), запуск импорта и страница истории заданий с обновляемым статусом.
 - Расширена модель импорта (`import_runs`): `source_kind`, `source_options`, `target_profile`, `discovered`, `progress`, `error`, `started_at`, `finished_at`, а также запись `target_profile` в metadata media/source-объектов.
-- Подготовлен пайплайн для импорта локальных источников из `private/import-inbox`: локальная папка и архив (zip/tar/gz/tgz) с валидацией пути, распаковкой в temp-папку и безопасным удалением после обработки.
+- Этап 2 Import Center: загрузка ZIP/TAR/TAR.GZ/TGZ прямо с компьютера через существующий resumable upload до 20 GB, повторные попытки при сбоях и продолжение после повторного выбора файла. Папки регистрируют реальные пути; распакованные оригиналы остаются в private/import-inbox/archives, повторный импорт не дублирует записи. Добавлена недостающая source_ref migration, исправлена отправка ImportArchive в очередь. Проверяются traversal, ссылки и лимиты распаковки.
 - UI Import Center в десктопе использует общий layout-макет без повторяющихся заголовков окон, с формой запуска и списком последних запусков.
 
 ## Известные ограничения
@@ -69,6 +69,8 @@
 - После получения личной выгрузки YouTube реализовать адаптер ручного архива по `youtube/MANUAL_ARCHIVE_IMPORT.md`, затем запустить импорт через Import Center.
 
 ## Проверки
+
+- Этап 2: локальный PHP 8.4 подготовлен в игнорируемой .local; 12 целевых Laravel tests / 50 assertions прошли, view:cache, node --check трёх media/import scripts и git diff --check прошли. MySQL и production не проверялись.
 
 - Пройден локальный browser-сценарий: открытие и фокус окон, resize, Snap Layouts, закрепление, сворачивание и мобильная компоновка.
 - Пройден целевой browser-сценарий: заполнение свободных Snap-зон, перенос между зонами, восстановление после F5, явное закрытие окна и закрытие всех окон с очисткой состояния.
@@ -98,5 +100,5 @@
 
 ## Последний связанный commit
 
-- `Build Import Center pipeline for desktop` (`d173f27`)
+- Текущий этап: `Fix archive imports and add resumable desktop intake` (hash доступен через git log -1 для commit, содержащего эту запись).
 
