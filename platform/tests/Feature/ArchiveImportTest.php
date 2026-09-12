@@ -30,7 +30,7 @@ class ArchiveImportTest extends TestCase
         $this->write('files/notes.txt.metadata.json',['schema'=>'atapin-intake/v1','id'=>'intake-1','stored_path'=>'files/notes.txt',
             'original_name'=>'Notizen.txt','bytes'=>5,'completed_at'=>'2026-09-11','received_at'=>'2026-09-11','original_relative_path'=>'notes.txt']);
         $run=$this->runArchive('intake');$this->assertSame('complete',$run->status);$this->assertSame(1,$run->imported);
-        $this->assertDatabaseHas('media',['disk'=>'intake','path'=>'files/notes.txt']);
+        $this->assertDatabaseHas('media',['disk'=>'intake','path'=>'files/notes.txt','status'=>'unsorted']);
         $media=Media::first();$media->update(['title'=>'Edited title']);
         $this->runArchive('intake');$this->assertDatabaseCount('media',1);$this->assertSame('Edited title',$media->fresh()->title);
         $this->assertSame('Hallo',file_get_contents($this->root.'/files/notes.txt'));

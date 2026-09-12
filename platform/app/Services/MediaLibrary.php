@@ -26,7 +26,7 @@ class MediaLibrary
                 $name = mb_substr(basename(str_replace('\\', '/', $file->getClientOriginalName())), 0, 255);
                 $media = Media::create(['id' => $id, 'title' => $name, 'original_name' => $name,
                     'kind' => self::kind($mime), 'mime' => $mime, 'bytes' => $file->getSize(), 'disk' => $disk,
-                    'path' => $path, 'sha256' => hash_file('sha256', $file->getRealPath()), 'user_id' => $user]);
+                    'path' => $path, 'sha256' => hash_file('sha256', $file->getRealPath()), 'status' => 'unsorted', 'user_id' => $user]);
                 app(Audit::class)->record('media.uploaded', $media->id);
                 return $media;
             });

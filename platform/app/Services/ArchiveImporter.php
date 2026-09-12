@@ -47,7 +47,7 @@ class ArchiveImporter
         $media=Media::firstOrCreate(['source'=>$this->run->source,'source_id'=>$id],[
             'title'=>mb_substr($name,0,255),'original_name'=>mb_substr(basename($name),0,255),'kind'=>MediaLibrary::kind($mime),
             'mime'=>$mime,'bytes'=>$size,'disk'=>$this->run->source,'path'=>$relative,'sha256'=>$sha,
-            'metadata'=>$metadata,'user_id'=>$this->run->user_id]);
+            'metadata'=>$metadata,'status'=>'unsorted','user_id'=>$this->run->user_id]);
         $this->run->increment($media->wasRecentlyCreated?'imported':'skipped');return $media;
     }
     private function intake():void

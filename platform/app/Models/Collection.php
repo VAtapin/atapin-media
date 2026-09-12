@@ -6,4 +6,5 @@ class Collection extends Model
     protected $guarded=[];
     protected function casts():array{return ['metadata'=>'array'];}
     public function items(){return $this->hasMany(CollectionItem::class)->orderBy('position');}
+    public function media(){return $this->belongsToMany(Media::class)->withPivot('position')->withTimestamps();}
 }
