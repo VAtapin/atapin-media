@@ -40,7 +40,9 @@
     dateStyle: 'medium',
   }).format(new Date(value)) : '–';
 
-  const icon = kind => ({ video: '▶', audio: '♫', image: '▧', document: '▤', pdf: '▤', other: '…' }[kind] || '…');
+  const icon = kind => kind === 'video'
+    ? '<svg class="media-library-video-file-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M7 3v18M17 3v18M3 8h4M3 16h4M17 8h4M17 16h4M7 12h10"></path></svg>'
+    : ({ audio: '♫', image: '▧', document: '▤', pdf: '▤', other: '…' }[kind] || '…');
 
   const preview = item => {
     if (!item.preview_url) return '';

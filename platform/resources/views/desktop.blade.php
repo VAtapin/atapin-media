@@ -38,7 +38,7 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <link rel="stylesheet" href="/assets/desktop-app.css?v=1"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=6"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=2">
     <script src="/assets/desktop-shortcuts.js?v=3" defer></script>
     <link rel="stylesheet" href="/assets/desktop-import-workflow.css?v=3">
-    <script src="/assets/desktop-os.js?v=13" defer></script><script src="/assets/settings-tabs.js?v=5" defer></script><script src="/assets/desktop-media-library.js?v=11" defer></script><script src="/assets/desktop-import-center.js?v=7" defer></script>
+    <script src="/assets/desktop-os.js?v=13" defer></script><script src="/assets/settings-tabs.js?v=5" defer></script><script src="/assets/desktop-media-library.js?v=12" defer></script><script src="/assets/desktop-import-center.js?v=7" defer></script>
 </head>
 <body class="os-body">
 <main class="os-desktop" data-desktop data-storage-key="atapin.desktop.{{ auth()->id() }}.v1"
