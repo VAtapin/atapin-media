@@ -11,7 +11,7 @@ use App\Services\Importing\IntakeArchiveAdapter;
 use App\Services\Importing\YoutubeArchiveAdapter;
 use App\Services\Importing\LocalFolderAdapter;
 use App\Services\Importing\LocalArchiveAdapter;
-use App\Services\Importing\PlannedServiceAdapter;
+use App\Services\Importing\ServiceLinkAdapter;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Pagination\Paginator;
 
@@ -29,10 +29,10 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(YoutubeArchiveAdapter::class),
                 $app->make(LocalFolderAdapter::class),
                 $app->make(LocalArchiveAdapter::class),
-                $app->make(PlannedServiceAdapter::class, ['source' => 'youtube-service']),
-                $app->make(PlannedServiceAdapter::class, ['source' => 'tiktok']),
-                $app->make(PlannedServiceAdapter::class, ['source' => 'instagram']),
-                $app->make(PlannedServiceAdapter::class, ['source' => 'facebook-video']),
+                $app->make(ServiceLinkAdapter::class, ['source' => 'youtube-service']),
+                $app->make(ServiceLinkAdapter::class, ['source' => 'tiktok']),
+                $app->make(ServiceLinkAdapter::class, ['source' => 'instagram']),
+                $app->make(ServiceLinkAdapter::class, ['source' => 'facebook-video']),
             ]);
         });
     }

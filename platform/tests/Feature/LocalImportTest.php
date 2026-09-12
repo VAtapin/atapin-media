@@ -65,4 +65,27 @@ class LocalImportTest extends TestCase
         $this->runImport('local-archive', 'archive.tar'); $media = Media::firstOrFail();
         $this->assertSame('Original', Storage::disk($media->disk)->get($media->path));
     }
+    public function test_content_export_preserves_posts_polls_comments_and_reviewed_edits(): void
+    {
+        mkdir($this->root.'/export');
+        file_put_contents($this->root.'/export/content.json', json_encode(['schema' => 'atapin-content/v1', 'records' => [
+            ['source' => 'youtube', 'id' => 'UgPost', 'kind' => 'post', 'title' => 'Beitrag', 'body' => 'Text',
+                'poll' => ['choices' => ['Ja', 'Nein']], 'comments' => [['id' => 'C1', 'text' => 'Kommentar', 'author' => 'Name']]],
+        ]]));
+        $this->runImport('local-folder', 'export');
+        $this->assertDatabaseCount('source_records', 3);
+        $record = \App\Models\SourceRecord::where('kind', 'post')->firstOrFail();
+        $record->update(['title' => 'Edited', 'status' => 'ready']);
+        $this->runImport('local-folder', 'export');
+        $this->assertSame('Edited', $record->fresh()->title); $this->assertDatabaseCount('source_records', 3);
+    }
+    public function test_link_adapter_rejects_other_hosts_and_credentials(): void
+    {
+        $adapter = new \App\Services\Importing\ServiceLinkAdapter('youtube-service');
+        foreach (['https://127.0.0.1/test', 'https://youtube.com.evil.test/test', 'https://name@youtube.com/watch?v=abcdefghijk'] as $url) {
+            try { $adapter->validate(['source_ref' => $url]); $this->fail('URL accepted.'); }
+            catch (\Illuminate\Validation\ValidationException $error) { $this->assertArrayHasKey('source_ref', $error->errors()); }
+        }
+        $this->assertSame('https://www.youtube.com/@MannaVomHimmel', $adapter->validate(['source_ref' => 'https://www.youtube.com/@MannaVomHimmel'])['source_ref']);
+    }
 }

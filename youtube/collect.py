@@ -177,12 +177,12 @@ def flatten(info, source, output):
             row['sources'].append(source)
 
 
-def inventory(backend, root):
+def inventory(backend, root, channel=CHANNEL, channel_id=CHANNEL_ID):
     collected, reports = {}, {}
     for tab in ('videos', 'shorts', 'streams'):
         try:
-            _, raw, warnings = backend.extract(CHANNEL + '/' + tab, extract_flat=True)
-            if raw.get('channel_id') != CHANNEL_ID:
+            _, raw, warnings = backend.extract(channel + '/' + tab, extract_flat=True)
+            if raw.get('channel_id') != channel_id:
                 raise RuntimeError('Channel identity did not match; refusing unrelated content.')
             save(root / 'channel' / (tab + '.json'), raw)
             flatten(raw, tab, collected)
@@ -196,8 +196,8 @@ def inventory(backend, root):
             print(tab + ': ' + message, flush=True)
     # Public playlist structure is metadata only: playlists can contain other creators' videos.
     try:
-        _, raw, warnings = backend.extract(CHANNEL + '/playlists', extract_flat=True)
-        if raw.get('channel_id') != CHANNEL_ID:
+        _, raw, warnings = backend.extract(channel + '/playlists', extract_flat=True)
+        if raw.get('channel_id') != channel_id:
             raise RuntimeError('Playlist channel identity did not match.')
         save(root / 'channel' / 'playlists.json', raw)
         for item in raw.get('entries') or []:
@@ -232,7 +232,7 @@ def inventory(backend, root):
         message = str(error)
         absent = 'does not have a' in message.lower() and 'tab' in message.lower()
         reports['playlists'] = {'state': 'absent' if absent else 'failed', 'error': message}
-    result = {'channel': CHANNEL, 'channel_id': CHANNEL_ID, 'collected_at': now(),
+    result = {'channel': channel, 'channel_id': channel_id, 'collected_at': now(),
               'tabs': reports, 'entries': list(collected.values())}
     # A failed tab must not discard candidates discovered by an earlier run.
     previous = read(root / 'inventory.json', {})
@@ -274,7 +274,7 @@ def verify_media(path):
     return digest.hexdigest()
 
 
-def collect_video(backend, root, entry):
+def collect_video(backend, root, entry, channel_id=CHANNEL_ID):
     ident = entry['id']
     if not VIDEO_ID.fullmatch(ident):
         raise ValueError('Invalid video ID.')
@@ -289,7 +289,7 @@ def collect_video(backend, root, entry):
     try:
         info, raw, warnings = backend.extract('https://www.youtube.com/watch?v=' + ident,
                                               getcomments=False, ignore_no_formats_error=True)
-        if info.get('channel_id') != CHANNEL_ID:
+        if info.get('channel_id') != channel_id:
             raise RuntimeError('Video belongs to a different or unknown channel; not downloading.')
         if info.get('availability') not in (None, 'public'):
             state.update(state='not_public', reason=info.get('availability'), checked_at=now())

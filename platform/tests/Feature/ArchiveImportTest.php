@@ -44,7 +44,7 @@ class ArchiveImportTest extends TestCase
         $this->write('playlists/PLtest.json',['id'=>'PLtest','title'=>'Serie','ordered_items'=>[
             ['position'=>1,'id'=>$id,'title'=>'Hoffnung'],['position'=>2,'id'=>null,'title'=>'Unavailable'],['position'=>3,'id'=>$id,'title'=>'Repeated']]]);
         $this->runArchive('youtube');$this->runArchive('youtube');
-        $this->assertDatabaseCount('source_records',2);$this->assertDatabaseHas('source_records',['source_id'=>$id,'kind'=>'short','status'=>'review']);
+        $this->assertDatabaseCount('source_records',2);$this->assertDatabaseHas('source_records',['source_id'=>$id,'kind'=>'short','status'=>'unsorted']);
         $this->assertSame('vor 2 Jahren',SourceRecord::where('kind','post')->first()->metadata['published_label']);
         $collection=Collection::firstOrFail();$this->assertSame([$id,null,$id],$collection->items->pluck('source_id')->all());
         $this->assertSame([1,2,3],$collection->items->pluck('position')->all());

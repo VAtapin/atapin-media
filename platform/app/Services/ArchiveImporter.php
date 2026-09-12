@@ -5,6 +5,7 @@ use App\Models\Media;
 use App\Models\SourceRecord;
 use App\Models\Collection;
 use Illuminate\Support\Facades\DB;
+use App\Services\Importing\ContentMetadataImporter;
 class ArchiveImporter
 {
     private string $root;
@@ -68,12 +69,13 @@ class ArchiveImporter
     private function media(string $relative,string $id,string $name,?int $bytes=null,?string $sha=null,array $metadata=[]):Media
     {
         $path=$this->path($relative); $size=filesize($path);
+        $this->run->increment('discovered');
         if($bytes!==null && $size!==$bytes)throw new \RuntimeException('Archive file size differs from its manifest.');
         $mime=(new \finfo(FILEINFO_MIME_TYPE))->file($path)?:'application/octet-stream';
         $metadata['target_profile'] = $this->run->target_profile ?: $this->defaultTargetProfile();
         $media=Media::firstOrCreate(['source'=>$this->run->source,'source_id'=>$id],[
             'title'=>mb_substr($name,0,255),'original_name'=>mb_substr(basename($name),0,255),'kind'=>MediaLibrary::kind($mime),
-            'mime'=>$mime,'bytes'=>$size,'disk'=>$this->run->source,'path'=>$relative,'sha256'=>$sha,
+            'mime'=>$mime,'bytes'=>$size,'disk'=>$this->run->source,'path'=>$relative,'sha256'=>$sha,'asset_role'=>$metadata['role']??null,
             'metadata'=>$metadata,'status'=>'unsorted','user_id'=>$this->run->user_id]);
         $this->run->increment($media->wasRecentlyCreated?'imported':'skipped');return $media;
     }
@@ -111,13 +113,19 @@ class ArchiveImporter
                         });
                     }
                 }
-                SourceRecord::updateOrCreate(['source'=>'youtube','source_id'=>$id],[
-                    'kind'=>in_array('shorts',$raw['sources']??[],true)?'short':'video','title'=>$info['title']??$id,'body'=>$info['description']??'',
+                $primary = $mediaIds['video'][0] ?? null;
+                if ($primary) Media::whereIn('id', [...($mediaIds['thumbnail']??[]), ...($mediaIds['subtitles']??[])])->whereNull('parent_id')->update(['parent_id'=>$primary]);
+                $record = SourceRecord::firstOrCreate(['source'=>'youtube','source_id'=>$id],[
+                    'kind'=>in_array('shorts',$raw['sources']??[],true)?'short':'video','title'=>$info['title']??$id,'body'=>$info['description']??'','status'=>'unsorted',
                     'metadata'=>['archive_path'=>'items/'.$id,'sources'=>$raw['sources']??[],'media'=>$mediaIds,'target_profile'=>$this->run->target_profile?:'videos',
                         'published_date'=>$info['upload_date']??null,'duration'=>$info['duration']??null,'channel'=>$info['channel']??null,
                         'webpage_url'=>$info['webpage_url']??'https://www.youtube.com/watch?v='.$id,
                         'comments_path'=>is_file($this->root.'/items/'.$id.'/comments.json')?'items/'.$id.'/comments.json':null,
                         'collection_state'=>$state['state']??'partial']]);
+                if (is_file($this->root.'/items/'.$id.'/comments.json')) {
+                    $comments = $this->json('items/'.$id.'/comments.json');
+                    app(ContentMetadataImporter::class)->comments('youtube', $id, $comments['comments']??[], ['import_id'=>$this->run->id]);
+                }
             });
         }
         foreach(glob($this->root.'/posts/*/post.json')?:[] as $file){
@@ -128,10 +136,13 @@ class ArchiveImporter
                     $relative='posts/'.$id.'/'.$asset['file'];
                     $this->attempt($relative,function()use($relative,$asset,$id,&$images){$images[]=$this->media($relative,$id.':'.$asset['file'],$asset['file'],null,null,['youtube_post'=>$id])->id;});
                 }
-                SourceRecord::updateOrCreate(['source'=>'youtube','source_id'=>$id],[
-                    'kind'=>'post','title'=>mb_substr($post['text']??$id,0,120),'body'=>$post['text']??'',
+                SourceRecord::firstOrCreate(['source'=>'youtube','source_id'=>$id],[
+                    'kind'=>'post','title'=>mb_substr($post['text']??$id,0,120),'body'=>$post['text']??'','status'=>'unsorted',
                     'metadata'=>['archive_path'=>'posts/'.$id,'published_label'=>$post['published_label']??null,'url'=>$post['url']??null,'images'=>$images,'target_profile'=>$this->run->target_profile?:'posts',
-                        'likes_label'=>$post['likes_label']??null,'links'=>$post['links']??[]]]);
+                        'likes_label'=>$post['likes_label']??null,'links'=>$post['links']??[],'raw'=>$post]]);
+                $poll = $post['raw']['backstageAttachment']['pollRenderer'] ?? null;
+                if (is_array($poll)) app(ContentMetadataImporter::class)->record('youtube', 'poll:'.$id, 'poll',
+                    mb_substr($post['text']??$id,0,120), $post['text']??'', ['parent_source_id'=>$id,'poll'=>$poll,'import_id'=>$this->run->id]);
             });
         }
         foreach(glob($this->root.'/playlists/*.json')?:[] as $file){

@@ -51,7 +51,7 @@
 - Стандартное production-обновление platform выполняется из `/var/www/vhosts/mannavomhimmel.de/httpdocs` через `git pull --ff-only` и только необходимые `config:clear`/`view:clear` c `/opt/plesk/php/8.4/bin/php`; без PATH exports и maintenance-скрипта.
 - Публичный YouTube-сборщик сохранил частичный архив в `private/manna-youtube` (около 3.9 GB); полный личный архив владелец скачивает отдельно и хранит в `private/manna-youtube-manual/<дата-выгрузки>`. Текущий Import Center принимает структурированный архив сборщика; для YouTube Studio/Google Takeout нужен отдельный адаптер ручного формата. Полная инструкция: `youtube/MANUAL_ARCHIVE_IMPORT.md`.
 - Миграция статуса: для Media Library первично добавлен собственный загрузочный путь на платформе; временно внешний `/upload/`-инструмент продолжает работать для существующих кейсов и будет выключен после приемки новой пайплайна.
-- Запущен полноценный Import Center внутри Media Desktop: API `/desktop/imports`, список источников (intake, YouTube-архив, локальная папка/архив, YouTube/Instagram/TikTok/Facebook-заглушки), выбор целевого профиля (`media_library`, `videos`, `posts`, `shorts`, `comments`, `polls`), запуск импорта и страница истории заданий с обновляемым статусом.
+- Import Center внутри Media Desktop: API `/desktop/imports`, intake, YouTube-архив, локальная папка/архив, выбор целевого профиля и история заданий. Этап 3 заменил заглушки реальным queued импортом публичных ссылок через установленный yt-dlp runtime; YouTube-каналы используют существующий collector с Beiträge/опросами/комментариями. Распознаются collector/yt-dlp JSON, видео CSV и atapin-content/v1; оригиналы неизвестных форматов сохраняются. Подробности и ограничения: docs/IMPORT-CENTER.md.
 - Расширена модель импорта (`import_runs`): `source_kind`, `source_options`, `target_profile`, `discovered`, `progress`, `error`, `started_at`, `finished_at`, а также запись `target_profile` в metadata media/source-объектов.
 - Этап 2 Import Center: загрузка ZIP/TAR/TAR.GZ/TGZ прямо с компьютера через существующий resumable upload до 20 GB, повторные попытки при сбоях и продолжение после повторного выбора файла. Папки регистрируют реальные пути; распакованные оригиналы остаются в private/import-inbox/archives, повторный импорт не дублирует записи. Добавлена недостающая source_ref migration, исправлена отправка ImportArchive в очередь. Проверяются traversal, ссылки и лимиты распаковки.
 - UI Import Center в десктопе использует общий layout-макет без повторяющихся заголовков окон, с формой запуска и списком последних запусков.
@@ -61,7 +61,7 @@
 - Для Media Library, Projekte, Aufgaben, Kalender, Shop и Benutzer ещё требуется отдельная разработка native-интерфейсов внутри Desktop.
 - Для Media Library пока не реализованы: режимы сеточного просмотра, AI-классификация и ручная сортировка/нормализация, а также автоматическое отключение временного `/upload/` после согласования и production-проверки нового роута загрузки.
 - Public Website начат, но ещё не завершён.
-- Импорт произвольной ручной выгрузки YouTube Studio/Google Takeout ещё не реализован; до создания адаптера её нельзя вручную смешивать с `private/manna-youtube`.
+- Для ручных YouTube выгрузок поддержаны ZIP/TAR и распознаваемые JSON/видео CSV. Произвольные варианты Takeout, экспортные HTML и неизвестные schemas ещё требуют отдельного разбора; нельзя выдавать их регистрацию файлами за полный импорт содержания.
 
 ## Рекомендуемый следующий этап
 
@@ -69,6 +69,8 @@
 - После получения личной выгрузки YouTube реализовать адаптер ручного архива по `youtube/MANUAL_ARCHIVE_IMPORT.md`, затем запустить импорт через Import Center.
 
 ## Проверки
+
+- Этап 3: 12 целевых Laravel tests / 42 assertions и PHP syntax прошли; YouTube unittest: 10 passed, 1 skipped (локально нет ffmpeg). service_import.py --help и git diff --check прошли. Реальная загрузка из внешних сервисов не запускалась; runtime/доступность проверяются на сервере.
 
 - Этап 2: локальный PHP 8.4 подготовлен в игнорируемой .local; 12 целевых Laravel tests / 50 assertions прошли, view:cache, node --check трёх media/import scripts и git diff --check прошли. MySQL и production не проверялись.
 
@@ -100,5 +102,5 @@
 
 ## Последний связанный commit
 
-- Текущий этап: `Fix archive imports and add resumable desktop intake` (hash доступен через git log -1 для commit, содержащего эту запись).
+- Этап 2: f55f340. Текущий этап: `Import service links and structured archive content` (hash — git log для содержащего эту запись commit).
 

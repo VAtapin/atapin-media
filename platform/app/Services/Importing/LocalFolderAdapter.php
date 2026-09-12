@@ -40,6 +40,7 @@ class LocalFolderAdapter implements ImportAdapter
         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS));
         foreach ($iterator as $file) {
             if (! $file->isFile() || $file->isLink()) continue;
+            if (str_starts_with($file->getFilename(), '.') || preg_match('/\.(part|ytdl|tmp)$/i', $file->getFilename())) continue;
             $absolute = ImportPath::resolve($root, $file->getPathname());
             $relative = str_replace(DIRECTORY_SEPARATOR, '/', substr($absolute, strlen($inbox) + 1));
             $run->increment('discovered');
@@ -61,5 +62,6 @@ class LocalFolderAdapter implements ImportAdapter
             }
         }
         if (! $run->fresh()->discovered) $run->update(['notes' => ['No files found.']]);
+        app(ContentMetadataImporter::class)->scan($run, $root);
     }
 }
