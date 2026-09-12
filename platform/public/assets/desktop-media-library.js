@@ -150,24 +150,57 @@
       if (uploadInput) uploadInput.disabled = state;
     };
 
-    const uploadFile = file => window.uploadDesktopMedia(file, root.dataset.userId, (offset, total) => {
-      setUploadMessage(`${file.name}: ${prettyBytes(offset)} / ${prettyBytes(total)}`);
+    let uploadControl = null, paused = false;
+    const queue = root.querySelector('[data-media-upload-queue]');
+    const queueItems = root.querySelector('[data-media-upload-items]');
+    const pauseButton = root.querySelector('[data-media-upload-pause]');
+    const folderInput = root.querySelector('[data-media-upload-folder-input]');
+    pauseButton?.addEventListener('click', () => {
+      if (!uploadControl) return;
+      paused = !paused;
+      uploadControl[paused ? 'pause' : 'resume']();
+      pauseButton.textContent = window.desktopImportLabels[paused ? 'upload_resume' : 'upload_pause'];
     });
+    root.querySelector('[data-media-upload-stop]')?.addEventListener('click', () => uploadControl?.stop());
+    root.querySelector('[data-media-upload-folder]')?.addEventListener('click', () => {if (!uploading) folderInput.click();});
+    folderInput?.addEventListener('change', () => {if (!uploading) uploadSelectedFiles(Array.from(folderInput.files || []));});
 
     const uploadSelectedFiles = async files => {
       if (!files?.length) return;
+      if (uploading) return;
       setUploading(true);
-      setUploadMessage('Lade Medien hoch …');
-      try {
-        for (const file of files) {
-          await uploadFile(file);
+      uploadControl = window.createDesktopUploadControl(); paused = false;
+      const control = uploadControl;
+      pauseButton.textContent = window.desktopImportLabels.upload_pause;
+      queue.hidden = false; root.querySelector('[data-media-upload-controls]').hidden = false;
+      if (folderInput) folderInput.disabled = true;
+      queueItems.innerHTML = files.map((file, index) => `<li data-upload-row="${index}"><strong>${escape(file.webkitRelativePath || file.name)}</strong><progress value="0" max="${file.size}"></progress><small>${escape(window.desktopImportLabels.upload_waiting)}</small></li>`).join('');
+      setUploadMessage(window.desktopImportLabels.upload_running);
+      let cursor = 0, succeeded = 0, failed = 0;
+      const worker = async () => {
+        while (cursor < files.length) {
+          const index = cursor++, file = files[index], row = queueItems.querySelector(`[data-upload-row="${index}"]`);
+          try {
+            await control.checkpoint();
+            await window.uploadDesktopMedia(file, root.dataset.userId, (offset, total) => {
+              row.querySelector('progress').value = offset;
+              row.querySelector('small').textContent = `${prettyBytes(offset)} / ${prettyBytes(total)}`;
+            }, control);
+            row.querySelector('small').textContent = window.desktopImportLabels.upload_done; succeeded++;
+          } catch (error) {failed++; row.querySelector('small').textContent = control.signal.aborted ? window.desktopImportLabels.upload_stopped : error.message;}
         }
+      };
+      try {
+        await Promise.all([worker(), worker()]);
         await load(1);
-        setUploadMessage('');
+        setUploadMessage(`${succeeded} ${window.desktopImportLabels.upload_done}${failed ? ` · ${failed} ${window.desktopImportLabels.upload_not_done}` : ''}`, failed > 0);
       } catch (error) {
         setUploadMessage(error.message || 'Upload fehlgeschlagen.', true);
       } finally {
         if (uploadInput) uploadInput.value = '';
+        if (folderInput) {folderInput.value = ''; folderInput.disabled = false;}
+        uploadControl = null; root.querySelector('[data-media-upload-controls]').hidden = true;
+        queue.hidden = failed === 0;
         setUploading(false);
       }
     };
@@ -250,6 +283,9 @@
     });
 
     if (uploadButton && uploadInput) {
+      root.addEventListener('dragover', event => {if (event.dataTransfer.types.includes('Files')) {event.preventDefault(); root.classList.add('is-upload-drop');}});
+      root.addEventListener('dragleave', event => {if (!root.contains(event.relatedTarget)) root.classList.remove('is-upload-drop');});
+      root.addEventListener('drop', event => {event.preventDefault(); root.classList.remove('is-upload-drop'); if (!uploading) uploadSelectedFiles(Array.from(event.dataTransfer.files || []));});
       uploadButton.addEventListener('click', () => {
         if (uploading) return;
         uploadInput.click();

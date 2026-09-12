@@ -37,6 +37,7 @@
         </details>
         <p class="import-safety-note">{{ __('imports.safety_note') }}</p>
         <div class="import-submit-row"><button type="submit" class="desktop-button is-primary" data-import-start>{{ __('imports.start') }}</button><p class="import-center-message" data-import-message role="status" aria-live="polite" hidden></p></div>
+        <div class="import-submit-row" data-import-upload-controls hidden><button type="button" class="desktop-button" data-import-upload-pause>{{ __('imports.upload_pause') }}</button><button type="button" class="desktop-button" data-import-upload-stop>{{ __('imports.upload_stop') }}</button><small>{{ __('imports.upload_queue_hint') }}</small></div>
     </form>
     <div class="import-center-live">
         <div class="import-center-status" data-import-status role="status"></div>

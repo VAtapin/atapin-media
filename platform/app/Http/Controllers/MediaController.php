@@ -76,7 +76,7 @@ class MediaController extends Controller
             'role' => $item->asset_role, 'download_url' => route('media.download', $item),
             'preview_url' => in_array($item->mime, self::PREVIEW_MIMES, true) ? route('media.preview', $item) : null];
         $records = \App\Models\SourceRecord::whereIn('id', $media->usages->where('subject_type', \App\Models\SourceRecord::class)->pluck('subject_id'))->get();
-        return response()->json(['id' => $media->id, 'summary' => $media->metadata['summary'] ?? '',
+        return response()->json(['id' => $media->id, 'summary' => $media->metadata['summary'] ?? '', 'client_relative_path' => $media->metadata['client_relative_path'] ?? null,
             'external_url' => $presentation->externalUrl($media->metadata ?? [], $media->source ?? '', $media->source_id, $media->kind),
             'storage' => ['disk' => $media->disk, 'path' => $media->path, 'sha256' => $media->sha256],
             'technical' => array_intersect_key($media->metadata['technical'] ?? [], array_flip(['duration', 'width', 'height', 'format', 'codec'])),
@@ -121,7 +121,13 @@ class MediaController extends Controller
     public function uploadFinish(Request $request, ResumableMediaUpload $upload, ResumableMediaUploadService $uploads)
     {
         abort_unless($upload->user_id === $request->user()->id, 404);
+        $data = $request->validate(['client_relative_path' => 'nullable|string|max:2000']);
+        if (! empty($data['client_relative_path'])) {
+            try {\App\Services\Importing\ImportPath::entry($data['client_relative_path']);}
+            catch (\RuntimeException $error) {throw \Illuminate\Validation\ValidationException::withMessages(['client_relative_path' => __('imports.path_required')]);}
+        }
         $media = $uploads->finish($upload);
+        if (! empty($data['client_relative_path'])) $media->update(['metadata' => [...($media->metadata ?? []), 'client_relative_path' => $data['client_relative_path']]]);
         app(\App\Services\MediaUploadCutover::class)->confirm();
         return response()->json(['status'=>'saved','media_id'=>$media->id]);
     }

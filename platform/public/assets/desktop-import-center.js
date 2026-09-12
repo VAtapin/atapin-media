@@ -34,6 +34,11 @@
     const up = root.querySelector('[data-import-up]');
     let selection = null, folder = '', parent = null, runPage = 1, previousStatuses = new Map();
     let browsing = 0;
+    let uploadControl = null, uploadPaused = false;
+    const uploadControls = root.querySelector('[data-import-upload-controls]');
+    const pause = root.querySelector('[data-import-upload-pause]');
+    pause.addEventListener('click', () => {if (!uploadControl) return; uploadPaused = !uploadPaused; uploadControl[uploadPaused ? 'pause' : 'resume'](); pause.textContent = t[uploadPaused ? 'upload_resume' : 'upload_pause'];});
+    root.querySelector('[data-import-upload-stop]').addEventListener('click', () => uploadControl?.stop());
     const method = () => form.querySelector('[name="method"]:checked')?.value;
     const showMessage = (value, error = false) => {message.textContent = value; message.hidden = !value; message.classList.toggle('is-error', error);};
     const selected = () => {root.querySelector('[data-import-selection]').textContent = selection ? t.selected + ': ' + (selection.path === '.' ? t.browser_root : selection.path) : t.select_folder_hint;};
@@ -102,8 +107,10 @@
           const file = fileInput?.files[0];
           if (!file || !/\.(zip|tar|tar\.gz|tgz)$/i.test(file.name)) throw new Error(t.archive_required);
           start.disabled = true;
+          uploadControl = window.createDesktopUploadControl(); uploadPaused = false; pause.textContent = t.upload_pause; uploadControls.hidden = false; fileInput.disabled = true;
           payload.source = 'local-archive';
-          payload.media_id = await window.uploadDesktopMedia(file, root.dataset.userId, (bytes, total) => showMessage(file.name + ': ' + Math.floor(bytes / total * 100) + ' %'));
+          payload.media_id = await window.uploadDesktopMedia(file, root.dataset.userId, (bytes, total) => showMessage(file.name + ': ' + Math.floor(bytes / total * 100) + ' %'), uploadControl);
+          await uploadControl.checkpoint(); uploadControls.hidden = true;
         } else if (activeMethod === 'link') {
           payload.source_ref = link.value.trim(); payload.source = sourceFromLink(payload.source_ref);
           if (!payload.source) throw new Error(t.supported_links);
@@ -113,8 +120,8 @@
         await request(root.dataset.importsUrl, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
         showMessage(t.started); if (fileInput) fileInput.value = '';
         await loadRuns(1);
-      } catch (error) {showMessage(error.message, true);}
-      finally {start.disabled = false; form.querySelectorAll('[name="method"]').forEach(input => {input.disabled = false;});}
+      } catch (error) {showMessage(uploadControl?.signal.aborted ? t.upload_stopped : error.message, true);}
+      finally {start.disabled = false; uploadControls.hidden = true; uploadControl = null; if (fileInput) fileInput.disabled = method() !== 'computer'; form.querySelectorAll('[name="method"]').forEach(input => {input.disabled = false;});}
     });
     root.querySelector('[data-import-refresh]').addEventListener('click', () => loadRuns().catch(error => showMessage(error.message, true)));
     root.querySelector('[data-import-pages]').addEventListener('click', event => {const button = event.target.closest('[data-import-page]'); if (button) loadRuns(Number(button.dataset.importPage)).catch(error => showMessage(error.message, true));});

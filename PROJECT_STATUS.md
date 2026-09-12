@@ -2,6 +2,8 @@
 
 ## Реализовано
 
+- Этап загрузки: Media Library имеет queue с двумя параллельными файлами, drag-and-drop и выбор client folder, pause/resume/stop без удаления accepted data. Relative client paths проверяются и сохраняются только в metadata; одинаковые basename в разных папках имеют разные resume keys. Import Center получил pause/resume/stop для archive transfer (не для фонового ImportRun). Успешная очередь скрывается, неподтверждённые файлы остаются с подсказкой повторного выбора.
+
 - Этап организации Media Library: дополнительные действия и фильтры раскрываются отдельно; выбор до 100 файлов, массовое добавление tags/status/раздела/коллекции и archive/restore без удаления originals/usages. Собственные Collections (не YouTube Playlists) создаются/переименовываются, имеют description, pagination, перестановку соседних файлов и удаление только связи. Фильтры tags/collections/active/archive и все service sources; раскрываемый file inspector показывает storage, parent/assets, collections, usage names и последние AI proposals.
 
 - Этап удобства Import Center/Media Desktop: четыре понятных способа импорта вместо Quelle/Pfad/ID/URL, скрытые дополнительные настройки, серверный браузер с текущим путём/назад/явным выбором папки и сообщениями пустого/недоступного каталога. История пагинируется и открывает библиотеку. Кнопка ? во всех окнах открывает отдельную локализованную справку поверх рабочего окна; для ещё пустых программ справка не обещает готовую функциональность. Playlist отличает локальную структуру/описание, реально доступный video original и внешний YouTube link; убраны большие синие кнопки с названиями всех позиций. Защищены списки Media Library от устаревших параллельных ответов после upload.
@@ -69,7 +71,7 @@
 
 - Для Projekte, Aufgaben, Kalender и Shop ещё требуется отдельная разработка native-интерфейсов внутри Desktop.
 - Production deployment/приёмка последних изменений не подтверждены: реальные service downloads, OpenAI-запросы, 10–20 GB transfer и automatic intake cutover локальными тестами не подтверждены. По решению владельца сплошное платное прослушивание/анализ аудио и видео не входит в ближайший план; ИИ использует имеющиеся тексты, метаданные, готовые субтитры и небольшие изображения. Пока готовые субтитры ещё не подмешиваются полностью в AI evidence; поддержан только OpenAI.
-- Media Library ещё требует редактора импортированных playlist positions, массовых действий для текстовых SourceRecords (массовые действия сейчас для файлов), корректного обратного назначения раздела, переходов по usage references, отмены AI-истории и локального технического processing. Import Center ещё требует полного адаптера личных YouTube exports, межисточниковой дедупликации, upload pause/cancel/folder/queue, управления долгими импортами и более подробного результата. Реальный личный архив нужен для подтверждения полноты адаптера; серверная приёмка не заменяется локальными тестами.
+- Media Library ещё требует редактора импортированных playlist positions, массовых действий для текстовых SourceRecords (массовые действия сейчас для файлов), корректного обратного назначения раздела, переходов по usage references, отмены AI-истории и локального технического processing. Import Center ещё требует полного адаптера личных YouTube exports, межисточниковой дедупликации, управления долгими фоновыми импортами и более подробного результата. Реальный личный архив нужен для подтверждения полноты адаптера; серверная приёмка не заменяется локальными тестами.
 - Public Website начат, но ещё не завершён.
 - Для ручных YouTube выгрузок поддержаны ZIP/TAR и распознаваемые JSON/видео CSV. Произвольные варианты Takeout, экспортные HTML и неизвестные schemas ещё требуют отдельного разбора; нельзя выдавать их регистрацию файлами за полный импорт содержания.
 
@@ -79,6 +81,8 @@
 - После получения личной выгрузки YouTube реализовать адаптер ручного архива по `youtube/MANUAL_ARCHIVE_IMPORT.md`, затем запустить импорт через Import Center.
 
 ## Проверки
+
+- Этап загрузки: 1 целевой Laravel upload flow / 14 assertions прошёл (checksum/finish, unsafe client path rejection, сохранение client path только в metadata). Node control test проверил parallel pause/resume, stop без finish, продолжение прежней сессии и разные папки с одинаковыми basename; JS syntax, Blade и Edge workflow прошли. Реальные 10–20 GB и native folder picker на production не проверены; full suite не запускался.
 
 - Этап организации: 2 целевых Laravel tests / 26 assertions прошли (collections, порядок, bulk filters, archive/restore, сохранность originals и permissions). Blade/JS syntax и Edge workflow создания коллекции/выбора файла/массового добавления/смены вида прошли. Полный suite не запускался.
 
@@ -96,7 +100,8 @@
 ## Последние связанные commits
 
 - Удобство и справка: 55fd044 — Simplify imports and explain local content in desktop windows.
-- Текущий этап организации: Organize library files with collections and reversible archiving (commit с этой записью).
+- Организация: 08c1c59 — Organize library files with collections and reversible archiving.
+- Текущий этап загрузки: Add pausable parallel uploads and client folder intake (commit с этой записью).
 
 - Этап 2: f55f340 — Fix archive imports and add resumable desktop intake.
 - Этап 3: 7d787a3 — Import service links and structured archive content.

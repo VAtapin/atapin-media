@@ -76,6 +76,7 @@ jobs:
           php tests/browser-fixture.php
           php tests/cron-smoke.php
           timeout 150 node tests/browser.mjs
+          node tests/media-upload-controls.mjs
           timeout 150 node tests/import-center-browser.mjs
         env:
           APP_ENV: testing

@@ -5,14 +5,21 @@
         <details class="media-library-actions"><summary>{{ __('imports.more_actions') }}</summary><div class="media-library-toolbar-row">
         <button type="button" class="media-library-primary" data-library-grid>{{ __('imports.grid') }}</button>
         <button type="button" class="desktop-button" data-library-collections>{{ __('imports.collections') }}</button>
+        @can('media.upload')<button type="button" class="desktop-button" data-media-upload-folder>{{ __('imports.upload_folder') }}</button>@endcan
         @can('media.edit')<button type="button" class="desktop-button" data-library-select>{{ __('imports.select_files') }}</button>@endcan
         @can('imports.manage')<button type="button" class="media-library-primary" data-library-import-existing>{{ __('imports.import_existing') }}</button>@endcan
         @can('content.edit')<button type="button" class="media-library-primary" data-classify-batch="media">{{ __('imports.ai_batch') }}</button>@endcan
         </div></details>
-        <button type="button" class="media-library-primary" data-media-upload data-media-upload-label>Hochladen</button>
-        <input type="file" data-media-upload-input multiple hidden>
+        @can('media.upload')
+        <button type="button" class="media-library-primary" data-media-upload data-media-upload-label>{{ __('imports.upload_files') }}</button>
+        <input type="file" data-media-upload-input multiple hidden><input type="file" data-media-upload-folder-input webkitdirectory multiple hidden>
+        @endcan
         <p data-media-upload-message class="media-library-upload-message" aria-live="polite" role="status" hidden></p>
     </div>
+    <section class="media-upload-queue" data-media-upload-queue hidden>
+        <div class="media-library-toolbar-row" data-media-upload-controls><button type="button" class="desktop-button" data-media-upload-pause>{{ __('imports.upload_pause') }}</button><button type="button" class="desktop-button" data-media-upload-stop>{{ __('imports.upload_stop') }}</button><small>{{ __('imports.upload_queue_hint') }}</small></div>
+        <ul data-media-upload-items></ul>
+    </section>
     @include('desktop.media-organization')
     <div data-library-content-container hidden>@include('desktop.content-library')</div>
     <form class="media-library-toolbar" data-library-filter>

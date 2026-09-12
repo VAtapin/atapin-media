@@ -63,7 +63,8 @@ class MediaLibraryUploadTest extends TestCase
             'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
         ], $chunk2)->assertOk()->assertJson(['id' => $uploadId, 'offset' => $size]);
 
-        $this->post("/desktop/media/uploads/$uploadId/finish")->assertOk()->assertJson(['status' => 'saved']);
+        $this->postJson("/desktop/media/uploads/$uploadId/finish", ['client_relative_path'=>'../outside.txt'])->assertUnprocessable();
+        $this->postJson("/desktop/media/uploads/$uploadId/finish", ['client_relative_path'=>'folder/example.txt'])->assertOk()->assertJson(['status' => 'saved']);
         $this->assertSame('atapin-library-cutover/v1', json_decode(Storage::disk('local')->get(\App\Services\MediaUploadCutover::MARKER), true)['schema']);
 
         $this->assertDatabaseHas('media', [
@@ -73,6 +74,7 @@ class MediaLibraryUploadTest extends TestCase
             'mime' => 'text/plain',
         ]);
         $media = Media::where('source', 'upload')->where('source_id', $uploadId)->firstOrFail();
+        $this->assertSame('folder/example.txt', $media->metadata['client_relative_path']);
         $this->assertTrue(Storage::disk($media->disk)->exists($media->path));
         $this->assertDatabaseHas('resumable_media_uploads', [
             'id' => $uploadId,
