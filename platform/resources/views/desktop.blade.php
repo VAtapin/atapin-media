@@ -21,7 +21,7 @@ $programs = [
     <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Desktop · {{ config('platform.brand') }}</title>
     <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/desktop-os.css?v=2"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3">
-    <script src="/assets/desktop-os.js?v=4" defer></script>
+    <script src="/assets/desktop-os.js?v=5" defer></script>
 </head>
 <body class="os-body">
 <main class="os-desktop" data-desktop data-storage-key="atapin.desktop.{{ auth()->id() }}.v1">

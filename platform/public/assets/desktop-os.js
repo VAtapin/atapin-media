@@ -226,6 +226,7 @@
   };
 
   const openProgram = (trigger, saved = null) => {
+    hideSnap();
     stateWasCleared = false;
     const appId = trigger.dataset.openApp;
     let windowElement = windowFor(appId);
@@ -278,6 +279,7 @@
       windowElement.append(handle);
       handle.addEventListener('pointerdown', event => {
         if (window.innerWidth <= 700 || windowElement.classList.contains('is-maximized')) return;
+        hideSnap();
         event.preventDefault();
         event.stopPropagation();
         focusWindow(windowElement);
@@ -325,12 +327,12 @@
       event.stopPropagation();
       const action = button.dataset.windowAction;
       if (action === 'close') {
-        if (snapWindow === windowElement) hideSnap();
+        hideSnap();
         taskButtonFor(windowElement.dataset.appId)?.remove();
         windowElement.remove();
         saveState();
       } else if (action === 'minimize') {
-        if (snapWindow === windowElement) hideSnap();
+        hideSnap();
         windowElement.hidden = true;
         taskButtonFor(windowElement.dataset.appId)?.classList.remove('is-active');
         saveState();
@@ -382,15 +384,15 @@
           showZonePreview(placement);
         }
       };
-      const stop = () => {
+      const stop = stopEvent => {
         handle.removeEventListener('pointermove', move);
         handle.removeEventListener('pointerup', stop);
         handle.removeEventListener('pointercancel', stop);
-        if (placement) assignToZone(windowElement, placement.layout, placement.zone);
-        else if (!snapShown) {
-          hideSnap();
-          saveState();
-        }
+        const cancelled = stopEvent.type === 'pointercancel';
+        if (!cancelled && placement) assignToZone(windowElement, placement.layout, placement.zone);
+        else if (!snapShown || cancelled) saveState();
+        snapPreview.hidden = true;
+        if (!snapShown || cancelled) hideSnap();
       };
       handle.addEventListener('pointermove', move);
       handle.addEventListener('pointerup', stop);
@@ -399,6 +401,7 @@
   };
 
   const restoreDesktop = () => {
+    hideSnap();
     let state;
     try { state = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (_) { return; }
     if (!state || state.version !== 1 || !Array.isArray(state.windows)) return;
@@ -411,6 +414,7 @@
     restoring = false;
     const visible = [...document.querySelectorAll('.os-window:not([hidden])')];
     if (visible.length) focusWindow(visible.at(-1));
+    hideSnap();
   };
 
   document.querySelectorAll('[data-open-app]').forEach(button => button.addEventListener('click', () => openProgram(button)));

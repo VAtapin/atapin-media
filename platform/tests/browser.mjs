@@ -41,9 +41,14 @@ try {
   await page.locator('[data-layout="four"][data-zone="0"]').click();
   await page.locator('[data-start-button]').click();
   await page.locator('.os-start-menu [data-open-app="tasks"]').click();
-  assert.deepEqual(await page.locator('.os-window').evaluateAll(items=>items.map(item=>item.dataset.snapZone)),['0','1']);
+  const taskTitle=await page.locator('.os-window[data-app-id="tasks"] [data-drag-handle]').boundingBox();
+  await page.mouse.move(taskTitle.x+100,taskTitle.y+20);
+  await page.mouse.down();await page.mouse.move(360,700,{steps:8});await page.mouse.up();
+  assert.deepEqual(await page.locator('.os-window').evaluateAll(items=>items.map(item=>item.dataset.snapZone)),['0','2']);
+  assert.equal(await page.locator('.os-snap-preview').isVisible(),false,'Snap preview remained after drop');
   await page.reload();
   assert.equal(await page.locator('.os-window').count(),2,'Desktop windows were not restored');
+  assert.equal(await page.locator('.os-snap-preview').isVisible(),false,'Snap preview returned after reload');
   await page.locator('[data-close-all]').click();await page.reload();
   assert.equal(await page.locator('.os-window').count(),0,'Desktop windows returned after close all');
   await page.goto('http://127.0.0.1:8791/desktop/media');
