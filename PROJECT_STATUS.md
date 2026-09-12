@@ -16,6 +16,7 @@
 - Start содержит постоянный каталог из 19 программ; Desktop хранит только пользовательские ярлыки, которые можно перемещать, удалять и вновь добавлять из Start или контекстного меню.
 - Для Desktop подключены четыре полных approved-набора из 19 PNG: Manna Vom Himmel, Standard, Grün и Sol. В системных настройках выбираются набор значков, approved-фон, пользовательский фон и акцентный цвет без изменения ярлыков, окон или их расположения.
 - `Einstellungen` является центральным разделом настроек: Desktop & Design, KI, Social Media, Publishing, Integrationen, Benutzer & Rechte и System. Настройки хранятся в таблице `settings`; API-ключи и токены хранятся там же в зашифрованном виде и никогда не возвращаются в форму.
+- Einstellungen внутри Desktop использует компактные вкладки: одновременно видна только одна панель. В Benutzer & Rechte роль выбирается отдельно, а её права и форма создания роли раскрываются по запросу.
 - Пользовательские язык, timezone и branding применяются на уровне запроса из БД. Einstellungen открывается внутри стандартного окна Media Desktop как чистое встроенное приложение без старой sidebar/header-оболочки.
 - Устаревшая Laravel workspace-оболочка удалена: общий layout больше не содержит sidebar, topbar, breadcrumbs или старую навигацию; страницы сохранившихся модулей выводят только собственное содержимое.
 - Каталог Start/Desktop содержит 19 программ: Media Library объединяет Bilder, Audio и Dateien; Newsletter включает Subscribers. Добавлены Podcast, Themen & Kategorien и Shop & Verkäufe. Shop имеет базовые таблицы товаров и продаж без фиктивного payment provider.
@@ -60,7 +61,8 @@
 - Пройден `node --check` для Desktop JavaScript; проверены целостность Blade-директив и `git diff --check`. Laravel Feature tests добавлены для настроек и шифрования секретов, но локально не запускались из-за отсутствия PHP.
 - Пройден `node --check` для обновлённого Desktop JavaScript, `git diff --check` и проверка состава 19 ярлыков. Laravel Feature tests обновлены, но локально не запускались из-за отсутствия PHP.
 - Проверено отсутствие legacy-shell селекторов и разметки; Feature test добавлен, но локально не запускался из-за отсутствия PHP.
+- Пройден `node --check` для `settings-tabs.js`; проверено отсутствие anchor-навигации и наличие семи вкладок/панелей. Laravel Feature test обновлён, но локально не запускался из-за отсутствия PHP.
 
 ## Последний связанный commit
 
-- `Remove legacy workspace shell`
+- `Organize settings as desktop tabs`
