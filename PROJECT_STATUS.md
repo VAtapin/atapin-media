@@ -68,7 +68,8 @@
 - Пройден `node --check` для `settings-tabs.js`; проверено отсутствие anchor-навигации и наличие семи вкладок/панелей. Laravel Feature test обновлён, но локально не запускался из-за отсутствия PHP.
 - Пройден `node --check` для `desktop-os.js`, `settings-tabs.js` и `browser.mjs`, а также `git diff --check`. Browser-сценарий расширен проверкой live preview и отмены несохранённых изменений; локальный запуск Laravel/browser suite недоступен из-за отсутствия PHP.
 - Проверено отсутствие iframe, `embed=1`, `postMessage`, legacy routes и legacy Blade layouts в исходниках платформы. Laravel Feature tests обновлены для прямого Settings UI и удаления старых GET-маршрутов, но локально не запускались из-за отсутствия PHP.
+- Исправлена Blade-компиляция `settings-content.blade.php`: директивы partial снова разделены строками, поэтому удаление legacy-обёртки не создаёт ошибку `unexpected endif` на production.
 
 ## Последний связанный commit
 
-- `Remove legacy desktop interfaces`
+- `Fix settings Blade compilation`
