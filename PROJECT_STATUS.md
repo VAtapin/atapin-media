@@ -2,6 +2,8 @@
 
 ## Реализовано
 
+- Временный `/upload/` окончательно отключён: index всегда redirect `/desktop`, API всегда 410; UI app.js/app.css/login.php удалены. Private archive не изменяется, прежний инструмент доступен в Git. CI сохраняет archive/auth проверки и проверяет retired HTTP contract вместо старой загрузки. Связанный commit — текущий `Retire the temporary upload interface`.
+
 - Media Library, пункт 6: SourceRecord AI имеет собственный журнал running/applied/failed/insufficient/superseded, proposals и before/after snapshots; доступны просмотр и безопасная отмена в inspector. Отмена восстанавливает состояние до ручного запуска (включая прежний status), не удаляет originals и блокируется при последующих manual/import изменениях. Явно queued AI проверяет версию записи ещё до provider call, чтобы не заменить более новую правку. Старые AI результаты без snapshots нельзя откатить задним числом.
 
 - Media Library, пункты 2/3/4: импортированные playlists имеют редактор title/description, добавление зарегистрированных video/short (включая другой source), перемещение соседей и удаление только membership. Manual playlist layout сохраняется при reimport, новый export сохраняется отдельно в metadata. Массовые действия до 100 SourceRecords добавляют tags/status/раздел без изменения body/title и assets; Library-only записи остаются в общей библиотеке, возвращаются в разделы. Канонический imported video возвращается через file assignment без дубля и замены принятого текста.

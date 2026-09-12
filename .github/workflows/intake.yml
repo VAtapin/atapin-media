@@ -31,18 +31,5 @@ jobs:
         run: |
           php intake/tests/archive.php
           php intake/tests/auth.php
-      - name: Browser test dependencies
-        if: matrix.php == '8.4'
-        run: |
-          npm install --prefix .local --no-save --no-package-lock playwright@1.63.0
-          node .local/node_modules/playwright/cli.js install --with-deps chromium
-      - name: HTTP integration checks
-        run: node intake/tests/http.mjs
-        env:
-          INTAKE_BROWSER_TESTS: ${{ matrix.php == '8.4' && '1' || '0' }}
-      - name: Existing httpdocs deployment and subfolder uploads
-        run: node intake/tests/subfolder.mjs
-        env:
-          INTAKE_BROWSER_TESTS: ${{ matrix.php == '8.4' && '1' || '0' }}
-      - name: JavaScript syntax
-        run: node --check intake/public/app.js
+      - name: Retired uploader HTTP checks
+        run: node intake/tests/retirement.mjs
