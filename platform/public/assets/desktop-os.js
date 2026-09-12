@@ -12,6 +12,7 @@
   const MIN_HEIGHT = 160;
   const SNAP_GAP = 6;
   const SNAP_TRIGGER_PX = 14;
+  const SNAP_DRAG_INTENT_PX = 56;
   const STORAGE_KEY = desktop.dataset.storageKey || 'atapin.desktop.state.v1';
   const layouts = [
     { id:'two', label:'2 Fenster', cells:[[0,0,.5,1],[.5,0,.5,1]] },
@@ -69,6 +70,32 @@
     };
   };
 
+  const normalizedRegion = (layout, zones) => {
+    const cells = zones.map(zone => layout.cells[zone]);
+    const left = Math.min(...cells.map(cell => cell[0]));
+    const top = Math.min(...cells.map(cell => cell[1]));
+    const right = Math.max(...cells.map(cell => cell[0] + cell[2]));
+    const bottom = Math.max(...cells.map(cell => cell[1] + cell[3]));
+    return [left, top, right - left, bottom - top];
+  };
+
+  const regionsForLayout = layout => {
+    if (layout.regions) return layout.regions;
+    const regions = [];
+    const combinations = 2 ** layout.cells.length;
+    for (let mask = 1; mask < combinations; mask += 1) {
+      const zones = layout.cells.map((_, zone) => zone).filter(zone => mask & (2 ** zone));
+      const region = normalizedRegion(layout, zones);
+      const cellArea = zones.reduce((sum, zone) => sum + layout.cells[zone][2] * layout.cells[zone][3], 0);
+      const regionArea = region[2] * region[3];
+      if (Math.abs(cellArea - regionArea) < .00001) regions.push({ zones, cell:region });
+    }
+    layout.regions = regions;
+    return regions;
+  };
+
+  const rectForRegion = (layout, zones) => rectForCell(normalizedRegion(layout, zones));
+
   const applyRect = (windowElement, rect) => {
     windowElement.classList.remove('is-maximized');
     windowElement.querySelector('[data-window-action="maximize"]')?.classList.remove('is-active');
@@ -81,21 +108,32 @@
     windowElement.style.height = `${height}px`;
   };
 
+  const windowZones = windowElement => {
+    if (windowElement.dataset.snapZones) return windowElement.dataset.snapZones.split(',').map(Number).filter(Number.isInteger);
+    return windowElement.dataset.snapZone === undefined ? [] : [Number(windowElement.dataset.snapZone)];
+  };
+
   const occupiedZones = (layoutId, exceptWindow = null) => new Set(
     [...document.querySelectorAll(`.os-window[data-snap-layout="${CSS.escape(layoutId)}"]`)]
       .filter(windowElement => windowElement !== exceptWindow)
-      .map(windowElement => Number(windowElement.dataset.snapZone))
+      .flatMap(windowZones)
   );
 
   const clearWindowSnap = windowElement => {
     delete windowElement.dataset.snapLayout;
     delete windowElement.dataset.snapZone;
+    delete windowElement.dataset.snapZones;
   };
 
   const saveState = () => {
     if (restoring) return;
     const desktopRect = desktop.getBoundingClientRect();
-    const windows = [...document.querySelectorAll('.os-window')].map(windowElement => {
+    const windowElements = [...document.querySelectorAll('.os-window')];
+    if (windowElements.length === 0) {
+      activeLayoutId = null;
+      hideSnap();
+    }
+    const windows = windowElements.map(windowElement => {
       const rect = windowElement.getBoundingClientRect();
       return {
         appId:windowElement.dataset.appId,
@@ -104,7 +142,7 @@
         width:Math.round(parseFloat(windowElement.style.width) || rect.width),
         height:Math.round(parseFloat(windowElement.style.height) || rect.height),
         snapLayout:windowElement.dataset.snapLayout || null,
-        snapZone:windowElement.dataset.snapZone === undefined ? null : Number(windowElement.dataset.snapZone),
+        snapZones:windowZones(windowElement),
         minimized:windowElement.hidden,
         pinned:windowElement.dataset.pinned === 'true',
         maximized:windowElement.classList.contains('is-maximized'),
@@ -124,19 +162,24 @@
     saveTimer = setTimeout(saveState, 80);
   };
 
-  const assignToZone = (windowElement, layout, zone, persist = true) => {
-    if (!layout || !layout.cells[zone]) return false;
+  const assignToRegion = (windowElement, layout, zones, persist = true) => {
+    if (!layout || !zones.length || zones.some(zone => !layout.cells[zone])) return false;
     if (activeLayoutId !== layout.id) {
       document.querySelectorAll('.os-window').forEach(clearWindowSnap);
       activeLayoutId = layout.id;
     }
-    if (occupiedZones(layout.id, windowElement).has(zone)) return false;
+    const occupied = occupiedZones(layout.id, windowElement);
+    if (zones.some(zone => occupied.has(zone))) return false;
     windowElement.dataset.snapLayout = layout.id;
-    windowElement.dataset.snapZone = String(zone);
-    applyRect(windowElement, rectForCell(layout.cells[zone]));
+    windowElement.dataset.snapZones = zones.join(',');
+    if (zones.length === 1) windowElement.dataset.snapZone = String(zones[0]);
+    else delete windowElement.dataset.snapZone;
+    applyRect(windowElement, rectForRegion(layout, zones));
     if (persist) saveState();
     return true;
   };
+
+  const assignToZone = (windowElement, layout, zone, persist = true) => assignToRegion(windowElement, layout, [zone], persist);
 
   const nextFreeZone = () => {
     const layout = layoutById(activeLayoutId);
@@ -146,19 +189,24 @@
     return zone < 0 ? null : { layout, zone };
   };
 
-  const freeZoneAtPoint = (windowElement, clientX, clientY) => {
+  const freeRegionAtPoint = (windowElement, clientX, clientY) => {
     const layout = layoutById(activeLayoutId);
     if (!layout) return null;
     const desktopRect = desktop.getBoundingClientRect();
     const x = clientX - desktopRect.left;
     const y = clientY - desktopRect.top;
     const occupied = occupiedZones(layout.id, windowElement);
-    const zone = layout.cells.findIndex((cell, index) => {
-      if (occupied.has(index)) return false;
-      const rect = rectForCell(cell);
+    const current = windowElement.getBoundingClientRect();
+    const candidates = regionsForLayout(layout).filter(region => {
+      if (region.zones.some(zone => occupied.has(zone))) return false;
+      const rect = rectForCell(region.cell);
       return x >= rect.left && x <= rect.left + rect.width && y >= rect.top && y <= rect.top + rect.height;
-    });
-    return zone < 0 ? null : { layout, zone };
+    }).map(region => {
+      const rect = rectForCell(region.cell);
+      const score = Math.abs(Math.log(rect.width / current.width)) + Math.abs(Math.log(rect.height / current.height)) + (region.zones.length - 1) * .01;
+      return { layout, zones:region.zones, score };
+    }).sort((a, b) => a.score - b.score);
+    return candidates[0] || null;
   };
 
   const showZonePreview = placement => {
@@ -166,7 +214,8 @@
       snapPreview.hidden = true;
       return;
     }
-    const rect = rectForCell(placement.layout.cells[placement.zone]);
+    const zones = placement.zones || [placement.zone];
+    const rect = rectForRegion(placement.layout, zones);
     Object.assign(snapPreview.style, { left:`${rect.left}px`, top:`${rect.top}px`, width:`${rect.width}px`, height:`${rect.height}px` });
     snapPreview.hidden = false;
   };
@@ -246,7 +295,8 @@
         windowElement.dataset.pinned = saved.pinned ? 'true' : 'false';
         windowElement.querySelector('[data-window-action="pin"]')?.classList.toggle('is-active', saved.pinned);
         const savedLayout = layoutById(saved.snapLayout);
-        if (savedLayout && Number.isInteger(saved.snapZone)) assignToZone(windowElement, savedLayout, saved.snapZone, false);
+        const savedZones = Array.isArray(saved.snapZones) ? saved.snapZones.map(Number).filter(Number.isInteger) : (Number.isInteger(saved.snapZone) ? [saved.snapZone] : []);
+        if (savedLayout && savedZones.length) assignToRegion(windowElement, savedLayout, savedZones, false);
         else applyRect(windowElement, { left:saved.left, top:saved.top, width:saved.width, height:saved.height });
         windowElement.classList.toggle('is-maximized', Boolean(saved.maximized));
         windowElement.querySelector('[data-window-action="maximize"]')?.classList.toggle('is-active', Boolean(saved.maximized));
@@ -380,7 +430,8 @@
             snapPanel.hidden = true;
             snapWindow = null;
           }
-          placement = freeZoneAtPoint(windowElement, moveEvent.clientX, moveEvent.clientY);
+          const dragDistance = Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY);
+          placement = dragDistance >= SNAP_DRAG_INTENT_PX ? freeRegionAtPoint(windowElement, moveEvent.clientX, moveEvent.clientY) : null;
           showZonePreview(placement);
         }
       };
@@ -389,7 +440,7 @@
         handle.removeEventListener('pointerup', stop);
         handle.removeEventListener('pointercancel', stop);
         const cancelled = stopEvent.type === 'pointercancel';
-        if (!cancelled && placement) assignToZone(windowElement, placement.layout, placement.zone);
+        if (!cancelled && placement) assignToRegion(windowElement, placement.layout, placement.zones);
         else if (!snapShown || cancelled) saveState();
         snapPreview.hidden = true;
         if (!snapShown || cancelled) hideSnap();
@@ -453,8 +504,8 @@
     const desktopRect = desktop.getBoundingClientRect();
     document.querySelectorAll('.os-window:not(.is-maximized)').forEach(windowElement => {
       const layout = layoutById(windowElement.dataset.snapLayout);
-      const zone = Number(windowElement.dataset.snapZone);
-      if (layout?.cells[zone]) applyRect(windowElement, rectForCell(layout.cells[zone]));
+      const zones = windowZones(windowElement);
+      if (layout && zones.length && zones.every(zone => layout.cells[zone])) applyRect(windowElement, rectForRegion(layout, zones));
       else {
         const rect = windowElement.getBoundingClientRect();
         applyRect(windowElement, { left:rect.left - desktopRect.left, top:rect.top - desktopRect.top, width:rect.width, height:rect.height });
