@@ -6,7 +6,7 @@ class Access
 {
     public const PERMISSIONS = ['desktop.view','media.view','media.upload','media.edit','media.delete',
         'settings.manage','users.manage','audit.view','projects.manage','content.edit','content.publish',
-        'imports.manage','integrations.manage','community.moderate','subscribers.manage','analytics.view','live.manage'];
+        'imports.manage','integrations.manage','community.moderate','subscribers.manage','analytics.view','live.manage','shop.manage'];
     public function seed(): void
     {
         foreach (self::PERMISSIONS as $name) Permission::firstOrCreate(['name' => $name]);

@@ -35,6 +35,7 @@ return [
     'integrations_hint' => 'Verbindungen zu externen Diensten. Tokens werden verschlüsselt gespeichert.', 'api_url' => 'API-URL', 'webhook_url' => 'Webhook-URL', 'api_token' => 'API-Token',
     'users_hint' => 'Benutzerkonten, Rollen und Berechtigungen für Anwendungen und Systembereiche.', 'manage_users' => 'Benutzer verwalten', 'new_role' => 'Neue Rolle', 'create_role' => 'Rolle erstellen',
     'system_hint' => 'Allgemeine Daten der Installation. Technische Server-Zugänge bleiben geschützt.', 'language' => 'Sprache', 'timezone' => 'Zeitzone', 'branding' => 'Branding-Name',
+    'shop' => 'Shop & Verkäufe', 'shop_intro' => 'Digitale Materialien, Produkte und eingegangene Verkäufe verwalten.', 'products' => 'Produkte', 'sales' => 'Verkäufe', 'new_product' => 'Neues Produkt', 'create_product' => 'Produkt anlegen', 'product_empty' => 'Noch keine Produkte angelegt.', 'sales_empty' => 'Noch keine Verkäufe erfasst.', 'price_cents' => 'Preis in Cent', 'currency' => 'Währung', 'draft' => 'Entwurf', 'active' => 'Aktiv', 'archived' => 'Archiviert', 'customer' => 'Kunde', 'amount' => 'Betrag',
     'users'=>'Benutzer', 'name'=>'Name', 'role'=>'Rolle', 'new_user'=>'Neuer Benutzer', 'create_user'=>'Benutzer erstellen',
     'last_owner'=>'Mindestens ein Eigentümer muss erhalten bleiben.',
     'desktop' => 'Desktop',

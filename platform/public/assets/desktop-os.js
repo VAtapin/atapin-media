@@ -275,10 +275,6 @@
   };
 
   const openProgram = (trigger, saved = null) => {
-    if (!saved && trigger.dataset.appUrl) {
-      window.location.assign(trigger.dataset.appUrl);
-      return null;
-    }
     hideSnap();
     stateWasCleared = false;
     const appId = trigger.dataset.openApp;
@@ -294,6 +290,13 @@
       desktop.append(windowElement);
       bindWindow(windowElement);
       createTaskButton(windowElement, trigger);
+      if (trigger.dataset.appUrl) {
+        const frame = document.createElement('iframe');
+        frame.className = 'os-app-frame';
+        frame.src = trigger.dataset.appUrl;
+        frame.title = trigger.dataset.appName;
+        windowElement.querySelector('.os-window-content').append(frame);
+      }
 
       if (saved) {
         windowElement.dataset.pinned = saved.pinned ? 'true' : 'false';

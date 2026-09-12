@@ -120,7 +120,16 @@ class FoundationTest extends TestCase
         $this->put('/desktop/settings', ['section'=>'publishing','publishing_default_visibility'=>'internal','publishing_default_timezone'=>'Europe/Berlin','publishing_approval_required'=>'1'])->assertRedirect();
         $this->assertTrue(app(Settings::class)->get('publishing_approval_required'));
         $this->get('/desktop/settings')->assertOk()->assertSee('Desktop & Design')->assertSee('Social Media')->assertSee('Benutzer & Rechte');
-        $this->get('/desktop')->assertOk()->assertSee('data-app-url="http://localhost/desktop/settings"', false);
+        $this->get('/desktop')->assertOk()->assertSee('data-app-url="http://localhost/desktop/settings?embed=1"', false);
+    }
+    public function test_settings_and_shop_open_as_embedded_desktop_apps(): void
+    {
+        $owner = $this->user('Owner'); $this->actingAs($owner);
+        $this->get('/desktop/settings?embed=1')->assertOk()->assertDontSee('sidebar')->assertSee('Desktop & Design');
+        $this->get('/desktop/shop?embed=1')->assertOk()->assertSee('Shop & Verkäufe')->assertSee('Neues Produkt');
+        $desktop = $this->get('/desktop')->assertOk();
+        foreach (['Videos','Beiträge','Bücher & PDF','Podcast','Live Studio','Media Library','Projekte','Aufgaben','Kalender','Community','Newsletter','Themen & Kategorien','Publishing','Shop & Verkäufe','KI-Assistent','Analytics','Import Center','Integrationen','Einstellungen'] as $name) $desktop->assertSee($name);
+        $desktop->assertDontSee('>Subscribers<', false)->assertDontSee('>Bilder<', false)->assertDontSee('>Audio<', false)->assertDontSee('>Dateien<', false);
     }
     public function test_last_owner_cannot_be_demoted_and_short_password_account_can_be_created():void
     {

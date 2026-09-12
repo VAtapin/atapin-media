@@ -9,14 +9,15 @@ use App\Models\Role;
 use Illuminate\Support\Facades\Gate;
 class SettingsController extends Controller
 {
-    public function edit(Settings $settings) {
-        return view('settings', ['settings' => $settings->all(), 'roles' => Role::with('permissions')->orderBy('name')->get(),
+    public function edit(Request $request, Settings $settings) {
+        $data = ['settings' => $settings->all(), 'roles' => Role::with('permissions')->orderBy('name')->get(),
             'permissions' => Permission::orderBy('name')->get(), 'secretStatus' => [
                 'ai_api_key' => $settings->hasSecret('ai_api_key'), 'youtube_api_key' => $settings->hasSecret('youtube_api_key'),
                 'facebook_access_token' => $settings->hasSecret('facebook_access_token'), 'instagram_access_token' => $settings->hasSecret('instagram_access_token'),
                 'tiktok_access_token' => $settings->hasSecret('tiktok_access_token'), 'telegram_bot_token' => $settings->hasSecret('telegram_bot_token'),
                 'integration_api_token' => $settings->hasSecret('integration_api_token'),
-            ]]);
+            ]];
+        return view($request->boolean('embed') ? 'settings-embed' : 'settings', $data);
     }
     public function update(Request $request, Settings $settings)
     {

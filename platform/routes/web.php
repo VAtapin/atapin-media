@@ -39,6 +39,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/desktop/media/{media}', [MediaController::class,'update'])->middleware('can:media.edit')->name('media.update');
     Route::get('/desktop/media/{media}/download', [MediaController::class,'download'])->middleware('can:media.view')->name('media.download');
     Route::get('/desktop/media/{media}/preview', [MediaController::class,'preview'])->middleware('can:media.view')->name('media.preview');
+    Route::get('/desktop/shop', [\App\Http\Controllers\ShopController::class, 'index'])->middleware('can:shop.manage')->name('shop.index');
+    Route::post('/desktop/shop', [\App\Http\Controllers\ShopController::class, 'store'])->middleware('can:shop.manage')->name('shop.store');
     Route::get('/desktop/settings', [SettingsController::class,'edit'])->middleware('can:settings.manage')->name('settings');
     Route::put('/desktop/settings', [SettingsController::class,'update'])->middleware('can:settings.manage');
     Route::post('/desktop/settings/roles', [SettingsController::class,'storeRole'])->middleware('can:users.manage')->name('settings.roles.store');

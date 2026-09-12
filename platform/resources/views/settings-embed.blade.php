@@ -1,0 +1,3 @@
+<!doctype html>
+<html lang="{{ app()->getLocale() }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/app.css"></head>
+<body class="settings-embed"><main class="settings-embed-main">@if(session('status'))<div class="notice success" role="status">{{ session('status') }}</div>@endif @if($errors->any())<div class="notice error" role="alert"><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif @include('settings-content')</main></body></html>
