@@ -73,6 +73,15 @@ class ImportedContentController extends Controller
             'author' => $metadata['author'] ?? null, 'tags' => $metadata['tags'] ?? [], 'classification' => $metadata['classification'] ?? null,
             'external_url' => $presentation->externalUrl($metadata ?? [], $record->source, $record->source_id, $record->kind),
             'has_local_video' => $assets->contains(fn ($asset) => $asset['kind'] === 'video' && $asset['available']),
+            'import_enriched' => (bool) ($metadata['import_enriched'] ?? false),
+            'import_versions' => \App\Models\SourceRecordSnapshot::where('source_record_id',$record->id)->latest()->limit(20)->get(['id','title','created_at'])
+                ->map(fn ($snapshot) => ['title'=>$snapshot->title,'created_at'=>$snapshot->created_at,'url'=>route('content.import-version',[$record,$snapshot])]),
             'assets' => $assets, 'private' => true]);
+    }
+
+    public function importVersion(SourceRecord $record, \App\Models\SourceRecordSnapshot $snapshot)
+    {
+        abort_unless($snapshot->source_record_id === $record->id,404);
+        return response()->json(['title'=>$snapshot->title,'body'=>$snapshot->body,'kind'=>$snapshot->kind,'metadata'=>$snapshot->metadata]);
     }
 }

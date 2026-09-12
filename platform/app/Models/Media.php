@@ -14,6 +14,7 @@ class Media extends Model
     public function collections() { return $this->belongsToMany(Collection::class)->withPivot('position')->withTimestamps(); }
     public function usages() { return $this->hasMany(MediaUsage::class); }
     public function classifications() { return $this->hasMany(MediaClassification::class); }
+    public function originals() { return $this->hasMany(MediaOriginal::class); }
     public function scopeVisibleLibrary($query) { return $query->whereNull('archived_at'); }
     public function formattedSize(): string
     {

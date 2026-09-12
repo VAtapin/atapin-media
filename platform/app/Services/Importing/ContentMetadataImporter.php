@@ -12,16 +12,7 @@ class ContentMetadataImporter
 {
     public function record(string $source, string $id, string $kind, string $title, string $body, array $metadata): SourceRecord
     {
-        // Re-import never overwrites the owner's reviewed text or assignment.
-        $record = SourceRecord::firstOrCreate(['source' => $source, 'source_id' => $id], [
-            'kind' => $kind, 'title' => $title, 'body' => $body, 'metadata' => $metadata, 'status' => 'unsorted',
-        ]);
-        if (! $record->wasRecentlyCreated && ! empty($metadata['media_ids'])) {
-            $existing = $record->metadata;
-            $existing['media_ids'] = array_values(array_unique([...($existing['media_ids'] ?? []), ...$metadata['media_ids']]));
-            $record->update(['metadata' => $existing]);
-        }
-        return $record;
+        return app(ImportedRecordMerger::class)->merge($source,$id,$kind,$title,$body,$metadata);
     }
 
     public function comments(string $source, string $parent, array $comments, array $metadata = []): void
@@ -98,6 +89,9 @@ class ContentMetadataImporter
     {
         $ids = [];
         $prefix = str_replace(DIRECTORY_SEPARATOR, '/', substr(realpath($directory), strlen(realpath(config('platform.import_inbox_root'))) + 1));
+        $originalIds = \App\Models\MediaOriginal::where('disk','import-inbox')->where('path','like',$prefix === '' ? '%' : $prefix.'/%')->get()
+            ->filter(fn ($original) => ($prefix === '' || str_starts_with($original->path,$prefix.'/')) && ($name === null || pathinfo($original->path,PATHINFO_FILENAME) === $name))->pluck('media_id');
+        $ids = Media::whereIn('id',$originalIds)->get()->filter(fn ($media) => in_array($media->kind,['video','audio','image','pdf'],true) || in_array(strtolower(pathinfo($media->original_name,PATHINFO_EXTENSION)),['srt','vtt','ass'],true))->pluck('id')->all();
         foreach (Media::where('disk', 'import-inbox')->where('path', 'like', $prefix === '' ? '%' : $prefix.'/%')->get() as $media) {
             if ($prefix !== '' && ! str_starts_with($media->path, $prefix.'/')) continue;
             if ($name !== null && pathinfo($media->original_name, PATHINFO_FILENAME) !== $name) continue;
@@ -151,7 +145,8 @@ class ContentMetadataImporter
                 ImportPath::entry($file);
                 $path = ImportPath::resolve($root, $root.'/'.$file);
                 $relative = str_replace(DIRECTORY_SEPARATOR,'/',substr($path,strlen(realpath(config('platform.import_inbox_root')))+1));
-                $asset = Media::where('disk','import-inbox')->where('path',$relative)->first();
+                $original = \App\Models\MediaOriginal::where('disk','import-inbox')->where('path',$relative)->latest('id')->first();
+                $asset = $original ? Media::find($original->media_id) : Media::where('disk','import-inbox')->where('path',$relative)->first();
                 if ($asset) $metadata['media_ids'][] = $asset->id;
             }
         } elseif (! in_array($kind,['poll','comment'],true)) {

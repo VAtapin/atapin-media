@@ -22,6 +22,8 @@
       } catch (error) {message.textContent = error.message;}
     };
     panel.querySelector('form').addEventListener('submit', event => {event.preventDefault(); search();});
+    panel.querySelector('[name=q]').addEventListener('input', event => event.stopPropagation());
+    panel.querySelector('[name=q]').addEventListener('change', event => event.stopPropagation());
     panel.addEventListener('toggle', () => {if (panel.open && !panel.dataset.loaded) {panel.dataset.loaded='true'; search();}});
     results.addEventListener('click', async event => {
       const page = event.target.closest('[data-cover-page]'); if (page) {search(Number(page.dataset.coverPage)); return;}

@@ -49,7 +49,7 @@ class LocalFolderAdapter implements ImportAdapter
             try {
                 $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($absolute) ?: 'application/octet-stream';
                 $hash = hash_file('sha256', $absolute);
-                $media = Media::firstOrCreate(['source' => $run->source, 'source_id' => hash('sha256', $relative.'|'.$hash)], [
+                $media = app(ImportedMediaRegistry::class)->register(['source' => $run->source, 'source_id' => hash('sha256', $relative.'|'.$hash),
                     'title' => mb_substr($file->getFilename(), 0, 255), 'original_name' => mb_substr($file->getFilename(), 0, 255),
                     'kind' => MediaLibrary::kind($mime), 'mime' => $mime, 'bytes' => $file->getSize(),
                     'disk' => 'import-inbox', 'path' => $relative, 'sha256' => $hash, 'status' => 'unsorted',

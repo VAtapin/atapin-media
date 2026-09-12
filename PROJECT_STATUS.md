@@ -2,6 +2,8 @@
 
 ## Реализовано
 
+- Безопасное повторное чтение импортов: одинаковые originals сопоставляются по SHA-256/размеру/MIME, альтернативные private storage locations сохраняются отдельно без удаления файлов. SourceRecords объединяются по source/id: недостающие связи и metadata дополняются, более полное исходное описание сохраняется, ручные/ИИ-принятые title/body не заменяются. Исходные версии доступны в раскрываемой панели «Import-Versionen». Повторный идентичный импорт не создаёт лишние версии и не запускает повторный платный ИИ для уже существующего файла. Навигация и просмотр материалов/playlist positions не предлагают внешние кнопки; адреса источников остаются provenance, local media используют защищённый плеер.
+
 - Привязка обложек: в деталях image можно раскрыть «Als Video-Cover zuordnen», найти video/short с pagination и выбрать конкретный SourceRecord, даже без локального video original. Выбранное cover используется для video-file thumbnail; originals/описания не копируются и не перезаписываются, чужой parent блокирует ошибочную привязку. Inspector учитывает прямые metadata-связи, не только usages. ИИ больше не создаёт самостоятельный материал из известного thumbnail без parent.
 
 - Этап фоновых импортов: история показывает реальные processing stages, queued задания отменяются сразу, running переходят через stop_requested в cancelled. Downloads прерываются через Process stop, archive/file/metadata обработка проверяет остановку между операциями; originals не удаляются. Cancelled import можно повторить со стабильным ID/options, сохранённые файлы перечитываются. Worker claim защищён от повторного запуска, timeout/failure hook снимает running state. Progress исправлен на array, без выдуманного общего процента.
@@ -77,7 +79,7 @@
 
 - Для Projekte, Aufgaben, Kalender и Shop ещё требуется отдельная разработка native-интерфейсов внутри Desktop.
 - Production deployment/приёмка последних изменений не подтверждены: реальные service downloads, OpenAI-запросы, 10–20 GB transfer и automatic intake cutover локальными тестами не подтверждены. По решению владельца платное прослушивание/анализ аудио и видео не входит в ближайший план; ИИ использует имеющиеся тексты, метаданные, готовые субтитры и небольшие изображения; поддержан только OpenAI.
-- Media Library ещё требует редактора импортированных playlist positions, массовых действий для текстовых SourceRecords (массовые действия сейчас для файлов), полного обратного назначения canonical imported записей, переходов по usage references, истории/отмены ИИ для SourceRecords и локального технического processing. Отмена Media доступна только для новых журналов со snapshots, не для старых proposals. Import Center ещё требует полного адаптера личных YouTube exports, межисточниковой дедупликации и подробного per-item результата. Фоновый stop реализован, но сохранённая текущая операция/hash/copy может завершиться до checkpoint; granular resume отсутствует, retry перечитывает сохранённые данные. Реальный личный архив нужен для подтверждения полноты адаптера; серверная приёмка не заменяется локальными тестами.
+- Media Library ещё требует редактора импортированных playlist positions, массовых действий для текстовых SourceRecords (массовые действия сейчас для файлов), полного обратного назначения canonical imported записей, переходов по usage references, истории/отмены ИИ для SourceRecords и локального технического processing. Отмена Media доступна только для новых журналов со snapshots, не для старых proposals. Import Center ещё требует полного адаптера личных YouTube exports и подробного per-item результата. Дедупликация используется при регистрации архивов/серверных папок; уже существующие дубли автоматически не удаляются, ручной upload пока имеет отдельный registry. Фоновый stop реализован, но текущая операция/hash/copy может завершиться до checkpoint; granular resume отсутствует, retry перечитывает сохранённые данные. Серверная приёмка не заменяется локальными тестами.
 - Public Website начат, но ещё не завершён.
 - Для ручных YouTube выгрузок поддержаны ZIP/TAR и распознаваемые JSON/видео CSV. Произвольные варианты Takeout, экспортные HTML и неизвестные schemas ещё требуют отдельного разбора; нельзя выдавать их регистрацию файлами за полный импорт содержания.
 
@@ -87,6 +89,8 @@
 - После получения личной выгрузки YouTube реализовать адаптер ручного архива по `youtube/MANUAL_ARCHIVE_IMPORT.md`, затем запустить импорт через Import Center.
 
 ## Проверки
+
+- Повторные импорты: 15 целевых ImportMerge/LocalImport/ArchiveImport tests / 72 assertions прошли; существующие описания/субтитры проверены отдельным тестом. JS syntax, Blade compilation и Edge workflow (включая исходные версии, отсутствие внешних кнопок и сохранность форм) прошли. Полные suite, реальные provider requests и production не запускались. Реальные 8 Takeout ZIP прочитаны локально только для структуры/малых CSV, без распаковки 55 GB: 244 video originals, 242 однозначных сопоставления по исходному названию, 2 неоднозначных требуют безопасного отчёта, а не автоматического угадывания. Отдельный takeout-20260911T193951Z-001.zip — отчёт, не часть видеоархива.
 
 - Обложки: 3 целевых Laravel tests / 22 assertions, JS syntax/Blade compilation и Edge workflow ручного выбора cover прошли. Проверены отсутствие video original, связь с local video, thumbnail selection, сохранность originals/описаний и permissions/conflicting parent. Платные ИИ-запросы не запускались.
 
@@ -116,7 +120,8 @@
 - Загрузка: 43bb6c8 — Add pausable parallel uploads and client folder intake.
 - Экономная ИИ-разметка: 76fd699 — Preserve manual edits and safely undo economical AI classification.
 - Фоновые импорты: 4d92c41 — Stop background imports safely and show processing stages.
-- Текущий этап: Link image covers to specific video content (commit с этой записью).
+- Обложки: 9606bd5 — Link image covers to specific video content.
+- Текущий этап: Merge imported originals and preserve richer source versions (commit с этой записью).
 
 - Этап 2: f55f340 — Fix archive imports and add resumable desktop intake.
 - Этап 3: 7d787a3 — Import service links and structured archive content.

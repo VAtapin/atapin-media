@@ -48,6 +48,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/desktop/media/{media}/cover', [\App\Http\Controllers\MediaCoverController::class,'store'])->middleware(['can:media.edit','can:content.edit'])->name('media.cover');
     Route::post('/desktop/media/{media}/classifications/{classification}/undo', [\App\Http\Controllers\ContentClassificationController::class,'undo'])->middleware(['can:media.edit', 'can:content.edit'])->name('media.classification.undo');
     Route::get('/desktop/content', [\App\Http\Controllers\ImportedContentController::class,'index'])->middleware('can:media.view')->name('content.index');
+    Route::get('/desktop/content/{record}/imports/{snapshot}', [\App\Http\Controllers\ImportedContentController::class,'importVersion'])->middleware('can:media.view')->name('content.import-version');
     Route::get('/desktop/content/playlists', [\App\Http\Controllers\ImportedContentController::class,'playlists'])->middleware('can:media.view')->name('content.playlists');
     Route::get('/desktop/content/playlists/{collection}', [\App\Http\Controllers\ImportedContentController::class,'playlist'])->middleware('can:media.view')->name('content.playlist');
     Route::get('/desktop/content/{record}', [\App\Http\Controllers\ImportedContentController::class,'show'])->middleware('can:media.view')->name('content.show');

@@ -13,6 +13,7 @@
     let page = 1;
     let controller;
     let playlistUrl = null;
+    let detailGeneration = 0;
     const get = async url => {
       const response = await fetch(url, { credentials:'same-origin', headers:{Accept:'application/json'} });
       if (!response.ok) throw new Error(text.load_error);
@@ -50,17 +51,22 @@
       if (!url) return;
       if (details.dataset.dirty === 'true' && !window.confirm(text.discard_edits)) return;
       delete details.dataset.dirty;
+      const generation = ++detailGeneration;
+      details.textContent = text.content_loading;
+      delete details.dataset.recordId;
       try {
         const item = await get(url);
+        if (generation !== detailGeneration || !root.isConnected) return;
         if (item.kind === 'playlist') playlistUrl = url;
         else if (event.target.closest('[data-content-list]')) playlistUrl = null;
-        const external = href => `<a class="desktop-button" href="${escape(href)}" target="_blank" rel="noopener noreferrer">${escape(item.source === 'youtube' ? text.open_youtube : text.open_external)} ↗</a>`;
+        // Source URLs are provenance, never a playback or navigation fallback.
+        const external = () => '';
         details.innerHTML = `${item.kind !== 'playlist' && playlistUrl ? `<button type="button" class="desktop-button" data-content-detail="${escape(playlistUrl)}">← ${escape(text.playlist_back)}</button>` : ''}<h3>${escape(item.title)}</h3><p>${escape(text[`kind_${item.kind}`])} · ${escape(text.external_origin)} ${escape(text[`source_${item.source}`] || item.source)}</p><p class="content-location-note">${escape(item.kind === 'playlist' ? text.playlist_local : text.local_record)}${['video','short'].includes(item.kind) ? `<br>${escape(item.has_local_video ? text.local_file : text.no_local_video)}` : ''}</p>${item.external_url ? external(item.external_url) : ''}<p class="content-original-text">${escape(item.body)}</p>${item.author ? `<p>${escape(item.author)}</p>` : ''}${item.parent_source_id ? `<p>${escape(text.parent)}: ${escape(item.parent_source_id)}</p>` : ''}${item.poll ? `<pre class="content-original-text">${escape(JSON.stringify(item.poll,null,2))}</pre>` : ''}${item.assets.length ? `<h4>${escape(text.related_files)}</h4>` : ''}${item.assets.map(asset => `<p>${escape(asset.title)}</p>${preview(asset)}${asset.download_url ? `<a class="media-library-download" href="${escape(asset.download_url)}">${escape(text.download_original || text.files)}</a>` : `<small>${escape(text.unavailable)}</small>`}`).join('')}<p><small>${escape(text.private)}</small></p>`;
         details.dataset.recordId = item.id;
         if (item.items) details.insertAdjacentHTML('beforeend', `<p>${escape(text.playlist_hint)}</p><ol class="content-playlist-items">${item.items.map(member=>`<li value="${escape(member.position)}"><span class="content-playlist-title">${escape(member.title||member.source_id||text.unavailable)}</span><small>${escape(member.has_local_video ? text.local_file : member.detail_url ? text.metadata_only : text.missing_content)}</small>${member.detail_url ? `<button type="button" class="desktop-button" data-content-detail="${escape(member.detail_url)}">${escape(text.open_content)}</button>` : ''}${member.external_url ? external(member.external_url) : ''}</li>`).join('')}</ol>${item.previous_url ? `<button type="button" class="desktop-button" data-content-detail="${escape(item.previous_url)}">‹</button>` : ''}${item.next_url ? `<button type="button" class="desktop-button" data-content-detail="${escape(item.next_url)}">›</button>` : ''}`);
         if (root.dataset.canEdit === 'true' && item.kind !== 'playlist') window.appendContentAssignment?.(details, 'record', item);
         details.dispatchEvent(new CustomEvent('content-selected', { bubbles: true, detail: item }));
-      } catch (error) { details.textContent = error.message; }
+      } catch (error) { if (generation === detailGeneration && root.isConnected) details.textContent = error.message; }
     });
     form.addEventListener('submit', event => { event.preventDefault(); load(); });
     form.addEventListener('change', () => load());

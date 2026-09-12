@@ -33,7 +33,8 @@ class MediaController extends Controller
             $term = $filters['q'];
             $query->where(fn ($items) => $items->where('title', 'like', "%{$term}%")->orWhere('original_name', 'like', "%{$term}%"));
         }
-        foreach (['source', 'kind', 'status'] as $field) if ($filters[$field] ?? null) $query->where($field, $filters[$field]);
+        if ($filters['source'] ?? null) $query->where(fn ($q) => $q->where('source',$filters['source'])->orWhereHas('originals',fn ($originals) => $originals->where('source',$filters['source'])));
+        foreach (['kind', 'status'] as $field) if ($filters[$field] ?? null) $query->where($field, $filters[$field]);
         match ($filters['sort'] ?? 'newest') {
             'oldest' => $query->oldest(),
             'name' => $query->orderBy('title'),
@@ -89,6 +90,7 @@ class MediaController extends Controller
             'parent' => $media->parent ? $asset($media->parent) : null,
             'assets' => $media->assets->map($asset), 'collections' => $media->collections->map(fn ($item) => ['id' => $item->id, 'title' => $item->title]),
             'cover_url' => route('media.cover', $media),
+            'originals' => $media->originals()->get(['disk','path','source','original_name','sha256','bytes']),
             'usages' => $records->map(fn ($item) => ['title' => $item->title, 'kind' => $item->kind, 'detail_url' => route('content.show', $item)]),
             'classifications' => $media->classifications()->latest()->limit(20)->get()->map(fn ($log) => [
                 'id'=>$log->id, 'provider'=>$log->provider, 'model'=>$log->model, 'status'=>$log->status, 'confidence'=>$log->confidence,

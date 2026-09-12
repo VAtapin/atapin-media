@@ -29,7 +29,9 @@ class AiContentEvidence
         if (! empty($item->metadata['summary'])) $parts[] = mb_substr($item->metadata['summary'], 0, 4000);
         if (! empty($item->metadata['description'])) $parts[] = mb_substr($item->metadata['description'], 0, 4000);
         foreach ($records as $record) {
-            if (! empty($record->body)) $parts[] = mb_substr($record->title."\n".$record->body, 0, 8000);
+            $description = $record->metadata['original_description'] ?? '';
+            if ($description !== '') $parts[] = mb_substr($record->title."\n".$description,0,8000);
+            if (! empty($record->body) && $record->body !== $description) $parts[] = mb_substr($record->title."\n".$record->body, 0, 8000);
             $ids = array_merge($ids, app(ImportedContentPresentation::class)->mediaIds($record->metadata ?? []));
         }
         foreach (Media::whereIn('id', array_unique($ids))->get() as $media) {

@@ -29,6 +29,7 @@ try {
   const stamp = Date.now(); const fileName = `browser-original-${stamp}.txt`; const reviewedFile = `Browser reviewed original ${stamp}`; const reviewedPost = `Browser reviewed post ${stamp}`;
   const coverName = `browser-cover-${stamp}.png`;
   await media.locator('[data-media-upload-input]').setInputFiles({name:coverName,mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==','base64')});
+  await media.locator('[data-media-upload-queue]').waitFor({state:'hidden'});
   await media.locator('[data-library-list]').getByText(coverName).click();
   const coverPanel = media.locator('[data-library-details] details').filter({has:page.locator('[data-cover-results]')});
   await coverPanel.locator('summary').click();
@@ -38,6 +39,19 @@ try {
   page.once('dialog', dialog => dialog.accept());
   await coverPanel.locator('[data-cover-record]').filter({hasText:'Browser playlist video'}).click();
   assert((await coverResponse).ok());
+  await media.locator('[data-library-content-toggle]').click();
+  const content = media.locator('[data-content-library]');
+  await content.locator('[name=q]').fill('Browser playlist video');
+  await content.locator('form').dispatchEvent('submit');
+  await content.locator('[data-content-list]').getByText('Browser playlist video').click();
+  await content.locator('[data-content-details][data-record-id]').waitFor();
+  assert.equal(await content.locator('[data-content-details] a[href*="youtube.com"]').count(), 0);
+  const versions = content.locator('[data-content-details] details').filter({has:page.locator('[data-import-version-body]')});
+  await versions.locator('summary').click();
+  await versions.locator('[data-import-version]').first().click();
+  await versions.locator('[data-import-version-body]').getByText('Original description',{exact:true}).waitFor();
+  await content.locator('[name=q]').fill('');
+  await media.locator('[data-library-content-toggle]').click();
   await media.locator('[data-media-upload-input]').setInputFiles({name:fileName,mimeType:'text/plain',buffer:Buffer.from('Original from browser')});
   await media.locator('[data-library-list]').getByText(fileName).waitFor();
   await media.locator('[data-library-list]').getByText(fileName).click();
