@@ -12,6 +12,7 @@
     if (root.dataset.section && root.dataset.section !== 'videos') form.querySelector('[value="playlist"]').remove();
     let page = 1;
     let controller;
+    let playlistUrl = null;
     const get = async url => {
       const response = await fetch(url, { credentials:'same-origin', headers:{Accept:'application/json'} });
       if (!response.ok) throw new Error(text.load_error);
@@ -41,6 +42,7 @@
       if (!asset.preview_url) return '';
       if (asset.kind === 'image') return `<img class="media-library-preview image" src="${url}" alt="" loading="lazy">`;
       if (asset.kind === 'video' || asset.kind === 'audio') return `<${asset.kind} class="media-library-preview ${asset.kind}" controls preload="metadata" src="${url}"></${asset.kind}>`;
+      if (asset.mime === 'application/pdf') return `<iframe class="media-library-preview pdf" src="${url}" title="PDF" sandbox></iframe>`;
       return '';
     };
     root.addEventListener('click', async event => {
@@ -48,9 +50,12 @@
       if (!url) return;
       try {
         const item = await get(url);
-        details.innerHTML = `<h3>${escape(item.title)}</h3><p>${escape(text[`kind_${item.kind}`])} · ${escape(item.source)} · ${escape(item.source_id)}</p><p class="content-original-text">${escape(item.body)}</p>${item.author ? `<p>${escape(item.author)}</p>` : ''}${item.parent_source_id ? `<p>${escape(text.parent)}: ${escape(item.parent_source_id)}</p>` : ''}${item.poll ? `<pre class="content-original-text">${escape(JSON.stringify(item.poll,null,2))}</pre>` : ''}${item.assets.map(asset => `${preview(asset)}<p><a class="media-library-download" href="${escape(asset.download_url)}">${escape(asset.title)}</a></p>`).join('')}<small>${escape(text.private)}</small>`;
+        if (item.kind === 'playlist') playlistUrl = url;
+        else if (event.target.closest('[data-content-list]')) playlistUrl = null;
+        const external = href => `<a class="desktop-button" href="${escape(href)}" target="_blank" rel="noopener noreferrer">${escape(item.source === 'youtube' ? text.open_youtube : text.open_external)} ↗</a>`;
+        details.innerHTML = `${item.kind !== 'playlist' && playlistUrl ? `<button type="button" class="desktop-button" data-content-detail="${escape(playlistUrl)}">← ${escape(text.playlist_back)}</button>` : ''}<h3>${escape(item.title)}</h3><p>${escape(text[`kind_${item.kind}`])} · ${escape(text.external_origin)} ${escape(text[`source_${item.source}`] || item.source)}</p><p class="content-location-note">${escape(item.kind === 'playlist' ? text.playlist_local : text.local_record)}${['video','short'].includes(item.kind) ? `<br>${escape(item.has_local_video ? text.local_file : text.no_local_video)}` : ''}</p>${item.external_url ? external(item.external_url) : ''}<p class="content-original-text">${escape(item.body)}</p>${item.author ? `<p>${escape(item.author)}</p>` : ''}${item.parent_source_id ? `<p>${escape(text.parent)}: ${escape(item.parent_source_id)}</p>` : ''}${item.poll ? `<pre class="content-original-text">${escape(JSON.stringify(item.poll,null,2))}</pre>` : ''}${item.assets.length ? `<h4>${escape(text.related_files)}</h4>` : ''}${item.assets.map(asset => `<p>${escape(asset.title)}</p>${preview(asset)}${asset.download_url ? `<a class="media-library-download" href="${escape(asset.download_url)}">${escape(text.download_original || text.files)}</a>` : `<small>${escape(text.unavailable)}</small>`}`).join('')}<p><small>${escape(text.private)}</small></p>`;
         details.dataset.recordId = item.id;
-        if (item.items) details.insertAdjacentHTML('beforeend', `<ol class="content-playlist-items">${item.items.map(member=>`<li value="${escape(member.position)}">${member.detail_url ? `<button type="button" class="media-library-primary" data-content-detail="${escape(member.detail_url)}">${escape(member.title||member.source_id)}</button>` : `${escape(member.title||member.source_id||text.unavailable)} <small>${escape(member.availability||text.unavailable)}</small>`}</li>`).join('')}</ol>${item.previous_url ? `<button type="button" class="media-library-primary" data-content-detail="${escape(item.previous_url)}">‹</button>` : ''}${item.next_url ? `<button type="button" class="media-library-primary" data-content-detail="${escape(item.next_url)}">›</button>` : ''}`);
+        if (item.items) details.insertAdjacentHTML('beforeend', `<p>${escape(text.playlist_hint)}</p><ol class="content-playlist-items">${item.items.map(member=>`<li value="${escape(member.position)}"><span class="content-playlist-title">${escape(member.title||member.source_id||text.unavailable)}</span><small>${escape(member.has_local_video ? text.local_file : member.detail_url ? text.metadata_only : text.missing_content)}</small>${member.detail_url ? `<button type="button" class="desktop-button" data-content-detail="${escape(member.detail_url)}">${escape(text.open_content)}</button>` : ''}${member.external_url ? external(member.external_url) : ''}</li>`).join('')}</ol>${item.previous_url ? `<button type="button" class="desktop-button" data-content-detail="${escape(item.previous_url)}">‹</button>` : ''}${item.next_url ? `<button type="button" class="desktop-button" data-content-detail="${escape(item.next_url)}">›</button>` : ''}`);
         if (root.dataset.canEdit === 'true' && item.kind !== 'playlist') window.appendContentAssignment?.(details, 'record', item);
         details.dispatchEvent(new CustomEvent('content-selected', { bubbles: true, detail: item }));
       } catch (error) { details.textContent = error.message; }

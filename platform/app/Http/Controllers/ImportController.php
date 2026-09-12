@@ -102,23 +102,10 @@ class ImportController extends Controller
         ]);
     }
 
-    public function files(Request $request)
+    public function files(Request $request, \App\Services\Importing\ServerImportBrowser $browser)
     {
         $data = $request->validate(['path' => 'nullable|string|max:255']);
-        $configured = config('platform.import_inbox_root');
-        if (! is_dir($configured)) return response()->json(['data' => [], 'path' => '']);
-        $root = \App\Services\Importing\ImportPath::resolve($configured, $data['path'] ?? '.');
-        abort_unless(is_dir($root), 422);
-        $items = [];
-        foreach (new \DirectoryIterator($root) as $file) {
-            if ($file->isDot() || $file->isLink() || str_starts_with($file->getFilename(), '.')) continue;
-            if (! $file->isDir() && ! preg_match('/\.(zip|tar|tgz|gz)$/i', $file->getFilename())) continue;
-            $real = \App\Services\Importing\ImportPath::resolve($configured, $file->getPathname());
-            $items[] = ['name' => $file->getFilename(), 'path' => str_replace(DIRECTORY_SEPARATOR, '/', substr($real, strlen(realpath($configured)) + 1)),
-                'source' => $file->isDir() ? 'local-folder' : 'local-archive'];
-            if (count($items) >= 500) break;
-        }
-        return response()->json(['data' => $items]);
+        return response()->json($browser->list($data['path'] ?? ''));
     }
 
     public function store(Request $request, Audit $audit, ImportCenter $center)

@@ -66,4 +66,19 @@ class ImportCenterTest extends TestCase
         $this->actingAs($this->user('Editor'));
         $this->postJson('/desktop/imports', ['source' => 'intake'])->assertForbidden();
     }
+
+    public function test_server_browser_has_navigation_and_does_not_escape_import_root(): void
+    {
+        $root = sys_get_temp_dir().'/atapin-browser-'.bin2hex(random_bytes(8));
+        mkdir($root.'/nested', 0700, true);
+        file_put_contents($root.'/nested/original.txt', 'original');
+        config(['platform.import_inbox_root' => $root]);
+        try {
+            $this->actingAs($this->user('Owner'));
+            $this->getJson('/desktop/imports/files')->assertOk()->assertJsonPath('data.0.type', 'folder')->assertJsonPath('parent', null);
+            $this->getJson('/desktop/imports/files?path=nested')->assertOk()->assertJsonPath('path', 'nested')->assertJsonPath('parent', '')->assertJsonPath('data.0.type', 'file');
+            $this->getJson('/desktop/imports/files?path=..')->assertUnprocessable();
+            $this->getJson('/desktop/imports/files?path=nested/original.txt')->assertUnprocessable();
+        } finally {\Illuminate\Support\Facades\File::deleteDirectory($root);}
+    }
 }

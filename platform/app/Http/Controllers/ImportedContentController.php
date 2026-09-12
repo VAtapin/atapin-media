@@ -44,33 +44,35 @@ class ImportedContentController extends Controller
         ]),'meta'=>['current_page'=>$page->currentPage(),'last_page'=>$page->lastPage(),'total'=>$page->total()]]);
     }
 
-    public function playlist(Request $request, \App\Models\Collection $collection)
+    public function playlist(Request $request, \App\Models\Collection $collection, \App\Services\Importing\ImportedContentPresentation $presentation)
     {
         $request->validate(['page'=>'nullable|integer|min:1']);
         $page = $collection->items()->paginate(100);
         $items = $page->getCollection();
         $records = SourceRecord::where('source',$collection->source)->whereIn('source_id',$items->pluck('source_id')->filter())->get()->keyBy('source_id');
+        $ids = $records->flatMap(fn ($record) => $presentation->mediaIds($record->metadata ?? []))->unique();
+        $videoIds = Media::whereIn('id', $ids)->where('kind', 'video')->get()->filter(fn ($media) => \Illuminate\Support\Facades\Storage::disk($media->disk)->exists($media->path))->pluck('id')->all();
         return response()->json(['id'=>$collection->id,'title'=>$collection->title,'body'=>$collection->description,'kind'=>'playlist',
             'source'=>$collection->source,'source_id'=>$collection->source_id,'status'=>'','assets'=>[],'private'=>true,
+            'external_url' => $presentation->externalUrl($collection->metadata ?? [], $collection->source ?? '', $collection->source_id, 'playlist'),
             'items'=>$items->map(fn ($item)=>['position'=>$item->position,'title'=>$item->title,'source_id'=>$item->source_id,
+                'has_local_video' => isset($records[$item->source_id ?? '']) && (bool) array_intersect($presentation->mediaIds($records[$item->source_id]->metadata ?? []), $videoIds),
+                'external_url' => $presentation->externalUrl([], $collection->source ?? '', $item->source_id, 'video'),
                 'availability'=>$item->availability,'detail_url'=>isset($records[$item->source_id??'']) ? route('content.show',$records[$item->source_id]) : null]),
             'previous_url'=>$page->previousPageUrl(),'next_url'=>$page->nextPageUrl(),
         ]);
     }
 
-    public function show(SourceRecord $record)
+    public function show(SourceRecord $record, \App\Services\Importing\ImportedContentPresentation $presentation)
     {
         $metadata = $record->metadata;
-        $ids = [...($metadata['media_ids'] ?? []), ...($metadata['images'] ?? [])];
-        foreach ($metadata['media'] ?? [] as $assets) $ids = [...$ids, ...$assets];
+        $assets = $presentation->assets($record);
         return response()->json(['id' => $record->id, 'title' => $record->title, 'body' => $record->body,
             'kind' => $record->kind, 'source' => $record->source, 'source_id' => $record->source_id, 'status' => $record->status,
             'parent_source_id' => $metadata['parent_source_id'] ?? null, 'poll' => $metadata['poll'] ?? null,
             'author' => $metadata['author'] ?? null, 'tags' => $metadata['tags'] ?? [], 'classification' => $metadata['classification'] ?? null,
-            'assets' => Media::whereIn('id', array_unique($ids))->get()->map(fn ($media) => [
-                'title' => $media->title, 'kind' => $media->kind, 'mime' => $media->mime,
-                'download_url' => route('media.download', $media),
-                'preview_url' => in_array($media->mime, ['image/jpeg','image/png','image/webp','image/gif','audio/mpeg','audio/ogg','video/mp4','video/webm','application/pdf'], true) ? route('media.preview', $media) : null,
-            ]), 'private' => true]);
+            'external_url' => $presentation->externalUrl($metadata ?? [], $record->source, $record->source_id, $record->kind),
+            'has_local_video' => $assets->contains(fn ($asset) => $asset['kind'] === 'video' && $asset['available']),
+            'assets' => $assets, 'private' => true]);
     }
 }

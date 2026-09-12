@@ -1,0 +1,19 @@
+<?php
+
+return [
+    'title' => 'Help',
+    'close' => 'Close help',
+    'workflow_title' => 'How do these programs work together?',
+    'workflow' => 'Import Center brings files and content in. Media Library shows stored originals. Videos, Posts and Community show associated content. Importing and classifying do not publish anything automatically.',
+    'navigation_title' => 'Using windows',
+    'navigation' => 'You can move, resize and close this help window. Your working window stays open. Search and filters only change the view; they do not delete materials.',
+    'pending' => 'The native workspace for this program is not fully implemented yet. An empty area does not mean archived files were deleted. Use Media Library and Import Center for the implemented archive functions.',
+    'apps' => [
+        'imports' => ['Choose one of four methods: an archive from your computer, a public link, an existing archive or a permitted server folder. Only relevant fields are displayed.', 'Existing archives registers previous uploads or collected YouTube data. Server folder shows only the permitted import area. Open a folder to inspect it, then explicitly select it for import.', 'ZIP/TAR archives are uploaded first, then processed in the background. Reselect the same file to resume an interrupted upload. Unknown export formats are preserved as files but not automatically understood as posts.', 'The import log shows newly registered and skipped entries. A skipped entry may already exist. Errors and partial imports are not reported as complete success.'],
+        'media' => ['This is your local file archive. Select a file for preview, details and download. Posts & metadata switches to content, including text entries without a video file.', 'Read existing archives makes previous uploads and YouTube originals visible. It does not download them again. Use Import Center for new links or ZIP/TAR archives.', 'Unsorted means not classified yet. You can edit tags and destination manually. Assigning content reuses originals and does not publish them.', 'AI uses existing text, descriptions, metadata and supported small images. It does not listen to audio or analyze video tracks. Insufficient information requires review.'],
+        'videos' => ['This list shows locally stored video and short content. A description or thumbnail does not mean a video file is available. Details explicitly indicate whether a video original exists.', 'Playlists show locally imported order, not a live YouTube view. Open local content displays stored information; Open on YouTube explicitly visits the external service.', 'Missing positions and originals remain visible and can be supplemented by a later archive or link import.'],
+        'posts' => ['Posts are stored text, possibly with images and other files. Original text is the imported post, not an automatically published website page.', 'External original opens the source service. Related files are in the private archive. You can edit title, body, tags and status in details.'],
+        'community' => ['This area shows imported polls and comments. Belongs to identifies the original post or video when that relationship is present in the export.', 'A stored comment is an archive copy. This interface does not send replies to external services. Importing does not publish anything.'],
+        'settings' => ['Tabs separate desktop appearance, AI, social media, publishing, integrations, permissions and system settings. Save changes explicitly.', 'AI classification requires enabled AI, an OpenAI model and an API key. Automatic classification can be disabled. Social configuration alone does not establish OAuth access or publishing.', 'Your personal profile opens from your name in the Start menu and is separate from official project accounts.'],
+    ],
+];

@@ -1,0 +1,9 @@
+.os-window-content{--desktop-app-bg:#f3f7fb;--desktop-app-panel:#fff;--desktop-app-border:#d8e3ef;--desktop-app-text:#102f52;--desktop-app-muted:#627893;--desktop-app-accent:#0e477d}
+.desktop-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--desktop-app-border);border-radius:6px;background:#fff;color:var(--desktop-app-text);padding:8px 12px;font:600 13px/1.35 Inter,Arial,sans-serif;cursor:pointer;text-decoration:none}
+.desktop-button:hover{background:#f2f7fc}
+.desktop-button.is-primary{background:var(--desktop-app-accent);border-color:var(--desktop-app-accent);color:#fff}
+.desktop-button:disabled{opacity:.55;cursor:not-allowed}
+.desktop-button:focus-visible{outline:2px solid var(--desktop-app-accent);outline-offset:2px}
+.desktop-help{height:100%;overflow:auto;padding:20px;color:var(--desktop-app-text);background:var(--desktop-app-bg);font:14px/1.6 Inter,Arial,sans-serif}
+.desktop-help p{margin:0 0 16px}.desktop-help h3{font-size:15px;margin:20px 0 8px}.desktop-help ul{padding-left:22px}.desktop-help li{margin:8px 0}
+.desktop-help .desktop-help-note{padding:12px;border:1px solid var(--desktop-app-border);border-radius:8px;background:#fff}

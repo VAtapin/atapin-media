@@ -222,7 +222,7 @@
   const saveState = () => {
     if (restoring) return;
     const desktopRect = desktop.getBoundingClientRect();
-    const windowElements = [...document.querySelectorAll('.os-window')];
+    const windowElements = [...document.querySelectorAll('.os-window')].filter(element => !element.dataset.appId.startsWith('help-'));
     if (windowElements.length === 0) {
       activeLayoutId = null;
       hideSnap();
@@ -384,6 +384,11 @@
       desktop.append(windowElement);
       bindWindow(windowElement);
       createTaskButton(windowElement, trigger);
+      if (appId.startsWith('help-')) {
+        const help = document.querySelector(`[data-help-template="${CSS.escape(appId.slice(5))}"]`);
+        if (help) windowElement.querySelector('.os-window-content').append(help.content.firstElementChild.cloneNode(true));
+        windowElement.querySelector('[data-window-action="help"]').remove();
+      }
       if (appId === 'settings') {
         windowElement._settingsPreview = captureSettingsPreview(windowElement);
         const settingsTemplate = document.querySelector('#settings-app-template');
@@ -511,7 +516,13 @@
     windowElement.querySelectorAll('[data-window-action]').forEach(button => button.addEventListener('click', async event => {
       event.stopPropagation();
       const action = button.dataset.windowAction;
-      if (action === 'close') {
+      if (action === 'help') {
+        const source = programTrigger(windowElement.dataset.appId);
+        if (!source) return;
+        const help = openProgram({dataset:{openApp:`help-${windowElement.dataset.appId}`,appName:`${button.title} · ${source.dataset.appName}`,appIcon:source.dataset.appIcon}});
+        help.dataset.pinned = 'true';
+        focusWindow(help);
+      } else if (action === 'close') {
         if (!confirmSettingsClose(windowElement)) return;
         hideSnap();
         taskButtonFor(windowElement.dataset.appId)?.remove();
@@ -606,7 +617,7 @@
 
   desktop.addEventListener('click', event => {
     const button = event.target.closest('[data-open-app]');
-    if (button) openProgram(button);
+    if (button) openProgram(button.dataset.appName ? button : (programTrigger(button.dataset.openApp) || button));
   });
   startButton.addEventListener('click', event => {
     event.stopPropagation();

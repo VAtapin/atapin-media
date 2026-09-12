@@ -36,6 +36,18 @@ class ImportedContentTest extends TestCase
         $this->getJson('/desktop/imports/files')->assertForbidden();
     }
 
+    public function test_content_distinguishes_local_video_from_metadata_and_rejects_active_links(): void
+    {
+        $this->login();
+        \Illuminate\Support\Facades\Storage::fake('private');
+        $media = \App\Models\Media::create(['title'=>'Video', 'original_name'=>'video.mp4', 'kind'=>'video', 'mime'=>'video/mp4', 'disk'=>'private', 'path'=>'video.mp4', 'bytes'=>5, 'status'=>'unsorted', 'source'=>'upload']);
+        $record = SourceRecord::create(['source'=>'youtube','source_id'=>'dQw4w9WgXcQ','kind'=>'video','title'=>'Video','status'=>'unsorted','metadata'=>['media_ids'=>[$media->id], 'url'=>'javascript:alert(1)']]);
+        $this->getJson('/desktop/content/'.$record->id)->assertOk()->assertJsonPath('has_local_video',false)->assertJsonPath('assets.0.download_url',null)
+            ->assertJsonPath('external_url','https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+        \Illuminate\Support\Facades\Storage::disk('private')->put('video.mp4', 'video');
+        $this->getJson('/desktop/content/'.$record->id)->assertOk()->assertJsonPath('has_local_video',true)->assertJsonPath('assets.0.available',true);
+    }
+
     public function test_playlists_preserve_missing_positions_and_link_real_content(): void
     {
         $this->login();

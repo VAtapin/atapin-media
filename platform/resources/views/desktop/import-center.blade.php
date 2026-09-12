@@ -1,55 +1,49 @@
-<section class="desktop-import-center" data-import-center data-user-id="{{ auth()->id() }}" data-imports-url="{{ route('imports.index') }}" data-imports-options-url="{{ route('imports.options') }}">
+<section class="desktop-import-center" data-import-center data-user-id="{{ auth()->id() }}" data-imports-url="{{ route('imports.index') }}" data-imports-options-url="{{ route('imports.options') }}" data-import-files-url="{{ route('imports.files') }}">
     <form class="import-center-form" data-import-form>
-        <label><span>{{ __('imports.server_folder') }}</span><select data-import-server><option value="">{{ __('imports.select_server') }}</option></select><button type="button" data-import-browse>{{ __('imports.open_folder') }}</button></label>
+        <fieldset class="import-methods">
+            <legend>{{ __('imports.choose_method') }}</legend>
+            @can('media.upload')
+            <label><input type="radio" name="method" value="computer" checked><strong>{{ __('imports.method_computer') }}</strong><small>{{ __('imports.method_computer_hint') }}</small></label>
+            @endcan
+            <label><input type="radio" name="method" value="link" @cannot('media.upload') checked @endcannot><strong>{{ __('imports.method_link') }}</strong><small>{{ __('imports.method_link_hint') }}</small></label>
+            <label><input type="radio" name="method" value="existing"><strong>{{ __('imports.method_existing') }}</strong><small>{{ __('imports.method_existing_hint') }}</small></label>
+            <label><input type="radio" name="method" value="server"><strong>{{ __('imports.method_server') }}</strong><small>{{ __('imports.method_server_hint') }}</small></label>
+        </fieldset>
         @can('media.upload')
-        <label><span>{{ __('imports.upload_archive') }}</span><input type="file" data-import-file accept=".zip,.tar,.tar.gz,.tgz"><small>{{ __('imports.upload_hint') }}</small></label>
+        <div class="import-method-panel" data-import-panel="computer">
+            <label class="import-upload-zone" data-import-drop><span>{{ __('imports.upload_archive') }}</span><input type="file" data-import-file accept=".zip,.tar,.tar.gz,.tgz"><small>{{ __('imports.upload_hint') }}</small></label>
+        </div>
         @endcan
-        <label>
-            <span>Quelle</span>
-            <select name="source" data-import-source required>
-                <option value="">Quelle wählen ...</option>
-            </select>
-        </label>
-
-        <label>
-            <span>Zielbereich</span>
-            <select name="target_profile" data-import-target>
-                <option value="mixed">Automatisch (gemischt)</option>
-            </select>
-        </label>
-
-        <label>
-            <span>Pfad / ID / URL</span>
-            <input type="text" name="source_value" data-import-source-value placeholder="Pfad, Link oder ID" maxlength="255">
-            <small>Für lokale Quellen: Pfad unter <code>private/import-inbox</code>. Für Services: URL.</small>
-        </label>
-
-        <label>
-            <span>Erweiterte Felder</span>
-            <div class="import-center-grid-2">
-                <input type="text" name="channel_id" data-import-channel placeholder="YouTube Channel-ID (optional)" maxlength="255">
-                <input type="text" name="playlist_id" data-import-playlist placeholder="YouTube Playlist-ID (optional)" maxlength="255">
-            </div>
-            <textarea name="notes" data-import-notes placeholder="Notizen (optional)" rows="3" maxlength="2000"></textarea>
-        </label>
-
-        <label class="import-center-check">
-            <input type="checkbox" name="only_unsorted" value="1" checked>
-            <span>Neue Einträge im Status Unsortiert starten</span>
-        </label>
-
-        <button type="submit" class="import-center-primary" data-import-start>Import starten</button>
-        <p class="import-center-message" data-import-message role="status" aria-live="polite" hidden></p>
+        <div class="import-method-panel" data-import-panel="link" hidden>
+            <label><span>{{ __('imports.link_label') }}</span><input type="url" data-import-link placeholder="https://www.youtube.com/…" maxlength="255"><small>{{ __('imports.method_link_hint') }}</small></label>
+            <p class="import-center-message" data-import-detected role="status"></p>
+        </div>
+        <div class="import-method-panel" data-import-panel="existing" hidden>
+            <label><span>{{ __('imports.existing_label') }}</span><select data-import-existing><option value="intake">{{ __('imports.source_intake') }}</option><option value="youtube">{{ __('imports.source_youtube') }}</option></select></label>
+            <p>{{ __('imports.existing_hint') }}</p>
+        </div>
+        <div class="import-method-panel" data-import-panel="server" hidden>
+            <p>{{ __('imports.server_scope') }}</p>
+            <div class="import-browser-toolbar"><button type="button" class="desktop-button" data-import-up disabled>{{ __('imports.browser_up') }}</button><strong data-import-browser-path>{{ __('imports.browser_root') }}</strong><button type="button" class="desktop-button" data-import-reload>{{ __('imports.refresh') }}</button></div>
+            <ul class="import-browser-list" data-import-browser-list aria-label="{{ __('imports.server_folder') }}"></ul>
+            <p data-import-browser-message role="status"></p>
+            <button type="button" class="desktop-button" data-import-use-folder disabled>{{ __('imports.use_folder') }}</button>
+            <p class="import-selection" data-import-selection role="status"></p>
+        </div>
+        <details class="import-advanced">
+            <summary>{{ __('imports.advanced_options') }}</summary>
+            <label><span>{{ __('imports.target_profile') }}</span><select data-import-target><option value="mixed">{{ __('imports.target_mixed') }}</option></select><small>{{ __('imports.target_hint') }}</small></label>
+            <label><span>{{ __('imports.notes_label') }}</span><textarea data-import-notes rows="2" maxlength="2000"></textarea></label>
+        </details>
+        <p class="import-safety-note">{{ __('imports.safety_note') }}</p>
+        <div class="import-submit-row"><button type="submit" class="desktop-button is-primary" data-import-start>{{ __('imports.start') }}</button><p class="import-center-message" data-import-message role="status" aria-live="polite" hidden></p></div>
     </form>
-
     <div class="import-center-live">
-        <div class="import-center-status" data-import-status>Laufende Import-Jobs werden geladen ...</div>
+        <div class="import-center-status" data-import-status role="status"></div>
         <div class="import-center-run-list-wrap">
-            <div class="import-center-run-list-head">
-                <strong>Import-Protokoll</strong>
-                <button type="button" data-import-refresh>Aktualisieren</button>
-            </div>
+            <div class="import-center-run-list-head"><strong>{{ __('imports.run_history') }}</strong><button type="button" class="desktop-button" data-import-refresh>{{ __('imports.refresh') }}</button></div>
             <div class="import-center-run-list" data-import-run-list aria-live="polite"></div>
+            <nav class="media-library-pagination" data-import-pages aria-label="{{ __('imports.pages') }}"></nav>
         </div>
     </div>
 </section>

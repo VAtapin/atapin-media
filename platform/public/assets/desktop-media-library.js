@@ -133,6 +133,7 @@
     let current = [];
     let lastPayload = null;
     let uploading = false;
+    let loadGeneration = 0;
 
     const setUploadMessage = (text, isError = false) => {
       if (!uploadMessage) return;
@@ -216,14 +217,16 @@
     };
 
     const load = async page => {
+      const generation = ++loadGeneration;
       summary.textContent = 'Archiv wird geladen …';
       try {
         const payload = await requestJson(query(page), {
           method: 'GET',
           headers: { Accept: 'application/json' },
         });
-        render(payload);
+        if (generation === loadGeneration && root.isConnected) render(payload);
       } catch (_) {
+        if (generation !== loadGeneration || !root.isConnected) return;
         list.innerHTML = '<li class="media-library-empty">Das Archiv konnte nicht geladen werden.</li>';
         summary.textContent = 'Fehler beim Laden';
       }
@@ -255,6 +258,7 @@
 
     const changed = () => {
       if (!root.isConnected) { document.removeEventListener('desktop-media-changed', changed); return; }
+      if (uploading) return;
       load(lastPayload?.meta?.current_page || 1);
     };
     document.addEventListener('desktop-media-changed', changed);
