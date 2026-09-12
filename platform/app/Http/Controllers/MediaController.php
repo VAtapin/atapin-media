@@ -7,6 +7,48 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 class MediaController extends Controller
 {
+    public function library(Request $request)
+    {
+        $filters = $request->validate([
+            'q' => 'nullable|string|max:120',
+            'source' => 'nullable|in:intake,youtube,upload',
+            'kind' => 'nullable|in:video,audio,image,document,other',
+            'status' => 'nullable|in:unsorted,processing,ready,needs_attention,failed',
+            'sort' => 'nullable|in:newest,oldest,name,size',
+        ]);
+        $query = Media::visibleLibrary()->with(['tags:id,name', 'assets:id,parent_id,asset_role'])->latest();
+        if ($filters['q'] ?? null) {
+            $term = $filters['q'];
+            $query->where(fn ($items) => $items->where('title', 'like', "%{$term}%")->orWhere('original_name', 'like', "%{$term}%"));
+        }
+        foreach (['source', 'kind', 'status'] as $field) if ($filters[$field] ?? null) $query->where($field, $filters[$field]);
+        match ($filters['sort'] ?? 'newest') {
+            'oldest' => $query->oldest(),
+            'name' => $query->orderBy('title'),
+            'size' => $query->orderByDesc('bytes'),
+            default => $query->latest(),
+        };
+        $page = $query->paginate(30)->withQueryString();
+        return response()->json([
+            'data' => $page->getCollection()->map(fn (Media $media) => [
+                'id' => $media->id,
+                'title' => $media->title,
+                'original_name' => $media->original_name,
+                'kind' => $media->kind,
+                'asset_role' => $media->asset_role,
+                'bytes' => $media->bytes,
+                'formatted_size' => $media->formattedSize(),
+                'source' => $media->source,
+                'status' => $media->status,
+                'created_at' => $media->created_at?->toIso8601String(),
+                'tags' => $media->tags->pluck('name')->values(),
+                'asset_count' => $media->assets->count(),
+                'download_url' => route('media.download', $media),
+            ]),
+            'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total()],
+        ]);
+    }
+
     public function store(Request $request, MediaLibrary $library)
     {
         $request->validate(['file' => 'required|file|max:102400']);

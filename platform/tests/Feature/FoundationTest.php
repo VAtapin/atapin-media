@@ -102,6 +102,16 @@ class FoundationTest extends TestCase
         foreach (['/desktop/media','/desktop/settings','/desktop/users','/desktop/projects','/desktop/tasks','/desktop/imports','/desktop/shop'] as $url) $this->get($url)->assertStatus(405);
         foreach (['/desktop/calendar','/desktop/audit'] as $url) $this->get($url)->assertNotFound();
     }
+    public function test_media_library_endpoint_is_private_and_filterable(): void
+    {
+        $this->get('/desktop/media/library')->assertRedirect('/login');
+        $user = $this->user('Owner'); $this->actingAs($user);
+        $visible = Media::create(['title'=>'Hoffnung','original_name'=>'hoffnung.mp4','kind'=>'video','mime'=>'video/mp4','bytes'=>1024,'disk'=>'youtube','path'=>'items/a.mp4','source'=>'youtube','source_id'=>'a','status'=>'unsorted']);
+        Media::create(['title'=>'Archiviert','original_name'=>'alt.pdf','kind'=>'document','mime'=>'application/pdf','bytes'=>50,'disk'=>'intake','path'=>'alt.pdf','source'=>'intake','source_id'=>'old','status'=>'ready','archived_at'=>now()]);
+        $this->getJson('/desktop/media/library?source=youtube&status=unsorted')->assertOk()
+            ->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.id', $visible->id)
+            ->assertJsonPath('data.0.source', 'youtube');
+    }
     public function test_role_seeding_is_idempotent(): void
     {
         app(Access::class)->seed(); $this->assertDatabaseCount('roles',6);

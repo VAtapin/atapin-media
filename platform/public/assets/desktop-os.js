@@ -392,6 +392,15 @@
 
       }
 
+      if (appId === 'media') {
+        const mediaTemplate = document.querySelector('#media-library-app-template');
+        const mediaLibrary = mediaTemplate?.content.firstElementChild.cloneNode(true);
+        if (mediaLibrary) {
+          windowElement.querySelector('.os-window-content').append(mediaLibrary);
+          window.initializeMediaLibrary?.(mediaLibrary);
+        }
+      }
+
       if (saved) {
         windowElement.dataset.pinned = saved.pinned ? 'true' : 'false';
         windowElement.querySelector('[data-window-action="pin"]')?.classList.toggle('is-active', saved.pinned);

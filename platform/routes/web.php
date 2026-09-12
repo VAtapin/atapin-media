@@ -31,6 +31,7 @@ Route::middleware('auth')->group(function () {
         Route::post('tasks', [\App\Http\Controllers\TaskController::class,'store'])->name('tasks.store');
         Route::patch('tasks/{task}', [\App\Http\Controllers\TaskController::class,'update'])->name('tasks.update');
     });
+    Route::get('/desktop/media/library', [MediaController::class,'library'])->middleware('can:media.view')->name('media.library');
     Route::post('/desktop/media', [MediaController::class,'store'])->middleware('can:media.upload')->name('media.store');
     Route::patch('/desktop/media/{media}', [MediaController::class,'update'])->middleware('can:media.edit')->name('media.update');
     Route::get('/desktop/media/{media}/download', [MediaController::class,'download'])->middleware('can:media.view')->name('media.download');
