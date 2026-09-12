@@ -213,6 +213,8 @@
     };
 
     const renderDetails = item => {
+      if (details.dataset.dirty === 'true' && details.dataset.currentId === item?.id) return;
+      details.dataset.currentId = item?.id || '';
       const tags = Array.isArray(item?.tags) ? item.tags : [];
       if (!item) {
         details.innerHTML = '<p>Wähle ein Medium, um Details zu sehen.</p>';
@@ -239,7 +241,7 @@
     const render = payload => {
       lastPayload = payload;
       current = payload.data;
-      if (selected) selected = current.find(item => item.id === selected.id) || null;
+      if (selected) selected = current.find(item => item.id === selected.id) || (details.dataset.dirty === 'true' ? selected : null);
       list.innerHTML = current.length
         ? current
           .map(item => `<li><button type="button" class="media-library-item ${selected?.id === item.id ? 'is-selected' : ''}" data-media-id="${escape(item.id)}">${item.thumbnail_url ? `<img class="media-library-thumbnail" src="${escape(item.thumbnail_url)}" alt="" loading="lazy">` : `<span class="media-library-file-icon" aria-hidden="true">${icon(item.kind)}</span>`}<span class="media-library-item-main"><strong>${escape(item.title)}</strong><small>${escape(labels[item.source] || item.source)} · ${escape(prettyBytes(item.bytes))} · ${prettyDate(item.created_at)}</small></span><span class="media-library-status status-${escape(item.status)}">${escape(labels[item.status] || item.status)}</span></button></li>`)
@@ -274,6 +276,8 @@
     list.addEventListener('click', event => {
       const id = event.target.closest('[data-media-id]')?.dataset.mediaId;
       if (!id) return;
+      if (details.dataset.dirty === 'true' && !window.confirm(window.desktopImportLabels.discard_edits)) return;
+      delete details.dataset.dirty;
       selected = current.find(item => item.id === id) || null;
       if (lastPayload) render(lastPayload);
     });

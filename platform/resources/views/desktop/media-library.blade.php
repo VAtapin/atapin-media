@@ -1,4 +1,4 @@
-<section class="desktop-media-library" data-media-library data-can-edit="{{ auth()->user()->hasPermission('media.edit') ? 'true' : 'false' }}" data-user-id="{{ auth()->id() }}" data-library-url="{{ route('media.library') }}">
+<section class="desktop-media-library" data-media-library data-can-edit="{{ auth()->user()->hasPermission('media.edit') ? 'true' : 'false' }}" data-can-undo="{{ auth()->user()->hasPermission('media.edit') && auth()->user()->hasPermission('content.edit') ? 'true' : 'false' }}" data-user-id="{{ auth()->id() }}" data-library-url="{{ route('media.library') }}">
     <div class="media-library-toolbar-row">
         <button type="button" class="media-library-primary" data-library-content-toggle>{{ __('imports.content') }}</button>
         @can('imports.manage')<button type="button" class="desktop-button" data-open-app="imports">{{ __('imports.import_action') }}</button>@endcan

@@ -48,6 +48,8 @@
     root.addEventListener('click', async event => {
       const url = event.target.closest('[data-content-detail]')?.dataset.contentDetail;
       if (!url) return;
+      if (details.dataset.dirty === 'true' && !window.confirm(text.discard_edits)) return;
+      delete details.dataset.dirty;
       try {
         const item = await get(url);
         if (item.kind === 'playlist') playlistUrl = url;

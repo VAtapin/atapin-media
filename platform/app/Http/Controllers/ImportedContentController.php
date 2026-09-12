@@ -13,7 +13,7 @@ class ImportedContentController extends Controller
             'source' => 'nullable|string|max:32', 'page' => 'nullable|integer|min:1']);
         $query = SourceRecord::query()->latest();
         $kinds = match ($data['section'] ?? '') { 'videos' => ['video', 'short'], 'posts' => ['post'], 'community' => ['poll', 'comment'], default => [] };
-        if ($kinds) $query->whereIn('kind', $kinds);
+        if ($kinds) $query->whereIn('kind', $kinds)->where(fn ($q) => $q->whereNull('metadata->library_only')->orWhere('metadata->library_only', false));
         foreach (['kind', 'source', 'status'] as $field) if ($data[$field] ?? '') $query->where($field, $data[$field]);
         if ($data['q'] ?? '') $query->where(fn ($q) => $q->where('title', 'like', '%'.$data['q'].'%')->orWhere('body', 'like', '%'.$data['q'].'%'));
         $page = $query->paginate(30);

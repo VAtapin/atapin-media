@@ -77,6 +77,39 @@ class ContentAssignmentTest extends TestCase
     {
         $this->ai(); Http::fake(['api.openai.com/*'=>Http::response($this->response())]); $media = $this->media('video/mp4');
         $this->classify($media); $this->assertSame('needs_attention',$media->fresh()->status);
+        Http::assertNothingSent();
+    }
+
+    public function test_existing_descriptions_and_subtitles_are_used_without_reading_video(): void
+    {
+        $this->ai(); Http::fake(['api.openai.com/*'=>Http::response($this->response())]);
+        $media = $this->media('video/mp4');
+        Storage::disk('local')->put('ready.vtt', "WEBVTT\n\n1\n00:00:01.000 --> 00:00:03.000\nBereits vorhandene Untertitel");
+        $subtitle = Media::create(['disk'=>'local','path'=>'ready.vtt','source'=>'upload','original_name'=>'ready.vtt','title'=>'Subtitle',
+            'kind'=>'document','mime'=>'text/vtt','bytes'=>90,'parent_id'=>$media->id,'status'=>'ready']);
+        SourceRecord::create(['source'=>'youtube','source_id'=>'source-video','title'=>'Original title','body'=>'Vorhandene Beschreibung',
+            'kind'=>'video','status'=>'unsorted','metadata'=>['media_ids'=>[$media->id,$subtitle->id]]]);
+        $input = app(\App\Services\Importing\AiContentEvidence::class)->build($media);
+        $this->assertStringContainsString('Vorhandene Beschreibung',$input['evidence']['body']);
+        $this->assertStringContainsString('Bereits vorhandene Untertitel',$input['evidence']['body']);
+        $this->assertStringNotContainsString('ausführlicher Beitrag',$input['evidence']['body']);
+        $this->assertNull($input['image']);
+        $this->classify($media); $this->assertSame('videos',$media->fresh()->metadata['target_profile']);
+    }
+
+    public function test_ai_undo_restores_state_without_deleting_originals_or_overwriting_manual_edits(): void
+    {
+        $this->login(); $this->ai(); Http::fake(['api.openai.com/*'=>Http::response($this->response())]);
+        $media = $this->media(); $this->classify($media); $log = $media->classifications()->first();
+        $this->postJson('/desktop/media/'.$media->id.'/classifications/'.$log->id.'/undo')->assertOk();
+        $this->assertSame('Original',$media->fresh()->title); $this->assertSame('unsorted',$media->fresh()->status);
+        $this->assertDatabaseCount('source_records',1); $this->getJson('/desktop/content?section=posts')->assertOk()->assertJsonCount(0,'data');
+        $this->assertTrue(Storage::disk('local')->exists('original'));
+        $this->assertSame('undone',$log->fresh()->status);
+        $this->classify($media); $latest = $media->classifications()->latest('id')->first();
+        $media->update(['title'=>'Manual correction']);
+        $this->postJson('/desktop/media/'.$media->id.'/classifications/'.$latest->id.'/undo')->assertConflict();
+        $this->assertSame('Manual correction',$media->fresh()->title);
     }
     public function test_manual_edits_during_ai_request_are_not_overwritten(): void
     {

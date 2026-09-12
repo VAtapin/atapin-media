@@ -8,7 +8,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class ClassifyImportedContent implements ShouldQueue, ShouldBeUnique
 {
@@ -18,37 +17,51 @@ class ClassifyImportedContent implements ShouldQueue, ShouldBeUnique
     public int $uniqueFor = 600;
     public function __construct(public string $type, public string $id) {}
     public function uniqueId(): string { return $this->type.':'.$this->id; }
-    private function version($item): string { return hash('sha256', json_encode($item->getAttributes(), JSON_THROW_ON_ERROR)); }
+    private function version($item): string { return app(\App\Services\Importing\ContentState::class)->version($item); }
     public function handle(AiContentClassifier $classifier, ContentAssignment $assignment): void
     {
         $model = $this->type === 'media' ? Media::class : SourceRecord::class;
         $item = $model::findOrFail($this->id);
         if ($item->status !== 'unsorted' || ! $classifier->available()) return;
-        $version = $this->version($item); $image = null; $log = null;
-        $evidence = ['title' => $item->title, 'kind' => $item->kind, 'source' => $item->source];
+        $version = $this->version($item); $log = null;
+        $state = app(\App\Services\Importing\ContentState::class);
+        $before = $state->snapshot($item);
+        $managed = $item instanceof Media ? SourceRecord::where('source_id','media:'.$item->id)->first() : null;
+        $beforeRecord = $managed ? $state->snapshot($managed) : null;
         try {
-            if ($item instanceof Media) {
-                $evidence['original_name'] = $item->original_name;
-                $evidence['mime'] = $item->mime;
-                $log = $item->classifications()->create(['provider' => 'openai', 'model' => app(\App\Services\Settings::class)->get('ai_model'), 'status' => 'running']);
-                if (str_starts_with($item->mime, 'text/') && $item->bytes <= 1024 * 1024) $evidence['body'] = mb_substr(Storage::disk($item->disk)->get($item->path),0,30000);
-                if (in_array($item->mime, ['image/jpeg','image/png','image/webp'], true) && $item->bytes <= 10 * 1024 * 1024) $image = 'data:'.$item->mime.';base64,'.base64_encode(Storage::disk($item->disk)->get($item->path));
-            } else {
-                $evidence['body'] = mb_substr($item->body ?? '',0,30000);
-                if (isset($item->metadata['poll'])) $evidence['poll'] = mb_substr(json_encode($item->metadata['poll'], JSON_THROW_ON_ERROR),0,10000);
+            if ($item instanceof Media) $log = $item->classifications()->create(['provider' => 'openai', 'model' => app(\App\Services\Settings::class)->get('ai_model'), 'status' => 'running']);
+            $input = app(\App\Services\Importing\AiContentEvidence::class)->build($item);
+            if (! $input['sufficient']) {
+                DB::transaction(function () use ($model, $item, $version, $log) {
+                    $current = $model::lockForUpdate()->findOrFail($item->id);
+                    if ($current->status === 'unsorted' && $this->version($current) === $version) {
+                        $current->update(['status' => 'needs_attention']); $log?->update(['status' => 'insufficient_data']);
+                    } else $log?->update(['status' => 'superseded']);
+                });
+                return; // Do not pay a provider to guess from a filename.
             }
-            $proposal = $classifier->classify($evidence, $image);
+            $proposal = $classifier->classify($input['evidence'], $input['image']);
             // Classifying a filename is not equivalent to watching or listening to the original.
-            $sufficient = $image !== null || ! empty($evidence['body']) || ! empty($evidence['poll']);
-            $proposal['status'] = $sufficient && $proposal['confidence'] >= 0.85 ? 'ready' : 'needs_attention';
-            DB::transaction(function () use ($model, $item, $version, $proposal, $assignment, $log) {
+            $proposal['status'] = $proposal['confidence'] >= 0.85 ? 'ready' : 'needs_attention';
+            DB::transaction(function () use ($model, $item, $version, $proposal, $assignment, $log, $before, $beforeRecord, $state) {
                 $current = $model::lockForUpdate()->findOrFail($item->id);
                 if ($current->status !== 'unsorted' || $this->version($current) !== $version) { $log?->update(['status' => 'superseded', 'proposal' => $proposal]); return; }
                 if ($current instanceof Media) {
+                    if ($beforeRecord) {
+                        $managedBefore = SourceRecord::where('source_id', 'media:'.$current->id)->lockForUpdate()->first();
+                        if (! $managedBefore || $state->version($managedBefore) !== hash('sha256', json_encode($beforeRecord, JSON_THROW_ON_ERROR))) {
+                            $log->update(['status' => 'superseded', 'proposal' => $proposal]); return;
+                        }
+                    }
                     if (! in_array($proposal['target_profile'], ['media_library','videos','shorts','posts'], true)) $proposal['target_profile'] = 'media_library';
+                    if ($proposal['status'] !== 'ready') $proposal['target_profile'] = $current->metadata['target_profile'] ?? 'media_library';
+                    if ($current->kind === 'video' && $proposal['target_profile'] === 'posts') $proposal['target_profile'] = 'videos';
                     $assignment->media($current, $proposal, 'ai');
                     $current->update(['classification_confidence' => $proposal['confidence'], 'classification_version' => 'v1']);
-                    $log->update(['status' => 'applied', 'confidence' => $proposal['confidence'], 'proposal' => $proposal, 'applied_changes' => $proposal]);
+                    $managed = SourceRecord::where('source_id','media:'.$current->id)->first();
+                    $log->update(['status' => 'applied', 'confidence' => $proposal['confidence'], 'proposal' => $proposal,
+                        'applied_changes' => ['before' => $before, 'after_version' => $state->version($current), 'before_record' => $beforeRecord,
+                            'managed_record_id' => $managed?->id, 'managed_record_version' => $managed ? $state->version($managed) : null]]);
                 } else {
                     $assignment->record($current, $proposal, 'ai');
                     $meta = $current->metadata; $meta['classification'] = $proposal; $current->update(['metadata' => $meta]);

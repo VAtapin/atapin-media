@@ -2,6 +2,8 @@
 
 ## Реализовано
 
+- Этап экономной ИИ-разметки: используются существующие descriptions/текстовые файлы/готовые SRT/VTT, без чтения audio/video originals; filename-only не вызывает provider. Для новых классификаций Media сохраняются before/after snapshots, доступна безопасная отмена без удаления originals и связанных материалов; последующие ручные изменения блокируют отмену. Незавершённая ручная форма сохраняется при обновлении списка и требует подтверждения при смене записи. Архивные файлы исключены из batch. Возврат собственных file-generated материалов в Media Library скрывает их в разделах, сохраняя данные; дочерние assets не назначаются ИИ как отдельные Beiträge.
+
 - Этап загрузки: Media Library имеет queue с двумя параллельными файлами, drag-and-drop и выбор client folder, pause/resume/stop без удаления accepted data. Relative client paths проверяются и сохраняются только в metadata; одинаковые basename в разных папках имеют разные resume keys. Import Center получил pause/resume/stop для archive transfer (не для фонового ImportRun). Успешная очередь скрывается, неподтверждённые файлы остаются с подсказкой повторного выбора.
 
 - Этап организации Media Library: дополнительные действия и фильтры раскрываются отдельно; выбор до 100 файлов, массовое добавление tags/status/раздела/коллекции и archive/restore без удаления originals/usages. Собственные Collections (не YouTube Playlists) создаются/переименовываются, имеют description, pagination, перестановку соседних файлов и удаление только связи. Фильтры tags/collections/active/archive и все service sources; раскрываемый file inspector показывает storage, parent/assets, collections, usage names и последние AI proposals.
@@ -70,8 +72,8 @@
 ## Известные ограничения
 
 - Для Projekte, Aufgaben, Kalender и Shop ещё требуется отдельная разработка native-интерфейсов внутри Desktop.
-- Production deployment/приёмка последних изменений не подтверждены: реальные service downloads, OpenAI-запросы, 10–20 GB transfer и automatic intake cutover локальными тестами не подтверждены. По решению владельца сплошное платное прослушивание/анализ аудио и видео не входит в ближайший план; ИИ использует имеющиеся тексты, метаданные, готовые субтитры и небольшие изображения. Пока готовые субтитры ещё не подмешиваются полностью в AI evidence; поддержан только OpenAI.
-- Media Library ещё требует редактора импортированных playlist positions, массовых действий для текстовых SourceRecords (массовые действия сейчас для файлов), корректного обратного назначения раздела, переходов по usage references, отмены AI-истории и локального технического processing. Import Center ещё требует полного адаптера личных YouTube exports, межисточниковой дедупликации, управления долгими фоновыми импортами и более подробного результата. Реальный личный архив нужен для подтверждения полноты адаптера; серверная приёмка не заменяется локальными тестами.
+- Production deployment/приёмка последних изменений не подтверждены: реальные service downloads, OpenAI-запросы, 10–20 GB transfer и automatic intake cutover локальными тестами не подтверждены. По решению владельца платное прослушивание/анализ аудио и видео не входит в ближайший план; ИИ использует имеющиеся тексты, метаданные, готовые субтитры и небольшие изображения; поддержан только OpenAI.
+- Media Library ещё требует редактора импортированных playlist positions, массовых действий для текстовых SourceRecords (массовые действия сейчас для файлов), полного обратного назначения canonical imported записей, переходов по usage references, истории/отмены ИИ для SourceRecords и локального технического processing. Отмена Media доступна только для новых журналов со snapshots, не для старых proposals. Import Center ещё требует полного адаптера личных YouTube exports, межисточниковой дедупликации, управления долгими фоновыми импортами и более подробного результата. Реальный личный архив нужен для подтверждения полноты адаптера; серверная приёмка не заменяется локальными тестами.
 - Public Website начат, но ещё не завершён.
 - Для ручных YouTube выгрузок поддержаны ZIP/TAR и распознаваемые JSON/видео CSV. Произвольные варианты Takeout, экспортные HTML и неизвестные schemas ещё требуют отдельного разбора; нельзя выдавать их регистрацию файлами за полный импорт содержания.
 
@@ -81,6 +83,8 @@
 - После получения личной выгрузки YouTube реализовать адаптер ручного архива по `youtube/MANUAL_ARCHIVE_IMPORT.md`, затем запустить импорт через Import Center.
 
 ## Проверки
+
+- Этап ИИ/сохранности правок: 9 целевых Laravel tests / 48 assertions прошли (нет provider call по имени, готовые subtitles/descriptions, undo и concurrent manual edits). JS syntax, Blade compilation и Edge workflow сохранения незавершённой формы при refresh прошли. Full suite и платные provider requests не запускались.
 
 - Этап загрузки: 1 целевой Laravel upload flow / 14 assertions прошёл (checksum/finish, unsafe client path rejection, сохранение client path только в metadata). Node control test проверил parallel pause/resume, stop без finish, продолжение прежней сессии и разные папки с одинаковыми basename; JS syntax, Blade и Edge workflow прошли. Реальные 10–20 GB и native folder picker на production не проверены; full suite не запускался.
 
@@ -101,7 +105,8 @@
 
 - Удобство и справка: 55fd044 — Simplify imports and explain local content in desktop windows.
 - Организация: 08c1c59 — Organize library files with collections and reversible archiving.
-- Текущий этап загрузки: Add pausable parallel uploads and client folder intake (commit с этой записью).
+- Загрузка: 43bb6c8 — Add pausable parallel uploads and client folder intake.
+- Текущий этап: Preserve manual edits and safely undo economical AI classification (commit с этой записью).
 
 - Этап 2: f55f340 — Fix archive imports and add resumable desktop intake.
 - Этап 3: 7d787a3 — Import service links and structured archive content.

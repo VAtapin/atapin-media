@@ -14,7 +14,9 @@ class ContentClassificationController extends Controller
         abort_unless($classifier->available(), 422, __('imports.ai_unavailable'));
         $model = $data['type'] === 'media' ? Media::class : SourceRecord::class;
         if ($data['batch'] ?? false) {
-            $items = $model::where('status', 'unsorted')->oldest()->limit(100)->get();
+            $query = $model::where('status', 'unsorted');
+            if ($data['type'] === 'media') $query->whereNull('archived_at');
+            $items = $query->oldest()->limit(100)->get();
         } else {
             $item = $model::findOrFail($data['id'] ?? '');
             $item->update(['status' => 'unsorted']);
@@ -23,5 +25,11 @@ class ContentClassificationController extends Controller
         foreach ($items as $item) dispatch(new ClassifyImportedContent($data['type'], (string) $item->id));
         app(\App\Services\Audit::class)->record('content.classification.queued', $data['id'] ?? null, ['type' => $data['type'], 'count' => $items->count()]);
         return response()->json(['status' => 'queued', 'count' => $items->count()]);
+    }
+
+    public function undo(Media $media, \App\Models\MediaClassification $classification, \App\Services\Importing\UndoMediaClassification $undo)
+    {
+        $undo->undo($media, $classification);
+        return response()->json(['status' => 'saved']);
     }
 }

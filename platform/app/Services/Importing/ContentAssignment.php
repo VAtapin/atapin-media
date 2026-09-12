@@ -14,6 +14,7 @@ class ContentAssignment
         DB::transaction(function () use ($media, $data, $origin) {
             $metadata = $media->metadata ?? [];
             $metadata['target_profile'] = $data['target_profile'] ?? $metadata['target_profile'] ?? 'media_library';
+            if ($origin === 'ai' && $media->parent_id) $metadata['target_profile'] = 'media_library';
             if (isset($data['summary'])) $metadata['summary'] = $data['summary'];
             $media->update(['title' => $data['title'] ?? $media->title, 'status' => $data['status'] ?? 'ready',
                 'metadata' => $metadata, 'classification_origin' => $origin, 'classified_at' => now()]);
@@ -27,14 +28,18 @@ class ContentAssignment
                 $media->tags()->sync($ids);
             }
             $kind = match ($metadata['target_profile']) { 'videos' => 'video', 'shorts' => 'short', 'posts' => 'post', default => null };
+            $managed = SourceRecord::where('source', $media->source ?? 'upload')->where('source_id', 'media:'.$media->id)->first();
+            if (! $kind && $managed && $origin === 'manual') $managed->update(['metadata' => [...($managed->metadata ?? []), 'library_only' => true]]);
             if ($kind) {
                 $existing = SourceRecord::where(function ($query) use ($media) {
                     foreach (['media_ids', 'images', 'media->video', 'media->thumbnail', 'media->subtitles'] as $key) $query->orWhereJsonContains('metadata->'.$key, $media->id);
                 });
-                $existing = $existing->first();
+                $existing = $managed ?? ($media->kind === 'video' && ! $media->parent_id ? $existing->first() : null);
                 $record = $existing ?? SourceRecord::firstOrCreate(['source' => $media->source ?? 'upload', 'source_id' => 'media:'.$media->id],
                     ['kind' => $kind, 'title' => $media->title, 'body' => $metadata['summary'] ?? '', 'metadata' => ['media_ids' => [$media->id]], 'status' => 'unsorted']);
                 if (! $existing || $origin === 'manual') $record->update(['kind' => $kind, 'title' => $media->title]);
+                if ($record->source_id === 'media:'.$media->id && ($origin === 'manual' || $media->status === 'ready'))
+                    $record->update(['metadata' => [...($record->metadata ?? []), 'library_only' => false]]);
                 $media->usages()->firstOrCreate(['used_as' => 'original', 'subject_type' => SourceRecord::class, 'subject_id' => (string) $record->id]);
             }
             app(Audit::class)->record('media.assigned', $media->id, ['origin' => $origin, 'target_profile' => $metadata['target_profile']]);
@@ -46,6 +51,7 @@ class ContentAssignment
         $metadata = $record->metadata;
         $metadata['classification_origin'] = $origin;
         if ($origin === 'manual') unset($metadata['classification']);
+        if ($origin === 'manual') $metadata['library_only'] = false;
         if (isset($data['summary'])) $metadata['summary'] = $data['summary'];
         if (isset($data['tags'])) $metadata['tags'] = $data['tags'];
         $record->update(['title' => $data['title'] ?? $record->title, 'body' => array_key_exists('body', $data) ? ($data['body'] ?? '') : $record->body,

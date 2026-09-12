@@ -33,6 +33,10 @@ try {
   await media.locator('[data-library-details] .media-library-download').waitFor();
   const assignment = media.locator('[data-library-details] .content-assignment');
   await assignment.locator('[name=title]').fill(reviewedFile);
+    const refreshResponse = page.waitForResponse(response => response.url().includes('/desktop/media/library') && response.request().method() === 'GET');
+    await page.evaluate(() => document.dispatchEvent(new Event('desktop-media-changed')));
+    await refreshResponse;
+  assert.equal(await assignment.locator('[name=title]').inputValue(), reviewedFile);
   await assignment.locator('[name=tags]').fill('Browser, Original');
   await assignment.locator('[name=target_profile]').selectOption('posts');
   const saveResponse = page.waitForResponse(response => response.request().method() === 'PATCH' && new URL(response.url()).pathname.startsWith('/desktop/media/'));

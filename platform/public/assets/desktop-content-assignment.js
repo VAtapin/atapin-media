@@ -17,9 +17,11 @@
     }
     form.innerHTML = `<label>${escape(text.title)}<input name="title" required maxlength="255" value="${escape(item.title)}"></label>${type === 'record' ? `<label>${escape(text.body)}<textarea name="body" rows="5">${escape(item.body)}</textarea></label>${select('kind',['video','short','post','poll','comment'],item.kind)}` : select('target_profile',['media_library','videos','shorts','posts'],item.target_profile)}${select('status',['unsorted','ready','needs_attention'],item.status)}<label>${escape(text.tags)}<input name="tags" value="${escape((item.tags || []).join(', '))}" placeholder="${escape(text.tags_hint)}"></label><div class="media-library-toolbar-row"><button class="media-library-primary" type="submit">${escape(text.save)}</button><button class="media-library-primary" type="button" data-ai>${escape(text.ai_classify)}</button></div><p role="status" aria-live="polite"></p>`;
     const message = form.querySelector('[role=status]');
+    form.addEventListener('input', () => {details.dataset.dirty = 'true';});
+    form.addEventListener('change', () => {details.dataset.dirty = 'true';});
     const perform = async operation => {
       const buttons = form.querySelectorAll('button'); buttons.forEach(button => {button.disabled = true;});
-      try { await operation(); document.dispatchEvent(new Event('desktop-media-changed')); }
+      try { await operation(); delete details.dataset.dirty; document.dispatchEvent(new Event('desktop-media-changed')); }
       catch (error) {message.textContent = error.message;}
       finally {buttons.forEach(button => {button.disabled = false;});}
     };
@@ -28,7 +30,10 @@
       const data = Object.fromEntries(new FormData(form)); data.tags = [...new Set(data.tags.split(',').map(tag => tag.trim()).filter(Boolean))];
       perform(async () => {await request(`/desktop/${type === 'media' ? 'media' : 'content'}/${item.id}`,data,'PATCH'); message.textContent = text.saved;});
     });
-    form.querySelector('[data-ai]').addEventListener('click', () => perform(async () => {await request('/desktop/content/classify',{type,id:String(item.id)}); message.textContent = text.ai_queued;}));
+    form.querySelector('[data-ai]').addEventListener('click', () => {
+      if (details.dataset.dirty === 'true') {message.textContent = text.save_before_ai; return;}
+      perform(async () => {await request('/desktop/content/classify',{type,id:String(item.id)}); message.textContent = text.ai_queued;});
+    });
     details.append(form);
   };
   document.addEventListener('click', async event => {

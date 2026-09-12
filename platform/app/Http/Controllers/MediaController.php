@@ -76,6 +76,7 @@ class MediaController extends Controller
             'role' => $item->asset_role, 'download_url' => route('media.download', $item),
             'preview_url' => in_array($item->mime, self::PREVIEW_MIMES, true) ? route('media.preview', $item) : null];
         $records = \App\Models\SourceRecord::whereIn('id', $media->usages->where('subject_type', \App\Models\SourceRecord::class)->pluck('subject_id'))->get();
+        $version = app(\App\Services\Importing\ContentState::class)->version($media);
         return response()->json(['id' => $media->id, 'summary' => $media->metadata['summary'] ?? '', 'client_relative_path' => $media->metadata['client_relative_path'] ?? null,
             'external_url' => $presentation->externalUrl($media->metadata ?? [], $media->source ?? '', $media->source_id, $media->kind),
             'storage' => ['disk' => $media->disk, 'path' => $media->path, 'sha256' => $media->sha256],
@@ -83,7 +84,12 @@ class MediaController extends Controller
             'parent' => $media->parent ? $asset($media->parent) : null,
             'assets' => $media->assets->map($asset), 'collections' => $media->collections->map(fn ($item) => ['id' => $item->id, 'title' => $item->title]),
             'usages' => $records->map(fn ($item) => ['title' => $item->title, 'kind' => $item->kind, 'detail_url' => route('content.show', $item)]),
-            'classifications' => $media->classifications()->latest()->limit(20)->get(['id', 'provider', 'model', 'status', 'confidence', 'proposal', 'created_at'])]);
+            'classifications' => $media->classifications()->latest()->limit(20)->get()->map(fn ($log) => [
+                'id'=>$log->id, 'provider'=>$log->provider, 'model'=>$log->model, 'status'=>$log->status, 'confidence'=>$log->confidence,
+                'proposal'=>$log->proposal, 'created_at'=>$log->created_at,
+                'undo_url'=>$log->status === 'applied' && ($log->applied_changes['after_version'] ?? null) === $version
+                    ? route('media.classification.undo', [$media, $log]) : null,
+            ])]);
     }
 
     public function store(Request $request, MediaLibrary $library)
