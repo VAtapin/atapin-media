@@ -26,6 +26,35 @@
     item.button.style.left = `${clamp(item.x, surface.clientWidth - item.button.offsetWidth)}px`;
     item.button.style.top = `${clamp(item.y, surface.clientHeight - item.button.offsetHeight)}px`;
   };
+  const isGrid = () => desktop.dataset.shortcutLayout === 'grid';
+  const gridMetrics = () => {
+    const items = [...shortcuts.values()];
+    const slotWidth = Math.max(96, ...items.map(item => item.button.offsetWidth)) + 16;
+    const slotHeight = Math.max(96, ...items.map(item => item.button.offsetHeight)) + 16;
+    return { slotWidth, slotHeight, rows:Math.max(1, Math.floor((surface.clientHeight - 24) / slotHeight)) };
+  };
+  const arrangeGrid = (persist = false) => {
+    const { slotWidth, slotHeight, rows } = gridMetrics();
+    [...shortcuts.values()].forEach((item, index) => {
+      item.x = 12 + Math.floor(index / rows) * slotWidth;
+      item.y = 12 + (index % rows) * slotHeight;
+      place(item);
+    });
+    if (persist) save();
+  };
+  const reorderGrid = (appId, position) => {
+    const entries = [...shortcuts.entries()];
+    const currentIndex = entries.findIndex(([id]) => id === appId);
+    if (currentIndex < 0) return;
+    const [moved] = entries.splice(currentIndex, 1);
+    const { slotWidth, slotHeight, rows } = gridMetrics();
+    const column = Math.max(0, Math.round((position.x - 12) / slotWidth));
+    const row = Math.max(0, Math.round((position.y - 12) / slotHeight));
+    entries.splice(Math.min(entries.length, column * rows + row), 0, moved);
+    shortcuts.clear();
+    entries.forEach(([id, item]) => shortcuts.set(id, item));
+    arrangeGrid(true);
+  };
   const fitToViewport = () => {
     const occupied = [];
     const overflow = [];
@@ -95,7 +124,8 @@
       12 + (innerWidth <= 700 ? Math.floor(index / columns) : index % rows) * 108));
   }
 
-  fitToViewport();
+  if (isGrid()) arrangeGrid(true);
+  else fitToViewport();
 
   const hideMenu = (focus = false) => {
     menu.hidden = true;
@@ -124,7 +154,9 @@
   };
   const add = (id, position) => {
     const item = create(id, position.x, position.y);
-    save();
+    if (!item) return;
+    if (isGrid()) reorderGrid(id, position);
+    else save();
     item?.button.focus();
   };
   // Command factories keep menu rendering independent of each action and allow additional commands.
@@ -133,7 +165,8 @@
     if (shortcut) return [{ id:'remove', label:menu.dataset.removeLabel, run:() => {
       shortcuts.delete(shortcut.dataset.openApp);
       shortcut.remove();
-      save();
+      if (isGrid()) arrangeGrid(true);
+      else save();
       surface.focus();
     } }];
     const application = source.closest('[data-open-app]');
@@ -151,6 +184,12 @@
     showMenu(commandsFor(source, position), position, source);
   };
   desktop.addEventListener('contextmenu', contextMenu);
+  desktop.addEventListener('atapin.settings', event => {
+    const data = event.detail;
+    if (data?.type !== 'atapin.settings.saved' || data.section !== 'desktop_design' || !['free', 'grid'].includes(data.shortcutLayout)) return;
+    desktop.dataset.shortcutLayout = data.shortcutLayout;
+    if (isGrid()) arrangeGrid(true);
+  });
   desktop.addEventListener('keydown', event => {
     if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) contextMenu(event, true);
   });
@@ -227,6 +266,7 @@
   window.addEventListener('resize', () => {
     hideMenu();
     finishDrag(true);
-    fitToViewport(); // Adapt the display, retaining coordinates for a larger viewport.
+    if (isGrid()) arrangeGrid();
+    else fitToViewport(); // Adapt the display, retaining coordinates for a larger viewport.
   });
 })();

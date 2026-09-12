@@ -94,9 +94,11 @@ try {
   const savedSettingsWindow = page.locator('.os-window[data-app-id="settings"]');
   const savedSettingsApp = savedSettingsWindow.locator('[data-settings-app]');
   await savedSettingsApp.locator('[name=desktop_wallpaper]').selectOption('navy');
+  await savedSettingsApp.locator('[name=desktop_shortcut_layout]').selectOption('grid');
   await savedSettingsApp.locator('[data-settings-save]').click();
   await savedSettingsApp.locator('[data-settings-notice]').getByText('Gespeichert.').waitFor();
   assert.equal(await page.locator('[data-desktop]').getAttribute('data-wallpaper'), 'navy');
+  assert.equal(await page.locator('[data-desktop]').getAttribute('data-shortcut-layout'), 'grid');
   await savedSettingsWindow.locator('[data-window-action="close"]').click();
   await page.setViewportSize({width:1440,height:1000});
   await fs.mkdir('tests/artifacts',{recursive:true});

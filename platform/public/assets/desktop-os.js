@@ -66,6 +66,7 @@
     wallpaper: desktop.dataset.wallpaper,
     accent: desktop.dataset.accent,
     density: desktop.dataset.density,
+    shortcutLayout: desktop.dataset.shortcutLayout,
     effects: desktop.dataset.effects,
     wallpaperStyle: desktop.style.getPropertyValue('--desktop-wallpaper'),
     iconSet: iconSetFromSource(document.querySelector('[data-app-icon]')?.dataset.appIcon),
@@ -78,6 +79,7 @@
     desktop.dataset.wallpaper = preview.wallpaper;
     desktop.dataset.accent = preview.accent;
     desktop.dataset.density = preview.density;
+    desktop.dataset.shortcutLayout = preview.shortcutLayout;
     desktop.dataset.effects = preview.effects;
     if (preview.wallpaperStyle) desktop.style.setProperty('--desktop-wallpaper', preview.wallpaperStyle);
     else desktop.style.removeProperty('--desktop-wallpaper');
@@ -89,6 +91,7 @@
     if (values.wallpaper) desktop.dataset.wallpaper = values.wallpaper;
     if (values.accent) desktop.dataset.accent = values.accent;
     if (values.density) desktop.dataset.density = values.density;
+    if (values.shortcutLayout) desktop.dataset.shortcutLayout = values.shortcutLayout;
     if (typeof values.effects === 'boolean') desktop.dataset.effects = values.effects ? 'on' : 'off';
     if (values.iconSet) applyIconSet(values.iconSet);
     if (values.customWallpaper) desktop.style.setProperty('--desktop-wallpaper', `url("${values.customWallpaper}")`);

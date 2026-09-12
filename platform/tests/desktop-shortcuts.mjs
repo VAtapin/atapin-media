@@ -133,5 +133,12 @@ export async function checkDesktopShortcuts(page, { artifacts = 'tests/artifacts
   await page.evaluate(key => { localStorage.removeItem(`${key}.shortcuts`); localStorage.removeItem(key); }, storageKey);
   await page.reload();
   assert.equal(await page.locator('.os-shortcut').count(), initialCount);
+  await page.locator('[data-desktop]').evaluate(root => root.dispatchEvent(new CustomEvent('atapin.settings', {
+    detail:{ type:'atapin.settings.saved', section:'desktop_design', shortcutLayout:'grid' }, bubbles:true,
+  })));
+  const gridPositions = await page.locator('.os-shortcut').evaluateAll(items => items.map(item => ({ x:item.offsetLeft, y:item.offsetTop, width:item.offsetWidth, height:item.offsetHeight })));
+  assert.deepEqual(gridPositions[0], { x:12, y:12, width:96, height:96 });
+  assert(!gridPositions.some((item, index) => gridPositions.slice(index + 1).some(other => item.x < other.x + other.width && item.x + item.width > other.x && item.y < other.y + other.height && item.y + item.height > other.y)), 'Grid shortcuts overlap');
+  assert.equal(await page.locator('[data-desktop]').getAttribute('data-shortcut-layout'), 'grid');
   console.log('Desktop shortcuts: drag, cancel, persistence, removal, Start catalogue, menus, keyboard and mobile OK');
 }

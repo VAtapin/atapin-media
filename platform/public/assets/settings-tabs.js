@@ -169,6 +169,7 @@
     const wallpaper = app.querySelector('[name="desktop_wallpaper"]');
     const accent = app.querySelector('[name="desktop_accent"]');
     const density = app.querySelector('[name="desktop_density"]');
+    const shortcutLayout = app.querySelector('[name="desktop_shortcut_layout"]');
     const effects = app.querySelector('[name="desktop_effects"]');
     const customWallpaper = app.querySelector('[name="desktop_custom_wallpaper"]');
     const desktopForm = iconSet?.closest('form');
@@ -185,6 +186,7 @@
       wallpaperUrl: wallpaper?.selectedOptions[0]?.dataset.wallpaperUrl || '',
       accent: accent?.value,
       density: density?.value,
+      shortcutLayout: shortcutLayout?.value,
       effects: Boolean(effects?.checked),
       scale: scale?.value,
       ...extra,

@@ -146,9 +146,10 @@ class FoundationTest extends TestCase
         $this->assertSame('acct_123', app(Settings::class)->get('integration_connections')['stripe']['external_id']);
         $this->put('/desktop/settings', ['section'=>'publishing','publishing_default_visibility'=>'internal','publishing_default_timezone'=>'Europe/Berlin','publishing_approval_required'=>'1'])->assertRedirect();
         $this->assertTrue(app(Settings::class)->get('publishing_approval_required'));
-        $this->putJson('/desktop/settings', ['section'=>'desktop_design','desktop_icon_set'=>'manna','desktop_wallpaper'=>'navy','desktop_accent'=>'gold','desktop_density'=>'comfortable','desktop_effects'=>true])
+        $this->putJson('/desktop/settings', ['section'=>'desktop_design','desktop_icon_set'=>'manna','desktop_wallpaper'=>'navy','desktop_accent'=>'gold','desktop_density'=>'comfortable','desktop_shortcut_layout'=>'grid','desktop_effects'=>true])
             ->assertOk()->assertJson(['status'=>'saved','section'=>'desktop_design']);
         $this->assertSame('navy', app(Settings::class)->get('desktop_wallpaper'));
+        $this->assertSame('grid', app(Settings::class)->get('desktop_shortcut_layout'));
         $this->putJson('/desktop/settings', ['section'=>'system','site_name'=>'Manna','system_locale'=>'de','system_timezone'=>'Europe/Berlin','legal_locale'=>'de','impressum'=>'<p onclick="alert(1)">Impressum</p><script>alert(1)</script>','privacy_policy'=>'<p>Datenschutz</p>','editorial_policy'=>'<p>Redaktion</p>'])
             ->assertOk()->assertJson(['status'=>'saved','section'=>'system']);
         $this->assertSame('<p>Impressum</p>', app(Settings::class)->get('legal_documents')['de']['impressum']);

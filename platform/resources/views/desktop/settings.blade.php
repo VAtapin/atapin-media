@@ -46,6 +46,7 @@
                 </div>
                 <div class="desktop-settings-grid three">
                     <label>{{ __('ui.desktop_density') }}<select name="desktop_density"><option value="comfortable" @selected(old('desktop_density',$settings['desktop_density'] ?? 'comfortable')==='comfortable')>{{ __('ui.desktop_density_comfortable') }}</option><option value="compact" @selected(old('desktop_density',$settings['desktop_density'] ?? '')==='compact')>{{ __('ui.desktop_density_compact') }}</option></select></label>
+                    <label>{{ __('ui.desktop_shortcut_layout') }}<select name="desktop_shortcut_layout"><option value="free" @selected(old('desktop_shortcut_layout',$settings['desktop_shortcut_layout'] ?? 'free')==='free')>{{ __('ui.desktop_shortcut_layout_free') }}</option><option value="grid" @selected(old('desktop_shortcut_layout',$settings['desktop_shortcut_layout'] ?? '')==='grid')>{{ __('ui.desktop_shortcut_layout_grid') }}</option></select></label>
                     <label>{{ __('ui.desktop_ui_scale') }}<select data-ui-scale><option value="90">90%</option><option value="100" selected>100%</option><option value="110">110%</option><option value="120">120%</option><option value="130">130%</option></select></label>
                     <label class="desktop-settings-check"><input type="checkbox" name="desktop_effects" value="1" @checked(old('desktop_effects',$settings['desktop_effects'] ?? true))><span>{{ __('ui.desktop_effects') }}</span></label>
                 </div>

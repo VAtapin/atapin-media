@@ -25,6 +25,7 @@ class DesktopController extends Controller
                 'accent' => $settings->get('desktop_accent', 'gold'),
                 'custom_wallpaper' => $settings->get('desktop_custom_wallpaper'),
                 'density' => $settings->get('desktop_density', 'comfortable'),
+                'shortcut_layout' => $settings->get('desktop_shortcut_layout', 'free'),
                 'effects' => $settings->get('desktop_effects', true),
             ],
         ]);
