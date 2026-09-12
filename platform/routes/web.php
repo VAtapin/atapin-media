@@ -25,6 +25,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('can:imports.manage')->prefix('desktop')->group(function () {
         Route::get('imports', [\App\Http\Controllers\ImportController::class, 'index'])->name('imports.index');
         Route::get('imports/options', [\App\Http\Controllers\ImportController::class, 'options'])->name('imports.options');
+        Route::get('imports/files', [\App\Http\Controllers\ImportController::class, 'files'])->name('imports.files');
         Route::post('imports', [\App\Http\Controllers\ImportController::class,'store'])->name('imports.store');
     });
     Route::middleware('can:projects.manage')->prefix('desktop')->group(function () {
@@ -34,6 +35,8 @@ Route::middleware('auth')->group(function () {
         Route::patch('tasks/{task}', [\App\Http\Controllers\TaskController::class,'update'])->name('tasks.update');
     });
     Route::get('/desktop/media/library', [MediaController::class,'library'])->middleware('can:media.view')->name('media.library');
+    Route::get('/desktop/content', [\App\Http\Controllers\ImportedContentController::class,'index'])->middleware('can:media.view')->name('content.index');
+    Route::get('/desktop/content/{record}', [\App\Http\Controllers\ImportedContentController::class,'show'])->middleware('can:media.view')->name('content.show');
     Route::post('/desktop/media/uploads', [MediaController::class,'uploadStart'])->middleware('can:media.upload')->name('media.uploads.start');
     Route::post('/desktop/media/uploads/{upload}/chunk', [MediaController::class,'uploadChunk'])->middleware('can:media.upload')->name('media.uploads.chunk');
     Route::post('/desktop/media/uploads/{upload}/finish', [MediaController::class,'uploadFinish'])->middleware('can:media.upload')->name('media.uploads.finish');

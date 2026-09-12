@@ -1,9 +1,13 @@
 <section class="desktop-media-library" data-media-library data-user-id="{{ auth()->id() }}" data-library-url="{{ route('media.library') }}">
     <div class="media-library-toolbar-row">
+        <button type="button" class="media-library-primary" data-library-content-toggle>{{ __('imports.content') }}</button>
+        <button type="button" class="media-library-primary" data-library-grid>{{ __('imports.grid') }}</button>
+        @can('imports.manage')<button type="button" class="media-library-primary" data-library-import-existing>{{ __('imports.import_existing') }}</button>@endcan
         <button type="button" class="media-library-primary" data-media-upload data-media-upload-label>Hochladen</button>
         <input type="file" data-media-upload-input multiple hidden>
         <p data-media-upload-message class="media-library-upload-message" aria-live="polite" role="status" hidden></p>
     </div>
+    <div data-library-content-container hidden>@include('desktop.content-library')</div>
     <form class="media-library-toolbar" data-library-filter>
         <label class="media-library-search">
             <span class="sr-only">Suchen</span>

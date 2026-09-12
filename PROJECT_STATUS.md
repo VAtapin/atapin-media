@@ -55,11 +55,12 @@
 - Расширена модель импорта (`import_runs`): `source_kind`, `source_options`, `target_profile`, `discovered`, `progress`, `error`, `started_at`, `finished_at`, а также запись `target_profile` в metadata media/source-объектов.
 - Этап 2 Import Center: загрузка ZIP/TAR/TAR.GZ/TGZ прямо с компьютера через существующий resumable upload до 20 GB, повторные попытки при сбоях и продолжение после повторного выбора файла. Папки регистрируют реальные пути; распакованные оригиналы остаются в private/import-inbox/archives, повторный импорт не дублирует записи. Добавлена недостающая source_ref migration, исправлена отправка ImportArchive в очередь. Проверяются traversal, ссылки и лимиты распаковки.
 - UI Import Center в десктопе использует общий layout-макет без повторяющихся заголовков окон, с формой запуска и списком последних запусков.
+- Этап 4: Media Library показывает файлы и отдельные Beiträge/metadata, поддерживает список/сетку с protected thumbnails, выбор серверных папок и запуск регистрации существующих intake/YouTube archives из UI. Окна Videos, Beiträge и Community получили native-просмотр соответствующих imported SourceRecords, текста, опросов, комментариев и связанных originals; импорт остаётся private/unsorted. Обновление списков после завершения импорта; pagination ограничена предыдущей/следующей страницей.
 
 ## Известные ограничения
 
-- Для Media Library, Projekte, Aufgaben, Kalender, Shop и Benutzer ещё требуется отдельная разработка native-интерфейсов внутри Desktop.
-- Для Media Library пока не реализованы: режимы сеточного просмотра, AI-классификация и ручная сортировка/нормализация, а также автоматическое отключение временного `/upload/` после согласования и production-проверки нового роута загрузки.
+- Для Projekte, Aufgaben, Kalender и Shop ещё требуется отдельная разработка native-интерфейсов внутри Desktop.
+- Для Media Library ещё требуются AI-классификация и ручная сортировка/нормализация, а также отключение временного `/upload/` после production-проверки новой загрузки.
 - Public Website начат, но ещё не завершён.
 - Для ручных YouTube выгрузок поддержаны ZIP/TAR и распознаваемые JSON/видео CSV. Произвольные варианты Takeout, экспортные HTML и неизвестные schemas ещё требуют отдельного разбора; нельзя выдавать их регистрацию файлами за полный импорт содержания.
 
@@ -69,6 +70,8 @@
 - После получения личной выгрузки YouTube реализовать адаптер ручного архива по `youtube/MANUAL_ARCHIVE_IMPORT.md`, затем запустить импорт через Import Center.
 
 ## Проверки
+
+- Этап 4: 17 целевых Laravel tests / 103 assertions, view:cache, route:cache и JS syntax прошли. Edge browser workflow реально прошёл: upload файла, список/детали/скачивание, сетка, metadata toggle, запуск YouTube archive без ID, открытие Videos/Beiträge/Community, отсутствие JS errors; desktop 1672x941/mobile 390x844 screenshots проверены. Полный suite выявил отдельную старую проблему повторного profile update (unique user_profiles.user_id); проверка removed apps уточнена до каталога приложений.
 
 - Этап 3: 12 целевых Laravel tests / 42 assertions и PHP syntax прошли; YouTube unittest: 10 passed, 1 skipped (локально нет ffmpeg). service_import.py --help и git diff --check прошли. Реальная загрузка из внешних сервисов не запускалась; runtime/доступность проверяются на сервере.
 
@@ -102,5 +105,5 @@
 
 ## Последний связанный commit
 
-- Этап 2: f55f340. Текущий этап: `Import service links and structured archive content` (hash — git log для содержащего эту запись commit).
+- Этапы 2/3: f55f340, 7d787a3. Текущий этап: `Show imported content across desktop libraries` (hash — git log для содержащего эту запись commit).
 

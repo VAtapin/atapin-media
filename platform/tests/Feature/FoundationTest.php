@@ -173,7 +173,7 @@ class FoundationTest extends TestCase
         $desktop->assertSee('desktop-settings', false)->assertSee('/assets/desktop-settings.css?v=3', false)
             ->assertSee($owner->email)->assertSee('data-user-cancel', false)->assertSee('data-user-create-cancel', false)
             ->assertDontSee('/assets/app.css', false)->assertDontSee('<iframe', false);
-        $desktop->assertDontSee('>Subscribers<', false)->assertDontSee('>Bilder<', false)->assertDontSee('>Audio<', false)->assertDontSee('>Dateien<', false);
+        foreach (['Subscribers','Bilder','Audio','Dateien'] as $removedApp) $desktop->assertDontSee('data-app-name="'.$removedApp.'"', false);
     }
     public function test_last_owner_cannot_be_demoted_and_short_password_account_can_be_created():void
     {

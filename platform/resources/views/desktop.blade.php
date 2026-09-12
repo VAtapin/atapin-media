@@ -75,6 +75,9 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <template id="import-center-app-template">
         @include('desktop.import-center')
     </template>
+    <template id="content-library-app-template">@include('desktop.content-library')</template>
+    <script>window.desktopImportLabels = @json(__('imports'));</script>
+    <script src="/assets/desktop-content-library.js" defer></script>
 
     <script src="/assets/desktop-media-upload.js" defer></script>
     <template id="os-window-template">

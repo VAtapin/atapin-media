@@ -20,7 +20,7 @@ class MediaController extends Controller
             'status' => 'nullable|in:unsorted,processing,ready,needs_attention,failed',
             'sort' => 'nullable|in:newest,oldest,name,size',
         ]);
-        $query = Media::visibleLibrary()->with(['tags:id,name', 'assets:id,parent_id,asset_role']);
+        $query = Media::visibleLibrary()->with(['tags:id,name', 'assets:id,parent_id,asset_role,mime']);
         if ($filters['q'] ?? null) {
             $term = $filters['q'];
             $query->where(fn ($items) => $items->where('title', 'like', "%{$term}%")->orWhere('original_name', 'like', "%{$term}%"));
@@ -48,6 +48,8 @@ class MediaController extends Controller
                 'created_at' => $media->created_at?->toIso8601String(),
                 'tags' => $media->tags->pluck('name')->values(),
                 'asset_count' => $media->assets->count(),
+                'thumbnail_url' => str_starts_with($media->mime, 'image/') && in_array($media->mime, self::PREVIEW_MIMES, true)
+                    ? route('media.preview', $media) : (($thumbnail = $media->assets->first(fn ($asset) => in_array($asset->mime, ['image/jpeg','image/png','image/webp','image/gif'], true))) ? route('media.preview', $thumbnail) : null),
                 'download_url' => route('media.download', $media),
                 'preview_url' => in_array($media->mime, self::PREVIEW_MIMES, true) ? route('media.preview', $media) : null,
             ]),

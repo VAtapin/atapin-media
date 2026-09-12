@@ -412,6 +412,14 @@
           window.initializeImportCenter?.(importCenter);
         }
       }
+      if (['videos', 'posts', 'community'].includes(appId)) {
+        const content = document.querySelector('#content-library-app-template')?.content.firstElementChild.cloneNode(true);
+        if (content) {
+          content.dataset.section = appId;
+          windowElement.querySelector('.os-window-content').append(content);
+          window.initializeContentLibrary?.(content);
+        }
+      }
 
       if (saved) {
         windowElement.dataset.pinned = saved.pinned ? 'true' : 'false';

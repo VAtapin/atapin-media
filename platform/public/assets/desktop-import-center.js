@@ -133,6 +133,30 @@
     const optionsUrl = root.dataset.importsOptionsUrl;
     const listUrl = root.dataset.importsUrl;
     const startUrl = root.dataset.importsUrl;
+    root.querySelector('[data-import-file]')?.addEventListener('change', event => {
+      if (event.target.files?.length) { sourceSelect.value = 'local-archive'; applyRunHints(sourceSelect, sourceSelect.value); }
+    });
+    const serverSelect = root.querySelector('[data-import-server]');
+    const loadServer = async (path = '') => {
+      const data = await requestJson(`/desktop/imports/files?${new URLSearchParams({path})}`);
+      serverSelect.replaceChildren(new Option(window.desktopImportLabels.select_server, ''));
+      for (const file of data.data) {
+        const option = new Option(file.name, file.path);
+        option.dataset.source = file.source;
+        serverSelect.append(option);
+      }
+    };
+    serverSelect?.addEventListener('change', () => {
+      if (!serverSelect.value) return;
+      sourceSelect.value = serverSelect.selectedOptions[0].dataset.source;
+      root.querySelector('[data-import-source-value]').value = serverSelect.value;
+      applyRunHints(sourceSelect, sourceSelect.value);
+    });
+    root.querySelector('[data-import-browse]')?.addEventListener('click', () => {
+      if (serverSelect.selectedOptions[0]?.dataset.source === 'local-folder') loadServer(serverSelect.value).catch(error => setFormMessage(message,error.message,true));
+    });
+    loadServer().catch(error => setFormMessage(message,error.message,true));
+    let previousStatuses = new Map();
 
     if (!form || !sourceSelect || !targetSelect || !list || !status || !optionsUrl || !listUrl) {
       return;
@@ -158,6 +182,8 @@
     const loadRuns = async () => {
       const payload = await requestJson(`${listUrl}?per_page=12`, { method: 'GET' });
       const runs = Array.isArray(payload.data) ? payload.data : [];
+      if (runs.some(run => ['complete','partial'].includes(run.status) && previousStatuses.get(run.id) !== run.status)) document.dispatchEvent(new Event('desktop-media-changed'));
+      previousStatuses = new Map(runs.map(run => [run.id, run.status]));
     list.innerHTML = runs.length
         ? runs.map(renderRun).join('')
         : '<div class="import-center-empty">Noch keine Import-Vorgänge gestartet.</div>';

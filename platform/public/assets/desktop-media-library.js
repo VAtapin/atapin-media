@@ -109,6 +109,24 @@
     const uploadButton = root.querySelector('[data-media-upload]');
     const uploadInput = root.querySelector('[data-media-upload-input]');
     const uploadMessage = root.querySelector('[data-media-upload-message]');
+    const contentContainer = root.querySelector('[data-library-content-container]');
+    root.querySelector('[data-library-content-toggle]')?.addEventListener('click', event => {
+      const show = contentContainer.hidden;
+      contentContainer.hidden = !show;
+      [...root.children].filter(child => !child.matches('.media-library-toolbar-row, [data-library-content-container]')).forEach(child => { child.hidden = show; });
+      event.target.textContent = window.desktopImportLabels[show ? 'files' : 'content'];
+      if (show) window.initializeContentLibrary?.(contentContainer.querySelector('[data-content-library]'));
+    });
+    root.querySelector('[data-library-grid]')?.addEventListener('click', () => list.classList.toggle('is-grid'));
+    root.querySelector('[data-library-import-existing]')?.addEventListener('click', async event => {
+      const button = event.target;
+      button.disabled = true;
+      try {
+        for (const source of ['intake', 'youtube']) await requestJson('/desktop/imports', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({source, target_profile:'mixed'}) });
+        setUploadMessage(window.desktopImportLabels.existing_queued);
+      } catch (error) { setUploadMessage(error.message,true); }
+      finally { button.disabled = false; }
+    });
 
     let selected = null;
     let current = [];
@@ -185,12 +203,12 @@
       if (selected) selected = current.find(item => item.id === selected.id) || null;
       list.innerHTML = current.length
         ? current
-          .map(item => `<li><button type="button" class="media-library-item ${selected?.id === item.id ? 'is-selected' : ''}" data-media-id="${escape(item.id)}"><span class="media-library-file-icon" aria-hidden="true">${icon(item.kind)}</span><span class="media-library-item-main"><strong>${escape(item.title)}</strong><small>${escape(labels[item.source] || item.source)} · ${escape(prettyBytes(item.bytes))} · ${prettyDate(item.created_at)}</small></span><span class="media-library-status status-${escape(item.status)}">${escape(labels[item.status] || item.status)}</span></button></li>`)
+          .map(item => `<li><button type="button" class="media-library-item ${selected?.id === item.id ? 'is-selected' : ''}" data-media-id="${escape(item.id)}">${item.thumbnail_url ? `<img class="media-library-thumbnail" src="${escape(item.thumbnail_url)}" alt="" loading="lazy">` : `<span class="media-library-file-icon" aria-hidden="true">${icon(item.kind)}</span>`}<span class="media-library-item-main"><strong>${escape(item.title)}</strong><small>${escape(labels[item.source] || item.source)} · ${escape(prettyBytes(item.bytes))} · ${prettyDate(item.created_at)}</small></span><span class="media-library-status status-${escape(item.status)}">${escape(labels[item.status] || item.status)}</span></button></li>`)
           .join('')
         : '<li class="media-library-empty">Keine Medien für diese Auswahl.</li>';
       summary.textContent = `${payload.meta.total} Medien im Archiv`;
       pagination.innerHTML = payload.meta.last_page > 1
-        ? Array.from({ length: payload.meta.last_page }, (_, index) => `<button type="button" data-page="${index + 1}" ${payload.meta.current_page === index + 1 ? 'aria-current="page"' : ''}>${index + 1}</button>`).join('')
+        ? `<button type="button" data-page="${payload.meta.current_page - 1}" ${payload.meta.current_page <= 1 ? 'disabled' : ''}>‹</button><span>${payload.meta.current_page} / ${payload.meta.last_page}</span><button type="button" data-page="${payload.meta.current_page + 1}" ${payload.meta.current_page >= payload.meta.last_page ? 'disabled' : ''}>›</button>`
         : '';
       renderDetails(selected);
     };
@@ -233,6 +251,11 @@
       });
     }
 
+    const changed = () => {
+      if (!root.isConnected) { document.removeEventListener('desktop-media-changed', changed); return; }
+      load(lastPayload?.meta?.current_page || 1);
+    };
+    document.addEventListener('desktop-media-changed', changed);
     load(1);
   };
 })();
