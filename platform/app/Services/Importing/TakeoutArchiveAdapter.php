@@ -11,8 +11,10 @@ class TakeoutArchiveAdapter implements ImportAdapter
     public function inventory(): array
     {
         $root=config('platform.takeout_root'); $batches=[]; $reports=[];
-        if(!is_dir($root))return ['batches'=>[],'reports'=>[],'available'=>false];
-        foreach(new \DirectoryIterator($root) as $file) {
+        $prepared=config('platform.takeout_folder');
+        if(is_string($prepared)&&is_dir($prepared)&&!is_link($prepared))
+            $batches['prepared:Takeout']=['id'=>'prepared:Takeout','layout'=>'folder','parts'=>[],'name'=>basename($prepared)];
+        foreach(is_dir($root)?new \DirectoryIterator($root):[] as $file) {
             if($file->isLink()||$file->isDot())continue;
             if($file->isDir()) {
                 $batches['folder:'.$file->getFilename()]=['id'=>'folder:'.$file->getFilename(),'layout'=>'folder','parts'=>[],'name'=>$file->getFilename()];
@@ -29,11 +31,17 @@ class TakeoutArchiveAdapter implements ImportAdapter
             $batch['layout']??='zip';
             $batch['report']=$batch['layout']==='zip'?$this->report($batch['id']):null;
         }
-        return ['batches'=>array_values($batches),'reports'=>$reports,'available'=>true];
+        return ['batches'=>array_values($batches),'reports'=>$reports,'available'=>is_dir($root)||isset($batches['prepared:Takeout'])];
     }
     public function validate(array $input): array
     {
         $id=$input['batch']??''; $count=(int)($input['expected_parts']??0);
+        if($id==='prepared:Takeout') {
+            $root=config('platform.takeout_folder');
+            if(!is_string($root)||!is_dir($root)||is_link($root))throw ValidationException::withMessages(['batch'=>__('imports.takeout_select')]);
+            ImportPath::resolve(dirname($root),basename($root));
+            return $input;
+        }
         if(str_starts_with($id,'folder:')) {
             $name=substr($id,7);
             if($name===''||str_contains($name,'/')||str_contains($name,'\\')||in_array($name,['.','..'],true))throw ValidationException::withMessages(['batch'=>__('imports.takeout_select')]);
@@ -59,10 +67,13 @@ class TakeoutArchiveAdapter implements ImportAdapter
         $this->validate($run->source_options);
         $batch=collect($this->inventory()['batches'])->firstWhere('id',$run->source_options['batch']);
         if(($batch['layout']??null)==='folder') {
-            $root=ImportPath::resolve(config('platform.takeout_root'),substr($batch['id'],7));
+            $prepared=$batch['id']==='prepared:Takeout';
+            $storageRoot=$prepared?config('platform.takeout_folder'):config('platform.takeout_root');
+            $disk=$prepared?'takeout-prepared':'takeout';
+            $root=$prepared?ImportPath::resolve(dirname($storageRoot),basename($storageRoot)):ImportPath::resolve($storageRoot,substr($batch['id'],7));
             app(TakeoutCatalog::class)->inspect($run,[],$root,null);
-            (new LocalFolderAdapter(config('platform.takeout_root'),'takeout'))->importDirectory($run,$root,false);
-            app(TakeoutContentImporter::class)->import($run,[$root],'takeout',config('platform.takeout_root'));
+            (new LocalFolderAdapter($storageRoot,$disk))->importDirectory($run,$root,false);
+            app(TakeoutContentImporter::class)->import($run,[$root],$disk,$storageRoot);
             return;
         }
         $archives=[]; $required=0; $entries=0;

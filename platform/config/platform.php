@@ -14,6 +14,7 @@ return [
     'youtube_root' => env('YOUTUBE_ROOT', dirname(base_path(), 2).'/private/manna-youtube'),
     'import_inbox_root' => env('IMPORT_INBOX_ROOT', dirname(base_path(), 2).'/private/import-inbox'),
     'takeout_root' => env('TAKEOUT_ROOT', dirname(base_path(), 2).'/private/youtube_zip_alle'),
+    'takeout_folder' => env('TAKEOUT_FOLDER', dirname(base_path(), 2).'/private/Takeout'),
     'import_python' => env('IMPORT_PYTHON', dirname(base_path(), 2).'/private/manna-youtube-runtime/bin/python'),
     'import_node' => env('IMPORT_NODE', '/opt/plesk/node/22/bin/node'),
 ];

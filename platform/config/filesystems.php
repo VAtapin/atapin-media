@@ -46,6 +46,10 @@ return [
             'driver'=>'local', 'root'=>env('TAKEOUT_ROOT', dirname(base_path(),2).'/private/youtube_zip_alle'),
             'throw'=>true, 'serve'=>false,
         ],
+        'takeout-prepared' => [
+            'driver'=>'local', 'root'=>env('TAKEOUT_FOLDER', dirname(base_path(),2).'/private/Takeout'),
+            'throw'=>true, 'serve'=>false,
+        ],
 
         'local' => [
             'driver' => 'local',

@@ -99,6 +99,25 @@ class TakeoutImportTest extends TestCase
         $manifest=app(\App\Services\Importing\ImportJournal::class)->item($run,'takeout-manifest');
         $this->assertSame(0,$manifest->metadata['missing_files']);$this->assertCount(1,SourceRecord::where('kind','video')->firstOrFail()->metadata['media_ids']);
     }
+    public function test_direct_private_takeout_folder_keeps_the_legacy_disk_root(): void
+    {
+        $this->fixture();$parent=$this->root.'/private';mkdir($parent);
+        foreach([1,2] as $n){$zip=new ZipArchive;$zip->open($this->root.'/zips/'.$this->batch.'-'.sprintf('%03d',$n).'.zip');$zip->extractTo($parent);$zip->close();}
+        $folder=$parent.'/Takeout';
+        config(['platform.takeout_folder'=>$folder,'filesystems.disks.takeout-prepared.root'=>$folder,'filesystems.disks.takeout.root'=>$this->root.'/zips']);Storage::forgetDisk('takeout-prepared');Storage::forgetDisk('takeout');
+        file_put_contents($this->root.'/zips/legacy.mp4','Existing original');
+        $legacy=Media::create(['source'=>'youtube','disk'=>'takeout','path'=>'legacy.mp4','title'=>'Legacy','original_name'=>'legacy.mp4','kind'=>'video','mime'=>'video/mp4','bytes'=>17,'status'=>'unsorted']);
+        $inventory=app(TakeoutArchiveAdapter::class)->inventory();$this->assertTrue($inventory['available']);
+        $this->assertSame('Takeout',collect($inventory['batches'])->firstWhere('id','prepared:Takeout')['name']);
+        $input=app(ImportCenter::class)->prepareInput('youtube-takeout',['batch'=>'prepared:Takeout']);
+        $run=ImportRun::create([...$input,'status'=>'queued']);app(ImportCenter::class)->run($run);
+        $media=Media::findOrFail(SourceRecord::where('source_id','abcdefghijk')->firstOrFail()->metadata['media_ids'][0]);
+        $this->assertSame('takeout-prepared',$media->disk);$this->assertFileExists(Storage::disk($media->disk)->path($media->path));
+        $this->assertNotNull(app(\App\Services\MediaOriginalLocator::class)->find($legacy));
+        $this->assertDirectoryDoesNotExist($this->root.'/inbox/archives');
+        config(['platform.takeout_root'=>$this->root.'/absent']);
+        $this->assertTrue(app(TakeoutArchiveAdapter::class)->inventory()['available']);
+    }
     public function test_german_multipart_takeout_builds_complete_content_and_attachments(): void
     {
         $progress = new class extends \App\Services\Importing\ImportProgress {
