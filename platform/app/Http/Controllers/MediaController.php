@@ -19,8 +19,16 @@ class MediaController extends Controller
             'kind' => 'nullable|in:video,audio,image,document,pdf,other',
             'status' => 'nullable|in:unsorted,processing,ready,needs_attention,failed',
             'sort' => 'nullable|in:newest,oldest,name,size',
+            'tag' => 'nullable|string|max:100', 'collection' => 'nullable|integer|exists:collections,id',
+            'archive' => 'nullable|in:active,archived,all',
         ]);
-        $query = Media::visibleLibrary()->with(['tags:id,name', 'assets:id,parent_id,asset_role,mime']);
+        $query = Media::query()->with(['tags:id,name', 'assets:id,parent_id,asset_role,mime']);
+        if (($filters['archive'] ?? 'active') !== 'all') {
+            if (($filters['archive'] ?? 'active') === 'archived') $query->whereNotNull('archived_at');
+            else $query->whereNull('archived_at');
+        }
+        if ($filters['tag'] ?? '') $query->whereHas('tags', fn ($q) => $q->where('name', $filters['tag']));
+        if ($filters['collection'] ?? '') $query->whereHas('collections', fn ($q) => $q->where('collections.id', $filters['collection']));
         if ($filters['q'] ?? null) {
             $term = $filters['q'];
             $query->where(fn ($items) => $items->where('title', 'like', "%{$term}%")->orWhere('original_name', 'like', "%{$term}%"));
@@ -47,6 +55,8 @@ class MediaController extends Controller
                 'status' => $media->status,
                 'target_profile' => $media->metadata['target_profile'] ?? 'media_library',
                 'classification_confidence' => $media->classification_confidence,
+                'archived' => $media->archived_at !== null,
+                'detail_url' => route('media.details', $media),
                 'created_at' => $media->created_at?->toIso8601String(),
                 'tags' => $media->tags->pluck('name')->values(),
                 'asset_count' => $media->assets->count(),
@@ -57,6 +67,23 @@ class MediaController extends Controller
             ]),
             'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total()],
         ]);
+    }
+
+    public function details(Media $media, \App\Services\Importing\ImportedContentPresentation $presentation)
+    {
+        $media->load(['tags', 'assets', 'parent', 'collections', 'usages']);
+        $asset = fn ($item) => ['id' => $item->id, 'title' => $item->title, 'kind' => $item->kind, 'mime' => $item->mime,
+            'role' => $item->asset_role, 'download_url' => route('media.download', $item),
+            'preview_url' => in_array($item->mime, self::PREVIEW_MIMES, true) ? route('media.preview', $item) : null];
+        $records = \App\Models\SourceRecord::whereIn('id', $media->usages->where('subject_type', \App\Models\SourceRecord::class)->pluck('subject_id'))->get();
+        return response()->json(['id' => $media->id, 'summary' => $media->metadata['summary'] ?? '',
+            'external_url' => $presentation->externalUrl($media->metadata ?? [], $media->source ?? '', $media->source_id, $media->kind),
+            'storage' => ['disk' => $media->disk, 'path' => $media->path, 'sha256' => $media->sha256],
+            'technical' => array_intersect_key($media->metadata['technical'] ?? [], array_flip(['duration', 'width', 'height', 'format', 'codec'])),
+            'parent' => $media->parent ? $asset($media->parent) : null,
+            'assets' => $media->assets->map($asset), 'collections' => $media->collections->map(fn ($item) => ['id' => $item->id, 'title' => $item->title]),
+            'usages' => $records->map(fn ($item) => ['title' => $item->title, 'kind' => $item->kind, 'detail_url' => route('content.show', $item)]),
+            'classifications' => $media->classifications()->latest()->limit(20)->get(['id', 'provider', 'model', 'status', 'confidence', 'proposal', 'created_at'])]);
     }
 
     public function store(Request $request, MediaLibrary $library)

@@ -113,12 +113,14 @@
     root.querySelector('[data-library-content-toggle]')?.addEventListener('click', event => {
       const show = contentContainer.hidden;
       contentContainer.hidden = !show;
+      organization?.reset();
       for (const button of root.querySelectorAll('[data-library-grid], [data-classify-batch="media"]')) button.hidden = show;
-      [...root.children].filter(child => !child.matches('.media-library-toolbar-row, [data-library-content-container]')).forEach(child => { child.hidden = show; });
+      [...root.children].filter(child => child.matches('[data-library-filter], [data-library-summary], .media-library-layout, [data-library-pagination]')).forEach(child => { child.hidden = show; });
       event.target.textContent = window.desktopImportLabels[show ? 'files' : 'content'];
       if (show) window.initializeContentLibrary?.(contentContainer.querySelector('[data-content-library]'));
     });
     root.querySelector('[data-library-grid]')?.addEventListener('click', () => list.classList.toggle('is-grid'));
+    root.querySelector('.media-library-actions')?.addEventListener('click', event => {if (event.target.closest('button')) root.querySelector('.media-library-actions').open = false;});
     root.querySelector('[data-library-import-existing]')?.addEventListener('click', async event => {
       const button = event.target;
       button.disabled = true;
@@ -198,6 +200,7 @@
       ${tags.length ? `<p class="media-library-tags">${tags.map(tag => `<span>${escape(tag)}</span>`).join('')}</p>` : ''}
       <a class="media-library-download" href="${escape(item.download_url)}">Herunterladen</a>`;
       if (root.dataset.canEdit === 'true') window.appendContentAssignment?.(details, 'media', item);
+      window.appendMediaInspector?.(details, item);
     };
 
     const render = payload => {
@@ -214,6 +217,7 @@
         ? `<button type="button" data-page="${payload.meta.current_page - 1}" ${payload.meta.current_page <= 1 ? 'disabled' : ''}>‹</button><span>${payload.meta.current_page} / ${payload.meta.last_page}</span><button type="button" data-page="${payload.meta.current_page + 1}" ${payload.meta.current_page >= payload.meta.last_page ? 'disabled' : ''}>›</button>`
         : '';
       renderDetails(selected);
+      organization?.decorate();
     };
 
     const load = async page => {
@@ -262,6 +266,7 @@
       load(lastPayload?.meta?.current_page || 1);
     };
     document.addEventListener('desktop-media-changed', changed);
+    const organization = window.initializeMediaOrganization?.(root, () => current);
     load(1);
   };
 })();

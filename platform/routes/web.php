@@ -37,6 +37,13 @@ Route::middleware('auth')->group(function () {
         Route::patch('tasks/{task}', [\App\Http\Controllers\TaskController::class,'update'])->name('tasks.update');
     });
     Route::get('/desktop/media/library', [MediaController::class,'library'])->middleware('can:media.view')->name('media.library');
+    Route::patch('/desktop/media/organize', [\App\Http\Controllers\MediaOrganizationController::class,'update'])->middleware('can:media.edit')->name('media.organize');
+    Route::get('/desktop/media/collections', [\App\Http\Controllers\MediaCollectionController::class,'index'])->middleware('can:media.view')->name('media.collections');
+    Route::post('/desktop/media/collections', [\App\Http\Controllers\MediaCollectionController::class,'store'])->middleware('can:media.edit');
+    Route::get('/desktop/media/collections/{collection}', [\App\Http\Controllers\MediaCollectionController::class,'show'])->middleware('can:media.view');
+    Route::patch('/desktop/media/collections/{collection}', [\App\Http\Controllers\MediaCollectionController::class,'update'])->middleware('can:media.edit');
+    Route::patch('/desktop/media/collections/{collection}/members/{media}', [\App\Http\Controllers\MediaCollectionController::class,'member'])->middleware('can:media.edit');
+    Route::get('/desktop/media/{media}/details', [MediaController::class,'details'])->middleware('can:media.view')->name('media.details');
     Route::get('/desktop/content', [\App\Http\Controllers\ImportedContentController::class,'index'])->middleware('can:media.view')->name('content.index');
     Route::get('/desktop/content/playlists', [\App\Http\Controllers\ImportedContentController::class,'playlists'])->middleware('can:media.view')->name('content.playlists');
     Route::get('/desktop/content/playlists/{collection}', [\App\Http\Controllers\ImportedContentController::class,'playlist'])->middleware('can:media.view')->name('content.playlist');

@@ -1,13 +1,19 @@
 <section class="desktop-media-library" data-media-library data-can-edit="{{ auth()->user()->hasPermission('media.edit') ? 'true' : 'false' }}" data-user-id="{{ auth()->id() }}" data-library-url="{{ route('media.library') }}">
     <div class="media-library-toolbar-row">
         <button type="button" class="media-library-primary" data-library-content-toggle>{{ __('imports.content') }}</button>
+        @can('imports.manage')<button type="button" class="desktop-button" data-open-app="imports">{{ __('imports.import_action') }}</button>@endcan
+        <details class="media-library-actions"><summary>{{ __('imports.more_actions') }}</summary><div class="media-library-toolbar-row">
         <button type="button" class="media-library-primary" data-library-grid>{{ __('imports.grid') }}</button>
+        <button type="button" class="desktop-button" data-library-collections>{{ __('imports.collections') }}</button>
+        @can('media.edit')<button type="button" class="desktop-button" data-library-select>{{ __('imports.select_files') }}</button>@endcan
         @can('imports.manage')<button type="button" class="media-library-primary" data-library-import-existing>{{ __('imports.import_existing') }}</button>@endcan
         @can('content.edit')<button type="button" class="media-library-primary" data-classify-batch="media">{{ __('imports.ai_batch') }}</button>@endcan
+        </div></details>
         <button type="button" class="media-library-primary" data-media-upload data-media-upload-label>Hochladen</button>
         <input type="file" data-media-upload-input multiple hidden>
         <p data-media-upload-message class="media-library-upload-message" aria-live="polite" role="status" hidden></p>
     </div>
+    @include('desktop.media-organization')
     <div data-library-content-container hidden>@include('desktop.content-library')</div>
     <form class="media-library-toolbar" data-library-filter>
         <label class="media-library-search">
@@ -22,14 +28,6 @@
             <option value="needs_attention">Benötigt Aufmerksamkeit</option>
             <option value="failed">Fehlgeschlagen</option>
         </select>
-        <select name="source" aria-label="Quelle">
-            <option value="">Alle Quellen</option>
-            <option value="intake">Dateien des Eigentümers</option>
-            <option value="youtube">YouTube-Archiv</option>
-            <option value="upload">Media-Library-Upload</option>
-            <option value="local-folder">{{ __('imports.server_folder') }}</option>
-            <option value="local-archive">{{ __('imports.upload_archive') }}</option>
-        </select>
         <select name="kind" aria-label="Dateityp">
             <option value="">Alle Typen</option>
             <option value="video">Video</option>
@@ -39,7 +37,21 @@
             <option value="pdf">PDF</option>
             <option value="other">Andere</option>
         </select>
+        <details class="media-library-more-filters"><summary>{{ __('imports.more_filters') }}</summary><div class="media-library-filter-fields">
+        <select name="source" aria-label="Quelle">
+            <option value="">Alle Quellen</option>
+            <option value="intake">Dateien des Eigentümers</option>
+            <option value="youtube">YouTube-Archiv</option>
+            <option value="upload">Media-Library-Upload</option>
+            <option value="local-folder">{{ __('imports.server_folder') }}</option>
+            <option value="local-archive">{{ __('imports.upload_archive') }}</option>
+            @foreach(['tiktok','instagram','facebook-video','youtube-service'] as $source)<option value="{{ $source }}">{{ __('imports.source_'.$source) }}</option>@endforeach
+        </select>
         <select name="sort" aria-label="Sortierung"><option value="newest">Neueste zuerst</option><option value="oldest">Älteste zuerst</option><option value="name">Name</option><option value="size">Größe</option></select>
+        <label><span class="sr-only">{{ __('imports.tag_filter') }}</span><input name="tag" maxlength="100" placeholder="{{ __('imports.tag_filter') }}"></label>
+        <select name="collection" aria-label="{{ __('imports.collections') }}" data-media-collection-options><option value="">{{ __('imports.all_collections') }}</option></select>
+        <select name="archive" aria-label="{{ __('imports.archive_action') }}"><option value="active">{{ __('imports.active_files') }}</option><option value="archived">{{ __('imports.archived_files') }}</option><option value="all">{{ __('imports.all_files') }}</option></select>
+        </div></details>
     </form>
     <div class="media-library-summary" data-library-summary>Archiv wird geladen …</div>
     <div class="media-library-layout">
