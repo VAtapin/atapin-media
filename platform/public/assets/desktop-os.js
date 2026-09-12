@@ -42,17 +42,90 @@
     document.body.dataset.uiScale = selected;
     return selected;
   };
-  let uiScale = '100';
-  try { uiScale = applyUiScale(localStorage.getItem(SCALE_KEY) || '100'); } catch (_) { uiScale = applyUiScale('100'); }
+  let savedUiScale = '100';
+  try { savedUiScale = localStorage.getItem(SCALE_KEY) || '100'; } catch (_) {}
+  let uiScale = applyUiScale(savedUiScale);
+  savedUiScale = uiScale;
+
+  const iconSetFromSource = source => source?.match(/\/desktop\/(manna|standard|green|sol)\//)?.[1] || 'manna';
+  const sourceForIconSet = (source, iconSet) => source?.replace(/\/desktop\/(manna|standard|green|sol)\//, `/desktop/${iconSet}/`);
+  const applyIconSet = iconSet => {
+    if (!['manna', 'standard', 'green', 'sol'].includes(iconSet)) return;
+    document.querySelectorAll('[data-app-icon]').forEach(element => {
+      const source = sourceForIconSet(element.dataset.appIcon, iconSet);
+      if (source) element.dataset.appIcon = source;
+      const image = element.querySelector('img');
+      if (image && source) image.src = source;
+    });
+    document.querySelectorAll('img[src*="/desktop/"]').forEach(image => {
+      const source = sourceForIconSet(image.getAttribute('src'), iconSet);
+      if (source) image.src = source;
+    });
+  };
+  const captureSettingsPreview = windowElement => ({
+    wallpaper: desktop.dataset.wallpaper,
+    accent: desktop.dataset.accent,
+    density: desktop.dataset.density,
+    effects: desktop.dataset.effects,
+    wallpaperStyle: desktop.style.getPropertyValue('--desktop-wallpaper'),
+    iconSet: iconSetFromSource(document.querySelector('[data-app-icon]')?.dataset.appIcon),
+    scale: uiScale,
+    windowElement,
+  });
+  const restoreSettingsPreview = windowElement => {
+    const preview = windowElement?._settingsPreview;
+    if (!preview) return;
+    desktop.dataset.wallpaper = preview.wallpaper;
+    desktop.dataset.accent = preview.accent;
+    desktop.dataset.density = preview.density;
+    desktop.dataset.effects = preview.effects;
+    if (preview.wallpaperStyle) desktop.style.setProperty('--desktop-wallpaper', preview.wallpaperStyle);
+    else desktop.style.removeProperty('--desktop-wallpaper');
+    applyIconSet(preview.iconSet);
+    uiScale = applyUiScale(preview.scale);
+    windowElement.dataset.settingsDirty = 'false';
+  };
+  const applySettingsPreview = values => {
+    if (values.wallpaper) desktop.dataset.wallpaper = values.wallpaper;
+    if (values.accent) desktop.dataset.accent = values.accent;
+    if (values.density) desktop.dataset.density = values.density;
+    if (typeof values.effects === 'boolean') desktop.dataset.effects = values.effects ? 'on' : 'off';
+    if (values.iconSet) applyIconSet(values.iconSet);
+    if (values.customWallpaper) desktop.style.setProperty('--desktop-wallpaper', `url("${values.customWallpaper}")`);
+    else if (values.wallpaperUrl) desktop.style.setProperty('--desktop-wallpaper', `url("${values.wallpaperUrl}")`);
+    else if (values.wallpaper && values.wallpaper !== 'custom') desktop.style.removeProperty('--desktop-wallpaper');
+    if (values.scale) uiScale = applyUiScale(values.scale);
+  };
+  const settingsWindowFromSource = source => [...document.querySelectorAll('.os-window[data-app-id="settings"]')]
+    .find(windowElement => windowElement.querySelector('iframe')?.contentWindow === source);
   window.addEventListener('message', event => {
     if (event.origin !== window.location.origin || !event.data?.type) return;
-    if (event.data.type === 'atapin.desktop.ui-scale.request') event.source?.postMessage({ type:'atapin.desktop.ui-scale.value', value:uiScale }, event.origin);
-    if (event.data.type === 'atapin.desktop.ui-scale.set') {
-      uiScale = applyUiScale(event.data.value);
-      try { localStorage.setItem(SCALE_KEY, uiScale); } catch (_) {}
+    const settingsWindow = settingsWindowFromSource(event.source);
+    if (event.data.type === 'atapin.settings.scale.request') event.source?.postMessage({ type:'atapin.settings.scale.value', value:uiScale }, event.origin);
+    if (event.data.type === 'atapin.settings.preview' && settingsWindow) {
+      settingsWindow._desktopPreviewDirty = true;
+      applySettingsPreview(event.data);
+    }
+    if (event.data.type === 'atapin.settings.dirty' && settingsWindow) settingsWindow.dataset.settingsDirty = event.data.dirty ? 'true' : 'false';
+    if (event.data.type === 'atapin.settings.discard' && settingsWindow) restoreSettingsPreview(settingsWindow);
+    if (event.data.type === 'atapin.settings.saved' && settingsWindow) {
+      if (event.data.section === 'desktop_design') {
+        applySettingsPreview(event.data);
+        settingsWindow._settingsPreview = captureSettingsPreview(settingsWindow);
+        settingsWindow._desktopPreviewDirty = false;
+        savedUiScale = uiScale;
+        try { localStorage.setItem(SCALE_KEY, savedUiScale); } catch (_) {}
+      }
+      if (!settingsWindow._desktopPreviewDirty) settingsWindow.dataset.settingsDirty = 'false';
     }
   });
 
+  const confirmSettingsClose = windowElement => {
+    if (windowElement.dataset.appId !== 'settings') return true;
+    if (windowElement.dataset.settingsDirty === 'true' && !window.confirm('Es gibt nicht gespeicherte Änderungen. Möchten Sie das Fenster wirklich schließen?')) return false;
+    if (windowElement.dataset.settingsDirty === 'true') restoreSettingsPreview(windowElement);
+    return true;
+  };
   const snapPanel = document.createElement('section');
   snapPanel.className = 'os-snap-panel';
   snapPanel.hidden = true;
@@ -308,6 +381,7 @@
       desktop.append(windowElement);
       bindWindow(windowElement);
       createTaskButton(windowElement, trigger);
+      if (appId === 'settings') windowElement._settingsPreview = captureSettingsPreview(windowElement);
       if (trigger.dataset.appUrl) {
         const frame = document.createElement('iframe');
         frame.className = 'os-app-frame';
@@ -402,6 +476,7 @@
       event.stopPropagation();
       const action = button.dataset.windowAction;
       if (action === 'close') {
+        if (!confirmSettingsClose(windowElement)) return;
         hideSnap();
         taskButtonFor(windowElement.dataset.appId)?.remove();
         windowElement.remove();
@@ -503,6 +578,8 @@
     startButton.setAttribute('aria-expanded', String(!startMenu.hidden));
   });
   closeAllButton.addEventListener('click', () => {
+    const settingsWindow = windowFor('settings');
+    if (settingsWindow && !confirmSettingsClose(settingsWindow)) return;
     hideSnap();
     clearTimeout(saveTimer);
     document.querySelectorAll('.os-window,.os-task-app').forEach(element => element.remove());
@@ -525,6 +602,12 @@
       startButton.focus();
     }
     hideSnap();
+  });
+
+  window.addEventListener('beforeunload', event => {
+    if (!windowFor('settings') || windowFor('settings').dataset.settingsDirty !== 'true') return;
+    event.preventDefault();
+    event.returnValue = '';
   });
   window.addEventListener('resize', () => {
     hideSnap();

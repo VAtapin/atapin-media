@@ -50,7 +50,7 @@ class SettingsController extends Controller
         }
         $settings->update($values);
         $settings->updateSecrets($secrets);
-        return back()->with('status', __('ui.saved'));
+        return back()->with('status', __('ui.saved'))->with('saved_section', $section);
     }
     public function storeRole(Request $request, \App\Services\Audit $audit)
     {

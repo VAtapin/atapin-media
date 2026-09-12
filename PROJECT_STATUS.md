@@ -17,8 +17,8 @@
 - Для Desktop подключены четыре полных approved-набора из 19 PNG: Manna Vom Himmel, Standard, Grün и Sol. В системных настройках выбираются набор значков, approved-фон, пользовательский фон и акцентный цвет без изменения ярлыков, окон или их расположения.
 - `Einstellungen` является центральным разделом настроек: Desktop & Design, KI, Social Media, Publishing, Integrationen, Benutzer & Rechte и System. Настройки хранятся в таблице `settings`; API-ключи и токены хранятся там же в зашифрованном виде и никогда не возвращаются в форму.
 - Einstellungen внутри Desktop использует компактные вкладки: одновременно видна только одна панель. В Benutzer & Rechte роль выбирается отдельно, а её права и форма создания роли раскрываются по запросу.
-- Встроенные Einstellungen начинаются с вкладок без повторного branding/title/introduction. Форма использует плотную Desktop-компоновку; персональный масштаб 90–130 % применяется к Media Desktop и сохраняется в browser storage пользователя.
-- Пользовательские язык, timezone и branding применяются на уровне запроса из БД. Einstellungen открывается внутри стандартного окна Media Desktop как чистое встроенное приложение без старой sidebar/header-оболочки.
+- Встроенные Einstellungen начинаются с вкладок без повторного branding/title/introduction. Форма использует плотную Desktop-компоновку; персональный масштаб 90–130 % применяется к Media Desktop и сохраняется в browser storage только после явного сохранения.
+- Пользовательские язык, timezone и branding применяются на уровне запроса из БД. Einstellungen открывается внутри стандартного окна Media Desktop как чистое встроенное приложение без старой sidebar/header-оболочки. Desktop & Design даёт live preview обоев, набора значков, акцента, плотности, эффектов и масштаба; закрытие с несохранёнными изменениями запрашивает подтверждение и восстанавливает сохранённое состояние.
 - Устаревшая Laravel workspace-оболочка удалена: общий layout больше не содержит sidebar, topbar, breadcrumbs или старую навигацию; страницы сохранившихся модулей выводят только собственное содержимое.
 - Каталог Start/Desktop содержит 19 программ: Media Library объединяет Bilder, Audio и Dateien; Newsletter включает Subscribers. Добавлены Podcast, Themen & Kategorien и Shop & Verkäufe. Shop имеет базовые таблицы товаров и продаж без фиктивного payment provider.
 
@@ -63,8 +63,8 @@
 - Пройден `node --check` для обновлённого Desktop JavaScript, `git diff --check` и проверка состава 19 ярлыков. Laravel Feature tests обновлены, но локально не запускались из-за отсутствия PHP.
 - Проверено отсутствие legacy-shell селекторов и разметки; Feature test добавлен, но локально не запускался из-за отсутствия PHP.
 - Пройден `node --check` для `settings-tabs.js`; проверено отсутствие anchor-навигации и наличие семи вкладок/панелей. Laravel Feature test обновлён, но локально не запускался из-за отсутствия PHP.
-- Пройден `node --check` для `desktop-os.js` и `settings-tabs.js`, а также `git diff --check`. Laravel Feature test обновлён, но локально не запускался из-за отсутствия PHP.
+- Пройден `node --check` для `desktop-os.js`, `settings-tabs.js` и `browser.mjs`, а также `git diff --check`. Browser-сценарий расширен проверкой live preview и отмены несохранённых изменений; локальный запуск Laravel/browser suite недоступен из-за отсутствия PHP.
 
 ## Последний связанный commit
 
-- `Add compact desktop settings scale`
+- `Save desktop settings preview explicitly`
