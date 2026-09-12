@@ -51,17 +51,21 @@
 - Стандартное production-обновление platform выполняется из `/var/www/vhosts/mannavomhimmel.de/httpdocs` через `git pull --ff-only` и только необходимые `config:clear`/`view:clear` c `/opt/plesk/php/8.4/bin/php`; без PATH exports и maintenance-скрипта.
 - Публичный YouTube-сборщик сохранил частичный архив в `private/manna-youtube` (около 3.9 GB); полный личный архив владелец скачивает отдельно и хранит в `private/manna-youtube-manual/<дата-выгрузки>`. Текущий Import Center принимает структурированный архив сборщика; для YouTube Studio/Google Takeout нужен отдельный адаптер ручного формата. Полная инструкция: `youtube/MANUAL_ARCHIVE_IMPORT.md`.
 - Миграция статуса: для Media Library первично добавлен собственный загрузочный путь на платформе; временно внешний `/upload/`-инструмент продолжает работать для существующих кейсов и будет выключен после приемки новой пайплайна.
+- Запущен полноценный Import Center внутри Media Desktop: API `/desktop/imports`, список источников (intake, YouTube-архив, локальная папка/архив, YouTube/Instagram/TikTok/Facebook-заглушки), выбор целевого профиля (`media_library`, `videos`, `posts`, `shorts`, `comments`, `polls`), запуск импорта и страница истории заданий с обновляемым статусом.
+- Расширена модель импорта (`import_runs`): `source_kind`, `source_options`, `target_profile`, `discovered`, `progress`, `error`, `started_at`, `finished_at`, а также запись `target_profile` в metadata media/source-объектов.
+- Подготовлен пайплайн для импорта локальных источников из `private/import-inbox`: локальная папка и архив (zip/tar/gz/tgz) с валидацией пути, распаковкой в temp-папку и безопасным удалением после обработки.
+- UI Import Center в десктопе использует общий layout-макет без повторяющихся заголовков окон, с формой запуска и списком последних запусков.
 
 ## Известные ограничения
 
-- Для Media Library, Projekte, Aufgaben, Kalender, Import Center, Shop и Benutzer ещё требуется отдельная разработка native-интерфейсов внутри Desktop.
+- Для Media Library, Projekte, Aufgaben, Kalender, Shop и Benutzer ещё требуется отдельная разработка native-интерфейсов внутри Desktop.
 - Для Media Library пока не реализованы: режимы сеточного просмотра, AI-классификация и ручная сортировка/нормализация, а также автоматическое отключение временного `/upload/` после согласования и production-проверки нового роута загрузки.
 - Public Website начат, но ещё не завершён.
 - Импорт произвольной ручной выгрузки YouTube Studio/Google Takeout ещё не реализован; до создания адаптера её нельзя вручную смешивать с `private/manna-youtube`.
 
 ## Рекомендуемый следующий этап
 
-- Довести текущий медиапоток: включить автоматическую AI-классификацию и группировку/ручную доразметку `unsorted`, затем отключить временный `/upload/` и в интерфейсе оставить только новый путь.
+- Довести текущий медиапоток: включить автоматическую AI-классификацию и ручную доразметку `unsorted`, затем закрыть поддержку заглушечных импорт-адаптеров и подключить реальные API-коннекторы для TikTok/Instagram/Facebook.
 - После получения личной выгрузки YouTube реализовать адаптер ручного архива по `youtube/MANUAL_ARCHIVE_IMPORT.md`, затем запустить импорт через Import Center.
 
 ## Проверки

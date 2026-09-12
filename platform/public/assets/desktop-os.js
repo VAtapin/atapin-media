@@ -404,6 +404,15 @@
         }
       }
 
+      if (appId === 'imports') {
+        const importsTemplate = document.querySelector('#import-center-app-template');
+        const importCenter = importsTemplate?.content.firstElementChild.cloneNode(true);
+        if (importCenter) {
+          windowElement.querySelector('.os-window-content').append(importCenter);
+          window.initializeImportCenter?.(importCenter);
+        }
+      }
+
       if (saved) {
         windowElement.dataset.pinned = saved.pinned ? 'true' : 'false';
         windowElement.querySelector('[data-window-action="pin"]')?.classList.toggle('is-active', saved.pinned);

@@ -37,6 +37,11 @@ return [
             'driver'=>'local', 'root'=>env('YOUTUBE_ROOT',dirname(base_path(),2).'/private/manna-youtube'),
             'throw'=>true, 'serve'=>false,
         ],
+        'import-inbox' => [
+            'driver'=>'local',
+            'root'=>env('IMPORT_INBOX_ROOT', dirname(base_path(),2).'/private/import-inbox'),
+            'throw'=>true, 'serve'=>false,
+        ],
 
         'local' => [
             'driver' => 'local',

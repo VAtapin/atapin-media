@@ -23,6 +23,8 @@ Route::middleware('auth')->group(function () {
         Route::patch('users/{user}', [\App\Http\Controllers\UserController::class,'update'])->name('users.update');
     });
     Route::middleware('can:imports.manage')->prefix('desktop')->group(function () {
+        Route::get('imports', [\App\Http\Controllers\ImportController::class, 'index'])->name('imports.index');
+        Route::get('imports/options', [\App\Http\Controllers\ImportController::class, 'options'])->name('imports.options');
         Route::post('imports', [\App\Http\Controllers\ImportController::class,'store'])->name('imports.store');
     });
     Route::middleware('can:projects.manage')->prefix('desktop')->group(function () {

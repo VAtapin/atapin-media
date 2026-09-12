@@ -11,4 +11,5 @@ return [
     'media_upload_max_pending_uploads' => (int) env('MEDIA_UPLOAD_MAX_PENDING_UPLOADS', 10000),
     'intake_root' => env('INTAKE_ROOT', dirname(base_path(), 2).'/private/manna-intake'),
     'youtube_root' => env('YOUTUBE_ROOT', dirname(base_path(), 2).'/private/manna-youtube'),
+    'import_inbox_root' => env('IMPORT_INBOX_ROOT', dirname(base_path(), 2).'/private/import-inbox'),
 ];
