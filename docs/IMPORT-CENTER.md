@@ -1,5 +1,17 @@
 # Import Center
 
+## Удалить, восстановить и заменить файл
+
+В Media Library / Videos / Beiträge / Community выбрать материал: справа сверху доступны **Inhalt löschen**, **Bild / Cover ändern**, **Video ersetzen** (для video/short) и **Datei hinzufügen**. Каждое вложение имеет **Ersetzen** и **Verbindung entfernen**. Можно загрузить новую версию через существующий resumable uploader либо выбрать зарегистрированный файл. Это меняет связь только выбранного материала; общие originals и чужие материалы не перезаписываются. Убранные связи не возвращаются при repair/reimport.
+
+**Papierkorb** в фильтрах показывает удалённые материалы с **Wiederherstellen**. Удаление parent одновременно скрывает его polls/comments; restore не воскрешает ранее удалённые отдельно children. Reimport не отменяет ручное удаление. Физические originals/ZIP/snapshots сохранены. В файловой галерее **Datei löschen** перемещает запись в существующий архив, без разрыва чужих usages; восстановление — фильтр Archiviert и **Wiederherstellen**. Безвозвратное уничтожение originals не реализовано намеренно.
+
+## Видеть импорт после закрытия окна
+
+Accepted server queue import продолжается независимо от окна. **Import-Vorgänge** открывает крупную отдельную панель с обновлением, этапами, ошибками, stop/retry и detailed report. Основная форма показывает active count по всему серверу (не только текущей странице), status/stage и последнюю server message. History load errors видны. Desktop восстанавливает окна после загрузки app scripts, поэтому reload запускает loader истории, а не оставляет пустой template.
+
+Checkpoints обновляют heartbeat с throttling 30 секунд. Предупреждение о 10 минутах без сообщения не является подтверждением ошибки: текущий hash/entry может ещё выполняться. Нажать stop явно — отдельное действие. Загрузка файла с компьютера до принятия queue job всё ещё зависит от браузера; этот случай нельзя путать с уже запущенным server import.
+
 ## Приватный Google Takeout и новый каталог
 
 В Import Center выбрать **Google Takeout vom Server**. По умолчанию каталог — `/var/www/vhosts/mannavomhimmel.de/private/youtube_zip_alle` (переопределяется `TAKEOUT_ROOT`). Выбрать export `takeout-20260911T193951Z-1`, указать **8** ZIP частей. Файл `takeout-20260911T193951Z-001.zip` — отдельный отчёт, не девятая часть. Пропуски частей, traversal/links, общий лимит распаковки и свободное место проверяются до начала extraction. Для распакованного экспорта нужно дополнительное private storage плюс reserve; ZIP и распакованные originals не удаляются после импорта.

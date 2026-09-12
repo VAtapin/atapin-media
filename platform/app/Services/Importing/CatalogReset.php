@@ -10,8 +10,10 @@ class CatalogReset
     public function candidates()
     {
         $images=Media::where('kind','image')->pluck('id')->map(fn($id)=>'media:'.$id);
+        $generated=Media::where('classification_origin','ai')->pluck('id')->map(fn($id)=>'media:'.$id);
         return SourceRecord::where(fn($q)=>$q->whereIn('source',['youtube','youtube-service'])->where(fn($q)=>$q->whereNull('metadata->takeout')->orWhere('metadata->takeout',false)))
-            ->orWhere(fn($q)=>$q->where('source','!=','catalog-reset')->where('kind','post')->whereIn('source_id',$images));
+            ->orWhere(fn($q)=>$q->where('source','!=','catalog-reset')->where('kind','post')->whereIn('source_id',$images->merge($generated))
+                ->where(fn($q)=>$q->whereNull('metadata->classification_origin')->orWhere('metadata->classification_origin','!=','manual')));
     }
     private function playlists() {return Collection::whereIn('source',['youtube','youtube-service'])->where(fn($q)=>$q->whereNull('metadata->takeout')->orWhere('metadata->takeout',false));}
     public function preview(): array
@@ -42,7 +44,8 @@ class CatalogReset
         DB::transaction(function()use($id) {
             foreach([SourceRecord::class,Collection::class] as $class)foreach($class::where('source','catalog-reset')->where('metadata->catalog_reset->id',$id)->lockForUpdate()->get() as $record) {
                 $saved=$record->metadata['catalog_reset'];
-                abort_if($class::where('source',$saved['source'])->where('source_id',$saved['source_id'])->exists(),409,__('imports.reset_conflict'));
+                $conflicts=$class===SourceRecord::class?SourceRecord::withTrashed():$class::query();
+                abort_if($conflicts->where('source',$saved['source'])->where('source_id',$saved['source_id'])->exists(),409,__('imports.reset_conflict'));
                 $metadata=$record->metadata;unset($metadata['catalog_reset']);
                 if($class===SourceRecord::class){if($saved['library_only']===null)unset($metadata['library_only']);else $metadata['library_only']=$saved['library_only'];}
                 $record->update(['source'=>$saved['source'],'source_id'=>$saved['source_id'],'metadata'=>$metadata]);

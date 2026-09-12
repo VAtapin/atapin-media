@@ -21,7 +21,8 @@ class ClassifyImportedContent implements ShouldQueue, ShouldBeUnique
     public function handle(AiContentClassifier $classifier, ContentAssignment $assignment): void
     {
         $model = $this->type === 'media' ? Media::class : SourceRecord::class;
-        $item = $model::findOrFail($this->id);
+        $item = $model::find($this->id);
+        if(!$item)return;
         if ($item->source==='catalog-reset' || $item->status !== 'unsorted' || ! $classifier->available()) return;
         $version = $this->version($item); $log = null;
         if(isset($this->expectedVersion) && $version!==$this->expectedVersion)return;

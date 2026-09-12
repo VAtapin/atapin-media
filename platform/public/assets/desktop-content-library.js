@@ -26,9 +26,12 @@
       params.set('page', number);
       if (root.dataset.section) params.set('section', root.dataset.section);
       try {
+        const deleted=params.get('trash')==='deleted';
+        const playlistOption=form.querySelector('[value="playlist"]');if(playlistOption)playlistOption.disabled=deleted;
+        if(deleted && params.get('kind')==='playlist'){form.querySelector('[name="kind"]').value='';params.delete('kind');}
         const playlist = params.get('kind') === 'playlist';
         form.querySelector('[name="status"]').disabled = playlist;
-        const aiBatch = form.querySelector('[data-classify-batch]'); if (aiBatch) aiBatch.hidden = playlist;
+        const aiBatch = form.querySelector('[data-classify-batch]'); if (aiBatch) aiBatch.hidden = playlist||deleted;
         if (playlist) params.delete('kind');
         const data = await get(`${root.dataset.contentUrl}${playlist ? '/playlists' : ''}?${params}`);
         if (active.signal.aborted || !root.isConnected) return;
@@ -66,8 +69,8 @@
         details.dataset.recordId = item.id;
         details.dataset.currentUrl=url;
         if (item.items) details.insertAdjacentHTML('beforeend', `<p>${escape(text.playlist_hint)}</p><ol class="content-playlist-items">${item.items.map(member=>`<li value="${escape(member.position)}"><span class="content-playlist-title">${escape(member.title||member.source_id||text.unavailable)}</span><small>${escape(member.has_local_video ? text.local_file : member.detail_url ? text.metadata_only : text.missing_content)}</small>${member.detail_url ? `<button type="button" class="desktop-button" data-content-detail="${escape(member.detail_url)}">${escape(text.open_content)}</button>` : ''}${member.external_url ? external(member.external_url) : ''}</li>`).join('')}</ol>${item.previous_url ? `<button type="button" class="desktop-button" data-content-detail="${escape(item.previous_url)}">‹</button>` : ''}${item.next_url ? `<button type="button" class="desktop-button" data-content-detail="${escape(item.next_url)}">›</button>` : ''}`);
-        if (root.dataset.canEdit === 'true' && item.kind !== 'playlist') window.appendContentAssignment?.(details, 'record', item);
-        details.dispatchEvent(new CustomEvent('content-selected', { bubbles: true, detail: item }));
+        if (root.dataset.canEdit === 'true' && item.kind !== 'playlist' && !item.trashed) window.appendContentAssignment?.(details, 'record', item);
+        details.dispatchEvent(new CustomEvent(item.trashed?'content-trashed-selected':'content-selected', { bubbles: true, detail: item }));
       } catch (error) { if (generation === detailGeneration && root.isConnected) details.textContent = error.message; }
     };
     root.addEventListener('click', selectContent);

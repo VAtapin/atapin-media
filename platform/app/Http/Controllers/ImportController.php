@@ -57,6 +57,8 @@ class ImportController extends Controller
             $query->where('target_profile', $filters['target_profile']);
         }
 
+        $active=ImportRun::whereIn('status',['queued','running','stop_requested'])->count();
+        $activeRun=ImportRun::whereIn('status',['queued','running','stop_requested'])->latest('updated_at')->first();
         $runs = $query->paginate(20)->withQueryString();
         $items = $runs->getCollection()->map(function (ImportRun $run) {
             $summary=app(\App\Services\Importing\ImportJournal::class)->summary($run);
@@ -88,6 +90,8 @@ class ImportController extends Controller
                 'current_page' => $runs->currentPage(),
                 'last_page' => $runs->lastPage(),
                 'total' => $runs->total(),
+                'active'=>$active,
+                'active_run'=>$activeRun?['id'=>$activeRun->id,'source'=>$activeRun->source,'status'=>$activeRun->status,'progress'=>$activeRun->progress,'updated_at'=>$activeRun->updated_at?->toIso8601String()]:null,
             ],
         ]);
     }

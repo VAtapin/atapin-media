@@ -34,7 +34,7 @@
           button.disabled=true;const result=await request('/desktop/content/organize',data,'PATCH');selected.clear();bulk.reset();decorate();message.textContent=t.saved+': '+result.count;document.dispatchEvent(new Event('desktop-media-changed'));
         }catch(error){message.textContent=error.message;}finally{button.disabled=false;}
       });
-      root.contentOrganization=data=>{items=data.items;toggle.hidden=data.playlist;if(data.playlist){selected.clear();selecting=false;}decorate();};
+      root.contentOrganization=data=>{items=data.items;const disabled=data.playlist||filter.querySelector('[name=trash]')?.value==='deleted';toggle.hidden=disabled;if(disabled){selected.clear();selecting=false;}decorate();};
     }
     root.contentOrganization(event.detail);
   });

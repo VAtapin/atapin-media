@@ -244,6 +244,7 @@
       if (root.dataset.canEdit === 'true') window.appendContentAssignment?.(details, 'media', item);
       window.appendMediaInspector?.(details, item);
       window.appendMediaCover?.(details, item);
+      window.appendMediaLifecycle?.(details,item);
       for (const panel of details.querySelectorAll('details')) if (opened.includes(panel.querySelector('summary')?.textContent)) panel.open=true;
     };
 
@@ -309,9 +310,10 @@
       });
     }
 
-    const changed = () => {
+    const changed = event => {
       if (!root.isConnected) { document.removeEventListener('desktop-media-changed', changed); return; }
       if (uploading) return;
+      if(event.detail?.fileRemoved){receiptId=null;selected=null;}
       load(lastPayload?.meta?.current_page || 1);
     };
     document.addEventListener('desktop-media-changed', changed);

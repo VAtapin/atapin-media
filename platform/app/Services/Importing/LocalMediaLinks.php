@@ -18,11 +18,12 @@ class LocalMediaLinks
             $ids = [...$ids, ...Media::where('source','youtube')->where('source_id','like',$id.':%')->get(['id','source_id'])
                 ->filter(fn ($media) => str_starts_with($media->source_id,$id.':'))->pluck('id')->all()];
         }
-        return array_values(array_unique($ids));
+        return array_values(array_diff(array_unique($ids),$record->metadata['excluded_media_ids']??[]));
     }
 
     public function repair(SourceRecord $record, ?Media $chosen = null): void
     {
+        if($record->trashed())return;
         DB::transaction(function () use ($record,$chosen) {
             $record = SourceRecord::lockForUpdate()->findOrFail($record->id);
             if ($chosen) abort_unless($chosen->kind === 'video' && in_array($record->kind,['video','short']),422);
@@ -40,7 +41,7 @@ class LocalMediaLinks
                 }
                 $asset->usages()->firstOrCreate(['subject_type'=>SourceRecord::class,'subject_id'=>(string)$record->id,'used_as'=>$role ?? 'attachment']);
             }
-            if ($primary && isset($metadata['cover_media_id']) && $media->contains('id',$metadata['cover_media_id']))
+            if ($primary && !($metadata['manual_assets']??false) && isset($metadata['cover_media_id']) && $media->contains('id',$metadata['cover_media_id']))
                 $primary->update(['metadata'=>[...($primary->metadata ?? []),'cover_media_id'=>$metadata['cover_media_id']]]);
             $record->update(['metadata'=>$metadata]);
         });

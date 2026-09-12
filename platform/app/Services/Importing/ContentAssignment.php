@@ -29,7 +29,8 @@ class ContentAssignment
                 $media->tags()->sync($ids);
             }
             $kind = match ($metadata['target_profile']) { 'videos' => 'video', 'shorts' => 'short', 'posts' => 'post', default => null };
-            $managed = SourceRecord::where('source', $media->source ?? 'upload')->where('source_id', 'media:'.$media->id)->first();
+            $managed = SourceRecord::withTrashed()->where('source', $media->source ?? 'upload')->where('source_id', 'media:'.$media->id)->first();
+            abort_if($kind && $managed?->trashed(),422,__('imports.trash_restore_first'));
             $canonical = $media->kind === 'video' && !$media->parent_id ? SourceRecord::where(function ($query) use ($media) {
                 foreach(['media_ids','media->video'] as $key)$query->orWhereJsonContains('metadata->'.$key,$media->id);
             })->first() : null;

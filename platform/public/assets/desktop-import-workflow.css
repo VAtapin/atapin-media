@@ -5,3 +5,4 @@
 .import-report-dialog p{white-space:pre-wrap;overflow-wrap:anywhere}.import-report-dialog video{width:100%;max-height:320px}
 .import-report-dialog select{min-height:36px;padding:7px;border:1px solid var(--desktop-app-border);border-radius:6px;font:inherit;background:var(--desktop-app-panel);color:inherit}
 .import-report-dialog .media-library-toolbar-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.import-history-dialog .import-center-run-list{max-height:65vh;min-height:240px}.import-history-dialog .import-center-run-list-head{gap:12px;flex-wrap:wrap}.import-history-dialog .import-center-run-list-head>div{display:flex;gap:8px}

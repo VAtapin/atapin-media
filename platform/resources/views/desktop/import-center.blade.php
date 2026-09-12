@@ -1,6 +1,7 @@
 <section class="desktop-import-center" data-import-center data-user-id="{{ auth()->id() }}" data-imports-url="{{ route('imports.index') }}" data-imports-options-url="{{ route('imports.options') }}" data-import-files-url="{{ route('imports.files') }}" data-takeout-url="{{ route('imports.takeout') }}">
-    <div class="media-library-toolbar-row">@can('media.edit')<button type="button" class="desktop-button" data-local-video-check>{{ __('imports.audit_start') }}</button>@endcan
+    <div class="media-library-toolbar-row"><button type="button" class="desktop-button" data-open-import-history>{{ __('imports.run_history') }}</button>@can('media.edit')<button type="button" class="desktop-button" data-local-video-check>{{ __('imports.audit_start') }}</button>@endcan
     @can('content.edit')<button type="button" class="desktop-button" data-catalog-reset>{{ __('imports.reset_start') }}</button>@endcan</div>
+    <div class="import-center-status" data-import-status role="status">{{ __('imports.history_loading') }}</div>
     <form class="import-center-form" data-import-form>
         <fieldset class="import-methods">
             <legend>{{ __('imports.choose_method') }}</legend>
@@ -48,12 +49,11 @@
         <div class="import-submit-row"><button type="submit" class="desktop-button is-primary" data-import-start>{{ __('imports.start') }}</button><p class="import-center-message" data-import-message role="status" aria-live="polite" hidden></p></div>
         <div class="import-submit-row" data-import-upload-controls hidden><button type="button" class="desktop-button" data-import-upload-pause>{{ __('imports.upload_pause') }}</button><button type="button" class="desktop-button" data-import-upload-stop>{{ __('imports.upload_stop') }}</button><small>{{ __('imports.upload_queue_hint') }}</small></div>
     </form>
-    <div class="import-center-live">
-        <div class="import-center-status" data-import-status role="status"></div>
+    <dialog class="import-report-dialog import-history-dialog os-window-content" data-import-history-dialog aria-label="{{ __('imports.run_history') }}">
         <div class="import-center-run-list-wrap">
-            <div class="import-center-run-list-head"><strong>{{ __('imports.run_history') }}</strong><button type="button" class="desktop-button" data-import-refresh>{{ __('imports.refresh') }}</button></div>
+            <div class="import-center-run-list-head"><strong>{{ __('imports.run_history') }}</strong><div><button type="button" class="desktop-button" data-import-refresh>{{ __('imports.refresh') }}</button><button type="button" class="desktop-button" data-close-import-history>{{ __('imports.report_close') }}</button></div></div>
             <div class="import-center-run-list" data-import-run-list aria-live="polite"></div>
             <nav class="media-library-pagination" data-import-pages aria-label="{{ __('imports.pages') }}"></nav>
         </div>
-    </div>
+    </dialog>
 </section>

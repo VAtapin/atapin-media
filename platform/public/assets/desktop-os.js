@@ -675,5 +675,7 @@
   const updateClock = () => { clock.textContent = new Intl.DateTimeFormat('de-DE', { hour:'2-digit', minute:'2-digit' }).format(new Date()); };
   updateClock();
   setInterval(updateClock, 30000);
-  restoreDesktop();
+  // Deferred app scripts must be available before restoring their saved windows.
+  if(document.readyState==='complete')restoreDesktop();
+  else document.addEventListener('DOMContentLoaded',restoreDesktop,{once:true});
 })();

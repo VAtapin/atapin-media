@@ -10,8 +10,9 @@ class ImportedContentController extends Controller
     {
         $data = $request->validate(['q' => 'nullable|string|max:120', 'kind' => 'nullable|in:video,short,post,poll,comment',
             'section' => 'nullable|in:videos,posts,community', 'status' => 'nullable|in:unsorted,review,ready,needs_attention',
-            'source' => 'nullable|string|max:32', 'page' => 'nullable|integer|min:1']);
+            'source' => 'nullable|string|max:32', 'page' => 'nullable|integer|min:1','trash'=>'nullable|in:active,deleted']);
         $query = SourceRecord::query()->where('source','!=','catalog-reset')->latest();
+        if(($data['trash']??'active')==='deleted')$query->onlyTrashed();
         $kinds = match ($data['section'] ?? '') { 'videos' => ['video', 'short'], 'posts' => ['post'], 'community' => ['poll', 'comment'], default => [] };
         if ($kinds) $query->whereIn('kind', $kinds)->where(fn ($q) => $q->whereNull('metadata->library_only')->orWhere('metadata->library_only', false));
         foreach (['kind', 'source', 'status'] as $field) if ($data[$field] ?? '') $query->where($field, $data[$field]);
@@ -73,6 +74,7 @@ class ImportedContentController extends Controller
         $assets = $presentation->assets($record);
         $version=app(\App\Services\Importing\ContentState::class)->version($record);
         return response()->json(['id' => $record->id, 'title' => $record->title, 'body' => $record->body,
+            'trashed'=>$record->trashed(),
             'kind' => $record->kind, 'source' => $record->source, 'source_id' => $record->source_id, 'status' => $record->status,
             'parent_source_id' => $metadata['parent_source_id'] ?? null, 'poll' => $metadata['poll'] ?? null,
             'author' => $metadata['author'] ?? null, 'tags' => $metadata['tags'] ?? [], 'classification' => $metadata['classification'] ?? null,

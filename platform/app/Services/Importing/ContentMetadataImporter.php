@@ -18,6 +18,10 @@ class ContentMetadataImporter
         if($run && $journal->done($run,$key) && ($existing=SourceRecord::where('source',$source)->where('source_id',$id)->first())) return $existing;
         $before=SourceRecord::where('source',$source)->where('source_id',$id)->first();
         $record = app(ImportedRecordMerger::class)->merge($source,$id,$kind,$title,$body,$metadata);
+        if($record->trashed()){
+            if($run)$journal->record($run,$key,$title,$kind,'duplicate',(string)$record->id,['reason'=>__('imports.trash_not_reimported')]);
+            return $record;
+        }
         $created=$record->wasRecentlyCreated;
         app(LocalMediaLinks::class)->repair($record);
         $record->refresh(); $record->wasRecentlyCreated=$created;

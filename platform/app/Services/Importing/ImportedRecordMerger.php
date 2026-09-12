@@ -11,6 +11,8 @@ class ImportedRecordMerger
     public function merge(string $source, string $id, string $kind, string $title, string $body, array $metadata): SourceRecord
     {
         return DB::transaction(function () use ($source,$id,$kind,$title,$body,$metadata) {
+            $deleted=SourceRecord::onlyTrashed()->where('source',$source)->where('source_id',$id)->lockForUpdate()->first();
+            if($deleted)return $deleted;
             $record = SourceRecord::firstOrCreate(['source'=>$source,'source_id'=>$id], [
                 'kind'=>$kind,'title'=>$title,'body'=>$body,'metadata'=>$metadata,'status'=>'unsorted',
             ]);

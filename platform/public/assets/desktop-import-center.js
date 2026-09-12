@@ -28,6 +28,13 @@
     const fileInput = root.querySelector('[data-import-file]');
     const link = root.querySelector('[data-import-link]');
     const list = root.querySelector('[data-import-run-list]');
+    const history=root.querySelector('[data-import-history-dialog]');
+    root.querySelector('[data-open-import-history]').addEventListener('click',()=>{history.showModal();loadRuns().catch(historyError);});
+    root.querySelector('[data-close-import-history]').addEventListener('click',()=>history.close());
+    const historyError=error=>{
+      root.querySelector('[data-import-status]').textContent=t.history_error+': '+error.message;
+      if(!list.children.length)list.textContent=t.history_error+': '+error.message;
+    };
     const browserList = root.querySelector('[data-import-browser-list]');
     const browserMessage = root.querySelector('[data-import-browser-message]');
     const folderButton = root.querySelector('[data-import-use-folder]');
@@ -86,7 +93,7 @@
       fileInput.files = event.dataTransfer.files; setMethod('computer');
     });
     const date = value => value ? new Intl.DateTimeFormat(document.documentElement.lang, {dateStyle:'medium',timeStyle:'short'}).format(new Date(value)) : '—';
-    const runHtml = run => '<article class="import-center-run" data-import-run="\' + escape(run.id) + \'"><div class="import-run-heading"><strong>' + escape(t['source_' + run.source] || run.source) + '</strong><span class="media-library-status status-' + escape(run.status) + '">' + escape(t['run_' + run.status] || run.status) + '</span></div>' + (['running','stop_requested'].includes(run.status) && run.progress?.stage ? '<p>' + escape(t['stage_' + run.progress.stage] || run.progress.stage) + '</p>' : '') + (run.status === 'stop_requested' ? '<small>' + escape(t.stop_pending_hint) + '</small>' : '') + (run.source_ref ? '<p>' + escape(run.source_ref) + '</p>' : '') + '<dl><dt>' + escape(t.result_added) + '</dt><dd>' + Number(run.imported || 0) + '</dd><dt>' + escape(t.result_found) + '</dt><dd>' + Number(run.discovered || 0) + '</dd><dt>' + escape(t.result_skipped) + '</dt><dd>' + Number(run.skipped || 0) + '</dd><dt>' + escape(t.updated) + '</dt><dd>' + escape(date(run.updated_at)) + '</dd></dl>' + (run.skipped ? '<small>' + escape(t.skipped_hint) + '</small>' : '') + (run.error || run.notes?.length ? '<p class="is-error">' + escape(run.error || run.notes.join(' / ')) + '</p>' : '') + '<div class="import-run-actions"><button type="button" class="desktop-button" data-open-app="media">' + escape(t.view_library) + '</button>' + (['failed','partial','cancelled'].includes(run.status) ? '<button type="button" class="desktop-button" data-import-retry="' + escape(run.id) + '">' + escape(t.retry) + '</button>' : '') + (['queued','running'].includes(run.status) ? '<button type="button" class="desktop-button" data-import-stop="' + escape(run.id) + '">' + escape(t.stop_import) + '</button>' : '') + '</div></article>';
+    const runHtml = run => '<article class="import-center-run" data-import-run="' + escape(run.id) + '"><div class="import-run-heading"><strong>' + escape(t['source_' + run.source] || run.source) + '</strong><span class="media-library-status status-' + escape(run.status) + '">' + escape(t['run_' + run.status] || run.status) + '</span></div>' + (['running','stop_requested'].includes(run.status) && run.progress?.stage ? '<p>' + escape(t['stage_' + run.progress.stage] || run.progress.stage) + '</p>' : '') + (run.status === 'stop_requested' ? '<small>' + escape(t.stop_pending_hint) + '</small>' : '') + (run.source_ref ? '<p>' + escape(run.source_ref) + '</p>' : '') + '<dl><dt>' + escape(t.result_added) + '</dt><dd>' + Number(run.imported || 0) + '</dd><dt>' + escape(t.result_found) + '</dt><dd>' + Number(run.discovered || 0) + '</dd><dt>' + escape(t.result_skipped) + '</dt><dd>' + Number(run.skipped || 0) + '</dd><dt>' + escape(t.updated) + '</dt><dd>' + escape(date(run.updated_at)) + '</dd></dl>' + (run.skipped ? '<small>' + escape(t.skipped_hint) + '</small>' : '') + (run.error || run.notes?.length ? '<p class="is-error">' + escape(run.error || run.notes.join(' / ')) + '</p>' : '') + '<div class="import-run-actions"><button type="button" class="desktop-button" data-open-app="media">' + escape(t.view_library) + '</button>' + (['failed','partial','cancelled'].includes(run.status) ? '<button type="button" class="desktop-button" data-import-retry="' + escape(run.id) + '">' + escape(t.retry) + '</button>' : '') + (['queued','running'].includes(run.status) ? '<button type="button" class="desktop-button" data-import-stop="' + escape(run.id) + '">' + escape(t.stop_import) + '</button>' : '') + '</div></article>';
     const loadRuns = async (number = runPage) => {
       const data = await request(root.dataset.importsUrl + '?page=' + number);
       if (!root.isConnected) return;
@@ -95,8 +102,9 @@
       previousStatuses = new Map(data.data.map(run => [run.id,run.status]));
       list.innerHTML = data.data.length ? data.data.map(runHtml).join('') : '<p class="import-center-empty">' + escape(t.no_runs) + '</p>';
       root.dispatchEvent(new CustomEvent('import-runs-loaded',{bubbles:true,detail:data.data}));
-      const active = data.data.filter(run => ['queued','running','stop_requested'].includes(run.status)).length;
-      root.querySelector('[data-import-status]').textContent = data.meta.total + ' ' + t.run_history + ' · ' + active + ' ' + t.active_on_page;
+      const active=data.meta.active??data.data.filter(run=>['queued','running','stop_requested'].includes(run.status)).length;
+      const current=data.meta.active_run||data.data[0];
+      root.querySelector('[data-import-status]').textContent=data.meta.total+' '+t.run_history+' · '+active+' '+t.history_active+(current?' · '+(t['source_'+current.source]||current.source)+': '+(t['run_'+current.status]||current.status)+(current.progress?.stage?' · '+(t['stage_'+current.progress.stage]||current.progress.stage):'')+' · '+t.history_updated+': '+date(current.updated_at)+(active&&Date.now()-Date.parse(current.updated_at)>600000?' · '+t.history_stale:''):'');
       root.querySelector('[data-import-pages]').innerHTML = '<button type="button" data-import-page="' + (runPage - 1) + '" ' + (runPage <= 1 ? 'disabled' : '') + '>‹</button><span>' + runPage + ' / ' + data.meta.last_page + '</span><button type="button" data-import-page="' + (runPage + 1) + '" ' + (runPage >= data.meta.last_page ? 'disabled' : '') + '>›</button>';
     };
     form.addEventListener('submit', async event => {
@@ -123,6 +131,7 @@
         await request(root.dataset.importsUrl, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
         showMessage(t.started); if (fileInput) fileInput.value = '';
         await loadRuns(1);
+        if(root.isConnected && !history.open)history.showModal();
       } catch (error) {showMessage(uploadControl?.signal.aborted ? t.upload_stopped : error.message, true);}
       finally {start.disabled = false; uploadControls.hidden = true; uploadControl = null; if (fileInput) fileInput.disabled = method() !== 'computer'; form.querySelectorAll('[name="method"]').forEach(input => {input.disabled = false;});}
     });
@@ -140,7 +149,7 @@
       for (const target of data.targets) root.querySelector('[data-import-target]').append(new Option(t[target.id] || target.label, target.id));
     }).catch(error => showMessage(error.message, true));
     setMethod(method());
-    loadRuns().catch(error => showMessage(error.message, true));
-    const timer = setInterval(() => {if (!root.isConnected) {clearInterval(timer); return;} loadRuns().catch(error => showMessage(error.message, true));}, 5000);
+    loadRuns().catch(historyError);
+    const timer = setInterval(() => {if (!root.isConnected) {clearInterval(timer); return;} loadRuns().catch(historyError);}, 5000);
   };
 })();

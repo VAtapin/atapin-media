@@ -68,7 +68,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/desktop/content/playlists', [\App\Http\Controllers\ImportedContentController::class,'playlists'])->middleware('can:media.view')->name('content.playlists');
     Route::get('/desktop/content/playlists/{collection}', [\App\Http\Controllers\ImportedContentController::class,'playlist'])->middleware('can:media.view')->name('content.playlist');
     Route::get('/desktop/content/{record}/children', [\App\Http\Controllers\ImportedContentController::class,'children'])->middleware('can:media.view')->name('content.children');
-    Route::get('/desktop/content/{record}', [\App\Http\Controllers\ImportedContentController::class,'show'])->middleware('can:media.view')->name('content.show');
+    Route::get('/desktop/content/{record}', [\App\Http\Controllers\ImportedContentController::class,'show'])->withTrashed()->middleware('can:media.view')->name('content.show');
+    Route::delete('/desktop/content/{record}',[\App\Http\Controllers\ContentLifecycleController::class,'destroy'])->middleware('can:content.edit');
+    Route::post('/desktop/content/{record}/restore',[\App\Http\Controllers\ContentLifecycleController::class,'restore'])->withTrashed()->middleware('can:content.edit');
+    Route::post('/desktop/content/{record}/assets',[\App\Http\Controllers\ContentLifecycleController::class,'assets'])->middleware(['can:content.edit','can:media.edit']);
     Route::patch('/desktop/content/{record}', [\App\Http\Controllers\ImportedContentController::class,'update'])->middleware('can:content.edit')->name('content.update');
     Route::post('/desktop/content/{record}/classifications/{classification}/undo', [\App\Http\Controllers\ContentClassificationController::class,'undoRecord'])->middleware(['can:media.edit','can:content.edit'])->name('content.classification.undo');
     Route::post('/desktop/content/classify', [\App\Http\Controllers\ContentClassificationController::class,'store'])->middleware(['can:media.edit', 'can:content.edit', 'throttle:30,1'])->name('content.classify');
