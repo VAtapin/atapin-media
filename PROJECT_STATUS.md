@@ -16,6 +16,7 @@
 - Компактная кнопка на панели задач закрывает все окна и очищает сохранённое состояние рабочего стола.
 - Рабочий стол занимает весь viewport до нижней панели задач; доступ к аккаунту находится в меню Start.
 - Start содержит постоянный каталог из 19 программ; Desktop хранит только пользовательские ярлыки, которые можно перемещать, удалять и вновь добавлять из Start или контекстного меню.
+- Инициализация ярлыков использует только каталог программ, а не кнопку профиля: поэтому открытие Einstellungen не может отключить контекстное меню и перетягивание ярлыков.
 - Для Desktop подключены четыре полных approved-набора из 19 PNG: Manna Vom Himmel, Standard, Grün и Sol. В системных настройках выбираются набор значков, approved-фон, пользовательский фон и акцентный цвет без изменения ярлыков, окон или их расположения.
 - `Einstellungen` является центральным разделом настроек: Desktop & Design, KI, Social Media, Publishing, Integrationen, Benutzer & Rechte и System. Настройки хранятся в таблице `settings`; API-ключи и токены хранятся там же в зашифрованном виде и никогда не возвращаются в форму.
 - Social Media и Integrationen не показывают пустые поля: пользователь добавляет конкретный provider и получает только подходящую заготовку. Для Social Media доступны YouTube, Facebook, Instagram, TikTok, Telegram, LinkedIn и X; для Integrationen — Stripe, Google Drive, Google Calendar, Google Analytics, Mailchimp, Zapier и Webhook. Публичные ссылки и IDs хранятся отдельно от зашифрованных credentials.
@@ -80,7 +81,8 @@
 - Пройден `node --check` для `settings-tabs.js` и `browser.mjs`, а также `git diff --check`. Browser-сценарий расширен отменой и автоматическим закрытием форм пользователей; локально Laravel/browser suite недоступен из-за отсутствия PHP.
 - Проверено отсутствие iframe, `embed=1`, `postMessage`, legacy routes и legacy Blade layouts в исходниках платформы. Laravel Feature tests обновлены для прямого Settings UI и удаления старых GET-маршрутов, но локально не запускались из-за отсутствия PHP.
 - Проверены зависимости всех окон Desktop: `settings-content.blade.php` и его стили удалены; в runtime-исходниках отсутствуют legacy layouts, iframe, `embed=1`, `postMessage` и прямые legacy links.
+- Пройден `node --check` для исправленного `desktop-shortcuts.js`; browser-сценарий теперь требует все 19 начальных ярлыков, включая Einstellungen. Полный Laravel/Playwright-сценарий локально не запускался: PHP отсутствует в Windows PATH.
 
 ## Последний связанный commit
 
-- `Add native media library browser`
+- `Fix desktop shortcut initialization`

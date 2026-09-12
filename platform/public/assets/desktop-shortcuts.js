@@ -6,7 +6,10 @@
   if (!desktop || !surface || !start || !menu) return;
 
   // Start owns the application catalogue. Saved shortcuts contain only references and coordinates.
-  const applications = new Map([...start.querySelectorAll('[data-open-app]')].map(button => [button.dataset.openApp, button]));
+  // Only the program grid is a shortcut source. The account button also opens
+  // Settings, but it deliberately has no program icon; including it here used
+  // to overwrite the Settings catalogue entry and abort desktop startup.
+  const applications = new Map([...start.querySelectorAll('.os-program-grid [data-open-app]')].map(button => [button.dataset.openApp, button]));
   const storageKey = `${desktop.dataset.storageKey}.shortcuts`;
   const shortcuts = new Map();
   const clamp = (value, maximum) => Math.max(0, Math.min(value, maximum));

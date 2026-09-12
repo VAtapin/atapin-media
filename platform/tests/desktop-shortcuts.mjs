@@ -20,6 +20,7 @@ export async function checkDesktopShortcuts(page, { artifacts = 'tests/artifacts
   const catalogue = await page.locator('.os-start-menu [data-open-app]').evaluateAll(items => items.map(item => item.dataset.openApp));
   const initialCount = await page.locator('.os-shortcut').count();
   assert.equal(catalogue.length, 19);
+  assert.equal(initialCount, 19, 'All catalogue programs, including Settings, received initial shortcuts');
   await page.evaluate(() => Promise.all([...document.querySelectorAll('.os-shortcut img,.os-program-grid img')].map(image => image.decode())));
   assert(await app('videos').getAttribute('data-app-icon').then(path => path.endsWith('/desktop/manna/Videos.png')));
   await page.screenshot({ path:`${artifacts}/desktop-shortcuts.png` });
