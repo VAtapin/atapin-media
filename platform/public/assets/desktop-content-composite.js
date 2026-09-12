@@ -12,6 +12,11 @@
         if(!reply.ok)throw new Error(t.load_error);const data=await reply.json();if(!section.isConnected)return;
         section.innerHTML=`<h4>${esc(t.composite_children)} (${data.meta.total})</h4>${data.data.map(child=>child.kind==='poll'?`<div><strong>${esc(t.kind_poll)}</strong><ul>${(child.poll?.options||child.poll?.choices||[]).map(option=>`<li>${esc(optionText(option))}</li>`).join('')}</ul></div>`:`<article><small>${esc(child.author||t.kind_comment)}</small><p class="content-original-text">${esc(child.body)}</p></article>`).join('')}<div class="media-library-pagination"><button class="desktop-button" type="button" data-prev ${page<=1?'disabled':''}>‹</button><span>${page}/${data.meta.last_page}</span><button class="desktop-button" type="button" data-next ${page>=data.meta.last_page?'disabled':''}>›</button></div>`;
         section.querySelector('[data-prev]').onclick=()=>{page--;load();};section.querySelector('[data-next]').onclick=()=>{page++;load();};
+        section.querySelectorAll(':scope > article, :scope > div:not(.media-library-pagination)').forEach((element,index)=>{
+          const child=data.data[index];if(!child?.detail_url)return;
+          const button=document.createElement('button');button.type='button';button.className='desktop-button';button.dataset.contentDetail=child.detail_url;button.textContent=t.open_content;element.append(button);
+          if(child.kind==='live_chat')element.querySelector('small').textContent=`${t.kind_live_chat} · ${child.author||''}`;
+        });
       }catch(e){if(section.isConnected)section.textContent=e.message;}
     };await load();
   });

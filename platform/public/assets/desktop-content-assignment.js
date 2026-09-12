@@ -16,6 +16,9 @@
       details.append(label);
     }
     form.innerHTML = `<label>${escape(text.title)}<input name="title" required maxlength="255" value="${escape(item.title)}"></label>${type === 'record' ? `<label>${escape(text.body)}<textarea name="body" rows="5">${escape(item.body)}</textarea></label>${select('kind',['video','short','post','poll','comment'],item.kind)}` : select('target_profile',['media_library','videos','shorts','posts'],item.target_profile)}${select('status',['unsorted','ready','needs_attention'],item.status)}<label>${escape(text.tags)}<input name="tags" value="${escape((item.tags || []).join(', '))}" placeholder="${escape(text.tags_hint)}"></label><div class="media-library-toolbar-row"><button class="media-library-primary" type="submit">${escape(text.save)}</button><button class="media-library-primary" type="button" data-ai>${escape(text.ai_classify)}</button></div><p role="status" aria-live="polite"></p>`;
+    const kindField=form.querySelector('[name="kind"]');
+    if(kindField&&!Array.from(kindField.options).some(option=>option.value===item.kind))kindField.add(new Option(text['kind_'+item.kind]||item.kind,item.kind,true,true));
+    if(item.archive_data)form.querySelector('[data-ai]').hidden=true;
     const message = form.querySelector('[role=status]');
     if(type==='record'){
       const label=document.createElement('label');label.textContent=text.target_profile;

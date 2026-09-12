@@ -8,6 +8,27 @@ use Illuminate\Support\Facades\Storage;
 
 class ImportedContentPresentation
 {
+    public function references(SourceRecord $record): array
+    {
+        $references=$record->metadata['references']??[];
+        if($parent=$record->metadata['parent_source_id']??null)$references[]=['type'=>'parent','id'=>$parent,'text'=>__('imports.parent')];
+        if(($reply=$record->metadata['parent_comment_id']??null)&&$parent)$references[]=['type'=>'parent','id'=>'comment:'.$parent.':'.$reply,'text'=>__('imports.kind_comment')];
+        return array_map(function($reference)use($record){
+            $id=$reference['id']??null;$type=$reference['type']??'';$url=null;
+            if(is_string($id)) {
+                if($type==='playlistLink') {
+                    $target=\App\Models\Collection::where('source',$record->source)->where('source_id',$id)->first();
+                    if($target)$url=route('content.playlist',$target);
+                } else {
+                    if(in_array($type,['channelLink','mention'],true))$id='channel:'.$id;
+                    $target=SourceRecord::where('source',$record->source)->where('source_id',$id)->first();
+                    if($target)$url=route('content.show',$target);
+                }
+            }
+            // External URLs remain raw provenance only; never a navigation fallback.
+            return ['type'=>$type,'text'=>$reference['text']??$id??'', 'detail_url'=>$url,'missing'=>is_string($id)&&!$url];
+        },$references);
+    }
     public function mediaIds(array $metadata): array
     {
         $ids = array_merge($metadata['media_ids'] ?? [], $metadata['images'] ?? []);

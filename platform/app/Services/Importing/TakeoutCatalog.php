@@ -35,6 +35,7 @@ class TakeoutCatalog
                     if(!$expected)$expected=$reader->read($path);
                     continue;
                 }
+                if(basename($folder)==='Takeout')$entry='Takeout/'.$entry;
                 $available[$reader->entry($entry)]=true; $bytes+=$file->getSize(); $count++;
                 if($count>100000)throw new RuntimeException('Takeout catalog limit exceeded.');
             }

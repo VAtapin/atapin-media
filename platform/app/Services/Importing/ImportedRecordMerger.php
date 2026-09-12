@@ -25,10 +25,21 @@ class ImportedRecordMerger
             $merged = $this->metadata($current,$metadata);
             if (mb_strlen($body) > mb_strlen($current['original_description'] ?? '')) $merged['original_description']=$body;
             $protected = in_array($current['classification_origin'] ?? '', ['manual','ai'],true) || $record->status === 'ready';
+            $takeoutUpgrade=($metadata['takeout_schema_version']??0)>=2 && ($current['takeout_schema_version']??0)<2;
+            if(isset($metadata['takeout_data']))$merged['takeout_data']=array_replace($current['takeout_data']??[],$metadata['takeout_data']);
+            if(($metadata['takeout_schema_version']??0)>=2) {
+                $merged['takeout_schema_version']=2;
+                $merged['latest_takeout']=['title'=>$title,'body'=>$body,'metadata'=>$metadata];
+                if(!$protected&&isset($metadata['poll']))$merged['poll']=$metadata['poll'];
+            }
             $data = ['metadata'=>$merged];
             if (! $protected) {
                 if (mb_strlen($body) > mb_strlen($record->body ?? '')) $data['body']=$body;
                 if ($record->title === '' || $record->title === $id) $data['title']=$title;
+                if($takeoutUpgrade&&str_starts_with(ltrim($record->body??''),'{')) {
+                    $data['body']=$body;
+                    if(str_starts_with(ltrim($record->title),'{'))$data['title']=$title;
+                }
             }
             if (! $created && $snapshot->wasRecentlyCreated && ($body !== ($record->body ?? '') || $title !== $record->title))
                 $data['metadata']['import_enriched'] = true;
@@ -48,7 +59,7 @@ class ImportedRecordMerger
     private function metadata(array $old, array $new): array
     {
         foreach ($new as $key=>$value) {
-            if (in_array($key,['media_ids','images','links'],true) && is_array($value)) {
+            if (in_array($key,['media_ids','images','links','references'],true) && is_array($value)) {
                 $old[$key] = array_values(array_unique([...($old[$key] ?? []),...$value],SORT_REGULAR));
             } elseif ($key === 'media' && is_array($value)) {
                 foreach ($value as $role=>$ids) if (is_array($ids)) $old['media'][$role]=array_values(array_unique([...($old['media'][$role] ?? []),...$ids]));

@@ -12,7 +12,7 @@ class ContentLifecycle
             $record=SourceRecord::lockForUpdate()->findOrFail($record->id);
             $batch=(string)Str::uuid();
             $record->update(['metadata'=>[...($record->metadata??[]),'trash_batch'=>$batch]]);
-            foreach(SourceRecord::where('source',$record->source)->where('metadata->parent_source_id',$record->source_id)->whereIn('kind',['comment','poll'])->lockForUpdate()->get() as $child){
+            foreach(SourceRecord::where('source',$record->source)->where('metadata->parent_source_id',$record->source_id)->whereIn('kind',['comment','poll','live_chat'])->lockForUpdate()->get() as $child){
                 $child->update(['metadata'=>[...($child->metadata??[]),'trash_parent'=>$record->id,'trash_batch'=>$batch]]);$child->delete();
             }
             $record->delete();

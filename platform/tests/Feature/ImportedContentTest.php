@@ -15,6 +15,35 @@ class ImportedContentTest extends TestCase
         app(Access::class)->seed(); $user = User::factory()->create();
         $user->roles()->attach(Role::where('name', $role)->firstOrFail()); $this->actingAs($user); return $user;
     }
+    public function test_private_account_data_filters_live_chat_children_and_local_references(): void
+    {
+        $this->login();$importer=app(\App\Services\Importing\ContentMetadataImporter::class);
+        $video=$importer->record('youtube','abcdefghijk','video','Video','',[]);
+        $chat=$importer->record('youtube','live-chat:1','live_chat','Chat','Chat',['parent_source_id'=>'abcdefghijk','references'=>[['type'=>'videoLink','id'=>'missing0001','text'=>'Missing']]]);
+        $archive=$importer->record('youtube','channel:owner','channel','Channel','',['archive_data'=>true,'library_only'=>true,'takeout_data'=>['channel'=>['title'=>'Original']]]);
+        $this->getJson('/desktop/content')->assertOk()->assertJsonCount(2,'data');
+        $this->getJson('/desktop/content?kind=archive_data')->assertOk()->assertJsonCount(1,'data');
+        $this->getJson('/desktop/content?kind=channel')->assertOk()->assertJsonCount(1,'data');
+        $this->getJson('/desktop/content/'.$archive->id)->assertOk()->assertJsonPath('target_profile','media_library')->assertJsonPath('takeout_data.channel.title','Original');
+        $this->getJson('/desktop/content/'.$chat->id)->assertOk()->assertJsonPath('references.0.detail_url',null)->assertJsonPath('references.0.missing',true)->assertJsonPath('references.1.detail_url',route('content.show',$video));
+        $this->getJson('/desktop/content/'.$video->id.'/children')->assertOk()->assertJsonPath('data.0.kind','live_chat');
+        app(\App\Services\Importing\ContentLifecycle::class)->delete($video);$this->assertTrue($chat->fresh()->trashed());
+        app(\App\Services\Importing\ContentLifecycle::class)->restore($video->fresh());$this->assertFalse($chat->fresh()->trashed());
+    }
+    public function test_account_archive_is_not_sent_to_paid_ai(): void
+    {
+        $this->login();\Illuminate\Support\Facades\Queue::fake();
+        $classifier=\Mockery::mock(\App\Services\Importing\AiContentClassifier::class);$classifier->shouldReceive('available')->andReturn(true);app()->instance(\App\Services\Importing\AiContentClassifier::class,$classifier);
+        $archive=SourceRecord::create(['source'=>'youtube','source_id'=>'history:1','kind'=>'history','title'=>'History','status'=>'unsorted','metadata'=>['archive_data'=>true]]);
+        $record=SourceRecord::create(['source'=>'youtube','source_id'=>'video:1','kind'=>'video','title'=>'Video','status'=>'unsorted','metadata'=>[]]);
+        \Illuminate\Support\Facades\Queue::assertNotPushed(\App\Jobs\ClassifyImportedContent::class,fn($job)=>$job->id===(string)$archive->id);
+        \Illuminate\Support\Facades\Queue::fake();
+        $classifier->shouldNotReceive('classify');
+        (new \App\Jobs\ClassifyImportedContent('record',(string)$archive->id))->handle($classifier,app(\App\Services\Importing\ContentAssignment::class));
+        $this->postJson('/desktop/content/classify',['type'=>'record','batch'=>true])->assertOk()->assertJsonPath('count',1);
+        \Illuminate\Support\Facades\Queue::assertPushed(\App\Jobs\ClassifyImportedContent::class,1);
+        $this->postJson('/desktop/content/classify',['type'=>'record','id'=>(string)$archive->id])->assertUnprocessable();
+    }
     public function test_sections_show_real_imported_content_without_publishing(): void
     {
         $this->login();

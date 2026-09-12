@@ -17,9 +17,11 @@ class ContentClassificationController extends Controller
         if ($data['batch'] ?? false) {
             $query = $model::where('status', 'unsorted')->where('source','!=','catalog-reset');
             if ($data['type'] === 'media') $query->whereNull('archived_at');
+            else $query->where(fn($q)=>$q->whereNull('metadata->archive_data')->orWhere('metadata->archive_data',false));
             $items = $query->oldest()->limit(100)->get();
         } else {
             $item = $model::findOrFail($data['id'] ?? '');
+            abort_if(($item->metadata['archive_data']??false),422,__('imports.takeout_archive_private'));
             $previousState=app(\App\Services\Importing\ContentState::class)->snapshot($item);
             $item->update(['status' => 'unsorted']);
             $items = collect([$item]);

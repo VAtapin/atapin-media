@@ -14,6 +14,16 @@ use Tests\TestCase;
 class ImportMergeTest extends TestCase
 {
     use RefreshDatabase;
+    public function test_takeout_schema_upgrade_repairs_json_but_keeps_manual_text_and_raw_sections(): void
+    {
+        $importer=app(ContentMetadataImporter::class);
+        $record=$importer->record('youtube','UgUpgrade','post','{"text":"Text"}','{"text":"Text"}',[]);
+        $record=$importer->record('youtube','UgUpgrade','post','Text','Text',['takeout_schema_version'=>2,'takeout_data'=>['post'=>['text'=>'raw']]]);
+        $this->assertSame('Text',$record->body);$this->assertSame('Text',$record->title);
+        $record->update(['body'=>'Owner edit','status'=>'ready']);
+        $record=$importer->record('youtube','UgUpgrade','post','Export','Export text',['takeout_schema_version'=>2,'takeout_data'=>['comment_settings'=>['allow'=>true]]]);
+        $this->assertSame('Owner edit',$record->body);$this->assertArrayHasKey('post',$record->metadata['takeout_data']);$this->assertArrayHasKey('comment_settings',$record->metadata['takeout_data']);
+    }
     public function test_identical_files_from_different_sources_reuse_media_and_preserve_locations_and_tags(): void
     {
         Queue::fake(); $classifier=\Mockery::mock(\App\Services\Importing\AiContentClassifier::class); $classifier->shouldReceive('available')->andReturn(true);

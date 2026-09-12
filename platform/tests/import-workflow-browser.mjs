@@ -10,6 +10,19 @@ try {
  browser=await chromium.launch({headless:true,...(process.env.BROWSER_CHANNEL?{channel:process.env.BROWSER_CHANNEL}:{})});
  const page=await browser.newPage({viewport:{width:1672,height:941}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:8792/login');await page.locator('[name=email]').fill('test@example.com');await page.locator('[name=password]').fill('kurz5');await page.locator('form button').click();await page.waitForURL('**/desktop');console.log('Workflow logged in.');
+ // Presentation fixtures only: real CSV, account data and references are covered by PHP feature tests.
+ await page.locator('[data-close-all]').click();await page.locator('[data-open-app=videos]').first().click();
+ const library=page.locator('.os-window[data-app-id=videos] [data-content-library]');
+ await library.locator('[data-content-summary]').getByText('Inhalte').waitFor();
+ await page.route('**/desktop/content/takeout-ui-fixture',route=>route.fulfill({json:{id:'takeout-ui-fixture',kind:'poll',source:'youtube',title:'Original quiz',body:'Original text',status:'unsorted',assets:[],private:true,poll:{options:[{text:'Yes',is_correct:true,explanation:'Original explanation'}]},references:[{text:'Not available',missing:true,detail_url:null}],takeout_data:{post:{text:'<script>window.takeoutExecuted=true</script>'}}}}));
+ await library.evaluate(root=>root.dispatchEvent(new CustomEvent('local-content-open',{detail:{url:'/desktop/content/takeout-ui-fixture'}})));
+ await library.locator('[data-content-details] li').filter({hasText:'Yes — Richtige Antwort'}).waitFor();await library.getByText('Original explanation',{exact:true}).waitFor();
+ const original=library.locator('[data-content-details] details').filter({hasText:'Originaldaten aus Takeout'});await original.locator('summary').click();assert((await original.locator('pre').textContent()).includes('<script>'));assert.equal(await page.evaluate(()=>window.takeoutExecuted),undefined);
+ assert.equal(await library.locator('a[href*="youtube.com"]').count(),0);
+ await page.route('**/desktop/content/takeout-account-fixture',route=>route.fulfill({json:{id:'takeout-account-fixture',kind:'channel',source:'youtube',title:'Private channel',body:'',status:'unsorted',assets:[],private:true,archive_data:true,takeout_data:{channel:{title:'Original channel'}}}}));
+ await library.evaluate(root=>root.dispatchEvent(new CustomEvent('local-content-open',{detail:{url:'/desktop/content/takeout-account-fixture'}})));
+ await library.locator('.content-assignment [name=kind]').waitFor();assert.equal(await library.locator('.content-assignment [name=kind]').inputValue(),'channel');assert(await library.locator('[data-ai]').isHidden());
+ console.log('Takeout presentation passed: readable quiz, escaped originals, retained archive kind and no paid AI/archive or YouTube links.');
  await page.locator('[data-close-all]').click();await page.locator('[data-open-app=imports]').first().click();
  // Inventory fixture tests the UI only; PHP feature tests exercise real ZIP/folder discovery and parsing.
  await page.route('**/desktop/imports/takeout',route=>route.fulfill({json:{available:true,reports:['takeout-fixture-report.zip'],batches:[

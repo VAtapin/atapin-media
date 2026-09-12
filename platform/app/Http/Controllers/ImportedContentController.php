@@ -8,13 +8,15 @@ class ImportedContentController extends Controller
 {
     public function index(Request $request)
     {
-        $data = $request->validate(['q' => 'nullable|string|max:120', 'kind' => 'nullable|in:video,short,post,poll,comment',
+        $data = $request->validate(['q' => 'nullable|string|max:120', 'kind' => 'nullable|in:'.implode(',',SourceRecord::KINDS).',archive_data',
             'section' => 'nullable|in:videos,posts,community', 'status' => 'nullable|in:unsorted,review,ready,needs_attention',
             'source' => 'nullable|string|max:32', 'page' => 'nullable|integer|min:1','trash'=>'nullable|in:active,deleted']);
         $query = SourceRecord::query()->where('source','!=','catalog-reset')->latest();
         if(($data['trash']??'active')==='deleted')$query->onlyTrashed();
-        $kinds = match ($data['section'] ?? '') { 'videos' => ['video', 'short'], 'posts' => ['post'], 'community' => ['poll', 'comment'], default => [] };
+        $kinds = match ($data['section'] ?? '') { 'videos' => ['video', 'short'], 'posts' => ['post'], 'community' => ['poll', 'comment','live_chat'], default => [] };
         if ($kinds) $query->whereIn('kind', $kinds)->where(fn ($q) => $q->whereNull('metadata->library_only')->orWhere('metadata->library_only', false));
+        if(($data['kind']??'')==='archive_data') {$query->where('metadata->archive_data',true);unset($data['kind']);}
+        elseif(empty($data['kind']))$query->where(fn($q)=>$q->whereNull('metadata->archive_data')->orWhere('metadata->archive_data',false));
         foreach (['kind', 'source', 'status'] as $field) if ($data[$field] ?? '') $query->where($field, $data[$field]);
         if ($data['q'] ?? '') $query->where(fn ($q) => $q->where('title', 'like', '%'.$data['q'].'%')->orWhere('body', 'like', '%'.$data['q'].'%'));
         $page = $query->paginate(30);
@@ -28,7 +30,7 @@ class ImportedContentController extends Controller
     public function update(Request $request, SourceRecord $record, \App\Services\Importing\ContentAssignment $assignment)
     {
         $assignment->record($record, $request->validate(['title' => 'required|string|max:255', 'body' => 'nullable|string|max:1000000',
-            'kind' => 'required|in:video,short,post,poll,comment', 'status' => 'required|in:unsorted,ready,needs_attention',
+            'kind' => 'required|in:'.implode(',',SourceRecord::KINDS), 'status' => 'required|in:unsorted,ready,needs_attention',
             'target_profile'=>'nullable|in:media_library,videos,shorts,posts,polls,comments',
             'tags' => 'nullable|array|max:30', 'tags.*' => 'string|max:100']));
         return response()->json(['status' => 'saved']);
@@ -78,7 +80,9 @@ class ImportedContentController extends Controller
             'kind' => $record->kind, 'source' => $record->source, 'source_id' => $record->source_id, 'status' => $record->status,
             'parent_source_id' => $metadata['parent_source_id'] ?? null, 'poll' => $metadata['poll'] ?? null,
             'author' => $metadata['author'] ?? null, 'tags' => $metadata['tags'] ?? [], 'classification' => $metadata['classification'] ?? null,
-            'target_profile'=>($metadata['library_only']??false) ? 'media_library' : match($record->kind){'video'=>'videos','short'=>'shorts','post'=>'posts','poll'=>'polls','comment'=>'comments'},
+            'target_profile'=>($metadata['library_only']??false) ? 'media_library' : match($record->kind){'video'=>'videos','short'=>'shorts','post'=>'posts','poll'=>'polls','comment'=>'comments',default=>'media_library'},
+            'archive_data'=>(bool)($metadata['archive_data']??false),'takeout_data'=>$metadata['takeout_data']??[],
+            'references'=>$presentation->references($record),
             'external_url' => $presentation->externalUrl($metadata ?? [], $record->source, $record->source_id, $record->kind),
             'has_local_video' => $assets->contains(fn ($asset) => $asset['kind'] === 'video' && $asset['available']),
             'classifications'=>$record->classifications()->latest()->limit(20)->get()->map(fn($log)=>[
@@ -99,7 +103,7 @@ class ImportedContentController extends Controller
     public function children(Request $request,SourceRecord $record)
     {
         $request->validate(['page'=>'nullable|integer|min:1']);
-        $page=SourceRecord::where('source',$record->source)->where('metadata->parent_source_id',$record->source_id)->whereIn('kind',['comment','poll'])->orderBy('id')->paginate(30);
+        $page=SourceRecord::where('source',$record->source)->where('metadata->parent_source_id',$record->source_id)->whereIn('kind',['comment','poll','live_chat'])->orderBy('id')->paginate(30);
         return response()->json(['data'=>$page->getCollection()->map(fn($child)=>['id'=>$child->id,'kind'=>$child->kind,'body'=>$child->body,'author'=>$child->metadata['author']??null,
             'poll'=>$child->metadata['poll']??null,'detail_url'=>route('content.show',$child)]),'meta'=>['current_page'=>$page->currentPage(),'last_page'=>$page->lastPage(),'total'=>$page->total()]]);
     }

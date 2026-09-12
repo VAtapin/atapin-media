@@ -80,12 +80,12 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <script>window.desktopImportLabels = @json(__('imports'));</script>
     <script src="/assets/desktop-import-workflow.js?v=2" defer></script>
     <script src="/assets/desktop-content-lifecycle.js?v=1" defer></script>
-    <script src="/assets/desktop-content-composite.js?v=1" defer></script>
-    <script src="/assets/desktop-content-library.js?v=7" defer></script>
+    <script src="/assets/desktop-content-composite.js?v=2" defer></script>
+    <script src="/assets/desktop-content-library.js?v=8" defer></script>
     <script src="/assets/desktop-content-organization.js?v=2" defer></script>
     <script src="/assets/desktop-local-links.js?v=1" defer></script>
     <script src="/assets/desktop-media-technical.js?v=1" defer></script>
-    <script src="/assets/desktop-content-assignment.js?v=3" defer></script>
+    <script src="/assets/desktop-content-assignment.js?v=4" defer></script>
     <script src="/assets/desktop-media-organization.js?v=3" defer></script>
     <script src="/assets/desktop-media-cover.js?v=2" defer></script>
     <script src="/assets/desktop-import-versions.js?v=1" defer></script>

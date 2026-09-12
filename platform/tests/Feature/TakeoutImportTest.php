@@ -50,6 +50,55 @@ class TakeoutImportTest extends TestCase
     {
         $run=ImportRun::create(['source'=>'youtube-takeout','source_options'=>['batch'=>$this->batch,'expected_parts'=>2],'target_profile'=>'mixed']);app(ImportCenter::class)->run($run);return $run->fresh();
     }
+    public function test_structured_posts_extensionless_images_quiz_and_all_account_folders(): void
+    {
+        $runs='{"text":"Original "},{"text":"post","videoLink":{"externalVideoId":"abcdefghijk"}}';
+        $history='<html><meta charset="UTF-8"><body><div class="outer-cell"><a href="https://www.youtube.com/watch?v=abcdefghijk">Watched video</a> 2026-01-01</div><div class="outer-cell"><a href="https://www.youtube.com/watch?v=abcdefghijk">Watched video</a> 2026-01-01</div></body></html>';
+        $this->zip(1,[
+            'Video-Metadaten/Videos.csv'=>$this->csv(['Video-ID','Videotitel (Original)'],[['abcdefghijk','Fixture Video']]),
+            'Video-Metadaten/Videoaufzeichnungen.csv'=>$this->csv(['Video-ID','Breitengrad'],[['abcdefghijk','50']]),
+            'Beiträge/Beiträge.csv'=>$this->csv(['Beitrags-ID','Text des Beitrags','Name für Bild 1','Beitragstyp','Text der Antwortoption 1 für Umfrage/Quiz','Bildname für Option 1 der Umfrage','Richtige Antwortoption 1 für Quiz','Erklärung zur richtigen Antwort 1 im Quiz'],[['UgStructured',$runs,'UgStructured_image','Quiz','{"text":"Yes"}','UgStructured_poll_image','1','{"text":"Because"}']]),
+            'Beiträge/Einstellungen für Kommentare zu Beiträgen.csv'=>$this->csv(['Beitrags-ID','Kommentare zulassen'],[['UgStructured','true']]),
+            'Kommentare/Kommentare.csv'=>$this->csv(['Kommentar-ID','Beitrags-ID','Kommentartext'],[['C1','UgStructured','{"text":"First"},{"text":" reply"}'],['orphan','','{"text":"Unattached"}']]),
+            'Livechats/Livechats.csv'=>$this->csv(['Live-Chat-ID','Video-ID','Text für den Live-Chat'],[['L1','abcdefghijk','{"text":"Chat"}']]),
+            'Abos/Abos.csv'=>$this->csv(['Kanal-ID','Kanaltitel'],[['UCsubscription','Subscribed channel']]),
+            'Kanäle/Kanal.csv'=>$this->csv(['Kanal-ID','Kanaltitel (Original)','Kanalbeschreibung (Original)'],[['UCowner','Own channel','Description']]),
+            'Kanäle/Kanalbilder.csv'=>$this->csv(['Vollständige Inhalts-URL des Kanalbilds'],[['https://example.com/banner.jpg']]),
+            'shopping-collections/shopping-collections.csv'=>$this->csv(['Shopping Collection ID','Shopping Collection Title','Shopping Collection Description'],[['SC1','Shop ','Collection']]),
+            'shopping-collections/Shop -items.csv'=>$this->csv(['Shopping Collection ID'],[['product1'],['product2']]),
+            'Verlauf/Wiedergabeverlauf.html'=>$history,
+        ]);
+        $png=base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jvyoAAAAASUVORK5CYII=');
+        $this->zip(2,['Videos/Fixture Video.mp4'=>pack('N',24).'ftypisom'.str_repeat("\0",12),'Beiträge/UgStructured_image.png'=>$png,'Beiträge/UgStructured_poll_image.png'=>$png,'shopping-collections/Shop -thumbnail.jpg'=>$png]);
+        $run=$this->runImport();$this->assertNotSame('failed',$run->status);
+        $post=SourceRecord::where('source_id','UgStructured')->firstOrFail();
+        $this->assertSame('Original post',$post->body);$this->assertCount(1,$post->metadata['media_ids']);
+        $this->assertSame('true',$post->metadata['takeout_data']['comment_settings']['kommentarezulassen']);
+        $poll=SourceRecord::where('kind','poll')->firstOrFail();$this->assertTrue($poll->metadata['poll']['quiz']);
+        $this->assertSame('Yes',$poll->metadata['poll']['options'][0]['text']);$this->assertTrue($poll->metadata['poll']['options'][0]['is_correct']);
+        $this->assertSame('Because',$poll->metadata['poll']['options'][0]['explanation']);$this->assertCount(1,$poll->metadata['media_ids']);
+        $this->assertSame('First reply',SourceRecord::where('source_id','comment:UgStructured:C1')->firstOrFail()->body);
+        $this->assertSame('Unattached',SourceRecord::where('source_id','comment::orphan')->firstOrFail()->body);
+        $this->assertSame('abcdefghijk',SourceRecord::where('kind','live_chat')->firstOrFail()->metadata['parent_source_id']);
+        $this->assertSame('50',SourceRecord::where('kind','video')->firstOrFail()->metadata['takeout_data']['recording']['breitengrad']);
+        $this->assertSame(2,SourceRecord::where('kind','history')->count());
+        foreach(['subscription','channel','shopping_collection'] as $kind)$this->assertSame(1,SourceRecord::where('kind',$kind)->count());
+        $shop=SourceRecord::where('kind','shopping_collection')->firstOrFail();$this->assertCount(2,$shop->metadata['takeout_data']['items']);$this->assertCount(1,$shop->metadata['media_ids']);
+        $this->assertTrue($shop->metadata['archive_data']);$this->assertSame('unsorted',$shop->status);
+        $count=SourceRecord::count();$run->update(['status'=>'queued']);app(ImportCenter::class)->run($run);$this->assertSame($count,SourceRecord::count());
+        $this->runImport();$this->assertSame($count,SourceRecord::count());
+    }
+    public function test_merged_takeout_root_matches_the_html_file_inventory(): void
+    {
+        $this->fixture();$report=$this->report(['Videos/Fixture Video.mp4']);
+        foreach([1,2] as $n){$zip=new ZipArchive;$zip->open($this->root.'/zips/'.$this->batch.'-'.sprintf('%03d',$n).'.zip');$zip->extractTo($this->root.'/zips');$zip->close();}
+        $zip=new ZipArchive;$zip->open($report);$zip->extractTo($this->root.'/zips');$zip->close();
+        config(['filesystems.disks.takeout.root'=>$this->root.'/zips']);Storage::forgetDisk('takeout');
+        $input=app(ImportCenter::class)->prepareInput('youtube-takeout',['batch'=>'folder:Takeout']);
+        $run=ImportRun::create([...$input,'status'=>'queued']);app(ImportCenter::class)->run($run);
+        $manifest=app(\App\Services\Importing\ImportJournal::class)->item($run,'takeout-manifest');
+        $this->assertSame(0,$manifest->metadata['missing_files']);$this->assertCount(1,SourceRecord::where('kind','video')->firstOrFail()->metadata['media_ids']);
+    }
     public function test_german_multipart_takeout_builds_complete_content_and_attachments(): void
     {
         $progress = new class extends \App\Services\Importing\ImportProgress {
