@@ -94,5 +94,5 @@
 
 ## Последний связанный commit
 
-- `Implement resumable Media Library uploads` (`b9ee689`)
+- `Unify Media Library desktop presentation` (`c089dc4`)
 
