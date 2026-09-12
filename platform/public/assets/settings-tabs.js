@@ -21,4 +21,21 @@
     app.querySelector('[data-role-create-form]').hidden = false;
     createRole.hidden = true;
   });
+  const scale = app.querySelector('[data-ui-scale]');
+  const applyScale = value => {
+    const allowed = ['90', '100', '110', '120', '130'];
+    const selected = allowed.includes(String(value)) ? String(value) : '100';
+    document.body.dataset.settingsScale = selected;
+    if (scale) scale.value = selected;
+  };
+  if (scale) {
+    scale.addEventListener('change', () => {
+      applyScale(scale.value);
+      if (window.parent !== window) window.parent.postMessage({ type:'atapin.desktop.ui-scale.set', value:scale.value }, window.location.origin);
+    });
+    if (window.parent !== window) window.parent.postMessage({ type:'atapin.desktop.ui-scale.request' }, window.location.origin);
+  }
+  window.addEventListener('message', event => {
+    if (event.origin === window.location.origin && event.data?.type === 'atapin.desktop.ui-scale.value') applyScale(event.data.value);
+  });
 })();

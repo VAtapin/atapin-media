@@ -37,6 +37,7 @@ return [
     'system_hint' => 'General installation data. Technical server credentials remain protected.', 'language' => 'Language', 'timezone' => 'Timezone', 'branding' => 'Brand name',
     'shop' => 'Shop & Sales', 'shop_intro' => 'Manage digital materials, products, and received sales.', 'products' => 'Products', 'sales' => 'Sales', 'new_product' => 'New product', 'create_product' => 'Create product', 'product_empty' => 'No products yet.', 'sales_empty' => 'No sales recorded.', 'price_cents' => 'Price in cents', 'currency' => 'Currency', 'draft' => 'Draft', 'active' => 'Active', 'archived' => 'Archived', 'customer' => 'Customer', 'amount' => 'Amount',
     'select_role' => 'Select role',
+    'desktop_ui_scale' => 'Interface scale',
     'users'=>'Users', 'name'=>'Name', 'role'=>'Role', 'new_user'=>'New user', 'create_user'=>'Create user',
     'last_owner'=>'At least one owner must remain.',
     'desktop' => 'Desktop',

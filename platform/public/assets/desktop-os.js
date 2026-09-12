@@ -14,6 +14,7 @@
   const SNAP_TRIGGER_PX = 14;
   const SNAP_DRAG_INTENT_PX = 56;
   const STORAGE_KEY = desktop.dataset.storageKey || 'atapin.desktop.state.v1';
+  const SCALE_KEY = `${STORAGE_KEY}.ui-scale`;
   const layouts = [
     { id:'two', label:'2 Fenster', cells:[[0,0,.5,1],[.5,0,.5,1]] },
     { id:'three', label:'3 Fenster', cells:[[0,0,1/3,1],[1/3,0,1/3,1],[2/3,0,1/3,1]] },
@@ -34,6 +35,23 @@
   let restoring = false;
   let stateWasCleared = false;
   let saveTimer = null;
+  const applyUiScale = value => {
+    const allowed = ['90', '100', '110', '120', '130'];
+    const selected = allowed.includes(String(value)) ? String(value) : '100';
+    document.documentElement.style.setProperty('--desktop-ui-scale', String(Number(selected) / 100));
+    document.body.dataset.uiScale = selected;
+    return selected;
+  };
+  let uiScale = '100';
+  try { uiScale = applyUiScale(localStorage.getItem(SCALE_KEY) || '100'); } catch (_) { uiScale = applyUiScale('100'); }
+  window.addEventListener('message', event => {
+    if (event.origin !== window.location.origin || !event.data?.type) return;
+    if (event.data.type === 'atapin.desktop.ui-scale.request') event.source?.postMessage({ type:'atapin.desktop.ui-scale.value', value:uiScale }, event.origin);
+    if (event.data.type === 'atapin.desktop.ui-scale.set') {
+      uiScale = applyUiScale(event.data.value);
+      try { localStorage.setItem(SCALE_KEY, uiScale); } catch (_) {}
+    }
+  });
 
   const snapPanel = document.createElement('section');
   snapPanel.className = 'os-snap-panel';

@@ -132,7 +132,8 @@ class FoundationTest extends TestCase
     {
         $owner = $this->user('Owner'); $this->actingAs($owner);
         $this->get('/desktop/settings?embed=1')->assertOk()->assertDontSee('sidebar')->assertSee('data-settings-tabs', false)
-            ->assertSee('data-settings-panel="desktop_design"', false)->assertDontSee('href="#desktop_design"', false);
+            ->assertSee('data-settings-panel="desktop_design"', false)->assertSee('data-ui-scale', false)
+            ->assertDontSee('href="#desktop_design"', false)->assertDontSee('Zentrale Einstellungen für Desktop', false);
         $this->get('/desktop/shop?embed=1')->assertOk()->assertSee('Shop & Verkäufe')->assertSee('Neues Produkt');
         $desktop = $this->get('/desktop')->assertOk();
         foreach (['Videos','Beiträge','Bücher & PDF','Podcast','Live Studio','Media Library','Projekte','Aufgaben','Kalender','Community','Newsletter','Themen & Kategorien','Publishing','Shop & Verkäufe','KI-Assistent','Analytics','Import Center','Integrationen','Einstellungen'] as $name) $desktop->assertSee($name);

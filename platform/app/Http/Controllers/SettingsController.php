@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Gate;
 class SettingsController extends Controller
 {
     public function edit(Request $request, Settings $settings) {
-        $data = ['settings' => $settings->all(), 'roles' => Role::with('permissions')->orderBy('name')->get(),
+        $data = ['embedded' => $request->boolean('embed'), 'settings' => $settings->all(), 'roles' => Role::with('permissions')->orderBy('name')->get(),
             'permissions' => Permission::orderBy('name')->get(), 'secretStatus' => [
                 'ai_api_key' => $settings->hasSecret('ai_api_key'), 'youtube_api_key' => $settings->hasSecret('youtube_api_key'),
                 'facebook_access_token' => $settings->hasSecret('facebook_access_token'), 'instagram_access_token' => $settings->hasSecret('instagram_access_token'),
