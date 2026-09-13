@@ -18,7 +18,9 @@
 @foreach(['book','pdf','ebook'] as $format)<span>
 @include('public.icon',['name'=>'book']) {{ __('public.'.$format) }}</span>
 @endforeach</div>
-<p class="public-muted">◇ {{ __('public.reviews') }}: {{ __('public.no_data') }}</p>
+<p class="public-muted">{{ __('public.reviews') }}: {{ $reviews->count()?:__('public.no_data') }}</p>
+@if($bookRecord?->isbn)<p>ISBN: {{ $bookRecord->isbn }}</p>@endif
+@if($bookRecord?->page_count)<p>{{ __('public.book_field_page_count') }}: {{ $bookRecord->page_count }}</p>@endif
 </div>
 </div>
 <section class="public-panel public-tabset" data-public-tabs>
@@ -30,9 +32,11 @@
 <div class="public-document">{{ $bookRecord?->description??__('public.no_data') }}</div>
 </div>
 <div id="panel-contents" role="tabpanel" aria-labelledby="tab-contents" hidden>
-@include('public.empty')</div>
+@if($bookRecord?->contents)<div class="public-document">{{ $bookRecord->contents }}</div>@else @include('public.empty') @endif</div>
 <div id="panel-reviews" role="tabpanel" aria-labelledby="tab-reviews" hidden>
-@include('public.empty')</div>
+@forelse($reviews as $review)<article><strong>{{ $review->user?->name }} · {{ $review->rating }}/5</strong><p>{{ $review->body }}</p></article>@empty @include('public.empty') @endforelse
+@if($reviews instanceof \Illuminate\Contracts\Pagination\LengthAwarePaginator){{ $reviews->links() }}@endif
+@if($bookRecord)@auth<form method="post" action="{{ route('public.book-review',$bookRecord) }}">@csrf<label>{{ __('public.review_rating') }}<select name="rating">@foreach(range(5,1) as $rating)<option>{{ $rating }}</option>@endforeach</select></label><label>{{ __('public.reviews') }}<textarea name="body" required maxlength="3000"></textarea></label><button class="public-button">{{ __('public.review_submit') }}</button></form>@else<a href="/login">{{ __('ui.login') }}</a>@endauth @endif</div>
 <div id="panel-related_materials" role="tabpanel" aria-labelledby="tab-related_materials" hidden>
 @foreach($assets as $asset)<p>
 <a href="{{ route('public.book-media',[$bookRecord,$asset]) }}">{{ $asset->title }} →</a>

@@ -80,6 +80,7 @@ class PublicCatalog
     public function bookDetail(Request $request,?Product $book): array
     {
         return ['bookRecord'=>$book,'card'=>$book?$this->books->card($book):null,'assets'=>$book?$this->books->assets($book):collect(),
+            'reviews'=>$book?\App\Models\BookReview::with('user')->where('product_id',$book->id)->where('status','published')->latest()->paginate(20,['*'],'reviews_page')->withQueryString():collect(),
             'states'=>$book?$this->participation->mine($book,$request->user()):[],
             'relatedBooks'=>$this->books->query()->when($book,fn($q)=>$q->whereKeyNot($book->id))->latest()->limit(4)->get()->map($this->books->card(...)),
             'relatedVideo'=>($video=$this->content->forSection('videos')->latest()->first())?$this->content->card($video):null,

@@ -1,0 +1,8 @@
+@extends('public.layout')
+@section('content')<section class="public-panel"><h1>{{ __('public.book_manage') }}</h1>
+@foreach($products as $product)<details><summary>{{ $product->title }}</summary><form method="post" action="{{ route('shop.update',$product) }}">@csrf @method('PATCH')
+@foreach(['title','author','isbn','language','page_count','price_cents','currency'] as $field)<label>{{ __('public.book_field_'.$field) }}<input name="{{ $field }}" value="{{ $product->$field }}" @if(in_array($field,['price_cents','page_count']))type="number" min="0"@endif></label>@endforeach
+@foreach(['description','contents'] as $field)<label>{{ __('public.'.$field) }}<textarea name="{{ $field }}">{{ $product->$field }}</textarea></label>@endforeach
+<label>{{ __('ui.status') }}<select name="status">@foreach(['draft','active','archived'] as $status)<option @selected($product->status===$status)>{{ $status }}</option>@endforeach</select></label><button class="public-button">{{ __('ui.save') }}</button></form></details>@endforeach{{ $products->links() }}
+@can('community.moderate')<h2>{{ __('public.reviews') }}</h2>@forelse($reviews as $review)<article><h3>{{ $review->product?->title }}</h3><p>{{ $review->user?->name }} · {{ $review->rating }}/5</p><p>{{ $review->body }}</p><form method="post" action="{{ route('shop.review-moderate',$review) }}">@csrf @method('PATCH')<button name="status" value="published">{{ __('public.broadcast_publish') }}</button><button name="status" value="rejected">{{ __('public.review_reject') }}</button></form></article>@empty @include('public.empty') @endforelse @endcan
+</section>@endsection

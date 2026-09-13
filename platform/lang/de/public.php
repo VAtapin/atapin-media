@@ -1,5 +1,6 @@
 <?php
 return [
+    'book_manage'=>'Bücher bearbeiten und Rezensionen prüfen','book_field_title'=>'Titel','book_field_author'=>'Autor','book_field_isbn'=>'ISBN','book_field_language'=>'Sprache','book_field_page_count'=>'Seitenzahl','book_field_price_cents'=>'Preis in Cent','book_field_currency'=>'Währung','review_rating'=>'Bewertung (1–5)','review_submit'=>'Rezension zur Prüfung senden','review_reject'=>'Ablehnen',
     'account'=>'Mein Konto','account_register'=>'Konto erstellen','account_consent'=>'Ich akzeptiere die Datenschutzhinweise.','account_verify'=>'Bitte bestätigen Sie Ihre E-Mail-Adresse über den zugesandten Link.','account_verified'=>'E-Mail-Adresse bestätigt.','account_verify_mail'=>"Bitte bestätigen Sie Ihre E-Mail-Adresse (48 Stunden):\n:link",'account_resend'=>'Bestätigung erneut senden','account_activity'=>'Meine Merkliste, Reaktionen und Fortschritte','account_remove'=>'Entfernen / abbestellen','account_push'=>'Meine Browser-Erinnerungen','account_profile'=>'Profil und Passwort','password_confirm'=>'Passwort wiederholen','current_password'=>'Aktuelles Passwort','new_password'=>'Neues Passwort (optional)',
     'newsletter_consent'=>'Ich möchte den Newsletter erhalten. Abmeldung jederzeit möglich.',
     'newsletter_requested'=>'Wenn eine Bestätigung erforderlich ist, erhalten Sie eine E-Mail. Bitte auch Spam prüfen.',

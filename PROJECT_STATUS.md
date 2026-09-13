@@ -2,6 +2,8 @@
 
 ## Реализовано
 
+- Books: editable author/contents/ISBN/language/pages and price/status in protected /desktop/shop/products; public pages read these columns. Authenticated verified readers submit one review per book; edits return it to pending. Only moderated published reviews are visible; owner moderation is protected by community.moderate and audited. Paid checkout provider remains undecided; no fake paid download is enabled. Related commit: Add editable book metadata and moderated reviews.
+
 - Public /konto: role-free visitor registration, queued signed email verification, own public bookmarks/reactions/progress/reminders with guarded removal and Push cancellation, password-confirmed name/password changes. Unverified visitors cannot submit public interactions/AI; existing staff roles remain compatible. Login redirects visitors to account, not Desktop. Password recovery and purchases need their later checkout/auth workflows. Related commit: Add public visitor accounts and personal activity.
 
 - Public newsletter forms: consent + double opt-in, encrypted confirmation queue payload, signed expiring confirmation, POST cancellation, request cooldown and no disclosure of existing email membership. Uses existing sendmail/SMTP readiness and retryable jobs with delivery status. Campaign editor/bulk newsletters are not part of this subscription implementation. Related commit: Connect public newsletter double opt-in.

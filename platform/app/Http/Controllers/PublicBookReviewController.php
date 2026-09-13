@@ -1,0 +1,14 @@
+<?php
+namespace App\Http\Controllers;
+use App\Models\{Product,BookReview};
+use App\Services\{PublicBooks,Audit};
+use Illuminate\Http\Request;
+class PublicBookReviewController extends Controller {
+    public function store(Request $request,Product $product,PublicBooks $books){
+        abort_unless($books->query()->whereKey($product->id)->exists(),404);
+        $data=$request->validate(['rating'=>'required|integer|min:1|max:5','body'=>'required|string|min:2|max:3000']);
+        BookReview::updateOrCreate(['product_id'=>$product->id,'user_id'=>$request->user()->id],[...$data,'status'=>'pending']);
+        return back()->with('public_status',__('public.comment_pending'));
+    }
+    public function moderate(Request $request,BookReview $review,Audit $audit){$data=$request->validate(['status'=>'required|in:published,rejected']);$review->update($data);$audit->record('shop.review_moderated',(string)$review->id);return back()->with('public_status',__('public.saved'));}
+}

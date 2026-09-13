@@ -17,6 +17,7 @@ foreach(['videos','beitraege','buecher','live','podcast','community','ueber-uns'
 Route::get('/videos/{slug}',[\App\Http\Controllers\PublicWebsiteController::class,'detail'])->defaults('section','videos')->name('public.video');
 Route::get('/beitraege/{slug}',[\App\Http\Controllers\PublicWebsiteController::class,'detail'])->defaults('section','beitraege')->name('public.article');
 Route::get('/buecher/{slug}',[\App\Http\Controllers\PublicWebsiteController::class,'book'])->name('public.book');
+Route::post('/buecher/{product}/reviews',[\App\Http\Controllers\PublicBookReviewController::class,'store'])->middleware(['auth','can:public.participate','throttle:3,1'])->name('public.book-review');
 Route::get('/media/public/books/{product}/{media}',[\App\Http\Controllers\PublicWebsiteController::class,'bookMedia'])->name('public.book-media');
 Route::get('/media/public/{record}/{media}',[\App\Http\Controllers\PublicWebsiteController::class,'media'])->name('public.media');
 Route::post('/public/records/{record}/state',[\App\Http\Controllers\PublicInteractionController::class,'record'])->middleware(['auth','throttle:30,1'])->name('public.record-state');
@@ -35,6 +36,9 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class,'store']);
 });
 Route::middleware('auth')->group(function () {
+    Route::get('/desktop/shop/products',[\App\Http\Controllers\ShopController::class,'index'])->middleware('can:shop.manage')->name('shop.products');
+    Route::patch('/desktop/shop/products/{product}',[\App\Http\Controllers\ShopController::class,'update'])->middleware('can:shop.manage')->name('shop.update');
+    Route::patch('/desktop/shop/reviews/{review}',[\App\Http\Controllers\PublicBookReviewController::class,'moderate'])->middleware('can:community.moderate')->name('shop.review-moderate');
     Route::get('/konto',[\App\Http\Controllers\PublicAccountController::class,'index'])->name('public.account');
     Route::get('/konto/verify/{user}/{hash}',[\App\Http\Controllers\PublicAccountController::class,'verify'])->middleware(['signed','throttle:10,1'])->name('public.account-verify');
     Route::post('/konto/verify',[\App\Http\Controllers\PublicAccountController::class,'resend'])->middleware('throttle:1,15')->name('public.account-resend');
