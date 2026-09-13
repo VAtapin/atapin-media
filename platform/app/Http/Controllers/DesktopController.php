@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use App\Services\Settings;
 use App\Services\PublicCommunityModeration;
+use App\Services\PublicVideoHealth;
 class DesktopController extends Controller
 {
     public function __invoke(Settings $settings, SettingsController $settingsController)
@@ -20,6 +21,7 @@ class DesktopController extends Controller
             'bytes' => $canMedia ? Media::sum('bytes') : null,
             'queued' => $canManageSettings ? DB::table('jobs')->count() : null,
             'failed' => $canManageSettings ? DB::table('failed_jobs')->count() : null,
+            'videoHealth' => $canManageSettings ? app(PublicVideoHealth::class)->report() : null,
             'canManageSettings' => $canManageSettings,
             'canModerateCommunity' => $canModerateCommunity,
             'communityEntries' => $canModerateCommunity ? $communityModeration->pending()->latest('id')->limit(50)->get() : collect(),
