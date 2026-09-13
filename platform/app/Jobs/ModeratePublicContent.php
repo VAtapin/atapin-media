@@ -6,12 +6,13 @@ use App\Models\SourceRecord;
 use App\Services\{Audit, PublicAiModerator, PublicCommunityModeration};
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\{ShouldBeUnique, ShouldQueue};
+use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class ModeratePublicContent implements ShouldQueue, ShouldBeUnique
 {
-    use Queueable;
+    use Dispatchable, Queueable;
 
     public int $timeout = 90;
     public int $tries = 1;
