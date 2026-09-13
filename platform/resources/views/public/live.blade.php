@@ -3,17 +3,18 @@
 @section('content')
 @php($card=$featured)@php($liveStatus=$record?->metadata['live_status']??null)@php($liveDate=$record?->metadata['starts_at']?\Illuminate\Support\Carbon::parse($record->metadata['starts_at'])->timezone(config('app.timezone'))->format('d.m.Y H:i'):null)@php($liveStatusLabel=$liveStatus?__('public.live_'.$liveStatus):null)<div class="public-live-top">
 <div>
-@include('public.player')<div class="public-title-actions">
+@if($record)
+<div class="public-live-actions public-live-actions-top"><div class="public-action-row">
+@include('public.state-button',['subject'=>$record,'action'=>'reminder','label'=>__('public.reminder')])</div>
+@include('public.push-button')
+</div>
+@endif
+@include('public.player')
 <div class="public-live-summary">
 <h1>{{ $record?->title??'—' }}</h1>
 @if($liveDate)<time class="public-record-meta" datetime="{{ $record->metadata['starts_at'] }}">{{ $liveDate }}</time>@endif
 @if($record?->body)<p class="public-live-description">{{ $record->body }}</p>@endif
 @if($liveStatusLabel)<p class="public-live-status"><span class="public-live-status-dot status-{{ $liveStatus }}" aria-hidden="true"></span><span>{{ $liveStatusLabel }}</span></p>@endif
-</div>
-<div class="public-live-actions"><div class="public-action-row">
-@include('public.state-button',['subject'=>$record,'action'=>'reminder','label'=>__('public.reminder')])</div>
-@include('public.push-button')
-</div>
 </div>
 </div>
 <section class="public-panel public-live-chat" id="chat" @if($record) data-live-heartbeat="{{ route('public.live-heartbeat',$record) }}" @endif>
