@@ -1,4 +1,4 @@
-@extends('public.layout',['title'=>__('public.broadcast_manage')])
+@extends('public.layout',['title'=>__('public.broadcast_manage'),'siteName'=>app(\App\Services\Settings::class)->get('site_name',config('platform.brand')),'description'=>__('public.broadcast_manage')])
 @section('content')
 <section class="public-panel">
 <h1>{{ __('public.broadcast_manage') }}</h1>
