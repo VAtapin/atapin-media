@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="/assets/fonts/fonts.css">
 <link rel="stylesheet" href="/assets/brand/ui-kit.css">
 <link rel="stylesheet" href="/assets/public.css">
-<link rel="stylesheet" href="/assets/public-pages.css?v=3">
+<link rel="stylesheet" href="/assets/public-pages.css?v=4">
 <link rel="icon" href="/favicon.png">
 <script src="/assets/public.js?v=2" defer>
 </script>
