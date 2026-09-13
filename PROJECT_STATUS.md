@@ -2,6 +2,8 @@
 
 ## Реализовано
 
+- Live-Verwaltung теперь содержит кнопку ? с отдельным modal help непосредственно на сайте: шаги OBS/SSH для стримера, Plesk/nginx/MediaMTX для администратора, диагностика и объяснение Composer. Команда SSH использует hostname текущей установки; ключ трансляции не переносится в справку. Локализации de/en; никаких внешних страниц для настройки не требуется. 4 целевых tests / 30 assertions, JS syntax, Blade compilation и browser dialog open/Escape/overflow на desktop/mobile прошли. Связанный commit: Embed streamer and administrator setup help in Live.
+
 - Password recovery: existing Laravel broker/tokens with expiry, encrypted queue payload, no account enumeration in forgot response, single-use reset and remember-token rotation. Existing accounts remain compatible. 3 targeted Account/Password tests and Blade compilation; no production mail sent. Последний связанный commit: Add queued public password recovery.
 
 - Проверки текущего frontend: 40 public/auth-related tests / 337 assertions; после endpoint/limit hardening — 8 Push/Broadcast tests / 52 assertions. Все 10 страниц desktop 1672×941 и mobile 390px: overflow/assets/tabs/JS passed. MediaMTX config дополнительно принят официальным binary 1.21.0; Push allowlist включает Microsoft WNS с проверкой suffix, read/publish auth имеют отдельные limits. Composer audit ранее passed, платных AI calls/production deployment не было. Последний связанный commit: Harden browser push and broadcast authorization limits.

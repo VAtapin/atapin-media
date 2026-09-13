@@ -59,6 +59,10 @@ for(const player of document.querySelectorAll('[data-progress-url]')){
   player.addEventListener('pause',save);player.addEventListener('timeupdate',()=>{if(player.currentTime>0)save();});
 }
 window.addEventListener('pagehide',()=>{if('speechSynthesis' in window)speechSynthesis.cancel();});
+for(const button of document.querySelectorAll('[data-public-help]')){
+  const dialog=document.getElementById(button.dataset.publicHelp);
+  button.addEventListener('click',()=>{if(dialog&&!dialog.open)dialog.showModal();});
+}
 for(const root of document.querySelectorAll('[data-live-heartbeat]')){
   let timer,controller,active=true,signature='',running=false;
   const pulse=async()=>{

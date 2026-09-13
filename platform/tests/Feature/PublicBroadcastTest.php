@@ -15,7 +15,9 @@ class PublicBroadcastTest extends TestCase
         $this->actingAs($owner)->post('/desktop/live',['title'=>'New stream','enabled'=>true,'published'=>true])->assertRedirect();
         $event=SourceRecord::firstOrFail();$key=app(Settings::class)->secret('live_publish_'.$event->id);
         $this->assertNotEmpty($key);
-        $this->get('/desktop/live/'.$event->id)->assertOk()->assertSee($key);
+        $this->get('/desktop/live/'.$event->id)->assertOk()->assertSee($key)
+            ->assertSee('data-public-help="broadcast-help"',false)->assertSee('<dialog',false)
+            ->assertSee('SSH_BENUTZER')->assertSee('proxy_buffering off;')->assertSee('minishlink/web-push');
         $this->get('/live?event='.$event->id)->assertOk()->assertDontSee($key);
     }
     private function event(): SourceRecord {return SourceRecord::create(['source'=>'website','source_id'=>'live','kind'=>'video','title'=>'Live','status'=>'ready','metadata'=>['public_section'=>'live','public_published'=>true,'live_stream_enabled'=>true]]);}

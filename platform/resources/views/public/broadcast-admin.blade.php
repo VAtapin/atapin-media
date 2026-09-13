@@ -2,6 +2,7 @@
 @section('content')
 <section class="public-panel">
 <h1>{{ __('public.broadcast_manage') }}</h1>
+@include('public.broadcast-help')
 @if($events)@foreach($events as $event)<p><a href="{{ route('public.broadcast-admin-show',$event) }}">{{ $event->title }}</a></p>@endforeach{{ $events->links() }}@endif
 <form method="post" action="{{ $record?route('public.broadcast-update',$record):route('public.broadcast-create') }}">@csrf
 <label>{{ __('ui.title') }}<input name="title" required maxlength="255" value="{{ $record?->title }}"></label>
