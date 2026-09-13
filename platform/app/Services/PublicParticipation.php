@@ -2,8 +2,6 @@
 namespace App\Services;
 
 use App\Models\{PublicContentState,SourceRecord,Product,User};
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class PublicParticipation
 {
@@ -45,11 +43,6 @@ class PublicParticipation
     }
     public function comment(User $user,SourceRecord $parent,string $body,string $kind='comment'): void
     {
-        DB::transaction(function()use($user,$parent,$body,$kind){
-            $record=SourceRecord::create(['source'=>$parent->source,'source_id'=>'website-comment:'.Str::uuid(),'kind'=>$kind,
-                'title'=>Str::limit($body,120,''),'body'=>$body,'status'=>'needs_attention',
-                'metadata'=>['parent_source_id'=>$parent->source_id,'author'=>$user->name,'author_user_id'=>$user->id,'public_published'=>false,'website_comment'=>true]]);
-            app(Audit::class)->record('public.comment_submitted',(string)$record->id);
-        });
+        app(PublicCommunitySubmission::class)->message($user,$parent,$body,$kind);
     }
 }

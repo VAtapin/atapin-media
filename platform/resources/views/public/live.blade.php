@@ -34,29 +34,27 @@
 @empty
 @include('public.empty')
 @endforelse</div>
-@if($record)
-@auth
-<form method="post" action="{{ route('public.record-state',$record) }}">@csrf<input type="hidden" name="action" value="chat">
-<label class="public-sr-only" for="chat-body">{{ __('public.write_message') }}</label>
-<input id="chat-body" name="body" required minlength="2" maxlength="5000" placeholder="{{ __('public.write_message') }}">
-<button class="public-button">{{ __('public.send') }} →</button>
-</form>
-<small>{{ __('public.moderation_hint') }}</small>
-@if(app(\App\Services\PublicAiChat::class)->available())
+ @if($record)
+ <form method="post" action="{{ route('public.message-submit',$record) }}">@csrf
+ <label class="public-sr-only" for="chat-body">{{ __('public.write_message') }}</label>
+ <input id="chat-body" name="body" required minlength="2" maxlength="5000" placeholder="{{ __('public.write_message') }}">
+ <button class="public-button">{{ __('public.send') }} →</button>
+ </form>
+ <small>{{ __('public.chat_guest_hint') }}</small>
+ @auth
+ @if(app(\App\Services\PublicAiChat::class)->available())
 <form method="post" action="{{ route('public.ai-chat',$record) }}" data-ai-form>@csrf
 <label for="ai-question">{{ __('public.ai_chat_label') }}</label>
 <input id="ai-question" name="question" required minlength="2" maxlength="1000" placeholder="@Assistent …">
 <label><input type="checkbox" name="consent" value="1" required>{{ __('public.ai_chat_consent') }}</label>
 <button class="public-button">{{ __('public.ai_chat_ask') }}</button>
 <p data-ai-answer role="status"></p>
-</form>
+ </form>
+ @endif
+ @endauth
+ @else<input placeholder="{{ __('public.write_message') }}" disabled>
 @endif
-@else<a class="public-button public-button-secondary" href="/login">{{ __('ui.login') }}</a><small>{{ __('public.chat_login_hint') }}</small>
-@endauth
-@else<input placeholder="{{ __('public.write_message') }}" disabled>
-@endif
-@can('community.moderate')<a class="public-moderation-link" href="{{ route('public.community-moderation') }}">{{ __('public.chat_moderation') }} →</a>@endcan
-<div class="public-action-row">
+ <div class="public-action-row">
 <button class="public-button public-button-secondary" data-share>{{ __('public.share') }}</button>
 @include('public.state-button',['subject'=>$record,'action'=>'like','label'=>__('public.like')])
 @include('public.state-button',['subject'=>$record,'action'=>'bookmark','label'=>__('public.bookmark')])</div>

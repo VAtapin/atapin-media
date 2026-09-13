@@ -9,7 +9,7 @@ use App\Http\Controllers\ImportController;
 
 Route::get('/', [\App\Http\Controllers\PublicWebsiteController::class,'home'])->name('home');
 Route::post('/newsletter',[\App\Http\Controllers\PublicNewsletterController::class,'store'])->middleware('throttle:3,1')->name('public.newsletter');
-Route::post('/community',[\App\Http\Controllers\PublicCommunityController::class,'store'])->middleware(['auth','can:public.participate','throttle:3,1'])->name('public.community-submit');
+Route::post('/community',[\App\Http\Controllers\PublicCommunityController::class,'store'])->name('public.community-submit');
 Route::get('/newsletter/{subscription}/confirm',[\App\Http\Controllers\PublicNewsletterController::class,'confirm'])->middleware(['signed','throttle:10,1'])->name('public.newsletter-confirm');
 Route::get('/newsletter/{subscription}/cancel',[\App\Http\Controllers\PublicNewsletterController::class,'cancel'])->middleware(['signed','throttle:10,1'])->name('public.newsletter-cancel');
 Route::post('/newsletter/{subscription}/cancel',[\App\Http\Controllers\PublicNewsletterController::class,'destroy'])->middleware(['signed','throttle:10,1']);
@@ -23,6 +23,7 @@ Route::get('/media/public/books/{product}/{media}',[\App\Http\Controllers\Public
 Route::get('/media/public/{record}/{media}',[\App\Http\Controllers\PublicWebsiteController::class,'media'])->name('public.media');
 Route::post('/public/records/{record}/view', [\App\Http\Controllers\PublicWebsiteController::class,'recordView'])->middleware('throttle:120,1')->name('public.record-view');
 Route::post('/public/records/{record}/state',[\App\Http\Controllers\PublicInteractionController::class,'record'])->middleware(['auth','throttle:30,1'])->name('public.record-state');
+Route::post('/public/records/{record}/messages',[\App\Http\Controllers\PublicInteractionController::class,'message'])->name('public.message-submit');
 Route::post('/public/books/{product}/state',[\App\Http\Controllers\PublicInteractionController::class,'book'])->middleware(['auth','throttle:30,1'])->name('public.book-state');
 Route::get('/upload/{path?}', fn () => redirect('/desktop', 303))->where('path', '.*');
 Route::post('/kontakt',[\App\Http\Controllers\PublicContactController::class,'store'])->middleware('throttle:3,1')->name('public.contact-submit');
@@ -42,8 +43,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class,'store']);
 });
 Route::middleware('auth')->group(function () {
-    Route::get('/desktop/community/moderation',[\App\Http\Controllers\PublicCommunityController::class,'index'])->middleware('can:community.moderate')->name('public.community-moderation');
-    Route::patch('/desktop/community/moderation/{record}',[\App\Http\Controllers\PublicCommunityController::class,'moderate'])->middleware('can:community.moderate')->name('public.community-moderate');
+    Route::get('/desktop/community/moderation',[\App\Http\Controllers\PublicCommunityController::class,'index'])->middleware('can:community.moderate')->name('desktop.community-moderation');
+    Route::patch('/desktop/community/moderation/{record}',[\App\Http\Controllers\PublicCommunityController::class,'moderate'])->middleware('can:community.moderate')->name('desktop.community-moderate');
     Route::get('/desktop/shop/products',[\App\Http\Controllers\ShopController::class,'index'])->middleware('can:shop.manage')->name('shop.products');
     Route::patch('/desktop/shop/products/{product}',[\App\Http\Controllers\ShopController::class,'update'])->middleware('can:shop.manage')->name('shop.update');
     Route::patch('/desktop/shop/reviews/{review}',[\App\Http\Controllers\PublicBookReviewController::class,'moderate'])->middleware('can:community.moderate')->name('shop.review-moderate');

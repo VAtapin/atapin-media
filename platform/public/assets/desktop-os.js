@@ -426,13 +426,18 @@
           window.initializeImportCenter?.(importCenter);
         }
       }
-      if (['videos', 'posts', 'community'].includes(appId)) {
+      if (['videos', 'posts'].includes(appId)) {
         const content = document.querySelector('#content-library-app-template')?.content.firstElementChild.cloneNode(true);
         if (content) {
           content.dataset.section = appId;
           windowElement.querySelector('.os-window-content').append(content);
           window.initializeContentLibrary?.(content);
         }
+      }
+      if (appId === 'community') {
+        const communityTemplate = document.querySelector('#community-app-template');
+        const community = communityTemplate?.content.firstElementChild.cloneNode(true);
+        if (community) windowElement.querySelector('.os-window-content').append(community);
       }
 
       if (saved) {
@@ -610,15 +615,21 @@
   const restoreDesktop = () => {
     hideSnap();
     let state;
-    try { state = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (_) { return; }
-    if (!state || state.version !== 1 || !Array.isArray(state.windows)) return;
-    activeLayoutId = layoutById(state.layoutId)?.id || null;
-    restoring = true;
-    state.windows.forEach(saved => {
-      const trigger = programTrigger(saved.appId);
-      if (trigger) openProgram(trigger, saved);
-    });
-    restoring = false;
+    try { state = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (_) { state = null; }
+    if (state && state.version === 1 && Array.isArray(state.windows)) {
+      activeLayoutId = layoutById(state.layoutId)?.id || null;
+      restoring = true;
+      state.windows.forEach(saved => {
+        const trigger = programTrigger(saved.appId);
+        if (trigger) openProgram(trigger, saved);
+      });
+      restoring = false;
+    }
+    const requestedApp = new URLSearchParams(window.location.search).get('open');
+    if (requestedApp) {
+      const trigger = programTrigger(requestedApp);
+      if (trigger) openProgram(trigger);
+    }
     const visible = [...document.querySelectorAll('.os-window:not([hidden])')];
     if (visible.length) focusWindow(visible.at(-1));
     hideSnap();

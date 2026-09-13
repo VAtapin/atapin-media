@@ -4,12 +4,15 @@ use App\Models\Media;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use App\Services\Settings;
+use App\Services\PublicCommunityModeration;
 class DesktopController extends Controller
 {
     public function __invoke(Settings $settings, SettingsController $settingsController)
     {
         $canMedia = Gate::allows('media.view');
         $canManageSettings = Gate::allows('settings.manage');
+        $canModerateCommunity = Gate::allows('community.moderate');
+        $communityModeration = app(PublicCommunityModeration::class);
         return view('desktop', [
             'project'=>Gate::allows('projects.manage') ? \App\Models\Project::where('status','!=','published')->latest('updated_at')->first() : null,
             'media' => $canMedia ? Media::latest()->limit(6)->get() : collect(),
@@ -18,6 +21,9 @@ class DesktopController extends Controller
             'queued' => $canManageSettings ? DB::table('jobs')->count() : null,
             'failed' => $canManageSettings ? DB::table('failed_jobs')->count() : null,
             'canManageSettings' => $canManageSettings,
+            'canModerateCommunity' => $canModerateCommunity,
+            'communityEntries' => $canModerateCommunity ? $communityModeration->pending()->latest('id')->limit(50)->get() : collect(),
+            'communityStats' => $canModerateCommunity ? $communityModeration->stats() : ['human_review' => 0, 'ai_pending' => 0],
             'settingsPageData' => $settingsController->pageData($settings),
             'desktopAppearance' => [
                 'icon_set' => $settings->get('desktop_icon_set', 'manna'),

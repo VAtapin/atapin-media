@@ -12,11 +12,11 @@
 @include('public.empty')
 @endforelse
 @if(method_exists($comments,'hasPages'))@include('public.pagination',['items'=>$comments])@endif
-@if($record)<form action="{{ route('public.record-state',$record) }}" method="post">@csrf<input type="hidden" name="action" value="comment">
+@if($record)<form action="{{ route('public.message-submit',$record) }}" method="post">@csrf
 <label for="comment-body">{{ __('public.write_comment') }}</label>
 <textarea id="comment-body" name="body" required minlength="2" maxlength="5000" rows="3">
 </textarea>
-<small>{{ __('public.moderation_hint') }}</small>
+<small>{{ __('public.chat_guest_hint') }}</small>
 <button class="public-button">{{ __('public.send') }} →</button>
 </form>
 @else<button class="public-button" disabled>{{ __('public.write_comment') }}</button>

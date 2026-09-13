@@ -1,7 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 use App\Models\{SourceRecord,Product};
-use App\Services\{PublicContent,PublicBooks,PublicParticipation};
+use App\Services\{PublicContent,PublicBooks,PublicParticipation,PublicCommunitySubmission};
 use Illuminate\Http\Request;
 
 class PublicInteractionController extends Controller
@@ -14,10 +14,19 @@ class PublicInteractionController extends Controller
         if(in_array($data['action'],['comment','chat'])){
             abort_unless(in_array($record->kind,['video','short','post']),422);
             if($data['action']==='chat')abort_unless($content->section($record)==='live',422);
-            $request->validate(['body'=>'required|string|min:2|max:5000']);$participation->comment($request->user(),$record,$data['body'],$data['action']==='chat'?'live_chat':'comment');
+            $request->validate(['body'=>'required|string|min:2|max:5000']);app(PublicCommunitySubmission::class)->message($request->user(),$record,$data['body'],$data['action']==='chat'?'live_chat':'comment');
             return $this->result($request,__('public.comment_pending'));
         }
         $participation->save($request->user(),$record,$data);return $this->result($request,__('public.saved'));
+    }
+    public function message(Request $request,SourceRecord $record,PublicContent $content,PublicCommunitySubmission $submission)
+    {
+        abort_unless($content->visible($record),404);
+        $data=$request->validate(['body'=>'required|string|min:2|max:5000']);
+        abort_unless(in_array($record->kind,['video','short','post']),422);
+        $kind=$content->section($record)==='live'?'live_chat':'comment';
+        $submission->message($request->user(),$record,$data['body'],$kind);
+        return $this->result($request,__('public.message_sent'));
     }
     public function book(Request $request,Product $product,PublicBooks $books,PublicParticipation $participation)
     {
