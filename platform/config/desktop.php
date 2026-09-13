@@ -8,7 +8,7 @@ return [
         'sol' => ['label_key' => 'desktop_icon_set_sol', 'path' => '/assets/brand/owner/desktop/sol'],
     ],
     'wallpapers' => [
-        'mountains' => ['label_key' => 'desktop_wallpaper_mountains', 'path' => '/assets/ui/photos/start-live.png'],
+        'mountains' => ['label_key' => 'desktop_wallpaper_mountains', 'path' => '/assets/brand/owner/desktop/wallpapers/manna-mountains.png'],
         'desktop1' => ['label_key' => 'desktop_wallpaper_desktop_1', 'path' => '/assets/brand/owner/desktop/wallpapers/desktop1.png'],
         'desktop2' => ['label_key' => 'desktop_wallpaper_desktop_2', 'path' => '/assets/brand/owner/desktop/wallpapers/desktop2.png'],
         'navy' => ['label_key' => 'desktop_wallpaper_navy'],

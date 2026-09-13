@@ -1,7 +1,7 @@
 <?php
 // These are sections of one approved website, not alternative design concepts.
 return [
-    'hero_image'=>env('PUBLIC_HERO_IMAGE','/assets/brand/owner/desktop/wallpapers/desktop2.png'),
+    'hero_image'=>env('PUBLIC_HERO_IMAGE','/assets/brand/owner/desktop/wallpapers/manna-mountains.png'),
     'screens'=>[
         'start'=>['reference'=>'01-start.png','path'=>'/'],
         'videos'=>['reference'=>'02-videos.png','path'=>'/videos'],
