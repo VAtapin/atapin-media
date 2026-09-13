@@ -344,10 +344,8 @@
 /* Keep the approved header geometry stable on every public screen. */
 .public-editorial .public-header-inner{background:rgba(255,255,255,.88);border-radius:0 0 8px 8px}
 .public-header-inner{padding-right:16px}
-.public-account-staff-note{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:0 0 18px;padding:18px 22px;border:1px solid #ead8b5;border-radius:12px;background:#fffaf0;color:#10294d}
-.public-account-staff-note strong{display:block;font-family:Georgia,serif;font-size:20px}
-.public-account-staff-note p{margin:4px 0 0;color:#5f7290}
-.public-account-staff-note .public-button{flex-shrink:0}
+.public-account-staff-only{min-height:300px;display:grid;place-items:center}
+.public-account-staff-only .public-panel{padding:40px;text-align:center}
 .public-button .public-icon{flex:0 0 24px;width:24px;height:24px;overflow:visible}
 .public-join{padding-left:16px;padding-right:16px;overflow:visible}
 .public-section-live{background-color:#fff;background-image:linear-gradient(180deg,#ffffff1a 0,#ffffffd9 520px,#fff 900px),var(--public-live-image);background-size:100% 100%,cover;background-position:center top;background-attachment:scroll,fixed}
@@ -355,4 +353,4 @@
 .public-section-live .public-header-inner{background:transparent}
 @media(max-width:1550px){.public-header-inner{padding-right:24px}}
 @media(max-width:800px){.public-header-inner{padding-right:16px}.public-section-live{background-image:linear-gradient(180deg,#fff 0,#fff 520px),none}.public-section-live .public-header{background:#fff}}
-@media(max-width:600px){.public-account-staff-note{align-items:flex-start;flex-direction:column}.public-account-staff-note .public-button{width:100%;text-align:center}}
+@media(max-width:600px){.public-account-staff-only .public-panel{width:100%;padding:28px 18px}.public-account-staff-only .public-button{width:100%;text-align:center}}

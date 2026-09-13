@@ -11,7 +11,7 @@ class PublicParticipation
     }
     public function mine($subject,?User $user): array
     {
-        return $user?$this->states($subject)->where('user_id',$user->id)->pluck('value','action')->all():[];
+        return $user&&!$user->isStaffAccount()?$this->states($subject)->where('user_id',$user->id)->pluck('value','action')->all():[];
     }
     public function options(SourceRecord $poll): array
     {
@@ -19,6 +19,7 @@ class PublicParticipation
     }
     public function save(User $user,$subject,array $data): void
     {
+        abort_unless(!$user->isStaffAccount(),403);
         $action=$data['action'];
         abort_unless(in_array($action,$subject instanceof Product?['bookmark','progress']:['bookmark','like','reminder','progress','vote']),422);
         if($action==='reminder')abort_unless(app(PublicContent::class)->section($subject)==='live',422);

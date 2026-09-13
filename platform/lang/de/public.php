@@ -88,5 +88,5 @@ return [
     'nav_start'=>'Start','nav_videos'=>'Videos','nav_beitraege'=>'Beiträge','nav_buecher'=>'Bücher','nav_live'=>'Livestreams',
     'nav_podcast'=>'Podcast','nav_community'=>'Community','nav_about'=>'Über uns',
     'search_placeholder'=>'Nach Videos, Beiträgen, Themen …','join'=>'Mitmachen',
-    'account_staff_label'=>'Administratorkonto','account_staff_title'=>'Administratorkonto','account_staff_hint'=>'Veröffentlichte Medien, Livestreams und Dateien verwalten Sie im Media Desktop. Diese Seite enthält nur persönliche Nutzerdaten.','account_staff_link'=>'Media Desktop öffnen',
+    'account_staff_link'=>'Media Desktop öffnen',
 ];
