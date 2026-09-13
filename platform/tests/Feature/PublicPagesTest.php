@@ -1,10 +1,11 @@
 <?php
 namespace Tests\Feature;
 
-use App\Models\{SourceRecord,Product,Media,PublicContentState,User};
+use App\Models\{SourceRecord,Product,Media,PublicContentState,PublicContentView,User};
 use App\Services\{PublicContent,PublicBooks,PublicParticipation};
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class PublicPagesTest extends TestCase
@@ -69,6 +70,30 @@ class PublicPagesTest extends TestCase
         $scheduled=$this->record('video',['public_section'=>'live','live_status'=>'scheduled','starts_at'=>'2027-01-01T12:00:00']);
         $ended=$this->record('video',['public_section'=>'live','live_status'=>'ended']);
         $this->get('/live?event='.$scheduled->id)->assertOk()->assertViewHas('popular',fn($items)=>!$items->contains('id',$scheduled->id)&&$items->contains('id',$ended->id));
+    }
+    public function test_expired_scheduled_lives_are_marked_ended_and_removed_from_upcoming(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-09-13 22:07:00',config('app.timezone')));
+        try {
+            $missed=$this->record('video',['public_section'=>'live','live_status'=>'scheduled','starts_at'=>'2026-09-13T21:30:00']);
+            $future=$this->record('video',['public_section'=>'live','live_status'=>'scheduled','starts_at'=>'2026-09-14T20:00:00']);
+            $this->get('/live')->assertOk()->assertViewHas('upcoming',fn($items)=>!$items->contains('id',$missed->id)&&$items->contains('id',$future->id));
+            $this->assertSame('ended',$missed->fresh()->metadata['live_status']);
+            $this->assertSame('missed_schedule',$missed->fresh()->metadata['ended_reason']);
+            $this->assertSame('scheduled',$future->fresh()->metadata['live_status']);
+        } finally { Carbon::setTestNow(); }
+    }
+    public function test_video_views_are_counted_once_and_popularity_uses_real_views(): void
+    {
+        $oldMetadata=$this->record('video',['views'=>999]);
+        $popular=$this->record('video',['views'=>1]);
+        foreach(['visitor-a','visitor-b','visitor-c'] as $hash)PublicContentView::create(['record_id'=>$popular->id,'visitor_hash'=>hash('sha256',$hash),'viewed_on'=>now()->toDateString()]);
+        $this->get('/videos?sort=popular')->assertOk()->assertViewHas('popular',fn($items)=>$items->first()['id']===$popular->id&&$items->first()['views']===3);
+        $url=route('public.record-view',$oldMetadata);
+        $this->postJson($url)->assertOk()->assertJsonPath('views',1);
+        $this->postJson($url)->assertOk()->assertJsonPath('views',1);
+        $this->assertDatabaseCount('public_content_views',4);
+        $this->get(route('public.video',['slug'=>'database-video-'.$oldMetadata->id]))->assertOk()->assertSee('data-view-url="'.e($url).'"',false);
     }
     public function test_active_books_render_and_drafts_do_not(): void
     {

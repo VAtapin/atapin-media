@@ -36,6 +36,13 @@ document.querySelectorAll('[data-read-aloud]').forEach(button=>button.addEventLi
   if(speechSynthesis.speaking){speechSynthesis.cancel();return;}
   const speech=new SpeechSynthesisUtterance(document.querySelector('[data-read-text]')?.textContent||'');speech.lang=document.documentElement.lang;speechSynthesis.speak(speech);
 }));
+for(const player of document.querySelectorAll('[data-view-url]')){
+  let sent=false,inFlight=false;
+  player.addEventListener('play',async()=>{
+    if(sent||inFlight)return;inFlight=true;
+    try{const response=await fetch(player.dataset.viewUrl,{method:'POST',keepalive:true,headers:{Accept:'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content}});if(response.ok)sent=true;}catch{}finally{inFlight=false;}
+  });
+}
 document.querySelectorAll('[data-seek]').forEach(button=>button.addEventListener('click',()=>{
   const player=document.querySelector('.public-main-player');if(player&&player.readyState>0)player.currentTime=Math.max(0,Math.min(Number(button.dataset.seek),player.duration));
   else publicFeedback(window.publicLabels.no_local_playback);

@@ -9,8 +9,9 @@ class PublicCatalog
     public function __construct(private PublicContent $content,private PublicBooks $books,private PublicParticipation $participation) {}
     public function listing(Request $request,string $section): array
     {
+        if($section==='live')$this->content->expireScheduledLives();
         $data=$request->validate(['q'=>'nullable|string|max:120','tag'=>'nullable|string|max:100','sort'=>'nullable|in:latest,oldest,popular','series'=>'nullable|integer|min:1','page'=>'nullable|integer|min:1|max:100000']);
-        $query=$section==='buecher'?$this->books->query():($section==='search'?$this->content->query()->whereIn('kind',['video','short','post','poll']):$this->content->forSection($section));
+        $query=$section==='buecher'?$this->books->query():$this->content->withViewCounts($section==='search'?$this->content->query()->whereIn('kind',['video','short','post','poll']):$this->content->forSection($section));
         if($data['q']??'')$query->where(fn($q)=>$q->where('title','like','%'.$data['q'].'%')->orWhere($section==='buecher'?'description':'body','like','%'.$data['q'].'%'));
         if($data['tag']??''){
             if($section==='buecher')$query->where(fn($q)=>$q->where('title','like','%'.$data['tag'].'%')->orWhere('description','like','%'.$data['tag'].'%'));
@@ -21,7 +22,7 @@ class PublicCatalog
             $query->where('source',$collection->source)->whereIn('source_id',$collection->items()->whereNotNull('source_id')->select('source_id'));
         }
         $sort=$data['sort']??'latest';
-        if($sort==='popular'&&$section!=='buecher')$query->orderByDesc('metadata->views');
+        if($sort==='popular'&&$section!=='buecher')$query->orderByDesc('public_view_count');
         $query->orderBy('created_at',$sort==='oldest'?'asc':'desc')->orderByDesc('id');
         $mapper=$section==='buecher'?$this->books->card(...):$this->content->card(...);
         $page=$query->paginate($section==='beitraege'?6:8)->withQueryString();
@@ -43,14 +44,14 @@ class PublicCatalog
         $resumeState=$request->user()?PublicContentState::where('user_id',$request->user()->id)->where('subject_type','record')->where('action','progress')->whereIn('subject_id',$this->content->forSection('podcast')->select('id'))->latest('updated_at')->first():null;
         $resumeRecord=$resumeState?$this->content->forSection('podcast')->find($resumeState->subject_id):null;
         return ['items'=>$items,'featured'=>$featured,'readingBooks'=>$readingBooks,'resume'=>$resumeRecord?[...$this->content->card($resumeRecord),'position'=>$resumeState->value['position']??0]:null,
-            'popular'=>($section==='buecher'?$this->books->query()->latest():($section==='live'?$this->content->forSection('live')->where('metadata->live_status','ended')->latest():$this->content->forSection($section)->orderByDesc('metadata->views')->latest()))->limit(5)->get()->map($mapper),
+            'popular'=>($section==='buecher'?$this->books->query()->latest():($section==='live'?$this->content->forSection('live')->where('metadata->live_status','ended')->latest():$this->content->withViewCounts($this->content->forSection($section))->orderByDesc('public_view_count')->latest()->orderByDesc('id')))->limit(5)->get()->map($mapper),
             'topics'=>$section==='buecher'?[]:$this->topics($section),'series'=>$this->series($section),
             'record'=>$record,'assets'=>$record?$this->content->assets($record):collect(),
             'comments'=>$record?$this->content->children($record)->latest()->paginate(20,['*'],'comments_page')->withQueryString()->fragment('comments'):collect(),
             'chat'=>$record?$this->content->children($record,'live_chat')->latest()->limit(30)->get()->reverse():collect(),
             'states'=>$record?$this->participation->mine($record,$request->user()):[],
             'poll'=>$this->content->forSection('community')->where('kind','poll')->latest()->first(),
-            'upcoming'=>$this->content->forSection('live')->where('metadata->live_status','scheduled')->orderBy('metadata->starts_at')->limit(5)->get()->map($this->content->card(...)),
+            'upcoming'=>$this->content->forSection('live')->where('metadata->live_status','scheduled')->get()->filter(fn($event)=>$this->content->hasFutureStart($event))->sortBy(fn($event)=>strtotime((string) ($event->metadata['starts_at']??'')))->take(5)->map($this->content->card(...)),
             'book'=>$this->books->query()->latest()->first()?->id? $this->books->card($this->books->query()->latest()->first()):null,
             'relatedVideo'=>$this->content->forSection('videos')->latest()->first()?->id?$this->content->card($this->content->forSection('videos')->latest()->first()):null];
     }

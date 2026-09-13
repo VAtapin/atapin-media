@@ -19,7 +19,7 @@
 @elseif($record && ($video||$audio))
 
 @if($video)<video class="public-main-player" controls preload="metadata"
-@if($card['image']??null)poster="{{ $card['image'] }}"
+data-view-url="{{ route('public.record-view',$record) }}" @if($card['image']??null)poster="{{ $card['image'] }}"
 @endif src="{{ route('public.media',[$record,$video]) }}" @auth data-progress-url="{{ route('public.record-state',$record) }}" data-resume="{{ $states['progress']['position']??0 }}" @endauth>
 </video>
 @else<audio class="public-main-audio" controls preload="metadata" src="{{ route('public.media',[$record,$audio]) }}" @auth data-progress-url="{{ route('public.record-state',$record) }}" data-resume="{{ $states['progress']['position']??0 }}" @endauth>

@@ -4,6 +4,7 @@ use App\Models\Media;
 use App\Models\SourceRecord;
 use App\Services\PublicContent;
 use App\Services\{PublicCatalog,PublicBooks};
+use App\Services\PublicViewCounter;
 use Illuminate\Http\Request;
 
 class PublicWebsiteController extends Controller
@@ -15,7 +16,7 @@ class PublicWebsiteController extends Controller
     }
     public function home(PublicContent $content)
     {
-        $videos=$content->forSection('videos')->latest()->limit(3)->get()->map($content->card(...));
+        $videos=$content->withViewCounts($content->forSection('videos'))->latest()->limit(3)->get()->map($content->card(...));
         $articles=$content->forSection('beitraege')->latest()->limit(3)->get()->map($content->card(...));
         $books=app(PublicBooks::class);$book=$books->query()->latest()->first();
         $live=$content->nextLive();
@@ -23,6 +24,11 @@ class PublicWebsiteController extends Controller
         return view('public.home',[...$this->shared(),'videos'=>$videos,'articles'=>$articles,
             'featured'=>$featuredRecord?$content->card($featuredRecord):null,'book'=>$book?$books->card($book):null,
             'live'=>$live?$content->card($live):null]);
+    }
+    public function recordView(Request $request, SourceRecord $record, PublicContent $content, PublicViewCounter $counter)
+    {
+        abort_unless(in_array($record->kind,['video','short'],true)&&$content->visible($record)&&$content->section($record)==='videos',404);
+        return response()->json(['views'=>$counter->record($record,$request)])->header('Cache-Control','no-store');
     }
     public function listing(Request $request,PublicContent $content)
     {

@@ -21,6 +21,7 @@ Route::get('/buecher/{slug}',[\App\Http\Controllers\PublicWebsiteController::cla
 Route::post('/buecher/{product}/reviews',[\App\Http\Controllers\PublicBookReviewController::class,'store'])->middleware(['auth','can:public.participate','throttle:3,1'])->name('public.book-review');
 Route::get('/media/public/books/{product}/{media}',[\App\Http\Controllers\PublicWebsiteController::class,'bookMedia'])->name('public.book-media');
 Route::get('/media/public/{record}/{media}',[\App\Http\Controllers\PublicWebsiteController::class,'media'])->name('public.media');
+Route::post('/public/records/{record}/view', [\App\Http\Controllers\PublicWebsiteController::class,'recordView'])->middleware('throttle:120,1')->name('public.record-view');
 Route::post('/public/records/{record}/state',[\App\Http\Controllers\PublicInteractionController::class,'record'])->middleware(['auth','throttle:30,1'])->name('public.record-state');
 Route::post('/public/books/{product}/state',[\App\Http\Controllers\PublicInteractionController::class,'book'])->middleware(['auth','throttle:30,1'])->name('public.book-state');
 Route::get('/upload/{path?}', fn () => redirect('/desktop', 303))->where('path', '.*');

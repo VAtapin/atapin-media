@@ -2,6 +2,8 @@
 namespace App\Services;
 use App\Models\Media;
 use App\Models\SourceRecord;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 class PublicContent
@@ -35,9 +37,46 @@ class PublicContent
     {
         return $this->forSection('live')->where('metadata->live_status','ended')->latest()->first();
     }
+    public function withViewCounts(Builder $query): Builder
+    {
+        return $query->withCount(['publicViews as public_view_count']);
+    }
+    public function viewCount(SourceRecord $record): int
+    {
+        if (array_key_exists('public_view_count', $record->getAttributes())) return (int) $record->public_view_count;
+        return (int) $record->publicViews()->count();
+    }
+    public function hasFutureStart(SourceRecord $record): bool
+    {
+        $starts = $record->metadata['starts_at'] ?? null;
+        if (!$starts) return false;
+        try { return Carbon::parse((string) $starts)->timezone(config('app.timezone'))->isFuture(); }
+        catch (\Throwable) { return false; }
+    }
+    public function isMissedScheduled(SourceRecord $record): bool
+    {
+        return ($record->metadata['live_status'] ?? null) === 'scheduled'
+            && !$this->hasFutureStart($record);
+    }
+    public function expireScheduledLives(): int
+    {
+        $expired = SourceRecord::where('metadata->public_section','live')->where('metadata->live_status','scheduled')->get()
+            ->filter(fn(SourceRecord $record)=>$this->isMissedScheduled($record));
+        foreach ($expired as $record) {
+            $metadata = $record->metadata ?? [];
+            $metadata['live_status'] = 'ended';
+            $metadata['ended_reason'] = 'missed_schedule';
+            $metadata['ended_at'] = now(config('app.timezone'))->toIso8601String();
+            $record->update(['metadata'=>$metadata]);
+        }
+        return $expired->count();
+    }
     public function nextLive(): ?SourceRecord
     {
-        return $this->forSection('live')->whereIn('metadata->live_status',['live','scheduled'])->get()->sortBy(function(SourceRecord $record){
+        $this->expireScheduledLives();
+        return $this->forSection('live')->whereIn('metadata->live_status',['live','scheduled'])->get()->filter(function(SourceRecord $record){
+            return ($record->metadata['live_status'] ?? null) === 'live' || $this->hasFutureStart($record);
+        })->sortBy(function(SourceRecord $record){
             $status=$record->metadata['live_status']??null;$starts=$record->metadata['starts_at']??null;$time=$starts?strtotime((string)$starts):PHP_INT_MAX;
             return [$status==='live'?0:1,$time,(int)$record->id];
         })->first();
@@ -80,7 +119,7 @@ class PublicContent
         return ['id'=>$record->id,'kind'=>$record->kind,'section'=>$section,'title'=>$record->title,'excerpt'=>Str::limit($record->body??'',140),
             'url'=>$url,'author'=>is_string($author)?$author:($author['name']??''),
             'tags'=>array_values(array_filter($record->metadata['tags']??[],'is_string')),
-            'duration'=>$record->metadata['duration']??null,'views'=>is_numeric($record->metadata['views']??null)?(int)$record->metadata['views']:null,
+            'duration'=>$record->metadata['duration']??null,'views'=>$this->viewCount($record),
             'date'=>$date,'viewers'=>is_numeric($record->metadata['viewer_count']??null)?(int)$record->metadata['viewer_count']:'',
             'image'=>$image?route('public.media',[$record,$image]):null,
             'meta'=>$meta];

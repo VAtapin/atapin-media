@@ -4,6 +4,7 @@ use App\Models\{SourceRecord,Media,User};
 use App\Services\{PublicBroadcast,Settings};
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 class PublicBroadcastTest extends TestCase
 {
@@ -26,6 +27,20 @@ class PublicBroadcastTest extends TestCase
         $second=$this->actingAs($owner)->postJson('/api/desktop/live',['title'=>'Second stream','enabled'=>true,'published'=>true])->assertCreated()->json('data');
         $this->assertSame($created['ingest']['url'],$second['ingest']['url']);
     }
+    public function test_live_studio_marks_expired_scheduled_events_as_ended(): void
+    {
+        app(\App\Services\Access::class)->seed();
+        $owner=User::factory()->create();$owner->roles()->attach(\App\Models\Role::where('name','Owner')->firstOrFail());
+        Carbon::setTestNow(Carbon::parse('2026-09-13 22:07:00',config('app.timezone')));
+        try {
+            $missed=SourceRecord::create(['source'=>'website','source_id'=>'missed-live','kind'=>'video','title'=>'Missed','status'=>'ready','metadata'=>['public_section'=>'live','public_published'=>true,'live_status'=>'scheduled','starts_at'=>'2026-09-13T21:30:00']]);
+            $future=SourceRecord::create(['source'=>'website','source_id'=>'future-live','kind'=>'video','title'=>'Future','status'=>'ready','metadata'=>['public_section'=>'live','public_published'=>true,'live_status'=>'scheduled','starts_at'=>'2026-09-14T20:00:00']]);
+            $events=$this->actingAs($owner)->getJson('/api/desktop/live')->assertOk()->json('data');
+            $this->assertSame('ended',collect($events)->firstWhere('id',$missed->id)['status']);
+            $this->assertSame('scheduled',collect($events)->firstWhere('id',$future->id)['status']);
+            $this->assertSame('missed_schedule',$missed->fresh()->metadata['ended_reason']);
+        } finally { Carbon::setTestNow(); }
+    }
     public function test_live_studio_cover_is_linked_to_the_event_and_returned_for_the_editor(): void
     {
         app(\App\Services\Access::class)->seed();
@@ -44,7 +59,7 @@ class PublicBroadcastTest extends TestCase
         app(\App\Services\Access::class)->seed();Storage::fake('local');
         $owner=User::factory()->create();$owner->roles()->attach(\App\Models\Role::where('name','Owner')->firstOrFail());
         $bytes=base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jvyoAAAAASUVORK5CYII=');
-        $start=$this->actingAs($owner)->postJson('/desktop/media/uploads',['request_key'=>(string)\Illuminate\Support\Str::uuid(),'name'=>'livestream-poster.png','size'=>strlen($bytes)])->assertOk();
+        $start=$this->actingAs($owner)->postJson('/desktop/media/uploads',['request_key'=>(string)\Illuminate\Support\Str::uuid(),'name'=>'livestream-poster.png','size'=>strlen($bytes),'profile'=>'poster'])->assertOk();
         $uploadId=$start->json('id');
         $this->call('POST',"/desktop/media/uploads/$uploadId/chunk",[],[],[],['CONTENT_TYPE'=>'application/octet-stream','HTTP_X_UPLOAD_OFFSET'=>'0','HTTP_X_CHUNK_SHA256'=>hash('sha256',$bytes)],$bytes)->assertOk();
         $mediaId=$this->postJson("/desktop/media/uploads/$uploadId/finish")->assertOk()->json('media_id');

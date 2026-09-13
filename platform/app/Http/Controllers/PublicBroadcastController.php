@@ -1,7 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 use App\Models\{Media,SourceRecord};
-use App\Services\{PublicBroadcast,Settings};
+use App\Services\{PublicBroadcast,PublicContent,Settings};
 use Illuminate\Http\Request;
 class PublicBroadcastController extends Controller
 {
@@ -10,8 +10,9 @@ class PublicBroadcastController extends Controller
         $data=$request->validate(['path'=>'required|string|max:80','action'=>'required|in:publish,read','protocol'=>'required|in:rtmp,hls','user'=>'nullable|string|max:100','password'=>'nullable|string|max:200']);
         return response('', $broadcast->authorize($data)?204:401);
     }
-    public function apiIndex()
+    public function apiIndex(PublicContent $content)
     {
+        $content->expireScheduledLives();
         $events=SourceRecord::where('metadata->public_section','live')->get()->sortBy(function(SourceRecord $record){
             $status=$record->metadata['live_status']??'draft';$starts=$record->metadata['starts_at']??null;$time=$starts?strtotime((string)$starts):PHP_INT_MAX;
             $rank=match($status){'live'=>0,'scheduled'=>1,'draft'=>2,'ended'=>3,default=>2};
@@ -19,8 +20,9 @@ class PublicBroadcastController extends Controller
         })->values();
         return response()->json(['data'=>$events->map(fn($record)=>$this->eventData($record))->values()]);
     }
-    public function apiShow(SourceRecord $record,Settings $settings,PublicBroadcast $broadcast)
+    public function apiShow(SourceRecord $record,Settings $settings,PublicBroadcast $broadcast,PublicContent $content)
     {
+        $content->expireScheduledLives();
         $this->assertLiveEvent($record);
         return response()->json(['data'=>$this->eventData($record,$broadcast->ingest($record,$settings))])->header('Cache-Control','private, no-store');
     }
