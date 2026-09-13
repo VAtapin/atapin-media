@@ -193,6 +193,7 @@ return [
     'community_risk' => 'Risk',
     'community_publish' => 'Publish',
     'community_reject' => 'Reject',
+    'community_ai_reason_generic' => 'Automatic review detected content that is suspicious or unclear. A human decision is required.',
     'community_queue_empty' => 'No messages are waiting for your decision.',
     'unavailable' => 'Unavailable',
 ];

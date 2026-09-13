@@ -51,6 +51,16 @@ class PublicCommunityModeration
         return $this->blockCount($user, $sessionId) >= 3;
     }
 
+    public function adminReasons(array $reasons): array
+    {
+        return collect($reasons)
+            ->map(fn ($reason) => trim((string) $reason))
+            ->filter()
+            ->isNotEmpty()
+            ? [trans('ui.community_ai_reason_generic', [], 'de')]
+            : [];
+    }
+
     public function decide(SourceRecord $record, string $decision, int $userId): void
     {
         abort_unless($this->isModeratable($record), 404);

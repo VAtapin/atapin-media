@@ -193,6 +193,7 @@ return [
     'community_risk' => 'Risiko',
     'community_publish' => 'Veröffentlichen',
     'community_reject' => 'Ablehnen',
+    'community_ai_reason_generic' => 'Die automatische Prüfung hat auffälligen oder unklaren Inhalt erkannt. Eine menschliche Entscheidung ist erforderlich.',
     'community_queue_empty' => 'Keine Nachrichten warten auf deine Entscheidung.',
     'unavailable' => 'Nicht verfügbar',
 ];

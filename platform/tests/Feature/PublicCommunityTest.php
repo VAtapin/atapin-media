@@ -118,4 +118,10 @@ class PublicCommunityTest extends TestCase
         $this->actingAs($moderator)->patch(route('desktop.community-moderate',$record),['decision'=>'publish'])->assertRedirect('/desktop?open=community');
         $this->assertTrue($record->fresh()->metadata['public_published']);
     }
+
+    public function test_admin_reasons_are_always_presented_in_german(): void
+    {
+        $reasons = app(PublicCommunityModeration::class)->adminReasons(['Оскорбительное высказывание в адрес автора.', 'Insulting language.']);
+        $this->assertSame(['Die automatische Prüfung hat auffälligen oder unklaren Inhalt erkannt. Eine menschliche Entscheidung ist erforderlich.'], $reasons);
+    }
 }
