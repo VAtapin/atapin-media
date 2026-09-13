@@ -3,7 +3,6 @@ namespace App\Services\Importing;
 
 use App\Models\ImportRun;
 use App\Models\Media;
-use App\Models\MediaOriginal;
 use App\Models\SourceRecord;
 
 class TakeoutContentImporter
@@ -24,8 +23,9 @@ class TakeoutContentImporter
                 $path=ImportPath::resolve($root,$file->getPathname());
                 $entry=str_replace('\\','/',substr($path,strlen(realpath($root))+1));
                 $relative=str_replace('\\','/',substr($path,strlen(realpath($storageRoot??config('platform.import_inbox_root')))+1));
-                $original=MediaOriginal::where('disk',$disk)->where('path',$relative)->first();
-                $this->files[]=['path'=>$path,'entry'=>$entry,'media_id'=>$original?->media_id];
+                $hash = hash_file('sha256', $path);
+                $media = Media::where('sha256', $hash)->first();
+                $this->files[]=['path'=>$path,'entry'=>$entry,'media_id'=>$media?->id];
             }
         }
         // All parts are indexed before metadata is attached: CSV and video may be in different ZIPs.
@@ -84,7 +84,6 @@ class TakeoutContentImporter
                 // Preserve whitespace/punctuation first: two different uploads can have nearly identical titles.
                 foreach($this->videos as $id=>$row)if($this->videoTitle($row,$id)===$name)$matches[]=$id;
                 if(!$matches)foreach($titles as $id=>$title)if($title===$norm)$matches[]=$id;
-                if(!$matches && mb_strlen($norm)>=40)foreach($titles as $id=>$title)if(str_starts_with($title,$norm))$matches[]=$id;
             }
             if(count($matches)===1 && $file['media_id']) {
                 $this->assets[$matches[0]][]=$file['media_id'];
