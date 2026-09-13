@@ -176,8 +176,6 @@ class MediaController extends Controller
         $headers=['Content-Type'=>$media->mime,'X-Content-Type-Options'=>'nosniff','Cache-Control'=>'private, max-age=3600','Accept-Ranges'=>'bytes','Content-Security-Policy'=>"sandbox; default-src 'none';"];
         if(config('filesystems.disks.'.$location['disk'].'.driver')==='local'){
             $path=app(\App\Services\MediaOriginalLocator::class)->path($location);
-            if ($media->kind === 'video' && $request->routeIs('public.media') && config('platform.media_x_sendfile'))
-                return response('', 200, $headers + ['X-Sendfile' => $path]);
             $size=filesize($path);$range=$request->header('Range');
             if(!$range)return response()->file($path,$headers);
             if(!preg_match('/bytes=(\d*)-(\d*)/',$range,$match)||str_contains($range,','))return response('',416,$headers+['Content-Range'=>'bytes */'.$size]);

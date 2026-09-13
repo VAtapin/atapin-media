@@ -63,9 +63,10 @@ class PublicWebsiteController extends Controller
         $card=$content->card($record);if($request->url()!==$card['url'])return redirect($card['url'],301);
         return view('public.'.($section==='videos'?'video':'beitrag'),[...$this->shared(),'section'=>$section,'layoutMode'=>'detail',...app(PublicCatalog::class)->detail($request,$record,$section)]);
     }
-    public function media(SourceRecord $record,Media $media,PublicContent $content)
+    public function media(SourceRecord $record,Media $media,PublicContent $content,\App\Services\PublicMediaLinks $links)
     {
         abort_unless($content->visible($record)&&$content->assets($record)->contains('id',$media->id),404);
+        if ($url = $links->url($media)) return redirect()->away($url, 302, ['Cache-Control'=>'public, max-age=31536000, immutable']);
         return app(MediaController::class)->preview($media);
     }
     public function book(Request $request,string $slug,PublicBooks $books,PublicCatalog $catalog)

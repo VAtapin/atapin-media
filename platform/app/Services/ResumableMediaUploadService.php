@@ -221,30 +221,21 @@ class ResumableMediaUploadService
             ]);
         });
 
-        $destination = $this->nextMediaPath();
-        $destinationPath = $this->path($destination);
-
-        if (!Storage::disk($this->disk())->makeDirectory(dirname($destination))) {
-            abort(503, 'Storage unavailable.');
-        }
-        if (!rename($source, $destinationPath)) {
-            $upload->update(['status' => ResumableMediaUpload::STATUS_UPLOADING]);
-            abort(503, 'Storage unavailable.');
-        }
-
         try {
-            $this->validateFinalFile($destinationPath, $mime, $upload->profile ?: 'media_library');
-            return DB::transaction(function () use ($upload, $destination, $mime): Media {
+            $this->validateFinalFile($source, $mime, $upload->profile ?: 'media_library');
+            $stored = app(CanonicalMediaStorage::class)->storePath($source, $mime, true);
+            $destination = $stored['path'];
+            return DB::transaction(function () use ($upload, $destination, $mime, $stored): Media {
                 $media = app(\App\Services\Importing\ImportedMediaRegistry::class)->register([
                     'id' => (string) Str::uuid(),
                     'title' => $upload->original_name,
-                    'original_name' => $upload->original_name,
+                    'original_name' => $stored['filename'],
                     'kind' => MediaLibrary::kind($mime),
                     'mime' => $mime,
-                    'bytes' => $upload->bytes,
-                    'disk' => $upload->disk,
+                    'bytes' => $stored['bytes'],
+                    'disk' => $stored['disk'],
                     'path' => $destination,
-                    'sha256' => hash_file('sha256', $this->path($destination)),
+                    'sha256' => $stored['sha256'],
                     'status' => 'unsorted',
                     'source' => 'upload',
                     'source_id' => $upload->id,
@@ -261,9 +252,6 @@ class ResumableMediaUploadService
                 return $media;
             });
         } catch (\Throwable $error) {
-            if (Storage::disk($this->disk())->exists($destination)) {
-                rename($destinationPath, $source);
-            }
             ResumableMediaUpload::where('id', $upload->id)->update([
                 'status' => ResumableMediaUpload::STATUS_UPLOADING,
                 'final_path' => null,
@@ -348,12 +336,6 @@ class ResumableMediaUploadService
             abort(500, 'Unsupported storage disk for resumable uploads.');
         }
         return $disk->path($relative);
-    }
-
-    protected function nextMediaPath(): string
-    {
-        $id = (string) Str::uuid();
-        return 'originals/' . now()->format('Y/m') . '/' . $id;
     }
 
     private function validateFinalFile(string $path, string $mime, string $profile): void

@@ -51,6 +51,12 @@ return [
             'driver'=>'local', 'root'=>env('TAKEOUT_FOLDER', dirname(base_path(),2).'/private/Takeout'),
             'throw'=>true, 'serve'=>false,
         ],
+        'media-canonical' => [
+            'driver' => 'local',
+            'root' => env('MEDIA_CANONICAL_ROOT', dirname(base_path(), 2).'/private/atapin-media/media'),
+            'throw' => true,
+            'serve' => false,
+        ],
 
         'local' => [
             'driver' => 'local',

@@ -17,20 +17,20 @@ class MediaLibrary
     }
     public function upload(UploadedFile $file, int $user): Media
     {
-        $disk = config('platform.media_disk'); $id = (string) Str::uuid();
-        $path = $file->storeAs('originals/'.now()->format('Y/m'), $id, $disk);
-        if (!$path) throw new \RuntimeException('Media storage failed.');
+        $id = (string) Str::uuid();
+        $mime = $file->getMimeType() ?: 'application/octet-stream';
+        $stored = app(CanonicalMediaStorage::class)->storeUploaded($file, $mime);
+        $disk = $stored['disk']; $path = $stored['path'];
         try {
-            return DB::transaction(function () use ($file, $user, $disk, $id, $path) {
-                $mime = $file->getMimeType() ?: 'application/octet-stream';
+            return DB::transaction(function () use ($file, $user, $disk, $id, $path, $mime, $stored) {
                 $name = mb_substr(basename(str_replace('\\', '/', $file->getClientOriginalName())), 0, 255);
-                $media = app(\App\Services\Importing\ImportedMediaRegistry::class)->register(['id' => $id, 'title' => $name, 'original_name' => $name,
+                $media = app(\App\Services\Importing\ImportedMediaRegistry::class)->register(['id' => $id, 'title' => $name, 'original_name' => $stored['filename'],
                     'kind' => self::kind($mime), 'mime' => $mime, 'bytes' => $file->getSize(), 'disk' => $disk,
-                    'path' => $path, 'sha256' => hash_file('sha256', $file->getRealPath()), 'status' => 'unsorted', 'user_id' => $user,
+                    'path' => $path, 'sha256' => $stored['sha256'], 'status' => 'unsorted', 'user_id' => $user,
                     'source' => 'upload', 'source_id' => $id]);
                 app(Audit::class)->record('media.uploaded', $media->id);
                 return $media;
             });
-        } catch (\Throwable $error) { Storage::disk($disk)->delete($path); throw $error; }
+        } catch (\Throwable $error) { throw $error; }
     }
 }
