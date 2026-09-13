@@ -31,6 +31,10 @@ Route::post('/live/{record}/push',[\App\Http\Controllers\PublicPushController::c
 Route::post('/live/{record}/assistant',[\App\Http\Controllers\PublicAiChatController::class,'store'])->middleware(['auth','can:public.participate','throttle:3,1'])->name('public.ai-chat');
 Route::get('/public/assistant/{entry}',[\App\Http\Controllers\PublicAiChatController::class,'show'])->middleware(['auth','throttle:60,1'])->name('public.ai-chat-status');
 Route::middleware('guest')->group(function () {
+    Route::get('/passwort-vergessen',[\App\Http\Controllers\PublicPasswordController::class,'form'])->name('public.password-forgot');
+    Route::post('/passwort-vergessen',[\App\Http\Controllers\PublicPasswordController::class,'send'])->middleware('throttle:3,1');
+    Route::get('/passwort-zuruecksetzen/{token}',[\App\Http\Controllers\PublicPasswordController::class,'form'])->name('public.password-reset');
+    Route::post('/passwort-zuruecksetzen',[\App\Http\Controllers\PublicPasswordController::class,'reset'])->middleware('throttle:5,1');
     Route::get('/registrieren',[\App\Http\Controllers\PublicAccountController::class,'registration'])->name('public.registration');
     Route::post('/registrieren',[\App\Http\Controllers\PublicAccountController::class,'register'])->middleware('throttle:3,1');
     Route::get('/login', [AuthController::class,'create'])->name('login');

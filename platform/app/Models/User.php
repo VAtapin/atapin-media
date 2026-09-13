@@ -14,6 +14,7 @@ use Illuminate\Notifications\Notifiable;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
+    public function sendPasswordResetNotification($token): void {\App\Jobs\ResetPublicPassword::dispatch($this->id,$this->email,$token,app()->getLocale());}
     public function roles() { return $this->belongsToMany(Role::class); }
     public function profile() { return $this->hasOne(UserProfile::class); }
     public function hasPermission(string $permission): bool

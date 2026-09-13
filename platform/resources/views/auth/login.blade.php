@@ -1,8 +1,9 @@
 <!doctype html><html lang="{{ app()->getLocale() }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ __('ui.login') }} · {{ config('platform.brand') }}</title><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/app.css"></head>
 <body class="login-page"><main class="login-card">@include('components.brand')<p class="eyebrow">{{ config('platform.brand') }}</p><h1>{{ __('ui.login') }}</h1><p class="muted">{{ __('ui.login_intro') }}</p>
 @if($errors->any())<div class="notice error" role="alert">{{ $errors->first() }}</div>@endif
+@if(session('public_status'))<p role="status">{{ session('public_status') }}</p>@endif
 <form method="post" action="{{ route('login') }}">@csrf
 <label>{{ __('ui.email') }}<input type="email" name="email" value="{{ old('email') }}" required autocomplete="username" autofocus></label>
 <label>{{ __('ui.password') }}<input type="password" name="password" required maxlength="72" autocomplete="current-password"></label>
 <label class="checkbox"><input type="checkbox" name="remember" value="1">{{ __('ui.remember') }}</label>
-<button class="button full">{{ __('ui.login') }}</button></form><a href="/registrieren">{{ __('public.account_register') }}</a><a class="back-link" href="/">{{ __('ui.public_website') }}</a></main></body></html>
+<button class="button full">{{ __('ui.login') }}</button></form><a href="/passwort-vergessen">{{ __('public.password_forgot') }}</a><a href="/registrieren">{{ __('public.account_register') }}</a><a class="back-link" href="/">{{ __('ui.public_website') }}</a></main></body></html>
