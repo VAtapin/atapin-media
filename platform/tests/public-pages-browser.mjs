@@ -26,6 +26,7 @@ try {
     await page.setViewportSize({width,height:width===1672?941:844});
     for(const [index,route] of routes.entries()){
       await page.goto('http://127.0.0.1:8795'+route);await page.evaluate(()=>document.fonts.ready);
+      if(await page.locator('[data-live-heartbeat]').count())await page.waitForFunction(()=>/^\d+$/.test(document.querySelector('[data-live-online]').textContent));
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`${route}: overflow at ${width}`);
       assert(await page.locator('.public-header').isVisible(),route);
       assert.equal(await page.locator('main').count(),1,route);

@@ -13,10 +13,10 @@
 @include('public.state-button',['subject'=>$record,'action'=>'reminder','label'=>__('public.reminder')])</div>
 </div>
 </div>
-<section class="public-panel public-live-chat" id="chat">
+<section class="public-panel public-live-chat" id="chat" @if($record) data-live-heartbeat="{{ route('public.live-heartbeat',$record) }}" @endif>
 <div class="public-panel-heading">
 <h2>{{ __('public.live_chat') }}</h2>
-<small>◇ {{ __('public.online') }}: {{ __('public.no_data') }}</small>
+<small>{{ __('public.online') }}: <span data-live-online>◇ {{ __('public.no_data') }}</span></small>
 </div>
 <div class="public-chat-messages">
 @forelse($chat as $message)<article>

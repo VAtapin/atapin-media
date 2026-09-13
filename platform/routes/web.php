@@ -19,6 +19,7 @@ Route::post('/public/records/{record}/state',[\App\Http\Controllers\PublicIntera
 Route::post('/public/books/{product}/state',[\App\Http\Controllers\PublicInteractionController::class,'book'])->middleware(['auth','throttle:30,1'])->name('public.book-state');
 Route::get('/upload/{path?}', fn () => redirect('/desktop', 303))->where('path', '.*');
 Route::post('/kontakt',[\App\Http\Controllers\PublicContactController::class,'store'])->middleware('throttle:3,1')->name('public.contact-submit');
+Route::post('/live/{record}/heartbeat',[\App\Http\Controllers\PublicLiveController::class,'heartbeat'])->middleware('throttle:120,1')->name('public.live-heartbeat');
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class,'create'])->name('login');
     Route::post('/login', [AuthController::class,'store']);

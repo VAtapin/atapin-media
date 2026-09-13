@@ -13,6 +13,8 @@ Artisan::command('public:live-reminders',function(){
     $this->info('Due reminder candidates: '.$service->dispatchDue());
 });
 Schedule::command('public:live-reminders')->everyMinute()->withoutOverlapping();
+Artisan::command('public:live-presence-prune',function(){\Illuminate\Support\Facades\DB::table('public_live_presence')->where('seen_at','<',now()->subDay())->delete();});
+Schedule::command('public:live-presence-prune')->daily()->withoutOverlapping();
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());

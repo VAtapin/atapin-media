@@ -1,5 +1,6 @@
 <?php
 return [
+    'live_unavailable'=>'Dieser Live-Inhalt ist nicht mehr öffentlich verfügbar.','live_connection_pending'=>'Verbindung wird wiederhergestellt …',
     'reminder_hint'=>'E-Mail etwa 15 Minuten vor Beginn. Erneut klicken, um abzumelden.','reminder_unavailable'=>'E-Mail-Erinnerungen benötigen SMTP und einen zukünftigen Sendetermin.','reminder_failed'=>'Der E-Mail-Versand ist fehlgeschlagen.','reminder_mail_subject'=>'Live-Erinnerung: :title','reminder_mail_date'=>'Beginn: :date','reminder_mail_manage'=>'Du hast diese Erinnerung angefordert. Auf der Veranstaltungsseite kannst du sie abmelden.',
     'contact_name'=>'Dein Name','contact_subject'=>'Betreff','contact_body'=>'Deine Nachricht','contact_privacy'=>'Ich stimme der Verarbeitung meiner Angaben zur Bearbeitung dieser Anfrage zu.','contact_received'=>'Deine Anfrage wurde gespeichert. Vielen Dank!','contact_inbox'=>'Kontaktanfragen','contact_more'=>'Weitere Anfragen laden','page_texts'=>'Texte der öffentlichen Website',
     'no_data'=>'Noch keine Daten','no_local_playback'=>'Keine lokale Video- oder Audiodatei verfügbar.',
