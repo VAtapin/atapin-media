@@ -9,6 +9,7 @@ use App\Http\Controllers\ImportController;
 
 Route::get('/', [\App\Http\Controllers\PublicWebsiteController::class,'home'])->name('home');
 Route::post('/newsletter',[\App\Http\Controllers\PublicNewsletterController::class,'store'])->middleware('throttle:3,1')->name('public.newsletter');
+Route::post('/community',[\App\Http\Controllers\PublicCommunityController::class,'store'])->middleware(['auth','can:public.participate','throttle:3,1'])->name('public.community-submit');
 Route::get('/newsletter/{subscription}/confirm',[\App\Http\Controllers\PublicNewsletterController::class,'confirm'])->middleware(['signed','throttle:10,1'])->name('public.newsletter-confirm');
 Route::get('/newsletter/{subscription}/cancel',[\App\Http\Controllers\PublicNewsletterController::class,'cancel'])->middleware(['signed','throttle:10,1'])->name('public.newsletter-cancel');
 Route::post('/newsletter/{subscription}/cancel',[\App\Http\Controllers\PublicNewsletterController::class,'destroy'])->middleware(['signed','throttle:10,1']);
@@ -36,6 +37,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class,'store']);
 });
 Route::middleware('auth')->group(function () {
+    Route::get('/desktop/community/moderation',[\App\Http\Controllers\PublicCommunityController::class,'index'])->middleware('can:community.moderate')->name('public.community-moderation');
+    Route::patch('/desktop/community/moderation/{record}',[\App\Http\Controllers\PublicCommunityController::class,'moderate'])->middleware('can:community.moderate')->name('public.community-moderate');
     Route::get('/desktop/shop/products',[\App\Http\Controllers\ShopController::class,'index'])->middleware('can:shop.manage')->name('shop.products');
     Route::patch('/desktop/shop/products/{product}',[\App\Http\Controllers\ShopController::class,'update'])->middleware('can:shop.manage')->name('shop.update');
     Route::patch('/desktop/shop/reviews/{review}',[\App\Http\Controllers\PublicBookReviewController::class,'moderate'])->middleware('can:community.moderate')->name('shop.review-moderate');

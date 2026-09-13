@@ -4,7 +4,7 @@
 
 @include('public.hero')<div class="public-wide">
 <nav class="public-community-navigation">
-@foreach(['discussions','questions','polls','guidelines','join'] as $anchor)<a class="public-panel" href="{{ in_array($anchor,['guidelines','join'])?($anchor==='join'?'/login':'/unsere-mission'):'#'.$anchor }}">
+@foreach(['discussions','questions','polls','guidelines','join'] as $anchor)<a class="public-panel" href="{{ $anchor==='join'?(auth()->check()?'#community-new':'/registrieren'):'#'.$anchor }}">
 @include('public.icon',['name'=>'community'])<strong>{{ __('public.community_'.$anchor) }}</strong> →</a>
 @endforeach</nav>
 @include('public.filters')<div class="public-community-grid">
@@ -13,6 +13,7 @@
 <h2 id="questions">{{ __('public.latest_questions') }}</h2>
 <a href="/community">{{ __('public.show_all') }} →</a>
 </div>
+@can('community.moderate')<a href="{{ route('public.community-moderation') }}">{{ __('public.community_moderation') }}</a>@endcan
 @forelse($items as $item)<article class="public-community-entry">
 <span class="public-avatar">{{ mb_substr($item['author'],0,1)?:'◇' }}</span>
 <div>
@@ -55,6 +56,8 @@
 @endforelse</section>
 @include('public.quote')</aside>
 </div>
+<section class="public-panel" id="community-new"><h2>{{ __('public.community_new') }}</h2>@auth<form method="post" action="{{ route('public.community-submit') }}">@csrf<label>{{ __('ui.title') }}<input name="title" required maxlength="255"></label><label>{{ __('public.community_type') }}<select name="type"><option value="question">{{ __('public.community_questions') }}</option><option value="discussion">{{ __('public.community_discussions') }}</option></select></label><label>{{ __('public.content') }}<textarea name="body" required maxlength="5000"></textarea></label><p>{{ __('public.community_review_notice') }}</p><button class="public-button">{{ __('public.community_submit') }}</button></form>@else<a class="public-button" href="/registrieren">{{ __('public.account_register') }}</a>@endauth</section>
+<section class="public-panel" id="guidelines"><h2>{{ __('public.community_guidelines') }}</h2><p>{{ __('public.community_review_notice') }}</p><p>{{ app(\App\Services\Settings::class)->get('community_guidelines')?:__('public.no_data') }}</p></section>
 @include('public.newsletter')</div>
 
 @endsection

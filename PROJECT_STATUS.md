@@ -2,6 +2,8 @@
 
 ## Реализовано
 
+- Community: verified visitor questions/discussions saved privately for review, existing reply/vote storage reused; explicit submission status. /desktop/community/moderation is available to Moderator and owner, with publish/reject, audit and public-parent guard for comments/chat. Public rules section, registration link and owner moderation link are discoverable. Paid checkout waits for owner’s payment-method choice; no provider invented. Related commit: Add moderated community questions and discussions.
+
 - Books: editable author/contents/ISBN/language/pages and price/status in protected /desktop/shop/products; public pages read these columns. Authenticated verified readers submit one review per book; edits return it to pending. Only moderated published reviews are visible; owner moderation is protected by community.moderate and audited. Paid checkout provider remains undecided; no fake paid download is enabled. Related commit: Add editable book metadata and moderated reviews.
 
 - Public /konto: role-free visitor registration, queued signed email verification, own public bookmarks/reactions/progress/reminders with guarded removal and Push cancellation, password-confirmed name/password changes. Unverified visitors cannot submit public interactions/AI; existing staff roles remain compatible. Login redirects visitors to account, not Desktop. Password recovery and purchases need their later checkout/auth workflows. Related commit: Add public visitor accounts and personal activity.

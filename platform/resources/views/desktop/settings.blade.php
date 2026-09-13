@@ -124,6 +124,7 @@
                 @foreach(['about_text'=>'ueber-uns','mission_text'=>'unsere-mission'] as $key=>$page)
                 <div class="desktop-settings-editor"><label>{{ __('public.section_'.$page) }}<div contenteditable="true" data-rich-editor="{{ $key }}"></div><textarea name="{{ $key }}" hidden></textarea></label></div>
                 @endforeach
+                <label>{{ __('public.community_guidelines') }}<textarea name="community_guidelines" maxlength="10000">{{ $settings['community_guidelines']??'' }}</textarea></label>
                 <button class="desktop-settings-primary" data-settings-save>{{ __('ui.save') }}</button>
             </form>
             @can('content.publish')<p><a href="{{ route('public.broadcast-admin') }}" target="_blank" rel="noopener">{{ __('public.broadcast_manage') }}</a></p>@endcan

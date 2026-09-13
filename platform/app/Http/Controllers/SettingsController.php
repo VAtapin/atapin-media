@@ -39,7 +39,7 @@ class SettingsController extends Controller
             default => abort(404),
         };
         $values = $request->validate($rules);
-        if($section==='system')$values=[...$values,...$request->validate(['about_text'=>'nullable|string|max:50000','mission_text'=>'nullable|string|max:50000'])];
+        if($section==='system')$values=[...$values,...$request->validate(['about_text'=>'nullable|string|max:50000','mission_text'=>'nullable|string|max:50000','community_guidelines'=>'nullable|string|max:10000'])];
         if ($request->boolean('reset_wallpaper')) $values['desktop_wallpaper'] = 'mountains';
         if (in_array($section, ['desktop_design', 'legacy'], true) && $values['desktop_wallpaper'] === 'custom' && !$request->hasFile('desktop_custom_wallpaper') && !$settings->get('desktop_custom_wallpaper')) {
             return back()->withErrors(['desktop_custom_wallpaper' => __('ui.desktop_custom_wallpaper_required')])->withInput();
