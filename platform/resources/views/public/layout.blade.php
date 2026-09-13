@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="/assets/fonts/fonts.css">
 <link rel="stylesheet" href="/assets/brand/ui-kit.css">
 <link rel="stylesheet" href="/assets/public.css">
-<link rel="stylesheet" href="/assets/public-pages.css">
+<link rel="stylesheet" href="/assets/public-pages.css?v=2">
 <script src="/assets/public.js?v=4" defer>
 </script>
 <script src="/assets/public-push.js?v=1" defer></script>
