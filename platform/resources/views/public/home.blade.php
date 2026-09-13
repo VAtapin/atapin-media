@@ -13,7 +13,7 @@
 <script src="/assets/public.js?v=2" defer>
 </script>
 </head>
-<body class="public-site">
+<body class="public-site public-home">
 
 @include('public.header',['section'=>'start'])
 <main>
