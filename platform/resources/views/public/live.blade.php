@@ -37,6 +37,17 @@
 <button class="public-button">{{ __('public.send') }} →</button>
 </form>
 <small>{{ __('public.moderation_hint') }}</small>
+@auth
+@if(app(\App\Services\PublicAiChat::class)->available())
+<form method="post" action="{{ route('public.ai-chat',$record) }}" data-ai-form>@csrf
+<label for="ai-question">{{ __('public.ai_chat_label') }}</label>
+<input id="ai-question" name="question" required minlength="2" maxlength="1000" placeholder="@Assistent …">
+<label><input type="checkbox" name="consent" value="1" required>{{ __('public.ai_chat_consent') }}</label>
+<button class="public-button">{{ __('public.ai_chat_ask') }}</button>
+<p data-ai-answer role="status"></p>
+</form>
+@endif
+@endauth
 @else<input placeholder="{{ __('public.write_message') }}" disabled>
 @endif<div class="public-action-row">
 <button class="public-button public-button-secondary" data-share>{{ __('public.share') }}</button>

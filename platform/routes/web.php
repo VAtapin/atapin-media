@@ -21,6 +21,8 @@ Route::get('/upload/{path?}', fn () => redirect('/desktop', 303))->where('path',
 Route::post('/kontakt',[\App\Http\Controllers\PublicContactController::class,'store'])->middleware('throttle:3,1')->name('public.contact-submit');
 Route::post('/live/{record}/heartbeat',[\App\Http\Controllers\PublicLiveController::class,'heartbeat'])->middleware('throttle:120,1')->name('public.live-heartbeat');
 Route::post('/live/{record}/push',[\App\Http\Controllers\PublicPushController::class,'toggle'])->middleware(['auth','throttle:20,1'])->name('public.live-push');
+Route::post('/live/{record}/assistant',[\App\Http\Controllers\PublicAiChatController::class,'store'])->middleware(['auth','throttle:3,1'])->name('public.ai-chat');
+Route::get('/public/assistant/{entry}',[\App\Http\Controllers\PublicAiChatController::class,'show'])->middleware(['auth','throttle:60,1'])->name('public.ai-chat-status');
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class,'create'])->name('login');
     Route::post('/login', [AuthController::class,'store']);
