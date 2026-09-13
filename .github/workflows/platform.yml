@@ -80,6 +80,7 @@ jobs:
           timeout 150 node tests/import-center-browser.mjs
           timeout 150 node tests/import-workflow-browser.mjs
           timeout 150 node tests/public-home-browser.mjs
+          timeout 150 node tests/public-pages-browser.mjs
         env:
           APP_ENV: testing
           APP_LOCALE: de

@@ -31,11 +31,23 @@
       label.append(destination);form.insertBefore(label,form.querySelector('.media-library-toolbar-row'));
     }
     let publication;
-    if(type==='record' && !item.archive_data && ['video','short','post'].includes(item.kind) && details.closest('[data-content-library]')?.querySelector('[data-can-publish]')){
+    if(type==='record' && !item.archive_data && ['video','short','post','poll','comment','live_chat'].includes(item.kind) && details.closest('[data-content-library]')?.querySelector('[data-can-publish]')){
       const label=document.createElement('label');publication=document.createElement('input');publication.type='checkbox';publication.checked=Boolean(item.public_published);
       label.append(publication,document.createTextNode(text.public_published));
       const hint=document.createElement('small');hint.textContent=text.public_published_hint;label.append(hint);
       form.insertBefore(label,form.querySelector('.media-library-toolbar-row'));
+      if(['video','short','post'].includes(item.kind)){
+        const sectionLabel=document.createElement('label');sectionLabel.textContent=text.public_section;
+        const section=document.createElement('select');section.name='public_section';
+        const updateSection=()=>{
+          const kind=kindField.value,current=section.value||item.public_section;
+          const values=kind==='post'?['beitraege','podcast','community']:['video','short'].includes(kind)?['videos','podcast','live']:['community'];
+          section.replaceChildren(...values.map(value=>new Option(text['public_section_'+value],value)));
+          section.value=values.includes(current)?current:values[0];
+        };
+        updateSection();kindField.addEventListener('change',updateSection);
+        sectionLabel.append(section);form.insertBefore(sectionLabel,label);
+      }
     }
     form.addEventListener('input', () => {details.dataset.dirty = 'true';});
     form.addEventListener('change', () => {details.dataset.dirty = 'true';});

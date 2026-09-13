@@ -1,0 +1,1 @@
+<section class="public-panel"><div class="public-panel-heading"><h2>{{ __('public.book_recommendation') }}</h2><a href="/buecher">{{ __('public.show_all') }} →</a></div>@if($book)@include('public.card',['item'=>$book,'style'=>'book'])@else @include('public.empty',['url'=>'/buecher/vorschau'])@endif</section>

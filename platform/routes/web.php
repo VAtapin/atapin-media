@@ -12,7 +12,11 @@ foreach(['videos','beitraege','buecher','live','podcast','community','ueber-uns'
     Route::get('/'.$section,[\App\Http\Controllers\PublicWebsiteController::class,'listing'])->defaults('section',$section==='suche'?'search':$section)->name('public.'.$section);
 Route::get('/videos/{slug}',[\App\Http\Controllers\PublicWebsiteController::class,'detail'])->defaults('section','videos')->name('public.video');
 Route::get('/beitraege/{slug}',[\App\Http\Controllers\PublicWebsiteController::class,'detail'])->defaults('section','beitraege')->name('public.article');
+Route::get('/buecher/{slug}',[\App\Http\Controllers\PublicWebsiteController::class,'book'])->name('public.book');
+Route::get('/media/public/books/{product}/{media}',[\App\Http\Controllers\PublicWebsiteController::class,'bookMedia'])->name('public.book-media');
 Route::get('/media/public/{record}/{media}',[\App\Http\Controllers\PublicWebsiteController::class,'media'])->name('public.media');
+Route::post('/public/records/{record}/state',[\App\Http\Controllers\PublicInteractionController::class,'record'])->middleware(['auth','throttle:30,1'])->name('public.record-state');
+Route::post('/public/books/{product}/state',[\App\Http\Controllers\PublicInteractionController::class,'book'])->middleware(['auth','throttle:30,1'])->name('public.book-state');
 Route::get('/upload/{path?}', fn () => redirect('/desktop', 303))->where('path', '.*');
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class,'create'])->name('login');

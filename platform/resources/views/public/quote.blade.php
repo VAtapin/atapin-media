@@ -1,0 +1,1 @@
+<aside class="public-quote" style="--hero-image:url('{{ $heroImage }}')"><span aria-hidden="true">“</span><blockquote>{{ __('public.hero_quote') }}</blockquote><cite>{{ __('public.hero_quote_source') }}</cite></aside>
