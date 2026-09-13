@@ -1,6 +1,6 @@
 <?php
 namespace Tests\Feature;
-use App\Models\{User,Role,SourceRecord,PublicContentState};
+use App\Models\{User,Role,SourceRecord,Product,Sale,BookReview,NewsletterSubscription,PublicAiChatRequest,PublicContentState};
 use App\Jobs\VerifyPublicAccount;
 use App\Services\Access;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,6 +18,16 @@ class PublicAccountTest extends TestCase {
         $record=SourceRecord::create(['source'=>'website','source_id'=>'staff-state','kind'=>'video','title'=>'Staff video','status'=>'ready','metadata'=>['public_published'=>true]]);
         $this->actingAs($owner)->postJson(route('public.record-state',$record),['action'=>'bookmark'])->assertForbidden();
         $this->assertDatabaseMissing('public_content_states',['user_id'=>$owner->id,'subject_id'=>$record->id]);
+    }
+    public function test_regular_account_shows_personal_history_sections(): void {
+        $user=User::factory()->create(['email'=>'reader@example.test']);$book=Product::create(['title'=>'Meine gekaufte Lektüre','description'=>'Book','price_cents'=>990,'currency'=>'EUR','status'=>'active']);
+        Sale::create(['product_id'=>$book->id,'customer_email'=>$user->email,'amount_cents'=>990,'currency'=>'EUR','status'=>'paid','provider'=>'test','paid_at'=>now()]);
+        NewsletterSubscription::create(['email'=>$user->email,'locale'=>'de','token_hash'=>hash('sha256','newsletter'),'status'=>'active','delivery_status'=>'sent','consented_at'=>now(),'confirmed_at'=>now()]);
+        $parent=SourceRecord::create(['source'=>'website','source_id'=>'account-parent','kind'=>'post','title'=>'Meine Diskussion','body'=>'Eine öffentliche Diskussion','status'=>'ready','metadata'=>['public_section'=>'community','public_published'=>true]]);
+        SourceRecord::create(['source'=>'website','source_id'=>'account-comment','kind'=>'comment','title'=>'Meine Antwort','body'=>'Meine persönliche Nachricht','status'=>'ready','metadata'=>['parent_source_id'=>$parent->source_id,'author_user_id'=>$user->id,'public_published'=>true]]);
+        BookReview::create(['product_id'=>$book->id,'user_id'=>$user->id,'rating'=>5,'body'=>'Meine Rezension','status'=>'pending']);
+        PublicAiChatRequest::create(['user_id'=>$user->id,'record_id'=>$parent->id,'question'=>'Meine Frage','answer'=>'Meine Antwort','status'=>'completed']);
+        $this->actingAs($user)->get('/konto')->assertOk()->assertSee('Meine Käufe')->assertSee('Meine Abonnements')->assertSee('Meine Beiträge und Nachrichten')->assertSee('Meine Antwort')->assertSee('Meine Buchrezensionen')->assertSee('Meine Rezension')->assertSee('Meine Fragen an den Assistenten')->assertSee('Meine Frage')->assertDontSee('public.account_');
     }
     public function test_registration_verifies_email_without_granting_admin_permissions(): void {
         Queue::fake();$this->get('/registrieren')->assertOk();

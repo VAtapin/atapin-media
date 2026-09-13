@@ -30,4 +30,12 @@ class PublicLiveStateTest extends TestCase
         $chat->update(['status'=>'needs_attention']);$this->assertSame([],$service->heartbeat($event,'one')['chat']);
         $this->assertSame(1,DB::table('public_live_presence')->count());
     }
+
+    public function test_pending_message_is_returned_only_to_its_sender(): void
+    {
+        $event=$this->event();$sessionId='sender-session';
+        SourceRecord::create(['source'=>'website','source_id'=>'pending-chat','kind'=>'live_chat','title'=>'Chat','body'=>'My pending message','status'=>'needs_attention','metadata'=>['parent_source_id'=>'live','website_comment'=>true,'public_published'=>false,'author_session_hash'=>hash('sha256',$sessionId),'moderation'=>['state'=>'pending_ai']]]);
+        $this->assertSame('My pending message',app(PublicLiveState::class)->heartbeat($event,$sessionId)['chat'][0]['body']);
+        $this->assertSame([] ,app(PublicLiveState::class)->heartbeat($event,'other-session')['chat']);
+    }
 }

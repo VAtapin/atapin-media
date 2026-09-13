@@ -6,6 +6,7 @@ return [
     'locales' => ['de', 'en'],
     'media_disk' => env('MEDIA_DISK', 'local'),
     'media_ffprobe_binary' => env('MEDIA_FFPROBE_BINARY', 'ffprobe'),
+    'media_x_sendfile' => env('MEDIA_X_SENDFILE', false),
     'media_upload_max_bytes' => (int) env('MEDIA_UPLOAD_MAX_BYTES', 20 * 1024 * 1024 * 1024),
     'media_upload_max_archive_bytes' => (int) env('MEDIA_UPLOAD_MAX_ARCHIVE_BYTES', 100 * 1024 * 1024 * 1024),
     'media_upload_reserve_free_bytes' => (int) env('MEDIA_UPLOAD_RESERVE_FREE_BYTES', 5 * 1024 * 1024 * 1024),

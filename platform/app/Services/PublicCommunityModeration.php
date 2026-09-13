@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\SourceRecord;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -30,6 +31,24 @@ class PublicCommunityModeration
     public function stats(): array
     {
         return ['human_review' => $this->pending()->count(), 'ai_pending' => $this->aiPending()->count()];
+    }
+
+    public function blockCount(?User $user, ?string $sessionId): int
+    {
+        if (! $user && ! $sessionId) return 0;
+
+        $query = SourceRecord::whereIn('kind', ['post', 'comment', 'live_chat'])
+            ->where(fn ($query) => $query->where('metadata->website_community', true)->orWhere('metadata->website_comment', true))
+            ->where('metadata->moderation->blocked', true);
+
+        if ($user) return $query->where('metadata->author_user_id', $user->id)->count();
+
+        return $query->where('metadata->author_session_hash', hash('sha256', $sessionId))->count();
+    }
+
+    public function blocked(?User $user, ?string $sessionId): bool
+    {
+        return $this->blockCount($user, $sessionId) >= 3;
     }
 
     public function decide(SourceRecord $record, string $decision, int $userId): void

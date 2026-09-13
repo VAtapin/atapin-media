@@ -8,24 +8,24 @@ use Illuminate\Support\Str;
 
 class PublicCommunitySubmission
 {
-    public function post(?User $user, array $data): SourceRecord
+    public function post(?User $user, array $data, ?string $sessionId = null): SourceRecord
     {
         return $this->create($user, 'post', $data['title'], $data['body'], [
             'public_section' => 'community',
             'website_community' => true,
             'community_type' => $data['type'],
-        ]);
+        ], $sessionId);
     }
 
-    public function message(?User $user, SourceRecord $parent, string $body, string $kind): SourceRecord
+    public function message(?User $user, SourceRecord $parent, string $body, string $kind, ?string $sessionId = null): SourceRecord
     {
         return $this->create($user, $kind, Str::limit($body, 120, ''), $body, [
             'parent_source_id' => $parent->source_id,
             'website_comment' => true,
-        ]);
+        ], $sessionId);
     }
 
-    private function create(?User $user, string $kind, string $title, string $body, array $metadata): SourceRecord
+    private function create(?User $user, string $kind, string $title, string $body, array $metadata, ?string $sessionId): SourceRecord
     {
         $author = $user?->name ?: __('public.guest');
         $record = SourceRecord::create([
@@ -40,6 +40,7 @@ class PublicCommunitySubmission
                 'author' => $author,
                 'author_type' => $user ? 'user' : 'guest',
                 'author_user_id' => $user?->id,
+                'author_session_hash' => $sessionId ? hash('sha256', $sessionId) : null,
                 'public_published' => false,
                 'moderation' => ['state' => 'pending_ai'],
             ],

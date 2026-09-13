@@ -51,7 +51,7 @@ for(const form of document.querySelectorAll('[data-public-form]'))form.addEventL
   event.preventDefault();const button=form.querySelector('button');button.disabled=true;
   const data=Object.fromEntries(new FormData(form));if('enabled' in data)data.enabled=data.enabled==='1';
   try{
-    const response=await fetch(form.action,{method:'POST',headers:{Accept:'application/json','Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content},body:JSON.stringify(data)});
+    const response=await fetch(form.getAttribute('action'),{method:'POST',headers:{Accept:'application/json','Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content},body:JSON.stringify(data)});
     if(response.status===401){location.href='/login';return;}
     const result=await response.json();if(!response.ok)throw new Error(result.message);location.reload();
   }catch(error){publicFeedback(error.message);}finally{button.disabled=false;}
@@ -101,7 +101,8 @@ for(const root of document.querySelectorAll('[data-live-heartbeat]')){
           signature=next;const messages=root.querySelector('.public-chat-messages'),bottom=messages.scrollHeight-messages.scrollTop-messages.clientHeight<50;
           if(data.chat.length){messages.replaceChildren(...data.chat.map(message=>{
             const article=document.createElement('article'),avatar=document.createElement('span'),body=document.createElement('div'),author=document.createElement('strong'),time=document.createElement('small'),text=document.createElement('p');
-            avatar.className='public-avatar';avatar.textContent=message.author.slice(0,1)||'◇';author.textContent=message.author;time.textContent=message.time;text.textContent=message.body;body.append(author,time,text);article.append(avatar,body);return article;
+            article.className=message.blocked?'public-chat-message is-blocked':message.pending?'public-chat-message is-pending':'public-chat-message';
+            avatar.className='public-avatar';avatar.textContent=message.author.slice(0,1)||'◇';author.textContent=message.author;time.textContent=message.time;text.textContent=message.body;body.append(author,time,text);if(message.blocked||message.pending){const status=document.createElement('span');status.className=message.blocked?'public-chat-status public-chat-status-blocked':'public-chat-status';status.textContent=message.blocked?window.publicLabels.chat_blocked:window.publicLabels.chat_moderation_pending;body.append(status);}article.append(avatar,body);return article;
           }));if(bottom)messages.scrollTop=messages.scrollHeight;}
           else{const empty=document.createElement('p');empty.className='public-empty';empty.textContent='◇ '+window.publicLabels.no_data;messages.replaceChildren(empty);}
         }

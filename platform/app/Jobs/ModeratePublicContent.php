@@ -63,6 +63,7 @@ class ModeratePublicContent implements ShouldQueue, ShouldBeUnique
                 'provider' => 'openai',
                 'model' => app(\App\Services\Settings::class)->get('ai_model'),
                 'checked_at' => now()->toIso8601String(),
+                'blocked' => ! $allow,
             ];
             $fresh->update(['status' => $allow ? 'ready' : 'needs_attention', 'metadata' => $metadata]);
         });
@@ -84,6 +85,7 @@ class ModeratePublicContent implements ShouldQueue, ShouldBeUnique
                 'risk' => 1.0,
                 'reasons' => [$reason],
                 'checked_at' => now()->toIso8601String(),
+                'blocked' => false,
             ];
             $fresh->update(['status' => 'needs_attention', 'metadata' => $metadata, 'updated_at' => now()]);
         });

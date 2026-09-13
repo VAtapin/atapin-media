@@ -2,6 +2,7 @@
 namespace App\Services;
 use App\Models\Media;
 use App\Models\SourceRecord;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -84,6 +85,32 @@ class PublicContent
     public function children(SourceRecord $record,string $kind='comment'): \Illuminate\Database\Eloquent\Builder
     {
         return $this->query()->where('source',$record->source)->where('metadata->parent_source_id',$record->source_id)->where('kind',$kind);
+    }
+    public function childrenForViewer(SourceRecord $record,string $kind,?User $user,?string $sessionId): \Illuminate\Database\Eloquent\Builder
+    {
+        $query=SourceRecord::where('source','!=','catalog-reset')
+            ->where(fn($q)=>$q->whereNull('metadata->archive_data')->orWhere('metadata->archive_data',false))
+            ->where(fn($q)=>$q->whereNull('metadata->library_only')->orWhere('metadata->library_only',false))
+            ->where('source',$record->source)->where('metadata->parent_source_id',$record->source_id)->where('kind',$kind)
+            ->where(fn($q)=>$q->where(fn($public)=>$public->where('status','ready')->where('metadata->public_published',true)));
+
+        if($user||$sessionId){
+            $query->orWhere(fn($owned)=>$owned->where('source','!=','catalog-reset')
+                ->where(fn($q)=>$q->whereNull('metadata->archive_data')->orWhere('metadata->archive_data',false))
+                ->where(fn($q)=>$q->whereNull('metadata->library_only')->orWhere('metadata->library_only',false))
+                ->where('source',$record->source)->where('metadata->parent_source_id',$record->source_id)->where('kind',$kind)
+                ->where('status','needs_attention')->where(function($q)use($user,$sessionId){
+                    if($user)$q->where('metadata->author_user_id',$user->id);
+                    else $q->where('metadata->author_session_hash',hash('sha256',$sessionId));
+                }));
+        }
+        return $query;
+    }
+    public function isOwnedByViewer(SourceRecord $record,?User $user,?string $sessionId): bool
+    {
+        $metadata=$record->metadata??[];
+        if($user&&isset($metadata['author_user_id']))return (int)$metadata['author_user_id']===$user->id;
+        return !$user&&$sessionId&&($metadata['author_session_hash']??null)===hash('sha256',$sessionId);
     }
     public function visible(SourceRecord $record): bool
     {

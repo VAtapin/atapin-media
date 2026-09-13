@@ -1,31 +1,33 @@
 <?php
 namespace App\Http\Controllers;
 use App\Models\{SourceRecord,Product};
-use App\Services\{PublicContent,PublicBooks,PublicParticipation,PublicCommunitySubmission};
+use App\Services\{PublicContent,PublicBooks,PublicParticipation,PublicCommunityModeration,PublicCommunitySubmission};
 use Illuminate\Http\Request;
 
 class PublicInteractionController extends Controller
 {
-    public function record(Request $request,SourceRecord $record,PublicContent $content,PublicParticipation $participation)
+    public function record(Request $request,SourceRecord $record,PublicContent $content,PublicCommunityModeration $moderation,PublicParticipation $participation)
     {
         \Illuminate\Support\Facades\Gate::authorize('public.participate');
         abort_unless($content->visible($record),404);
         $data=$this->data($request);
         if(in_array($data['action'],['comment','chat'])){
+            if($moderation->blocked($request->user(),$request->session()->getId()))return $this->blockedResult($request);
             abort_unless(in_array($record->kind,['video','short','post']),422);
             if($data['action']==='chat')abort_unless($content->section($record)==='live',422);
-            $request->validate(['body'=>'required|string|min:2|max:5000']);app(PublicCommunitySubmission::class)->message($request->user(),$record,$data['body'],$data['action']==='chat'?'live_chat':'comment');
+            $request->validate(['body'=>'required|string|min:2|max:5000']);app(PublicCommunitySubmission::class)->message($request->user(),$record,$data['body'],$data['action']==='chat'?'live_chat':'comment',$request->session()->getId());
             return $this->result($request,__('public.comment_pending'));
         }
         $participation->save($request->user(),$record,$data);return $this->result($request,__('public.saved'));
     }
-    public function message(Request $request,SourceRecord $record,PublicContent $content,PublicCommunitySubmission $submission)
+    public function message(Request $request,SourceRecord $record,PublicContent $content,PublicCommunityModeration $moderation,PublicCommunitySubmission $submission)
     {
         abort_unless($content->visible($record),404);
+        if($moderation->blocked($request->user(),$request->session()->getId()))return $this->blockedResult($request);
         $data=$request->validate(['body'=>'required|string|min:2|max:5000']);
         abort_unless(in_array($record->kind,['video','short','post']),422);
         $kind=$content->section($record)==='live'?'live_chat':'comment';
-        $submission->message($request->user(),$record,$data['body'],$kind);
+        $submission->message($request->user(),$record,$data['body'],$kind,$request->session()->getId());
         return $this->result($request,__('public.message_sent'));
     }
     public function book(Request $request,Product $product,PublicBooks $books,PublicParticipation $participation)
@@ -41,5 +43,10 @@ class PublicInteractionController extends Controller
     private function result(Request $request,string $message)
     {
         return $request->expectsJson()?response()->json(['message'=>$message]):back()->with('public_status',$message);
+    }
+    private function blockedResult(Request $request)
+    {
+        $message=__('public.chat_blocked_three');
+        return $request->expectsJson()?response()->json(['message'=>$message],403):back()->withErrors(['body'=>$message]);
     }
 }

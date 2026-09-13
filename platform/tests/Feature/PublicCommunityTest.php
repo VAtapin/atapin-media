@@ -86,6 +86,28 @@ class PublicCommunityTest extends TestCase
         $this->get('/community')->assertDontSee('Review me');
     }
 
+    public function test_ai_block_is_visible_to_sender_and_hidden_from_other_viewers(): void
+    {
+        Queue::fake();$this->enableAi();Http::fake(['api.openai.com/*'=>Http::response($this->aiResponse('review',0.94,['profanity']))]);
+        $event=$this->event();
+        $this->post(route('public.message-submit',$event),['body'=>'Blocked chat'])->assertRedirect();
+        $record=SourceRecord::where('kind','live_chat')->firstOrFail();
+        (new ModeratePublicContent($record->id))->handle(app(PublicAiModerator::class),app(PublicCommunityModeration::class),app(\App\Services\Audit::class));
+        $content=app(\App\Services\PublicContent::class);
+        $this->assertCount(1,$content->childrenForViewer($event,'live_chat',null,session()->getId())->get());
+        $this->assertCount(0,$content->childrenForViewer($event,'live_chat',null,'other-session')->get());
+        $this->assertTrue($record->fresh()->metadata['moderation']['blocked']);
+    }
+
+    public function test_three_ai_blocks_disable_further_public_writing(): void
+    {
+        Queue::fake();$event=$this->event();$user=User::factory()->create();
+        foreach(range(1,3) as $number)SourceRecord::create(['source'=>'website','source_id'=>'blocked-'.$number,'kind'=>'live_chat','title'=>'Blocked','body'=>'Blocked '.$number,'status'=>'needs_attention','metadata'=>['parent_source_id'=>$event->source_id,'website_comment'=>true,'author_type'=>'user','author_user_id'=>$user->id,'moderation'=>['state'=>'human_review','blocked'=>true],'public_published'=>false]]);
+        $this->actingAs($user);
+        $this->post(route('public.message-submit',$event),['body'=>'Fourth message'])->assertSessionHasErrors('body');
+        $this->assertSame(3,app(PublicCommunityModeration::class)->blockCount($user,null));
+    }
+
     public function test_moderation_is_a_protected_desktop_interface(): void
     {
         app(Access::class)->seed();

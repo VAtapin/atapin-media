@@ -4,9 +4,10 @@ use App\Models\SourceRecord;
 use App\Services\{Audit,PublicCommunityModeration,PublicCommunitySubmission};
 use Illuminate\Http\Request;
 class PublicCommunityController extends Controller {
-    public function store(Request $request, PublicCommunitySubmission $submission){
+    public function store(Request $request, PublicCommunityModeration $moderation, PublicCommunitySubmission $submission){
+        if($moderation->blocked($request->user(),$request->session()->getId()))return $request->expectsJson()?response()->json(['message'=>__('public.chat_blocked_three')],403):back()->withErrors(['body'=>__('public.chat_blocked_three')]);
         $data=$request->validate(['title'=>'required|string|min:3|max:255','body'=>'required|string|min:5|max:5000','type'=>'required|in:question,discussion']);
-        $submission->post($request->user(), $data);
+        $submission->post($request->user(), $data, $request->session()->getId());
         return back()->with('public_status',__('public.message_sent'));
     }
     public function index(){return redirect('/desktop?open=community',303);}

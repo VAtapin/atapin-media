@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 
 class PublicCatalog
 {
-    public function __construct(private PublicContent $content,private PublicBooks $books,private PublicParticipation $participation) {}
+    public function __construct(private PublicContent $content,private PublicBooks $books,private PublicParticipation $participation,private PublicCommunityModeration $communityModeration) {}
     public function listing(Request $request,string $section): array
     {
         if($section==='live')$this->content->expireScheduledLives();
@@ -43,12 +43,14 @@ class PublicCatalog
         });
         $resumeState=$request->user()?PublicContentState::where('user_id',$request->user()->id)->where('subject_type','record')->where('action','progress')->whereIn('subject_id',$this->content->forSection('podcast')->select('id'))->latest('updated_at')->first():null;
         $resumeRecord=$resumeState?$this->content->forSection('podcast')->find($resumeState->subject_id):null;
+        $sessionId=$request->hasSession()?$request->session()->getId():null;
         return ['items'=>$items,'featured'=>$featured,'readingBooks'=>$readingBooks,'resume'=>$resumeRecord?[...$this->content->card($resumeRecord),'position'=>$resumeState->value['position']??0]:null,
             'popular'=>($section==='buecher'?$this->books->query()->latest():($section==='live'?$this->content->forSection('live')->where('metadata->live_status','ended')->latest():$this->content->withViewCounts($this->content->forSection($section))->orderByDesc('public_view_count')->latest()->orderByDesc('id')))->limit(5)->get()->map($mapper),
             'topics'=>$section==='buecher'?[]:$this->topics($section),'series'=>$this->series($section),
             'record'=>$record,'assets'=>$record?$this->content->assets($record):collect(),
-            'comments'=>$record?$this->content->children($record)->latest()->paginate(20,['*'],'comments_page')->withQueryString()->fragment('comments'):collect(),
-            'chat'=>$record?$this->content->children($record,'live_chat')->latest()->limit(30)->get()->reverse():collect(),
+            'comments'=>$record?$this->content->childrenForViewer($record,'comment',$request->user(),$sessionId)->latest()->paginate(20,['*'],'comments_page')->withQueryString()->fragment('comments'):collect(),
+            'chat'=>$record?$this->content->childrenForViewer($record,'live_chat',$request->user(),$sessionId)->latest()->limit(30)->get()->reverse():collect(),
+            'communityBlocked'=>$this->communityModeration->blocked($request->user(),$sessionId),
             'states'=>$record?$this->participation->mine($record,$request->user()):[],
             'poll'=>$this->content->forSection('community')->where('kind','poll')->latest()->first(),
             'upcoming'=>$this->content->forSection('live')->where('metadata->live_status','scheduled')->get()->filter(fn($event)=>$this->content->hasFutureStart($event))->sortBy(fn($event)=>strtotime((string) ($event->metadata['starts_at']??'')))->take(5)->map($this->content->card(...)),
@@ -74,7 +76,8 @@ class PublicCatalog
     {
         return ['record'=>$record,'card'=>$record?$this->content->card($record):null,'assets'=>$record?$this->content->assets($record):collect(),
             'related'=>$this->content->forSection($section)->when($record,fn($q)=>$q->whereKeyNot($record->id))->latest()->limit(5)->get()->map($this->content->card(...)),
-            'comments'=>$record?$this->content->children($record)->latest()->paginate(20,['*'],'comments_page')->withQueryString()->fragment('comments'):collect(),
+            'comments'=>$record?$this->content->childrenForViewer($record,'comment',$request->user(),$request->hasSession()?$request->session()->getId():null)->latest()->paginate(20,['*'],'comments_page')->withQueryString()->fragment('comments'):collect(),
+            'communityBlocked'=>$this->communityModeration->blocked($request->user(),$request->hasSession()?$request->session()->getId():null),
             'states'=>$record?$this->participation->mine($record,$request->user()):[],
             'book'=>($book=$this->books->query()->latest()->first())?$this->books->card($book):null,
             'relatedVideo'=>($video=$this->content->forSection('videos')->when($record,fn($q)=>$q->whereKeyNot($record->id))->latest()->first())?$this->content->card($video):null];

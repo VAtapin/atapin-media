@@ -1,6 +1,6 @@
 <?php
 namespace App\Http\Controllers;
-use App\Models\{User,SourceRecord,Product,PublicContentState,PublicPushSubscription};
+use App\Models\{User,SourceRecord,Product,Sale,BookReview,NewsletterSubscription,PublicContentState,PublicPushSubscription,PublicAiChatRequest};
 use App\Services\{Settings,PublicContent,PublicBooks};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,16 +17,25 @@ class PublicAccountController extends Controller {
     public function verify(Request $request,User $user,string $hash){abort_unless($request->user()->id===$user->id&&hash_equals(sha1($user->email),$hash),403);$user->forceFill(['email_verified_at'=>now()])->save();return redirect('/konto')->with('public_status',__('public.account_verified'));}
     public function resend(Request $request){$user=$request->user();if($user->isStaffAccount())return back()->with('public_status',__('public.saved'));if(!$user->email_verified_at)\App\Jobs\VerifyPublicAccount::dispatch($user->id,$user->email,app()->getLocale());return back()->with('public_status',__('public.account_verify'));}
     public function index(Request $request,PublicContent $content,PublicBooks $books){
-        $isStaffAccount=$request->user()->isStaffAccount();
-        if($isStaffAccount)return response()->view('public.account',[...$this->shared(),'isStaffAccount'=>true])->header('Cache-Control','private, no-store');
-        $states=PublicContentState::where('user_id',$request->user()->id)->latest('updated_at')->paginate(30);
+        $user=$request->user();$isStaffAccount=$user->isStaffAccount();
+        if($isStaffAccount)return response()->view('public.account',[...$this->shared(),'isStaffAccount'=>true,'accountUser'=>$user])->header('Cache-Control','private, no-store');
+        $states=PublicContentState::where('user_id',$user->id)->latest('updated_at')->paginate(30);
         $items=collect();foreach($states as $state){$subject=$state->subject_type==='book'?$books->query()->find($state->subject_id):$content->query()->find($state->subject_id);if(!$subject||($subject instanceof SourceRecord&&!$content->visible($subject)))continue;$card=$subject instanceof Product?$books->card($subject):$content->card($subject);$items->push(['state'=>$state,'card'=>$card]);}
-        $push=PublicPushSubscription::where('user_id',$request->user()->id)->get()->map(function($entry)use($content){
+        $push=PublicPushSubscription::where('user_id',$user->id)->get()->map(function($entry)use($content){
             $event=SourceRecord::find($entry->record_id);
             return $event&&$content->visible($event)?['subscription'=>$entry,'card'=>$content->card($event)]:null;
         })->filter()->values();
-        return response()->view('public.account',[...$this->shared(),'items'=>$items,'states'=>$states,'push'=>$push,'isStaffAccount'=>$isStaffAccount,'requiresEmailVerification'=>!$isStaffAccount&&!$request->user()->email_verified_at])->header('Cache-Control','private, no-store');
+        $purchases=Sale::with('product')->whereRaw('LOWER(customer_email)=?',mb_strtolower($user->email))->whereNotIn('status',['cancelled','canceled','failed'])->latest()->paginate(10,['*'],'purchases_page')->through(function($sale)use($books){return ['sale'=>$sale,'card'=>$sale->product?$books->card($sale->product):null,'statusLabel'=>$this->accountStatus($sale->status,'purchase')];});
+        $subscriptions=NewsletterSubscription::where('email',mb_strtolower($user->email))->latest()->get()->map(fn($subscription)=>['subscription'=>$subscription,'statusLabel'=>$this->accountStatus($subscription->status,'subscription')]);
+        $messages=SourceRecord::whereIn('kind',['post','comment','live_chat'])->where(function($query)use($user){$query->where('metadata->author_user_id',$user->id)->orWhere('metadata->author_user_id',(string)$user->id);})->latest()->limit(50)->get()->map(function($record)use($content){
+            $parentId=$record->metadata['parent_source_id']??null;$parent=$parentId?$content->query()->where('source',$record->source)->where('source_id',$parentId)->whereIn('kind',['video','short','post'])->first():null;
+            return ['record'=>$record,'title'=>$record->title,'body'=>$record->body,'kind'=>$record->kind,'statusLabel'=>$this->accountStatus($record->status,'message'),'date'=>$record->created_at,'url'=>$parent?$content->card($parent)['url'].($record->kind==='live_chat'?'#chat':'#comments'):($record->kind==='post'?'/community':'/community') ,'parent'=>$parent?->title];
+        });
+        $reviews=BookReview::with('product')->where('user_id',$user->id)->latest()->limit(50)->get()->map(fn($review)=>['review'=>$review,'card'=>$review->product?$books->card($review->product):null,'statusLabel'=>$this->accountStatus($review->status,'review')]);
+        $aiChats=PublicAiChatRequest::with('record')->where('user_id',$user->id)->latest()->limit(50)->get()->map(function($entry)use($content){$record=$entry->record;return ['entry'=>$entry,'card'=>$record&&$content->visible($record)?$content->card($record):null,'statusLabel'=>$this->accountStatus($entry->status,'ai')];});
+        return response()->view('public.account',[...$this->shared(),'items'=>$items,'states'=>$states,'push'=>$push,'purchases'=>$purchases,'subscriptions'=>$subscriptions,'messages'=>$messages,'reviews'=>$reviews,'aiChats'=>$aiChats,'isStaffAccount'=>false,'requiresEmailVerification'=>!$user->email_verified_at])->header('Cache-Control','private, no-store');
     }
+    private function accountStatus(string $status,string $context): string { return match($context){ 'purchase'=>match($status){'paid','completed','succeeded'=>__('public.account_status_paid'),'pending'=>__('public.account_status_pending'),default=>__('public.account_status_other')},'subscription'=>match($status){'active'=>__('public.account_status_active'),'pending'=>__('public.account_status_pending'),'unsubscribed'=>__('public.account_status_rejected'),default=>__('public.account_status_other')},'message'=>match($status){'ready','published'=>__('public.account_status_published'),'needs_attention','pending'=>__('public.account_status_pending'),default=>__('public.account_status_other')},'review'=>match($status){'published'=>__('public.account_status_published'),'pending'=>__('public.account_status_pending'),'rejected'=>__('public.account_status_rejected'),default=>__('public.account_status_other')},'ai'=>match($status){'completed'=>__('public.account_ai_completed'),'processing'=>__('public.account_ai_processing'),'queued'=>__('public.account_ai_pending'),'failed'=>__('public.account_ai_failed'),default=>__('public.account_status_other')},default=>__('public.account_status_other')}; }
     public function remove(Request $request,PublicContentState $state){abort_unless($state->user_id===$request->user()->id,404);$state->delete();return back()->with('public_status',__('public.saved'));}
     public function cancelPush(Request $request,PublicPushSubscription $subscription){abort_unless($subscription->user_id===$request->user()->id,404);$subscription->delete();return back()->with('public_status',__('public.saved'));}
     public function profile(Request $request){abort_unless(!$request->user()->isStaffAccount(),404);$data=$request->validate(['name'=>'required|string|max:120','current_password'=>'required|current_password','password'=>'nullable|string|min:12|max:72|confirmed']);$user=$request->user();$user->name=$data['name'];if(!empty($data['password']))$user->password=$data['password'];$user->save();return back()->with('public_status',__('public.saved'));}

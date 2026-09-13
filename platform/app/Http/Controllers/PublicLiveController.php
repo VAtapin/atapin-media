@@ -7,6 +7,6 @@ class PublicLiveController extends Controller
 {
     public function heartbeat(Request $request,SourceRecord $record,PublicLiveState $state)
     {
-        return response()->json($state->heartbeat($record,$request->session()->getId()))->header('Cache-Control','private, no-store');
+        return response()->json($state->heartbeat($record,$request->session()->getId(),$request->user()))->header('Cache-Control','private, no-store');
     }
 }

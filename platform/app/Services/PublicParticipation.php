@@ -42,8 +42,8 @@ class PublicParticipation
         }
         PublicContentState::updateOrCreate(['user_id'=>$user->id,'subject_type'=>$subject instanceof Product?'book':'record','subject_id'=>$subject->id,'action'=>$action],['value'=>$value]);
     }
-    public function comment(User $user,SourceRecord $parent,string $body,string $kind='comment'): void
+    public function comment(User $user,SourceRecord $parent,string $body,string $kind='comment',?string $sessionId=null): void
     {
-        app(PublicCommunitySubmission::class)->message($user,$parent,$body,$kind);
+        app(PublicCommunitySubmission::class)->message($user,$parent,$body,$kind,$sessionId);
     }
 }
