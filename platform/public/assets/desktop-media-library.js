@@ -187,9 +187,10 @@
           try {
             await control.checkpoint();
             const id=await window.uploadDesktopMedia(file, root.dataset.userId, (offset, total) => {
+              row.querySelector('progress').max = total;
               row.querySelector('progress').value = offset;
               row.querySelector('small').textContent = `${prettyBytes(offset)} / ${prettyBytes(total)}`;
-            }, control);
+            }, control, {profile:'media_library'});
             received.push(id);
             row.querySelector('small').textContent = window.desktopImportLabels.upload_done; succeeded++;
           } catch (error) {failed++; row.querySelector('small').textContent = control.signal.aborted ? window.desktopImportLabels.upload_stopped : error.message;}

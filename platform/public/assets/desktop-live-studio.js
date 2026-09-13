@@ -23,6 +23,7 @@
     const rotateWrap = root.querySelector('[data-live-rotate-wrap]');
     const preview = root.querySelector('[data-live-preview]');
     const posterFile = root.querySelector('[data-live-poster-file]');
+    const posterDrop = root.querySelector('[data-live-poster-drop]');
     const posterPreview = root.querySelector('[data-live-poster-preview]');
     const posterImage = root.querySelector('[data-live-poster-image]');
     const posterEmpty = root.querySelector('[data-live-poster-empty]');
@@ -30,6 +31,7 @@
     const posterProgress = root.querySelector('[data-live-poster-progress]');
     const saveButton = form.querySelector('button[type="submit"]');
     let current = null;
+    let selectedPosterFile = null;
 
     const setFeedback = (message, error = false) => {
       feedback.textContent = message || '';
@@ -95,6 +97,7 @@
       setPosterStatus();
       setPosterProgress(null);
       posterFile.value = '';
+      selectedPosterFile = null;
     };
     const fillForm = data => {
       current = data;
@@ -144,21 +147,35 @@
       try { await navigator.clipboard.writeText(url); event.currentTarget.textContent = labels().copied; setTimeout(() => { event.currentTarget.textContent = labels().copy; }, 1800); }
       catch { setFeedback(labels().copy, true); }
     });
-    posterFile.addEventListener('change', () => {
-      const file = posterFile.files?.[0];
+    const selectPosterFile = file => {
       if (!file) return;
-      if (!file.type.startsWith('image/')) {
+      if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
         posterFile.value = '';
-        setPosterStatus(labels().poster_upload_error, 'error');
+        selectedPosterFile = null;
+        setPosterStatus(labels().poster_invalid, 'error');
         setPosterProgress(null);
         return;
       }
+      if (file.size > 50 * 1024 * 1024) {
+        posterFile.value = '';
+        selectedPosterFile = null;
+        setPosterStatus(labels().poster_source_too_large, 'error');
+        setPosterProgress(null);
+        return;
+      }
+      selectedPosterFile = file;
       posterImage.src = URL.createObjectURL(file);
       posterPreview.hidden = false;
       posterEmpty.hidden = true;
       setPosterStatus(labels().poster_selected, 'selected');
       setPosterProgress(null);
-    });
+    };
+    posterFile.addEventListener('change', () => selectPosterFile(posterFile.files?.[0]));
+    posterDrop?.addEventListener('click', event => { if (event.target !== posterFile) posterFile.click(); });
+    posterDrop?.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); posterFile.click(); } });
+    posterDrop?.addEventListener('dragover', event => { event.preventDefault(); posterDrop.classList.add('is-dragging'); });
+    posterDrop?.addEventListener('dragleave', event => { if (!posterDrop.contains(event.relatedTarget)) posterDrop.classList.remove('is-dragging'); });
+    posterDrop?.addEventListener('drop', event => { event.preventDefault(); posterDrop.classList.remove('is-dragging'); selectPosterFile(event.dataTransfer.files?.[0]); });
     preview.addEventListener('click', () => window.open(preview.dataset.url, '_blank', 'noopener'));
     root.querySelector('[data-live-help]').addEventListener('click', () => document.querySelector('[data-open-app="help-live-studio"]')?.click());
     events.addEventListener('click', event => { const button = event.target.closest('[data-live-event]'); if (button) loadEvent(button.dataset.liveEvent); });
@@ -173,7 +190,7 @@
       const id = payload.id;
       delete payload.id;
       const method = id ? 'PATCH' : 'POST';
-      const file = posterFile.files?.[0];
+      const file = selectedPosterFile || posterFile.files?.[0];
       let posterUploadStarted = false;
       saveButton.disabled = true;
       try {
@@ -190,7 +207,7 @@
             const percent = total ? Math.floor(offset / total * 100) : 0;
             setPosterStatus(`${labels().poster_uploading} ${percent} %`, 'loading');
             setPosterProgress(percent);
-          });
+          }, null, {profile:'poster'});
           setPosterStatus(labels().poster_linking, 'loading');
           setPosterProgress(100);
           data = await request(`${root.dataset.apiBase}/${data.id}`, {method:'PATCH', body:JSON.stringify({

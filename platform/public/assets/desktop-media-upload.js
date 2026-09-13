@@ -1,4 +1,100 @@
 (() => {
+  const imageProfiles = {
+    media_library: { maxWidth: 2560, maxHeight: 1600, maxBytes: 3 * 1024 * 1024 },
+    poster: { maxWidth: 1920, maxHeight: 1080, maxBytes: 2 * 1024 * 1024 },
+    cover: { maxWidth: 1920, maxHeight: 1080, maxBytes: 2 * 1024 * 1024 },
+    avatar: { maxWidth: 800, maxHeight: 800, maxBytes: 512 * 1024 },
+    wallpaper: { maxWidth: 2560, maxHeight: 1440, maxBytes: 3 * 1024 * 1024 },
+  };
+  const imageMimes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+  const labels = () => window.desktopImportLabels || {};
+  const imageError = key => labels()[key] || 'Bild konnte nicht geprüft werden.';
+  const readImage = file => new Promise((resolve, reject) => {
+    if (window.createImageBitmap) {
+      window.createImageBitmap(file).then(resolve).catch(reject);
+      return;
+    }
+    const image = new Image();
+    const url = URL.createObjectURL(file);
+    image.onload = () => { URL.revokeObjectURL(url); resolve(image); };
+    image.onerror = () => { URL.revokeObjectURL(url); reject(new Error(imageError('upload_image_invalid'))); };
+    image.src = url;
+  });
+  const canvasBlob = (canvas, type, quality) => new Promise(resolve => canvas.toBlob(resolve, type, quality));
+  const optimizedImage = async (file, profileName) => {
+    const profile = imageProfiles[profileName];
+    if (!profile) return file;
+    if (!imageMimes.has(file.type)) throw new Error(imageError('upload_image_type'));
+    if (file.size > 50 * 1024 * 1024) throw new Error(imageError('upload_image_source_size'));
+    const image = await readImage(file);
+    let width = image.width || image.naturalWidth;
+    let height = image.height || image.naturalHeight;
+    if (!width || !height) throw new Error(imageError('upload_image_invalid'));
+    const initialScale = Math.min(1, profile.maxWidth / width, profile.maxHeight / height);
+    width = Math.max(1, Math.round(width * initialScale));
+    height = Math.max(1, Math.round(height * initialScale));
+    let blob = null;
+    let outputType = 'image/webp';
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      const context = canvas.getContext('2d', { alpha: true });
+      if (!context) throw new Error(imageError('upload_image_invalid'));
+      context.drawImage(image, 0, 0, width, height);
+      blob = await canvasBlob(canvas, outputType, Math.max(.5, .86 - attempt * .05));
+      if (!blob) throw new Error(imageError('upload_image_invalid'));
+      if (blob.type !== outputType) {
+        outputType = 'image/jpeg';
+        blob = await canvasBlob(canvas, outputType, Math.max(.5, .86 - attempt * .05));
+      }
+      if (blob && blob.size <= profile.maxBytes) break;
+      width = Math.max(320, Math.round(width * .85));
+      height = Math.max(180, Math.round(height * .85));
+    }
+    if (!blob || blob.size > profile.maxBytes) throw new Error(imageError('upload_image_too_large'));
+    if (image.close) image.close();
+    const extension = outputType === 'image/webp' ? 'webp' : 'jpg';
+    const baseName = file.name.replace(/\.[^.]+$/, '') || 'bild';
+    const prepared = new File([blob], `${baseName}.${extension}`, { type: outputType, lastModified: file.lastModified });
+    if (file.webkitRelativePath) {
+      Object.defineProperty(prepared, 'webkitRelativePath', { value: file.webkitRelativePath });
+    }
+    return prepared;
+  };
+  const prepareFile = async (file, options = {}) => {
+    const profile = options.profile || 'media_library';
+    if (!file.type.startsWith('image/') || !imageProfiles[profile]) return file;
+    return optimizedImage(file, profile);
+  };
+  const setInputFile = (input, file) => {
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    input.files = transfer.files;
+  };
+
+  window.prepareDesktopMediaFile = prepareFile;
+  window.initializeDesktopImageInputs = () => {
+    document.querySelectorAll('[data-image-upload-profile]').forEach(input => {
+      if (input.dataset.imageUploadInitialized === 'true') return;
+      input.dataset.imageUploadInitialized = 'true';
+      input.addEventListener('change', async () => {
+        const file = input.files?.[0];
+        if (!file) return;
+        const status = input.closest('label')?.querySelector('[data-image-upload-status]');
+        input.disabled = true;
+        if (status) status.textContent = imageError('upload_image_preparing');
+        try {
+          const optimized = await prepareFile(file, { profile: input.dataset.imageUploadProfile });
+          setInputFile(input, optimized);
+          if (status) status.textContent = `${imageError('upload_image_optimized')} ${Math.round(optimized.size / 1024)} KB.`;
+        } catch (error) {
+          input.value = '';
+          if (status) status.textContent = error.message;
+        } finally { input.disabled = false; }
+      });
+    });
+  };
+
   const request = async (url, options = {}) => {
     const response = await fetch(url, { credentials: 'same-origin', ...options, headers: {
       Accept: 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '', ...options.headers,
@@ -36,15 +132,16 @@
       }
     }
   };
-  window.uploadDesktopMedia = async (file, user, progress = () => {}, control = null) => {
-    if (!file.size || !crypto.subtle || !crypto.randomUUID) throw new Error('Upload nicht verfügbar.');
+  window.uploadDesktopMedia = async (sourceFile, user, progress = () => {}, control = null, options = {}) => {
+    if (!sourceFile.size || !crypto.subtle || !crypto.randomUUID) throw new Error('Upload nicht verfügbar.');
+    const file = await prepareFile(sourceFile, options);
     const storageKey = `media-upload:${user}:${file.webkitRelativePath || file.name}:${file.size}:${file.lastModified}`;
     let key;
     try { key = localStorage.getItem(storageKey); } catch (_) { /* Private mode. */ }
     key ||= crypto.randomUUID();
     try { localStorage.setItem(storageKey, key); } catch (_) { /* Upload still works. */ }
     const session = await retry(() => request('/desktop/media/uploads', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ request_key: key, name: file.name, size: file.size }), signal:control?.signal,
+      body: JSON.stringify({ request_key: key, name: file.name, size: file.size, profile: options.profile || 'media_library' }), signal:control?.signal,
     }), control);
     let offset = Number(session.offset);
     const chunkSize = Number(session.chunk_size);
@@ -69,4 +166,5 @@
     document.dispatchEvent(new Event('desktop-media-changed'));
     return result.media_id;
   };
+  window.initializeDesktopImageInputs();
 })();

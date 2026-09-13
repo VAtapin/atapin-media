@@ -108,6 +108,22 @@ class MediaLibraryUploadTest extends TestCase
         ])->assertOk();
     }
 
+    public function test_image_upload_profiles_reject_non_image_payloads_at_finalization(): void
+    {
+        Storage::fake('local');
+        $this->actingAs($this->user('Owner'));
+        $bytes = 'not-an-image';
+        $start = $this->postJson('/desktop/media/uploads', [
+            'request_key' => (string) Str::uuid(), 'name' => 'poster.png', 'size' => strlen($bytes), 'profile' => 'poster',
+        ])->assertOk();
+        $uploadId = $start->json('id');
+        $this->call('POST', "/desktop/media/uploads/$uploadId/chunk", [], [], [], [
+            'CONTENT_TYPE' => 'application/octet-stream', 'HTTP_X_UPLOAD_OFFSET' => '0', 'HTTP_X_CHUNK_SHA256' => hash('sha256', $bytes),
+        ], $bytes)->assertOk();
+        $this->postJson("/desktop/media/uploads/$uploadId/finish")->assertStatus(422);
+        $this->assertDatabaseHas('resumable_media_uploads', ['id' => $uploadId, 'profile' => 'poster', 'status' => ResumableMediaUpload::STATUS_UPLOADING]);
+    }
+
     public function test_uploaded_zip_is_imported_through_center_with_readable_originals(): void
     {
         Storage::fake('local'); $this->actingAs($this->user('Owner'));

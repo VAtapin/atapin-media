@@ -12,7 +12,25 @@ class ResumableMediaUploadService
 {
     public const CHUNK_SIZE = 4 * 1024 * 1024;
 
+    private const IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+    private const PROFILES = [
+        'media_library' => ['max_image_bytes' => 3 * 1024 * 1024, 'max_width' => 2560, 'max_height' => 1600],
+        'poster' => ['image' => true, 'max_image_bytes' => 2 * 1024 * 1024, 'max_width' => 1920, 'max_height' => 1080],
+        'cover' => ['image' => true, 'max_image_bytes' => 2 * 1024 * 1024, 'max_width' => 1920, 'max_height' => 1080],
+        'avatar' => ['image' => true, 'max_image_bytes' => 512 * 1024, 'max_width' => 800, 'max_height' => 800],
+        'wallpaper' => ['image' => true, 'max_image_bytes' => 3 * 1024 * 1024, 'max_width' => 2560, 'max_height' => 1440],
+        'video' => ['video' => true],
+        'attachment' => [],
+        'archive' => [],
+    ];
+
     private const STAGING_PREFIX = 'media-uploads';
+
+    public static function profiles(): array
+    {
+        return self::PROFILES;
+    }
 
     public function start(array $data, int $user): ResumableMediaUpload
     {
@@ -20,19 +38,21 @@ class ResumableMediaUploadService
             'request_key' => 'required|uuid',
             'name' => 'required|string|max:255',
             'size' => 'required|integer|min:1|max:' . config('platform.media_upload_max_bytes'),
+            'profile' => ['nullable', \Illuminate\Validation\Rule::in(array_keys(self::PROFILES))],
         ])->validate();
 
         $name = $this->normalizeOriginalName($payload['name']);
         $id = (string) Str::uuid();
         $size = (int) $payload['size'];
+        $profile = $payload['profile'] ?? 'media_library';
 
-        return DB::transaction(function () use ($payload, $name, $size, $user, $id): ResumableMediaUpload {
+        return DB::transaction(function () use ($payload, $name, $size, $user, $id, $profile): ResumableMediaUpload {
             $existing = ResumableMediaUpload::query()
                 ->where('request_key', $payload['request_key'])
                 ->lockForUpdate()
                 ->first();
             if ($existing) {
-                if ($existing->user_id !== $user || $existing->bytes !== $size || $existing->original_name !== $name) {
+                if ($existing->user_id !== $user || $existing->bytes !== $size || $existing->original_name !== $name || ($existing->profile ?: 'media_library') !== $profile) {
                     abort(409, 'The upload key is already used.');
                 }
                 return $existing;
@@ -44,6 +64,7 @@ class ResumableMediaUploadService
                 'id' => $id,
                 'user_id' => $user,
                 'request_key' => $payload['request_key'],
+                'profile' => $profile,
                 'original_name' => $name,
                 'bytes' => $size,
                 'disk' => $this->disk(),
@@ -212,6 +233,7 @@ class ResumableMediaUploadService
         }
 
         try {
+            $this->validateFinalFile($destinationPath, $mime, $upload->profile ?: 'media_library');
             return DB::transaction(function () use ($upload, $destination, $mime): Media {
                 $media = app(\App\Services\Importing\ImportedMediaRegistry::class)->register([
                     'id' => (string) Str::uuid(),
@@ -332,6 +354,29 @@ class ResumableMediaUploadService
     {
         $id = (string) Str::uuid();
         return 'originals/' . now()->format('Y/m') . '/' . $id;
+    }
+
+    private function validateFinalFile(string $path, string $mime, string $profile): void
+    {
+        $rules = self::PROFILES[$profile] ?? self::PROFILES['media_library'];
+        if (($rules['image'] ?? false) && !in_array($mime, self::IMAGE_MIMES, true)) {
+            abort(422, 'Für diesen Upload wird ein gültiges Bild benötigt.');
+        }
+        if (($rules['video'] ?? false) && !str_starts_with($mime, 'video/')) {
+            abort(422, 'Für diesen Upload wird ein gültiges Video benötigt.');
+        }
+        if (!str_starts_with($mime, 'image/')) return;
+        if (!in_array($mime, self::IMAGE_MIMES, true)) abort(422, 'Dieses Bildformat wird nicht unterstützt.');
+        $dimensions = @getimagesize($path);
+        if (!$dimensions || (int) ($dimensions[0] ?? 0) < 1 || (int) ($dimensions[1] ?? 0) < 1) {
+            abort(422, 'Das Bild konnte nicht geprüft werden.');
+        }
+        if (isset($rules['max_image_bytes']) && filesize($path) > $rules['max_image_bytes']) {
+            abort(422, 'Das Bild ist für diesen Bereich zu groß.');
+        }
+        if (isset($rules['max_width'], $rules['max_height']) && ((int) $dimensions[0] > $rules['max_width'] || (int) $dimensions[1] > $rules['max_height'])) {
+            abort(422, 'Die Bildabmessungen überschreiten das erlaubte Format.');
+        }
     }
 
     protected function normalizeOriginalName(string $name): string

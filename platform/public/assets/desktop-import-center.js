@@ -151,7 +151,7 @@
           start.disabled = true;
           uploadControl = window.createDesktopUploadControl(); uploadPaused = false; pause.textContent = t.upload_pause; uploadControls.hidden = false; fileInput.disabled = true;
           payload.source = 'local-archive';
-          payload.media_id = await window.uploadDesktopMedia(file, root.dataset.userId, (bytes, total) => showMessage(file.name + ': ' + Math.floor(bytes / total * 100) + ' %'), uploadControl);
+          payload.media_id = await window.uploadDesktopMedia(file, root.dataset.userId, (bytes, total) => showMessage(file.name + ': ' + Math.floor(bytes / total * 100) + ' %'), uploadControl, {profile:'archive'});
           await uploadControl.checkpoint(); uploadControls.hidden = true;
         } else if (activeMethod === 'link') {
           payload.source_ref = link.value.trim(); payload.source = sourceFromLink(payload.source_ref);

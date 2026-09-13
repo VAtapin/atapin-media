@@ -31,7 +31,7 @@
       choice.querySelector('form').onsubmit=e=>{e.preventDefault();search();};
       choice.querySelector('[data-replacement-upload]')?.addEventListener('change',async e=>{
         const file=e.target.files[0];if(!file||dirty())return;tools.inert=true;
-        try{const id=await window.uploadDesktopMedia(file,root.dataset.userId,(n,total)=>message.textContent=t().upload_running+' '+Math.floor(n/total*100)+' %');await apply(id);}
+        try{const id=await window.uploadDesktopMedia(file,root.dataset.userId,(n,total)=>message.textContent=t().upload_running+' '+Math.floor(n/total*100)+' %',null,{profile:kind==='image'?'cover':kind==='video'?'video':'attachment'});await apply(id);}
         catch(error){message.textContent=error.message;}finally{tools.inert=false;}
       });search();
     };

@@ -117,8 +117,9 @@ class MediaController extends Controller
             'request_key' => 'required|uuid',
             'name' => 'required|string|max:255',
             'size' => 'required|integer|min:1|max:' . config('platform.media_upload_max_bytes'),
+            'profile' => ['nullable', \Illuminate\Validation\Rule::in(array_keys(ResumableMediaUploadService::profiles()))],
         ]);
-        $upload = $uploads->start($request->only('request_key', 'name', 'size'), $request->user()->id);
+        $upload = $uploads->start($request->only('request_key', 'name', 'size', 'profile'), $request->user()->id);
         return response()->json(['id'=>$upload->id, 'offset'=>$upload->offset, 'chunk_size'=>ResumableMediaUploadService::CHUNK_SIZE]);
     }
     public function uploadChunk(Request $request, ResumableMediaUpload $upload, ResumableMediaUploadService $uploads)

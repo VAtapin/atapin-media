@@ -52,7 +52,7 @@ class UserController extends Controller
         $data = $request->validate([
             'name'=>'required|string|max:255', 'email'=>['required','email','max:255',Rule::unique('users','email')->ignore($user)],
             'current_password'=>'required_with:password|string|max:72', 'password'=>'nullable|string|min:5|max:72|confirmed',
-            'avatar'=>'nullable|image|mimes:jpg,jpeg,png,webp|max:4096|dimensions:min_width=64,min_height=64,max_width=4000,max_height=4000',
+            'avatar'=>'nullable|image|mimes:jpg,jpeg,png,webp|max:512|dimensions:min_width=64,min_height=64,max_width=800,max_height=800',
             'phone'=>'nullable|string|max:80', 'location'=>'nullable|string|max:120', 'website'=>'nullable|url|max:1000', 'bio'=>'nullable|string|max:3000',
             'personal_youtube'=>'nullable|url|max:1000', 'personal_facebook'=>'nullable|url|max:1000', 'personal_instagram'=>'nullable|url|max:1000',
             'personal_tiktok'=>'nullable|url|max:1000', 'personal_telegram'=>'nullable|url|max:1000', 'personal_linkedin'=>'nullable|url|max:1000',
