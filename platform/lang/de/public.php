@@ -1,5 +1,11 @@
 <?php
 return [
+    'newsletter_consent'=>'Ich möchte den Newsletter erhalten. Abmeldung jederzeit möglich.',
+    'newsletter_requested'=>'Wenn eine Bestätigung erforderlich ist, erhalten Sie eine E-Mail. Bitte auch Spam prüfen.',
+    'newsletter_confirmed'=>'Ihre Newsletter-Anmeldung wurde bestätigt.',
+    'newsletter_cancel'=>'Newsletter abbestellen',
+    'newsletter_cancelled'=>'Sie sind vom Newsletter abgemeldet.',
+    'newsletter_confirm_mail'=>"Bitte bestätigen Sie Ihre Anmeldung innerhalb von 48 Stunden:\n:confirm\n\nAbmelden:\n:cancel",
     'broadcast_preview'=>'Live-Seite öffnen',
     'broadcast_manage'=>'Live-Verwaltung','broadcast_publish'=>'Auf der Website veröffentlichen','broadcast_enable'=>'OBS-Eingang aktivieren','broadcast_rotate'=>'OBS-Schlüssel erneuern (alter Schlüssel wird ungültig)','broadcast_obs'=>'OBS: Benutzerdefiniert, diese Server-Adresse; Stream-Key leer.','broadcast_security'=>'OBS nur über SSH-Tunnel/VPN verbinden. Den Schlüssel niemals veröffentlichen.',
     'ai_chat_enable'=>'KI-Assistent im Live-Chat aktivieren','ai_chat_daily_limit'=>'Maximale KI-Anfragen pro Tag (gesamte Website)','ai_chat_label'=>'KI-Assistent','ai_chat_ask'=>'KI fragen','ai_chat_consent'=>'Meine Frage darf an den KI-Anbieter gesendet werden. Die Antwort ist nur für mich sichtbar und kann Fehler enthalten.','ai_chat_unavailable'=>'KI-Assistent ist deaktiviert oder nicht konfiguriert.','ai_chat_budget'=>'Das Tageslimit für KI-Anfragen ist erreicht.','ai_chat_wait'=>'KI-Anfrage in Bearbeitung …','ai_chat_error'=>'Keine KI-Antwort verfügbar.','ai_chat_pending'=>'Die Antwort ist noch in Bearbeitung.',

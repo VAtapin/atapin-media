@@ -1,5 +1,11 @@
 <?php
 return [
+    'newsletter_consent'=>'I want to receive the newsletter. Unsubscribe at any time.',
+    'newsletter_requested'=>'If confirmation is needed, you will receive an email. Please also check spam.',
+    'newsletter_confirmed'=>'Your newsletter subscription is confirmed.',
+    'newsletter_cancel'=>'Unsubscribe from newsletter',
+    'newsletter_cancelled'=>'You are unsubscribed from the newsletter.',
+    'newsletter_confirm_mail'=>"Please confirm your subscription within 48 hours:\n:confirm\n\nUnsubscribe:\n:cancel",
     'broadcast_preview'=>'Open live page',
     'broadcast_manage'=>'Manage live broadcasts','broadcast_publish'=>'Publish on website','broadcast_enable'=>'Enable OBS input','broadcast_rotate'=>'Rotate OBS key (old key becomes invalid)','broadcast_obs'=>'OBS: Custom, this server address; leave stream key empty.','broadcast_security'=>'Connect OBS only through an SSH tunnel/VPN. Never publish the key.',
     'ai_chat_enable'=>'Enable AI assistant in live chat','ai_chat_daily_limit'=>'Maximum AI requests per day (whole website)','ai_chat_label'=>'AI assistant','ai_chat_ask'=>'Ask AI','ai_chat_consent'=>'My question may be sent to the AI provider. The answer is visible only to me and may contain errors.','ai_chat_unavailable'=>'AI assistant is disabled or not configured.','ai_chat_budget'=>'The daily AI request limit has been reached.','ai_chat_wait'=>'Processing AI request …','ai_chat_error'=>'No AI answer available.','ai_chat_pending'=>'The answer is still being processed.',

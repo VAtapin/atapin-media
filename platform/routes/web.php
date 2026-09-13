@@ -8,6 +8,10 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ImportController;
 
 Route::get('/', [\App\Http\Controllers\PublicWebsiteController::class,'home'])->name('home');
+Route::post('/newsletter',[\App\Http\Controllers\PublicNewsletterController::class,'store'])->middleware('throttle:3,1')->name('public.newsletter');
+Route::get('/newsletter/{subscription}/confirm',[\App\Http\Controllers\PublicNewsletterController::class,'confirm'])->middleware(['signed','throttle:10,1'])->name('public.newsletter-confirm');
+Route::get('/newsletter/{subscription}/cancel',[\App\Http\Controllers\PublicNewsletterController::class,'cancel'])->middleware(['signed','throttle:10,1'])->name('public.newsletter-cancel');
+Route::post('/newsletter/{subscription}/cancel',[\App\Http\Controllers\PublicNewsletterController::class,'destroy'])->middleware(['signed','throttle:10,1']);
 foreach(['videos','beitraege','buecher','live','podcast','community','ueber-uns','unsere-mission','kontakt','datenschutz','impressum','suche'] as $section)
     Route::get('/'.$section,[\App\Http\Controllers\PublicWebsiteController::class,'listing'])->defaults('section',$section==='suche'?'search':$section)->name('public.'.$section);
 Route::get('/videos/{slug}',[\App\Http\Controllers\PublicWebsiteController::class,'detail'])->defaults('section','videos')->name('public.video');

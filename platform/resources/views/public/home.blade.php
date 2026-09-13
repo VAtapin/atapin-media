@@ -114,17 +114,7 @@
 @include('public.empty',['url'=>'/live','hint'=>__('public.no_live')])
 @endif</section>
     </div>
-    <section class="public-newsletter">
-@include('public.icon',['name'=>'newsletter'])<div>
-<h2>{{ __('public.newsletter_title') }}</h2>
-<p>{{ __('public.newsletter_pending') }}</p>
-</div>
-<form>
-<label class="public-sr-only" for="newsletter-email">{{ __('ui.email') }}</label>
-<input type="email" id="newsletter-email" placeholder="{{ __('public.email_placeholder') }}" disabled>
-<button class="public-button" disabled>{{ __('public.subscribe') }} →</button>
-</form>
-</section>
+    @include('public.newsletter',['section'=>'start'])
 </main>
 
 @include('public.footer')
