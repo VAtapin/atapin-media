@@ -11,6 +11,8 @@ class AiContentEvidence
     public function build($item): array
     {
         $evidence = ['title' => $item->title, 'kind' => $item->kind, 'source' => $item->source];
+        $durations = [];
+        if (in_array($item->kind, ['video','short'], true)) $durations[] = $item->metadata['duration'] ?? null;
         $parts = []; $image = null; $ids = [];
         if ($item instanceof Media) {
             $evidence['original_name'] = $item->original_name; $evidence['mime'] = $item->mime;
@@ -29,6 +31,7 @@ class AiContentEvidence
         if (! empty($item->metadata['summary'])) $parts[] = mb_substr($item->metadata['summary'], 0, 4000);
         if (! empty($item->metadata['description'])) $parts[] = mb_substr($item->metadata['description'], 0, 4000);
         foreach ($records as $record) {
+            if (in_array($item->kind, ['video','short'], true) && in_array($record->kind, ['video','short'], true)) $durations[] = $record->metadata['duration'] ?? null;
             $description = $record->metadata['original_description'] ?? '';
             if ($description !== '') $parts[] = mb_substr($record->title."\n".$description,0,8000);
             if (! empty($record->body) && $record->body !== $description) $parts[] = mb_substr($record->title."\n".$record->body, 0, 8000);
@@ -43,6 +46,10 @@ class AiContentEvidence
             }
         }
         $evidence['body'] = mb_substr(implode("\n\n", array_filter($parts)), 0, 12000);
+        $durations = array_values(array_unique(array_map('floatval', array_filter($durations,
+            fn ($duration) => is_numeric($duration) && is_finite((float) $duration) && (float) $duration > 0))));
+        // A linked original inherits duration without reading/transcribing the video. Conflicting values are not guessed.
+        if (count($durations) === 1) $evidence['duration_seconds'] = $durations[0];
         return ['evidence' => $evidence, 'image' => $image,
             'sufficient' => $image !== null || trim($evidence['body']) !== '' || ! empty($evidence['poll'])];
     }
