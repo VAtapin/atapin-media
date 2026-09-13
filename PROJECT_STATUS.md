@@ -6,7 +6,7 @@
 
 - Основа: Laravel 13 / PHP 8.4, авторизация, пользователи и RBAC, настройки с зашифрованными секретами, аудит; backend проектов, задач и календаря.
 - Media Desktop: 19 программ, окна и Snap Layouts, сохранение персонального расположения, четыре approved-набора значков, общие настройки оформления и отдельные профили пользователей. Einstellungen — native-интерфейс с локализованными редакционными текстами и управлением пользователями. Live Studio подключён к desktop-окну через JSON API: список, создание, редактирование, публикация, OBS-вход, ротация ключа и получение RTMPS-данных больше не требуют отдельной HTML-ссылки.
-- Media Library: цельные материалы и отдельная файловая галерея; поиск, фильтры, protected preview/download с HTTP Range, resumable upload папок/файлов с pause/resume/stop, теги, коллекции, редактирование плейлистов и массовые действия. Удаление материалов обратимое; замена cover/video/attachments не перезаписывает originals и чужие связи.
+- Media Library: цельные материалы и отдельная файловая галерея; поиск, фильтры, protected preview/download с HTTP Range, resumable upload папок/файлов с pause/resume/stop, теги, коллекции, редактирование плейлистов и массовые действия. Удаление материалов обратимое; замена cover/video/attachments не перезаписывает originals и чужие связи. Проверка квоты resumable upload совместима с MariaDB: зарезервированные байты считаются без сырого выражения с колонкой `offset`.
 - Import Center: серверные папки/архивы, загрузка архивов до 20 GB, существующие intake/YouTube archives и публичные ссылки через collector/yt-dlp. Фоновая очередь, stop/retry, checkpoints, отдельное окно Import-Vorgänge, пообъектный отчёт и индикация стадии/файла/байтов/давности сообщения. Активность процесса очереди не выдаётся за подтверждение завершения конкретного импорта.
 - Takeout: единая распакованная папка private/Takeout либо multipart ZIP; CSV задают IDs, тексты и связи, HTML archive_browser.html проверяет файловый состав. При отсутствии отчёта сохранён fallback с предупреждением. Импортируются видео, Beiträge, изображения, опросы/Quiz, комментарии, Livechats, плейлисты и контоданные; неизвестные схемы сохраняются как originals с результатом в отчёте.
 - Повторные импорты объединяют записи по source/ID и originals по SHA-256/размеру/MIME; дополняют metadata/assets, сохраняют ручные правки, исходные версии, trash и исключённые связи. Обложки/комментарии/playlist positions связываются по достоверным IDs и metadata; неоднозначности остаются в отчёте, а не угадываются.
@@ -68,10 +68,11 @@
 - Intake archive/auth/retired HTTP contract проходили; Python collector suite — 12 passed / 1 skipped (ffmpeg). Linux-specific Plesk-subfolder и /proc checks недоступны локально Windows.
 - Для Live Studio локально прошли `node --check` для изменённого JavaScript и `git diff --check`; добавлен целевой Feature-тест полного resumable upload изображения и привязки его к Live-событию. PHP/Laravel Feature tests недоступны на Windows, потому что PHP не установлен. Для direct RTMPS локально выполнены только read-only diff checks; MediaMTX binary validation на Windows недоступна.
 - Для исправления `public/card.blade.php` прошёл `git diff --check`; PHP/Laravel Blade-компиляция локально недоступна, потому что PHP не установлен на Windows.
+- Для исправления квоты загрузок добавлен Feature-тест старта при незавершённой загрузке; PHP/Laravel tests локально недоступны, потому что PHP не установлен на Windows.
 - Для HLS-диагностики публичный плейлист `/_live/live-7340/index.m3u8?cookieCheck=1` read-only вернул HTTP 200 и видео-вариант; до исправления первый cookie-check редирект выпадал из `/_live/` в Laravel 404. Добавлены целевые тесты общего ingest path, разделения scheduled/ended и branded fallback без `<video>`.
 
 ## Последний связанный commit
 
-- Исправление синтаксиса публичной Blade-карточки: Fix public card Blade syntax.
+- Исправление MariaDB-запроса квоты resumable upload: Fix MariaDB upload capacity query.
 - Текущая ветка и upstream: main → origin/main.
 

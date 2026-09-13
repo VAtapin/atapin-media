@@ -82,6 +82,32 @@ class MediaLibraryUploadTest extends TestCase
         ]);
     }
 
+    public function test_upload_start_calculates_reserved_bytes_without_raw_reserved_column_sql(): void
+    {
+        Storage::fake('local');
+        config(['platform.media_upload_reserve_free_bytes' => 0]);
+        $user = $this->user('Owner');
+        $this->actingAs($user);
+
+        ResumableMediaUpload::create([
+            'id' => (string) Str::uuid(),
+            'user_id' => $user->id,
+            'request_key' => (string) Str::uuid(),
+            'original_name' => 'pending.bin',
+            'bytes' => 10,
+            'offset' => 4,
+            'status' => ResumableMediaUpload::STATUS_UPLOADING,
+            'disk' => 'local',
+            'staging_path' => 'media-uploads/pending.part',
+        ]);
+
+        $this->postJson('/desktop/media/uploads', [
+            'request_key' => (string) Str::uuid(),
+            'name' => 'next.bin',
+            'size' => 2,
+        ])->assertOk();
+    }
+
     public function test_uploaded_zip_is_imported_through_center_with_readable_originals(): void
     {
         Storage::fake('local'); $this->actingAs($this->user('Owner'));

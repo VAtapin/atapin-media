@@ -263,9 +263,9 @@ class ResumableMediaUploadService
         if ($activeUploads > (int) config('platform.media_upload_max_pending_uploads')) {
             abort(429, 'Too many active uploads.');
         }
-        $reserved = (int) DB::table('resumable_media_uploads')
-            ->where('status', '!=', ResumableMediaUpload::STATUS_COMPLETE)
-            ->sum(DB::raw('(bytes - offset)'));
+        $pendingUploads = DB::table('resumable_media_uploads')
+            ->where('status', '!=', ResumableMediaUpload::STATUS_COMPLETE);
+        $reserved = (int) $pendingUploads->sum('bytes') - (int) $pendingUploads->sum('offset');
 
         if ($available - $reserved - $additionalBytes < config('platform.media_upload_reserve_free_bytes')) {
             abort(507, 'Not enough free storage.');
