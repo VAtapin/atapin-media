@@ -64,9 +64,9 @@ class MediaController extends Controller
                 'tags' => $media->tags->pluck('name')->values(),
                 'asset_count' => $media->assets->count(),
                 'thumbnail_url' => str_starts_with($media->mime, 'image/') && in_array($media->mime, self::PREVIEW_MIMES, true)
-                    ? route('media.preview', $media) : (($thumbnail = $media->assets->firstWhere('id', $media->metadata['cover_media_id'] ?? '') ?? $media->assets->first(fn ($asset) => in_array($asset->mime, ['image/jpeg','image/png','image/webp','image/gif'], true))) ? route('media.preview', $thumbnail) : null),
-                'download_url' => route('media.download', $media),
-                'preview_url' => in_array($media->mime, self::PREVIEW_MIMES, true) ? route('media.preview', $media) : null,
+                    ? $media->previewUrl() : (($thumbnail = $media->assets->firstWhere('id', $media->metadata['cover_media_id'] ?? '') ?? $media->assets->first(fn ($asset) => in_array($asset->mime, ['image/jpeg','image/png','image/webp','image/gif'], true))) ? $thumbnail->previewUrl() : null),
+                'download_url' => $media->downloadUrl(),
+                'preview_url' => in_array($media->mime, self::PREVIEW_MIMES, true) ? $media->previewUrl() : null,
             ]),
             'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total()],
         ]);
@@ -76,8 +76,8 @@ class MediaController extends Controller
     {
         $media->load(['tags', 'assets', 'parent', 'collections', 'usages']);
         $asset = fn ($item) => ['id' => $item->id, 'title' => $item->title, 'kind' => $item->kind, 'mime' => $item->mime,
-            'role' => $item->asset_role, 'download_url' => route('media.download', $item),
-            'preview_url' => in_array($item->mime, self::PREVIEW_MIMES, true) ? route('media.preview', $item) : null];
+            'role' => $item->asset_role, 'download_url' => $item->downloadUrl(),
+            'preview_url' => in_array($item->mime, self::PREVIEW_MIMES, true) ? $item->previewUrl() : null];
         $records = \App\Models\SourceRecord::whereIn('id', $media->usages->where('subject_type', \App\Models\SourceRecord::class)->pluck('subject_id'))->get();
         $linked = \App\Models\SourceRecord::where(function ($query) use ($media) {
             foreach (['media_ids','images','media->video','media->thumbnail','media->subtitles'] as $key) $query->orWhereJsonContains('metadata->'.$key, $media->id);
@@ -161,6 +161,7 @@ class MediaController extends Controller
     }
     public function download(Media $media)
     {
+        if ($url = $media->publicUrl()) return redirect($url);
         $location=app(\App\Services\MediaOriginalLocator::class)->find($media); abort_unless($location,404);
         if(config('filesystems.disks.'.$location['disk'].'.driver')==='local')return response()->download(app(\App\Services\MediaOriginalLocator::class)->path($location),$media->original_name,
             ['Content-Type'=>'application/octet-stream','X-Content-Type-Options'=>'nosniff','Cache-Control'=>'private, no-store']);
@@ -171,6 +172,7 @@ class MediaController extends Controller
     {
         $request ??= request();
         abort_unless(in_array($media->mime, self::PREVIEW_MIMES, true), 415);
+        if ($url = $media->publicUrl()) return redirect($url);
         $location=app(\App\Services\MediaOriginalLocator::class)->find($media); abort_unless($location,404);
         $disk=Storage::disk($location['disk']);
         $headers=['Content-Type'=>$media->mime,'X-Content-Type-Options'=>'nosniff','Cache-Control'=>'private, max-age=3600','Accept-Ranges'=>'bytes','Content-Security-Policy'=>"sandbox; default-src 'none';"];

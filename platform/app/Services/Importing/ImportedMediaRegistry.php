@@ -11,7 +11,7 @@ class ImportedMediaRegistry
     public function register(array $attributes): Media
     {
         return \Illuminate\Support\Facades\Cache::lock('media-register:'.$attributes['sha256'],30)->block(15, fn () => DB::transaction(function () use ($attributes) {
-            $identity = hash('sha256', $attributes['disk'].'|'.$attributes['path'].'|'.$attributes['sha256']);
+            $identity = hash('sha256', $attributes['source'].'|'.$attributes['source_id'].'|'.$attributes['disk'].'|'.$attributes['path'].'|'.$attributes['sha256']);
             $original = MediaOriginal::where('identity',$identity)->first();
             if ($original) return Media::findOrFail($original->media_id);
             $media = Media::where('source',$attributes['source'])->where('source_id',$attributes['source_id'])->lockForUpdate()->first();

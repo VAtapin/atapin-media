@@ -58,7 +58,7 @@ class PublicBroadcastController extends Controller
         $coverId=$metadata['cover_media_id']??null;
         $cover=$coverId?Media::find($coverId):null;
         $coverPreview=$cover && $cover->kind==='image' && app(\App\Services\MediaOriginalLocator::class)->find($cover)
-            ?route('media.preview',$cover):null;
+            ?$cover->previewUrl():null;
         return ['id'=>$record->id,'title'=>$record->title,'body'=>$record->body,'starts_at'=>$metadata['starts_at']??null,'published'=>(bool)($metadata['public_published']??false),'enabled'=>(bool)($metadata['live_stream_enabled']??false),'status'=>$metadata['live_status']??'draft','cover_media_id'=>$cover?->id,'cover_preview_url'=>$coverPreview,'created_at'=>$record->created_at?->toIso8601String(),'updated_at'=>$record->updated_at?->toIso8601String(),'ingest'=>$ingest];
     }
 }

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 
 class ContentMetadataImporter
 {
+    private ?ImportRun $scanRun = null;
     public function record(string $source, string $id, string $kind, string $title, string $body, array $metadata): SourceRecord
     {
         $run=isset($metadata['import_id']) ? ImportRun::find($metadata['import_id']) : null;
@@ -45,6 +46,7 @@ class ContentMetadataImporter
 
     public function scan(ImportRun $run, string $root): void
     {
+        $this->scanRun = $run;
         $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS));
         foreach ($iterator as $file) {
             app(ImportProgress::class)->checkpoint($run);
@@ -122,15 +124,21 @@ class ContentMetadataImporter
     {
         $ids = [];
         $prefix = str_replace(DIRECTORY_SEPARATOR, '/', substr(realpath($directory), strlen(realpath(config('platform.import_inbox_root'))) + 1));
+        // New imported binaries live in public/media; their import coordinates only identify metadata links.
+        if($this->scanRun)foreach(\App\Models\ImportItem::where('import_run_id',$this->scanRun->id)->where('type','file')->whereIn('outcome',['added','duplicate'])->get() as $item) {
+            $relative=$item->label;
+            if(($prefix===''||str_starts_with($relative,$prefix.'/')) && ($name===null||pathinfo($relative,PATHINFO_FILENAME)===$name)
+                && ($media=Media::find($item->subject_id)) && (in_array($media->kind,['video','audio','image','pdf'],true)||in_array(strtolower(pathinfo($relative,PATHINFO_EXTENSION)),['srt','vtt','ass'],true)))$ids[]=$media->id;
+        }
         $originalIds = \App\Models\MediaOriginal::where('disk','import-inbox')->where('path','like',$prefix === '' ? '%' : $prefix.'/%')->get()
             ->filter(fn ($original) => ($prefix === '' || str_starts_with($original->path,$prefix.'/')) && ($name === null || pathinfo($original->path,PATHINFO_FILENAME) === $name))->pluck('media_id');
-        $ids = Media::whereIn('id',$originalIds)->get()->filter(fn ($media) => in_array($media->kind,['video','audio','image','pdf'],true) || in_array(strtolower(pathinfo($media->original_name,PATHINFO_EXTENSION)),['srt','vtt','ass'],true))->pluck('id')->all();
+        $ids = [...$ids,...Media::whereIn('id',$originalIds)->get()->filter(fn ($media) => in_array($media->kind,['video','audio','image','pdf'],true) || in_array(strtolower(pathinfo($media->original_name,PATHINFO_EXTENSION)),['srt','vtt','ass'],true))->pluck('id')->all()];
         foreach (Media::where('disk', 'import-inbox')->where('path', 'like', $prefix === '' ? '%' : $prefix.'/%')->get() as $media) {
             if ($prefix !== '' && ! str_starts_with($media->path, $prefix.'/')) continue;
             if ($name !== null && pathinfo($media->original_name, PATHINFO_FILENAME) !== $name) continue;
             if (in_array($media->kind, ['video', 'audio', 'image', 'pdf'], true) || in_array(strtolower(pathinfo($media->path,PATHINFO_EXTENSION)),['srt','vtt','ass'],true)) $ids[] = $media->id;
         }
-        return $ids;
+        return array_values(array_unique($ids));
     }
 
     private function video(ImportRun $run, array $info, string $directory, string $root, bool $short = false): void
@@ -179,7 +187,8 @@ class ContentMetadataImporter
                 $path = ImportPath::resolve($root, $root.'/'.$file);
                 $relative = str_replace(DIRECTORY_SEPARATOR,'/',substr($path,strlen(realpath(config('platform.import_inbox_root')))+1));
                 $original = \App\Models\MediaOriginal::where('disk','import-inbox')->where('path',$relative)->latest('id')->first();
-                $asset = $original ? Media::find($original->media_id) : Media::where('disk','import-inbox')->where('path',$relative)->first();
+                $registered=app(ImportJournal::class)->item($run,'file:'.$relative);
+                $asset = $registered?->subject_id ? Media::find($registered->subject_id) : ($original ? Media::find($original->media_id) : Media::where('disk','import-inbox')->where('path',$relative)->first());
                 if ($asset) $metadata['media_ids'][] = $asset->id;
             }
         } elseif (! in_array($kind,['poll','comment'],true)) {

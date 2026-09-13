@@ -81,11 +81,14 @@ class ArchiveImporter
         if($bytes!==null && $size!==$bytes)throw new \RuntimeException('Archive file size differs from its manifest.');
         $mime=(new \finfo(FILEINFO_MIME_TYPE))->file($path)?:'application/octet-stream';
         $metadata['target_profile'] = $this->run->target_profile ?: $this->defaultTargetProfile();
-        $actualHash=hash_file('sha256',$path);
+        $progress=app(\App\Services\Importing\ImportProgress::class);
+        $actualHash=$progress->hashFile($this->run,$path,'verify_file');
         if ($sha && $sha !== $actualHash) throw new \RuntimeException('Archive checksum differs from its manifest.');
+        $stored=app(CanonicalMediaStorage::class)->storePath($path,$mime,pathinfo($relative,PATHINFO_EXTENSION),$actualHash,
+            fn(int $bytes,int $total)=>$progress->checkpoint($this->run,'files',['file_bytes'=>$bytes,'file_total_bytes'=>$total]));
         $media=app(\App\Services\Importing\ImportedMediaRegistry::class)->register(['source'=>$this->run->source,'source_id'=>$id,
-            'title'=>mb_substr($name,0,255),'original_name'=>mb_substr(basename($name),0,255),'kind'=>MediaLibrary::kind($mime),
-            'mime'=>$mime,'bytes'=>$size,'disk'=>$this->run->source,'path'=>$relative,'sha256'=>$actualHash,'asset_role'=>$metadata['role']??null,
+            'title'=>mb_substr($name,0,255),'original_name'=>$stored['filename'],'kind'=>MediaLibrary::kind($mime),
+            'mime'=>$mime,'bytes'=>$size,'disk'=>$stored['disk'],'path'=>$stored['path'],'sha256'=>$actualHash,'asset_role'=>$metadata['role']??null,
             'metadata'=>$metadata,'status'=>'unsorted','user_id'=>$this->run->user_id]);
         $journal->record($this->run,$key,$name,'file',$media->wasRecentlyCreated?'added':'duplicate',(string)$media->id,['signature'=>$signature]);
         $this->run->increment($media->wasRecentlyCreated?'imported':'skipped');return $media;

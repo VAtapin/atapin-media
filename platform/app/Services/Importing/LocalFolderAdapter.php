@@ -4,7 +4,6 @@ namespace App\Services\Importing;
 use App\Models\ImportRun;
 use App\Models\Media;
 use App\Services\MediaLibrary;
-use App\Services\CanonicalMediaStorage;
 use Illuminate\Validation\ValidationException;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -12,7 +11,7 @@ use FilesystemIterator;
 
 class LocalFolderAdapter implements ImportAdapter
 {
-    public function __construct(private ?string $inboxRoot = null, private string $disk = 'import-inbox', private bool $canonical = false)
+    public function __construct(private ?string $inboxRoot = null)
     {
         $this->inboxRoot ??= config('platform.import_inbox_root');
     }
@@ -55,20 +54,16 @@ class LocalFolderAdapter implements ImportAdapter
                 $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($absolute) ?: 'application/octet-stream';
                 $hash = app(ImportProgress::class)->hashFile($run, $absolute, 'verify_file');
                 app(ImportProgress::class)->checkpoint($run, 'files', ['file' => $file->getFilename(), 'file_bytes' => $file->getSize(), 'file_total_bytes' => $file->getSize()]);
-                $stored = $this->canonical
-                    ? app(CanonicalMediaStorage::class)->storePath($absolute, $mime)
-                    : ['disk' => $this->disk, 'path' => $relative, 'filename' => mb_substr($file->getFilename(), 0, 255), 'sha256' => $hash, 'bytes' => $file->getSize()];
-                $journalPath = $this->canonical ? $stored['path'] : $relative;
-                $metadata = ['import_id' => $run->id, 'target_profile' => $run->target_profile ?? 'mixed'];
-                if (! $this->canonical) $metadata['relative_path'] = $relative;
+                $stored=app(\App\Services\CanonicalMediaStorage::class)->storePath($absolute,$mime,pathinfo($relative,PATHINFO_EXTENSION),$hash,
+                    fn(int $bytes,int $total)=>app(ImportProgress::class)->checkpoint($run,null,['file_bytes'=>$bytes,'file_total_bytes'=>$total]));
                 $media = app(ImportedMediaRegistry::class)->register(['source' => $run->source, 'source_id' => hash('sha256', $relative.'|'.$hash),
                     'title' => mb_substr($file->getFilename(), 0, 255), 'original_name' => $stored['filename'],
                     'kind' => MediaLibrary::kind($mime), 'mime' => $mime, 'bytes' => $file->getSize(),
-                    'disk' => $stored['disk'], 'path' => $stored['path'], 'sha256' => $stored['sha256'], 'status' => 'unsorted',
-                    'user_id' => $run->user_id, 'metadata' => $metadata,
+                    'disk' => $stored['disk'], 'path' => $stored['path'], 'sha256' => $hash, 'status' => 'unsorted',
+                    'user_id' => $run->user_id, 'metadata' => ['relative_path' => $relative, 'import_id' => $run->id, 'target_profile' => $run->target_profile ?? 'mixed'],
                 ]);
                 $run->increment($media->wasRecentlyCreated ? 'imported' : 'skipped');
-                $journal->record($run,$key,$journalPath,'file',$media->wasRecentlyCreated?'added':'duplicate',(string)$media->id,['signature'=>$signature]);
+                $journal->record($run,$key,$relative,'file',$media->wasRecentlyCreated?'added':'duplicate',(string)$media->id,['signature'=>$signature]);
             } catch (\Throwable $error) {
                 if ($error instanceof ImportStopped) throw $error;
                 $journal->record($run,$key,$relative,'file','failed',null,['signature'=>$signature,'error'=>$error->getMessage()]);

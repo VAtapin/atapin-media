@@ -29,9 +29,9 @@ bash platform/bin/plesk.sh check
 ```bash
 cd /var/www/vhosts/mannavomhimmel.de/httpdocs
 git pull --ff-only
-bash platform/bin/plesk.sh update
-bash platform/bin/plesk.sh check
 ```
+
+Это обычное обновление кода. `config:clear` добавлять при изменении config, `view:clear` — Blade; dependencies/migrations/worker restart только когда задача этого требует. `plesk.sh update` предназначен для документированной maintenance-операции, не для каждого pull. После фактического развёртывания доступна проверка `bash platform/bin/plesk.sh check`.
 
 Перед изменениями базы используйте backup базы через Plesk. Код не откатывает migrations автоматически. При неуспешной миграции не выполняйте migrate:fresh — это удалит данные.
 
@@ -41,7 +41,7 @@ bash platform/bin/plesk.sh check
 
 PHP-скрипт сам удерживает блокировку повторного запуска. Таймаут worker 3600 секунд меньше `retry_after=3660`. Команду `plesk.sh services` для этого способа не выполнять.
 
-YouTube/intake архивы остаются отдельно; Import Center регистрирует их для работы редакции без публикации и копирования оригиналов.
+Исходные YouTube/intake/Takeout архивы остаются отдельно. Новые импортированные бесплатные медиа копируются по одному с именем SHA-256 в физическую `platform/public/media` и отдаются напрямую. Документы/архивы остаются приватными, публикация материалов не автоматическая. [Точные пути и workflow импорта](../docs/MEDIA-STORAGE.md).
 
 ## Проверка
 

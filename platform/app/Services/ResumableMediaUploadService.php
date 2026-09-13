@@ -223,9 +223,9 @@ class ResumableMediaUploadService
 
         try {
             $this->validateFinalFile($source, $mime, $upload->profile ?: 'media_library');
-            $stored = app(CanonicalMediaStorage::class)->storePath($source, $mime, true);
+            $stored = app(CanonicalMediaStorage::class)->storePath($source, $mime, pathinfo($upload->original_name, PATHINFO_EXTENSION));
             $destination = $stored['path'];
-            return DB::transaction(function () use ($upload, $destination, $mime, $stored): Media {
+            $media = DB::transaction(function () use ($upload, $destination, $mime, $stored): Media {
                 $media = app(\App\Services\Importing\ImportedMediaRegistry::class)->register([
                     'id' => (string) Str::uuid(),
                     'title' => $upload->original_name,
@@ -245,12 +245,15 @@ class ResumableMediaUploadService
                 ResumableMediaUpload::lockForUpdate()->findOrFail($upload->id)->update([
                     'status' => ResumableMediaUpload::STATUS_COMPLETE,
                     'final_path' => $destination,
+                    'disk' => $stored['disk'],
                 ]);
                 DB::table('resumable_media_upload_chunks')->where('upload_id', $upload->id)->delete();
 
                 app(Audit::class)->record('media.uploaded', $media->id);
                 return $media;
             });
+            Storage::disk('local')->delete($upload->staging_path);
+            return $media;
         } catch (\Throwable $error) {
             ResumableMediaUpload::where('id', $upload->id)->update([
                 'status' => ResumableMediaUpload::STATUS_UPLOADING,
@@ -326,7 +329,7 @@ class ResumableMediaUploadService
 
     protected function disk(): string
     {
-        return config('platform.media_disk');
+        return 'local';
     }
 
     protected function path(string $relative): string

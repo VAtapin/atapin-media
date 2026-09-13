@@ -7,7 +7,7 @@ let finishes = 0, stopDuringChunk = null;
 const response = data => new Response(JSON.stringify(data), {headers:{'Content-Type':'application/json'}});
 const context = vm.createContext({crypto, AbortController, Error, Uint8Array, String, Number, Math, Promise, setTimeout,
   window:{desktopImportLabels:{upload_stopped:'Transfer stopped'}},
-  document:{querySelector:() => ({content:'test-only'}), dispatchEvent:() => {}}, Event,
+  document:{querySelector:() => ({content:'test-only'}), querySelectorAll:() => [], dispatchEvent:() => {}}, Event,
   localStorage:{getItem:key => stored.get(key), setItem:(key,value) => stored.set(key,value), removeItem:key => stored.delete(key)},
   fetch:async (url, options) => {
     if (url === '/desktop/media/uploads') {

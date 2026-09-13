@@ -3,7 +3,6 @@ namespace App\Services;
 use App\Models\Media;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 class MediaLibrary
 {
@@ -21,8 +20,7 @@ class MediaLibrary
         $mime = $file->getMimeType() ?: 'application/octet-stream';
         $stored = app(CanonicalMediaStorage::class)->storeUploaded($file, $mime);
         $disk = $stored['disk']; $path = $stored['path'];
-        try {
-            return DB::transaction(function () use ($file, $user, $disk, $id, $path, $mime, $stored) {
+        return DB::transaction(function () use ($file, $user, $disk, $id, $path, $mime, $stored) {
                 $name = mb_substr(basename(str_replace('\\', '/', $file->getClientOriginalName())), 0, 255);
                 $media = app(\App\Services\Importing\ImportedMediaRegistry::class)->register(['id' => $id, 'title' => $name, 'original_name' => $stored['filename'],
                     'kind' => self::kind($mime), 'mime' => $mime, 'bytes' => $file->getSize(), 'disk' => $disk,
@@ -30,7 +28,6 @@ class MediaLibrary
                     'source' => 'upload', 'source_id' => $id]);
                 app(Audit::class)->record('media.uploaded', $media->id);
                 return $media;
-            });
-        } catch (\Throwable $error) { throw $error; }
+        });
     }
 }

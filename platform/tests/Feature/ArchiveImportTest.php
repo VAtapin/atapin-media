@@ -12,7 +12,7 @@ class ArchiveImportTest extends TestCase
 {
     use RefreshDatabase;
     private string $root;
-    protected function setUp():void{parent::setUp();$this->root=sys_get_temp_dir().'/atapin-import-'.bin2hex(random_bytes(10));mkdir($this->root);}
+    protected function setUp():void{parent::setUp();$this->root=sys_get_temp_dir().'/atapin-import-'.bin2hex(random_bytes(10));mkdir($this->root);\Illuminate\Support\Facades\Storage::fake('local');\Illuminate\Support\Facades\Storage::fake('media-canonical');config(['platform.media_upload_reserve_free_bytes'=>0]);}
     protected function tearDown():void{File::deleteDirectory($this->root);parent::tearDown();}
     private function write(string $path,mixed $value):void
     {
@@ -24,13 +24,13 @@ class ArchiveImportTest extends TestCase
         config(['platform.'.$source.'_root'=>$this->root]);
         $run=ImportRun::create(['source'=>$source]);app(ArchiveImporter::class)->import($run);return $run->fresh();
     }
-    public function test_intake_registers_original_without_copy_and_repeat_does_not_duplicate():void
+    public function test_intake_copies_hash_named_file_keeps_source_and_repeat_does_not_duplicate():void
     {
         $this->write('files/notes.txt','Hallo');
         $this->write('files/notes.txt.metadata.json',['schema'=>'atapin-intake/v1','id'=>'intake-1','stored_path'=>'files/notes.txt',
             'original_name'=>'Notizen.txt','bytes'=>5,'completed_at'=>'2026-09-11','received_at'=>'2026-09-11','original_relative_path'=>'notes.txt']);
         $run=$this->runArchive('intake');$this->assertSame('complete',$run->status);$this->assertSame(1,$run->imported);
-        $this->assertDatabaseHas('media',['disk'=>'intake','path'=>'files/notes.txt','status'=>'unsorted']);
+        $this->assertDatabaseHas('media',['disk'=>'local','path'=>'media-files/'.hash('sha256','Hallo').'.txt','status'=>'unsorted']);
         $media=Media::first();$media->update(['title'=>'Edited title']);
         $this->runArchive('intake');$this->assertDatabaseCount('media',1);$this->assertSame('Edited title',$media->fresh()->title);
         $this->assertSame('Hallo',file_get_contents($this->root.'/files/notes.txt'));

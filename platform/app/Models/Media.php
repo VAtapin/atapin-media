@@ -16,6 +16,9 @@ class Media extends Model
     public function classifications() { return $this->hasMany(MediaClassification::class); }
     public function originals() { return $this->hasMany(MediaOriginal::class); }
     public function scopeVisibleLibrary($query) { return $query->whereNull('archived_at'); }
+    public function publicUrl(): ?string { return app(\App\Services\CanonicalMediaStorage::class)->url($this); }
+    public function previewUrl(): string { return $this->publicUrl() ?? route('media.preview', $this); }
+    public function downloadUrl(): string { return $this->publicUrl() ?? route('media.download', $this); }
     public function formattedSize(): string
     {
         $size = $this->bytes; $units = ['B','KB','MB','GB','TB']; $i = 0;

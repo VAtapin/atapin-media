@@ -16,6 +16,7 @@ class LocalImportTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Storage::fake('local');Storage::fake('media-canonical');
         $this->root = sys_get_temp_dir().'/atapin-local-'.bin2hex(random_bytes(8));
         mkdir($this->root, 0700);
         config(['platform.import_inbox_root' => $this->root, 'filesystems.disks.import-inbox.root' => $this->root,
@@ -94,7 +95,7 @@ class LocalImportTest extends TestCase
         foreach (['one','two'] as $id) {
             $record = \App\Models\SourceRecord::where('source_id',$id)->firstOrFail();
             $this->assertCount(1,$record->metadata['media_ids']);
-            $this->assertSame($id.'.txt',Media::findOrFail($record->metadata['media_ids'][0])->original_name);
+            $this->assertSame('incoming/'.$id.'.txt',Media::findOrFail($record->metadata['media_ids'][0])->metadata['relative_path']);
         }
         $this->assertDatabaseCount('collections',1);
         $this->assertSame(['one',null,'one'],\App\Models\Collection::firstOrFail()->items->pluck('source_id')->all());
@@ -118,10 +119,10 @@ class LocalImportTest extends TestCase
         file_put_contents($this->root.'/incoming/item.de.vtt',"WEBVTT\n\n00:00.000 --> 00:02.000\nOriginal subtitle");
         file_put_contents($this->root.'/incoming/item.info.json',json_encode(['id'=>'video-id','title'=>'Video','description'=>'Description','extractor_key'=>'Youtube']));
         $this->runImport('local-folder','incoming');
-        $video = Media::where('original_name','item.mp4')->firstOrFail();
+        $video = Media::where('metadata->relative_path','incoming/item.mp4')->firstOrFail();
         $this->assertSame('video',$video->kind);
-        $this->assertSame($video->id,Media::where('original_name','item.png')->firstOrFail()->parent_id);
-        $subtitle = Media::where('original_name','item.de.vtt')->firstOrFail();
+        $this->assertSame($video->id,Media::where('metadata->relative_path','incoming/item.png')->firstOrFail()->parent_id);
+        $subtitle = Media::where('metadata->relative_path','incoming/item.de.vtt')->firstOrFail();
         $this->assertSame($video->id,$subtitle->parent_id); $this->assertSame('subtitles',$subtitle->asset_role);
         $this->assertContains($subtitle->id,\App\Models\SourceRecord::where('source_id','video-id')->firstOrFail()->metadata['media_ids']);
     }

@@ -13,7 +13,7 @@
 <p class="public-article-intro">{{ $card['excerpt']??__('public.no_data') }}</p>
 <p class="public-record-meta">{{ $card['author']??'—' }} · {{ $card['meta']??'—' }}</p>
 <div class="public-action-row">
-@if($pdf=$assets->firstWhere('mime','application/pdf'))<a class="public-button" href="{{ route('public.media',[$record,$pdf]) }}" download>{{ __('public.pdf_download') }} ↓</a>
+@if($pdf=$assets->firstWhere('mime','application/pdf'))<a class="public-button" href="{{ $pdf->publicUrl() ?? route('public.media',[$record,$pdf]) }}" download>{{ __('public.pdf_download') }} ↓</a>
 @else<button class="public-button" disabled>{{ __('public.pdf_download') }}</button>
 @endif<button class="public-button public-button-secondary" data-read-aloud @disabled(!$record)>{{ __('public.read_aloud') }}</button>
 <button class="public-button public-button-secondary" data-share>{{ __('public.share') }}</button>

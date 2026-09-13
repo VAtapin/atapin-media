@@ -416,7 +416,7 @@
 .public-live-chat .public-chat-messages article{gap:8px;padding:4px 0;line-height:1.2}.public-live-chat .public-chat-messages .public-avatar{width:28px;height:28px}.public-live-chat .public-chat-messages p{margin:2px 0 0;line-height:1.2}.public-live-chat .public-chat-status{margin-top:2px}
 
 /* One reusable overview hero: the page changes its copy and feature, not its geometry. */
-.public-overview-hero{position:relative;isolation:isolate;background-image:var(--hero-image);background-size:cover;background-position:center}
+.public-overview-hero{position:relative;isolation:isolate;overflow:clip;background-image:var(--hero-image);background-size:cover;background-position:center}
 .public-overview-hero:after{display:none}
 .public-overview-hero .public-hero-background{opacity:1}
 .public-overview-hero-inner{position:relative;z-index:1;max-width:1232px;margin:auto;padding-top:12px;display:grid;grid-template-columns:560px minmax(0,1fr);gap:40px}

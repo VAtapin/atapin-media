@@ -18,7 +18,7 @@
 @elseif($section==='community')
 @include('public.poll',['poll'=>$poll])
 @elseif($featured??null)
-@include('public.picture',['image'=>$featured['image']])<div class="public-feature-content"><span class="public-feature-label">{{ __('public.featured_'.$section) }}</span><h2><a href="{{ $featured['url'] }}">{{ $featured['title'] }}</a></h2><p>{{ $featured['excerpt'] }}</p><div class="public-feature-author">{{ $featured['author']?:'—' }}<small>{{ $featured['meta']?:'—' }}</small></div></div>@if($section==='podcast'&&($audio=$assets->firstWhere('kind','audio')))<audio controls preload="metadata" src="{{ route('public.media',[$record,$audio]) }}"></audio>@else<a class="public-feature-link" href="{{ $featured['url'] }}">{{ __('public.view_now') }} →</a>@endif
+@include('public.picture',['image'=>$featured['image']])<div class="public-feature-content"><span class="public-feature-label">{{ __('public.featured_'.$section) }}</span><h2><a href="{{ $featured['url'] }}">{{ $featured['title'] }}</a></h2><p>{{ $featured['excerpt'] }}</p><div class="public-feature-author">{{ $featured['author']?:'—' }}<small>{{ $featured['meta']?:'—' }}</small></div></div>@if($section==='podcast'&&($audio=$assets->firstWhere('kind','audio')))<audio controls preload="metadata" src="{{ $audio->publicUrl() ?? route('public.media',[$record,$audio]) }}"></audio>@else<a class="public-feature-link" href="{{ $featured['url'] }}">{{ __('public.view_now') }} →</a>@endif
 @else@include('public.empty',['url'=>match($section){'videos'=>'/videos/vorschau','beitraege'=>'/beitraege/vorschau','buecher'=>'/buecher/vorschau',default=>'#catalog'},'hint'=>__('public.featured_'.$section)])
 @endif
 </div>

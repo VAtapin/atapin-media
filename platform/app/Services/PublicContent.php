@@ -32,7 +32,7 @@ class PublicContent
     }
     public function homepageVideos(): \Illuminate\Database\Eloquent\Builder
     {
-        return $this->query()->whereIn('kind',['video','short'])->where('metadata->public_homepage',true);
+        return $this->forSection('videos')->where('metadata->public_homepage',true);
     }
     public function latestRecording(): ?SourceRecord
     {
@@ -148,7 +148,7 @@ class PublicContent
             'tags'=>array_values(array_filter($record->metadata['tags']??[],'is_string')),
             'duration'=>$record->metadata['duration']??null,'views'=>$this->viewCount($record),
             'date'=>$date,'viewers'=>is_numeric($record->metadata['viewer_count']??null)?(int)$record->metadata['viewer_count']:'',
-            'image'=>$image?route('public.media',[$record,$image]):null,
+            'image'=>$image?($image->publicUrl() ?? route('public.media',[$record,$image])):null,
             'meta'=>$meta];
     }
 }

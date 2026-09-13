@@ -48,7 +48,7 @@ class FoundationTest extends TestCase
         $this->post('/desktop/media',['file'=>$file])->assertRedirect();
         $media = Media::firstOrFail(); Storage::disk('local')->assertExists($media->path);
         $this->get('/desktop/media/'.$media->id.'/preview')->assertStatus(415);
-        $this->get('/desktop/media/'.$media->id.'/download')->assertOk()->assertDownload('Notizen.html');
+        $this->get('/desktop/media/'.$media->id.'/download')->assertOk()->assertDownload($media->original_name);
         $this->patch('/desktop/media/'.$media->id,['title'=>'Hoffnung'])->assertRedirect();
         $this->assertDatabaseHas('audit_events',['action'=>'media.uploaded','subject'=>$media->id]);
     }

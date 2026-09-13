@@ -33,7 +33,8 @@ try {
     for(const [index,route] of routes.entries()){
       await page.goto('http://127.0.0.1:8795'+route);await page.evaluate(()=>document.fonts.ready);
       if(await page.locator('[data-live-heartbeat]').count())await page.waitForFunction(()=>/^\d+$/.test(document.querySelector('[data-live-online]').textContent));
-      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`${route}: overflow at ${width}`);
+      const overflow=await page.evaluate(()=>({ok:document.documentElement.scrollWidth<=innerWidth,offenders:Array.from(document.querySelectorAll('body *')).filter(element=>{const rect=element.getBoundingClientRect();return rect.width&&rect.right>innerWidth+0.1;}).slice(0,8).map(element=>({tag:element.tagName,class:element.className,right:element.getBoundingClientRect().right}))}));
+      assert.equal(overflow.ok,true,`${route}: overflow at ${width}: ${JSON.stringify(overflow.offenders)}`);
       assert(await page.locator('.public-header').isVisible(),route);
       assert.equal(await page.locator('main').count(),1,route);
       await page.screenshot({path:`tests/artifacts/public-page-${index+1}-${width}${process.env.PUBLIC_DETAIL_ROUTES?'-filled':''}.png`,fullPage:true});

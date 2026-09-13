@@ -20,7 +20,7 @@ class PublicWebsiteController extends Controller
         $articles=$content->forSection('beitraege')->latest()->limit(3)->get()->map($content->card(...));
         $books=app(PublicBooks::class);$book=$books->query()->latest()->first();
         $live=$content->nextLive();
-        $featuredRecord=$content->homepageVideos()->latest()->first()??$content->forSection('videos')->latest()->first();
+        $featuredRecord=$content->homepageVideos()->latest()->orderByDesc('id')->first()??$content->forSection('videos')->latest()->orderByDesc('id')->first();
         return view('public.home',[...$this->shared(),'videos'=>$videos,'articles'=>$articles,
             'featured'=>$featuredRecord?$content->card($featuredRecord):null,'book'=>$book?$books->card($book):null,
             'live'=>$live?$content->card($live):null]);
@@ -63,10 +63,10 @@ class PublicWebsiteController extends Controller
         $card=$content->card($record);if($request->url()!==$card['url'])return redirect($card['url'],301);
         return view('public.'.($section==='videos'?'video':'beitrag'),[...$this->shared(),'section'=>$section,'layoutMode'=>'detail',...app(PublicCatalog::class)->detail($request,$record,$section)]);
     }
-    public function media(SourceRecord $record,Media $media,PublicContent $content,\App\Services\PublicMediaLinks $links)
+    public function media(SourceRecord $record,Media $media,PublicContent $content)
     {
         abort_unless($content->visible($record)&&$content->assets($record)->contains('id',$media->id),404);
-        if ($url = $links->url($media)) return redirect()->away($url, 302, ['Cache-Control'=>'public, max-age=31536000, immutable']);
+        if ($url = $media->publicUrl()) return redirect($url);
         return app(MediaController::class)->preview($media);
     }
     public function book(Request $request,string $slug,PublicBooks $books,PublicCatalog $catalog)

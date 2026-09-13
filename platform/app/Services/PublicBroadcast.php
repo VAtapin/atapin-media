@@ -66,16 +66,26 @@ class PublicBroadcast
     {
         $record=$path===self::SHARED_PATH?$this->recordingRecord():$this->record($path);if(!$record)return;
         $root=Storage::disk('live-recordings')->path('');
+        $rootPath=rtrim(realpath($root) ?: $root, '/\\');
+        $candidate=str_replace('\\','/',$file);
+        $prefix=str_replace('\\','/',$rootPath).'/';
+        if(str_starts_with($candidate,$prefix)) {
+            $relative=substr($candidate,strlen($prefix));
+            \App\Services\Importing\ImportPath::entry($relative);
+            if(str_starts_with($relative,$path.'/') && Media::where('source','live')->where('source_id',hash('sha256',$relative))->exists())return;
+        }
         $resolved=\App\Services\Importing\ImportPath::resolve($root,$file);
         if(!is_file($resolved)||is_link($file)||strtolower(pathinfo($resolved,PATHINFO_EXTENSION))!=='mp4')throw new \RuntimeException('Invalid completed recording.');
         $relative=str_replace('\\','/',substr($resolved,strlen(rtrim(realpath($root),'/\\'))+1));
         if(!str_starts_with($relative,$path.'/'))throw new \RuntimeException('Recording belongs to another stream.');
-        $media = DB::transaction(function()use($record,$resolved,$relative){
+        $stored=app(CanonicalMediaStorage::class)->storePath($resolved,'video/mp4');
+        $media = DB::transaction(function()use($record,$stored,$relative){
             $record=SourceRecord::lockForUpdate()->findOrFail($record->id);
-            $media=Media::firstOrCreate(['source'=>'live','source_id'=>hash('sha256',$relative)],['disk'=>'live-recordings','path'=>$relative,'kind'=>'video','mime'=>'video/mp4','bytes'=>filesize($resolved),'title'=>$record->title,'original_name'=>basename($resolved),'status'=>'unsorted','metadata'=>['live_record_id'=>$record->id]]);
+            $media=app(\App\Services\Importing\ImportedMediaRegistry::class)->register(['source'=>'live','source_id'=>hash('sha256',$relative),'disk'=>$stored['disk'],'path'=>$stored['path'],'sha256'=>$stored['sha256'],'kind'=>'video','mime'=>'video/mp4','bytes'=>$stored['bytes'],'title'=>$record->title,'original_name'=>$stored['filename'],'status'=>'unsorted','metadata'=>['live_record_id'=>$record->id]]);
             $record->update(['metadata'=>[...$record->metadata,'media_ids'=>array_values(array_unique([...($record->metadata['media_ids']??[]),$media->id]))]]);
             return $media;
         });
+        unlink($resolved);
     }
     public function configuration(): string
     {

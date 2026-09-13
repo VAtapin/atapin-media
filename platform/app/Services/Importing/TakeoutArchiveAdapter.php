@@ -69,11 +69,9 @@ class TakeoutArchiveAdapter implements ImportAdapter
         if(($batch['layout']??null)==='folder') {
             $prepared=$batch['id']==='prepared:Takeout';
             $storageRoot=$prepared?config('platform.takeout_folder'):config('platform.takeout_root');
-            $disk=$prepared?'takeout-prepared':'takeout';
             $root=$prepared?ImportPath::resolve(dirname($storageRoot),basename($storageRoot)):ImportPath::resolve($storageRoot,substr($batch['id'],7));
             app(TakeoutCatalog::class)->inspect($run,[],$root,null);
-            (new LocalFolderAdapter($storageRoot,$disk,true))->importDirectory($run,$root,false);
-            app(TakeoutContentImporter::class)->import($run,[$root],$disk,$storageRoot);
+            app(TakeoutContentImporter::class)->import($run,[$root]);
             return;
         }
         $archives=[]; $required=0; $entries=0;
@@ -123,7 +121,6 @@ class TakeoutArchiveAdapter implements ImportAdapter
             }
             app(ImportProgress::class)->checkpoint($run,'extract', ['part' => $index + 1, 'parts' => count($archives), 'archive' => basename($archive)], true);
             $root=app(LocalArchiveAdapter::class)->expandFile($run,$archive,basename($archive)); $roots[]=$root;
-            (new LocalFolderAdapter(null, 'import-inbox', true))->importDirectory($run,$root,false);
             $journal->record($run,$key,basename($archive),'checkpoint','complete',null,['signature'=>$signature,'root'=>$root]);
         }
         app(ImportProgress::class)->checkpoint($run,'metadata');

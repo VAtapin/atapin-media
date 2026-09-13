@@ -146,7 +146,7 @@ class MediaLibraryUploadTest extends TestCase
             $run = \App\Models\ImportRun::findOrFail($queued->json('import_id'));
             app(\App\Services\Importing\ImportCenter::class)->run($run);
             $this->assertSame('complete',$run->fresh()->status);
-            $original = Media::where('source','local-archive')->where('original_name','original.txt')->firstOrFail();
+            $original = Media::where('source','local-archive')->where('sha256',hash('sha256','Original archive file'))->firstOrFail();
             $this->assertSame('Original archive file',Storage::disk($original->disk)->get($original->path));
             $this->assertDatabaseHas('source_records',['source'=>'youtube','source_id'=>'post-123','kind'=>'post','status'=>'unsorted']);
             $this->getJson('/desktop/content?section=posts')->assertOk()->assertJsonPath('data.0.title','Archiv Beitrag');

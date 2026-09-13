@@ -9,6 +9,12 @@ use Tests\TestCase;
 class PublicBroadcastTest extends TestCase
 {
     use RefreshDatabase;
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Storage::fake('media-canonical');
+        config(['platform.media_upload_reserve_free_bytes' => 0]);
+    }
     public function test_legacy_live_html_interface_is_not_exposed(): void
     {
         $this->get('/desktop/live')->assertNotFound();
@@ -98,12 +104,14 @@ class PublicBroadcastTest extends TestCase
         $broadcast->recording('live',$file);
         $this->assertContains(Media::firstOrFail()->id,$event->fresh()->metadata['media_ids']);
     }
-    public function test_completed_recordings_are_registered_once_and_linked_without_copying(): void
+    public function test_completed_recordings_are_moved_to_public_media_once_and_linked(): void
     {
         Storage::fake('live-recordings');$event=$this->event();$path='live-'.$event->id;
         Storage::disk('live-recordings')->put($path.'/segment.mp4','completed recording');$file=Storage::disk('live-recordings')->path($path.'/segment.mp4');
         $broadcast=app(PublicBroadcast::class);$broadcast->recording($path,$file);$broadcast->recording($path,$file);
-        $this->assertSame(1,Media::count());$this->assertSame([Media::first()->id],$event->fresh()->metadata['media_ids']);$this->assertFileExists($file);
+        $this->assertSame(1,Media::count());$this->assertSame([Media::first()->id],$event->fresh()->metadata['media_ids']);$this->assertFileDoesNotExist($file);
+        $this->assertSame('media-canonical',Media::first()->disk);
+        $this->assertFileExists(Storage::disk('media-canonical')->path(Media::first()->path));
         $broadcast->signal($path,true);$this->assertSame('live',$event->fresh()->metadata['live_status']);
         $broadcast->signal($path,false);$this->assertSame('ended',$event->fresh()->metadata['live_status']);
     }

@@ -21,7 +21,7 @@ class TakeoutImportTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();$this->root=sys_get_temp_dir().'/takeout-test-'.bin2hex(random_bytes(8));mkdir($this->root.'/inbox',0700,true);mkdir($this->root.'/zips');
-        config(['platform.takeout_root'=>$this->root.'/zips','platform.import_inbox_root'=>$this->root.'/inbox','filesystems.disks.import-inbox.root'=>$this->root.'/inbox','platform.media_upload_reserve_free_bytes'=>0]);Storage::forgetDisk('import-inbox');
+        config(['platform.takeout_root'=>$this->root.'/zips','platform.import_inbox_root'=>$this->root.'/inbox','filesystems.disks.import-inbox.root'=>$this->root.'/inbox','filesystems.disks.media-canonical.root'=>$this->root.'/public/media','platform.media_upload_reserve_free_bytes'=>0]);Storage::forgetDisk('import-inbox');Storage::forgetDisk('media-canonical');
     }
     protected function tearDown(): void {File::deleteDirectory($this->root);parent::tearDown();}
     private function csv(array $headers,array $rows): string
@@ -49,6 +49,49 @@ class TakeoutImportTest extends TestCase
     private function runImport(): ImportRun
     {
         $run=ImportRun::create(['source'=>'youtube-takeout','source_options'=>['batch'=>$this->batch,'expected_parts'=>2],'target_profile'=>'mixed']);app(ImportCenter::class)->run($run);return $run->fresh();
+    }
+    public function test_each_video_commits_with_its_children_before_the_next_binary_and_retry_is_complete(): void
+    {
+        $this->zip(1,[
+            'Video-Metadaten/Videos.csv'=>$this->csv(['Video-ID','Videotitel (Original)'],[['first000001','First'],['second00002','Second']]),
+            'Kommentare/Kommentare.csv'=>$this->csv(['Kommentar-ID','Video-ID','Kommentartext'],[['C1','first000001','First comment']]),
+            'Livechats/Livechats.csv'=>$this->csv(['Live-Chat-ID','Video-ID','Text für den Live-Chat'],[['L1','first000001','First chat']]),
+            'Playlists/Playlists.csv'=>$this->csv(['Playlist-ID','Playlist-Titel (Original)'],[['PL1','Ordered']]),
+            'Playlists/Ordered-Videos.csv'=>$this->csv(['Video-ID'],[['first000001'],['second00002']]),
+        ]);
+        $mp4=pack('N',24).'ftypisom'.str_repeat("\0",12);
+        $png=base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jvyoAAAAASUVORK5CYII=');
+        $this->zip(2,['Videos/First.mp4'=>$mp4,'Videos/Second.mp4'=>$mp4.'second','Videos/First.png'=>$png,'Videos/First.de.srt'=>"1\n00:00:00,000 --> 00:00:01,000\nFirst\n"]);
+        $observe=function() {
+            $first=SourceRecord::where('source_id','first000001')->firstOrFail();
+            $this->assertCount(3,$first->metadata['media_ids']);
+            $this->assertDatabaseHas('source_records',['source_id'=>'comment:first000001:C1']);
+            $this->assertDatabaseHas('source_records',['source_id'=>'live-chat:L1']);
+            $this->assertDatabaseHas('collection_items',['source_id'=>'first000001','source_record_id'=>$first->id]);
+            $this->assertDatabaseMissing('source_records',['source_id'=>'second00002']);
+        };
+        app()->instance(\App\Services\Importing\TakeoutMediaImporter::class,new class($observe) extends \App\Services\Importing\TakeoutMediaImporter {
+            public function __construct(private \Closure $observe) {}
+            public function prepare(ImportRun $run,array $file): void {
+                if(basename($file['entry'])==='Second.mp4') {($this->observe)();throw new \RuntimeException('Interrupted second object');}
+                parent::prepare($run,$file);
+            }
+        });
+        $run=ImportRun::create(['source'=>'youtube-takeout','source_options'=>['batch'=>$this->batch,'expected_parts'=>2],'target_profile'=>'mixed']);
+        try {app(ImportCenter::class)->run($run);$this->fail('Expected failure');}
+        catch(\RuntimeException $e) {$this->assertSame('Interrupted second object',$e->getMessage());}
+        $this->assertSame('failed',$run->fresh()->status);
+        $this->assertSame(3,Media::count());
+        app()->forgetInstance(\App\Services\Importing\TakeoutMediaImporter::class);
+        $run->update(['status'=>'queued']);app(ImportCenter::class)->run($run);
+        $this->assertNotSame('failed',$run->fresh()->status);
+        $this->assertDatabaseHas('source_records',['source_id'=>'second00002']);
+        $this->assertSame(4,Media::count());
+        foreach(Media::all() as $media) {
+            $this->assertSame('media-canonical',$media->disk);
+            $this->assertFileExists(Storage::disk($media->disk)->path($media->path));
+            $this->assertSame($media->path,$media->original_name);
+        }
     }
     public function test_structured_posts_extensionless_images_quiz_and_all_account_folders(): void
     {
@@ -112,7 +155,9 @@ class TakeoutImportTest extends TestCase
         $input=app(ImportCenter::class)->prepareInput('youtube-takeout',['batch'=>'prepared:Takeout']);
         $run=ImportRun::create([...$input,'status'=>'queued']);app(ImportCenter::class)->run($run);
         $media=Media::findOrFail(SourceRecord::where('source_id','abcdefghijk')->firstOrFail()->metadata['media_ids'][0]);
-        $this->assertSame('takeout-prepared',$media->disk);$this->assertFileExists(Storage::disk($media->disk)->path($media->path));
+        $this->assertSame('media-canonical',$media->disk);$this->assertFileExists(Storage::disk($media->disk)->path($media->path));
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{64}\.mp4$/',$media->path);
+        $this->assertFileExists($folder.'/YouTube und YouTube Music/Videos/Fixture Video.mp4');
         $this->assertNotNull(app(\App\Services\MediaOriginalLocator::class)->find($legacy));
         $this->assertDirectoryDoesNotExist($this->root.'/inbox/archives');
         config(['platform.takeout_root'=>$this->root.'/absent']);
@@ -233,8 +278,8 @@ class TakeoutImportTest extends TestCase
         $input=app(ImportCenter::class)->prepareInput('youtube-takeout',['batch'=>'folder:prepared']);
         $run=ImportRun::create([...$input,'status'=>'queued']);app(ImportCenter::class)->run($run);
         $video=SourceRecord::where('source_id','abcdefghijk')->firstOrFail();$this->assertCount(1,$video->metadata['media_ids']);
-        $media=Media::findOrFail($video->metadata['media_ids'][0]);$this->assertSame('takeout',$media->disk);
-        $this->assertFileExists(Storage::disk('takeout')->path($media->path));$this->assertDirectoryDoesNotExist($this->root.'/inbox/archives');
+        $media=Media::findOrFail($video->metadata['media_ids'][0]);$this->assertSame('media-canonical',$media->disk);
+        $this->assertFileExists(Storage::disk($media->disk)->path($media->path));$this->assertDirectoryDoesNotExist($this->root.'/inbox/archives');
         $this->assertTrue(app(\App\Services\Importing\ImportJournal::class)->item($run,'takeout-manifest')->metadata['manifest_available']);
         app(ImportCenter::class)->run($run->fresh());$this->assertSame(1,SourceRecord::where('source_id','abcdefghijk')->count());
     }

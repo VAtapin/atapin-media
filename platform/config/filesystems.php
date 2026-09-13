@@ -35,7 +35,7 @@ return [
             'throw'=>true, 'serve'=>false,
         ],
         'youtube' => [
-            'driver'=>'local', 'root'=>env('YOUTUBE_ROOT',dirname(base_path(),2).'/private/manna-youtube'),
+            'driver'=>'local', 'root'=>env('YOUTUBE_ROOT',rtrim(env('IMPORT_INBOX_ROOT',dirname(base_path(),2).'/private/import-inbox'),'/').'/youtube'),
             'throw'=>true, 'serve'=>false,
         ],
         'import-inbox' => [
@@ -53,7 +53,9 @@ return [
         ],
         'media-canonical' => [
             'driver' => 'local',
-            'root' => env('MEDIA_CANONICAL_ROOT', dirname(base_path(), 2).'/private/atapin-media/media'),
+            'root' => public_path('media'),
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/media',
+            'visibility' => 'public',
             'throw' => true,
             'serve' => false,
         ],

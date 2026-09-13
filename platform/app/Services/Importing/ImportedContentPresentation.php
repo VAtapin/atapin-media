@@ -43,8 +43,8 @@ class ImportedContentPresentation
             $available = (bool)app(\App\Services\MediaOriginalLocator::class)->find($media);
             return ['id' => $media->id, 'title' => $media->title, 'kind' => $media->kind, 'mime' => $media->mime,
                 'role' => $media->asset_role, 'available' => $available, 'bytes' => $media->bytes,
-                'download_url' => $available ? route('media.download', $media) : null,
-                'preview_url' => $available && in_array($media->mime, ['image/jpeg','image/png','image/webp','image/gif','audio/mpeg','audio/ogg','video/mp4','video/webm','application/pdf'], true) ? route('media.preview', $media) : null];
+                'download_url' => $available ? $media->downloadUrl() : null,
+                'preview_url' => $available && in_array($media->mime, ['image/jpeg','image/png','image/webp','image/gif','audio/mpeg','audio/ogg','video/mp4','video/webm','application/pdf'], true) ? $media->previewUrl() : null];
         });
     }
 
