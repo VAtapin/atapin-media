@@ -1,5 +1,9 @@
 <?php
 return [
+    'public_published'=>'Auf der Website veröffentlichen',
+    'public_visible'=>'Auf der Website veröffentlicht.','public_open'=>'Auf der Website ansehen',
+    'public_ready_required'=>'Nur fertige Videos und Beiträge außerhalb des privaten Archivs können veröffentlicht werden.',
+    'public_published_hint'=>'Nur für fertige Videos und Beiträge (Status Bereit). Verknüpfte Dateien werden öffentlich zugänglich. Import allein veröffentlicht nichts.',
     'progress_queued'=>'Wartet auf einen freien Hintergrundprozess. Startet automatisch; bitte nicht erneut importieren.',
     'progress_active'=>'Verarbeitung aktiv · Rückmeldung vor :seconds Sekunden',
     'progress_last'=>'Letzte Rückmeldung dieses Imports vor :seconds Sekunden',

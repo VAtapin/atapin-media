@@ -1,0 +1,61 @@
+<?php
+namespace Tests\Feature;
+
+use App\Models\{SourceRecord,Media,Role,User};
+use App\Services\{Access,PublicContent};
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
+use Tests\TestCase;
+
+class PublicWebsiteTest extends TestCase
+{
+    use RefreshDatabase;
+    private function record(array $data=[]): SourceRecord
+    {
+        return SourceRecord::create([...['source'=>'youtube','source_id'=>'abcdefghijk','kind'=>'video','title'=>'Public teaching','body'=>'Original text','status'=>'ready','metadata'=>[]],...$data]);
+    }
+    public function test_home_and_navigation_are_real_pages_without_private_imports(): void
+    {
+        $record=$this->record(['title'=>'Private archive title']);
+        $this->get('/')->assertOk()->assertSee('public-section-cards',false)->assertDontSee('Private archive title');
+        foreach(['videos','beitraege','buecher','live','podcast','community','ueber-uns','kontakt','datenschutz','impressum','suche'] as $path)$this->get('/'.$path)->assertOk();
+        $this->get('/videos/private-'.$record->id)->assertNotFound();
+    }
+    public function test_only_explicit_ready_publications_are_listed_and_can_be_revoked(): void
+    {
+        $record=$this->record(['metadata'=>['public_published'=>true]]);
+        $url=app(PublicContent::class)->card($record)['url'];
+        $this->get('/')->assertOk()->assertSee('Public teaching');
+        $this->get($url)->assertOk()->assertSee('Original text');
+        $this->get('/suche?q=unmatched')->assertDontSee('Public teaching');
+        foreach([['public_published'=>false],['public_published'=>true,'archive_data'=>true],['public_published'=>true,'library_only'=>true]] as $metadata){
+            $record->update(['metadata'=>$metadata]);$this->get($url)->assertNotFound();
+        }
+        $record->update(['metadata'=>['public_published'=>true],'status'=>'unsorted']);$this->get($url)->assertNotFound();
+    }
+    public function test_public_media_requires_a_published_parent_and_exact_connection(): void
+    {
+        Storage::fake('local');Storage::disk('local')->put('originals/local.mp4','0123456789');
+        $media=Media::create(['title'=>'Local video','original_name'=>'local.mp4','kind'=>'video','mime'=>'video/mp4','bytes'=>10,'disk'=>'local','path'=>'originals/local.mp4','source'=>'upload','source_id'=>'local-video']);
+        $record=$this->record(['metadata'=>['public_published'=>true,'media_ids'=>[$media->id]]]);
+        $url=route('public.media',[$record,$media]);
+        $this->get($url)->assertOk()->assertHeader('Content-Type','video/mp4');
+        $this->get($url,['Range'=>'bytes=0-3'])->assertStatus(206)->assertHeader('Content-Range','bytes 0-3/10');
+        $record->update(['metadata'=>['public_published'=>true]]);$this->get($url)->assertNotFound();
+        $record->update(['metadata'=>['media_ids'=>[$media->id]]]);$this->get($url)->assertNotFound();
+    }
+    public function test_publishing_requires_publish_permission_and_ready_content(): void
+    {
+        app(Access::class)->seed();$record=$this->record(['status'=>'unsorted']);
+        $user=User::factory()->create();$user->roles()->attach(Role::where('name','Mediengestalter')->firstOrFail());
+        $this->actingAs($user)->patchJson('/desktop/content/'.$record->id,['public_published'=>true])->assertForbidden();
+        $user->roles()->sync([Role::where('name','Owner')->firstOrFail()->id]);$user->unsetRelation('roles');
+        $data=['title'=>$record->title,'kind'=>'video'];
+        $this->patchJson('/desktop/content/'.$record->id,[...$data,'status'=>'unsorted','public_published'=>true])->assertStatus(422);
+        $this->patchJson('/desktop/content/'.$record->id,[...$data,'status'=>'ready','public_published'=>true])->assertOk();
+        $this->assertTrue($record->fresh()->metadata['public_published']);
+        $this->getJson('/desktop/content/'.$record->id)->assertOk()->assertJsonPath('private',false);
+        $this->patchJson('/desktop/content/'.$record->id,[...$data,'status'=>'ready','public_published'=>false])->assertOk();
+        $this->assertFalse($record->fresh()->metadata['public_published']);
+    }
+}

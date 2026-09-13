@@ -1,4 +1,5 @@
 <section class="desktop-media-library desktop-content-library" data-content-library data-can-edit="{{ auth()->user()->hasPermission('content.edit') ? 'true' : 'false' }}" data-can-media-edit="{{ auth()->user()->hasPermission('media.edit') ? 'true' : 'false' }}" data-can-upload="{{ auth()->user()->hasPermission('media.upload') ? 'true' : 'false' }}" data-user-id="{{ auth()->id() }}" data-content-url="{{ route('content.index') }}">
+    @can('content.publish')<span hidden data-can-publish></span>@endcan
     @can('content.edit')<details class="media-inspector"><summary>{{ __('imports.local_connections') }}</summary><p>{{ __('imports.local_connections_hint') }}</p><button type="button" class="desktop-button" data-repair-local-links>{{ __('imports.repair_connections') }}</button><p role="status"></p></details>@endcan
     <form class="media-library-toolbar" data-content-filter>
         <label class="media-library-search"><span class="sr-only">{{ __('ui.search') }}</span><input type="search" name="q" maxlength="120" placeholder="{{ __('ui.search') }}"></label>

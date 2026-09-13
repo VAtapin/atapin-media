@@ -29,9 +29,11 @@ class ImportedContentController extends Controller
 
     public function update(Request $request, SourceRecord $record, \App\Services\Importing\ContentAssignment $assignment)
     {
+        if($request->exists('public_published')||($record->metadata['public_published']??false))\Illuminate\Support\Facades\Gate::authorize('content.publish');
         $assignment->record($record, $request->validate(['title' => 'required|string|max:255', 'body' => 'nullable|string|max:1000000',
             'kind' => 'required|in:'.implode(',',SourceRecord::KINDS), 'status' => 'required|in:unsorted,ready,needs_attention',
             'target_profile'=>'nullable|in:media_library,videos,shorts,posts,polls,comments',
+            'public_published'=>'sometimes|boolean',
             'tags' => 'nullable|array|max:30', 'tags.*' => 'string|max:100']));
         return response()->json(['status' => 'saved']);
     }
@@ -74,6 +76,8 @@ class ImportedContentController extends Controller
     {
         $metadata = $record->metadata;
         $assets = $presentation->assets($record);
+        $publicContent=app(\App\Services\PublicContent::class);
+        $publicUrl=$publicContent->query()->whereKey($record->id)->exists()?$publicContent->card($record)['url']:null;
         $version=app(\App\Services\Importing\ContentState::class)->version($record);
         return response()->json(['id' => $record->id, 'title' => $record->title, 'body' => $record->body,
             'trashed'=>$record->trashed(),
@@ -82,6 +86,8 @@ class ImportedContentController extends Controller
             'author' => $metadata['author'] ?? null, 'tags' => $metadata['tags'] ?? [], 'classification' => $metadata['classification'] ?? null,
             'target_profile'=>($metadata['library_only']??false) ? 'media_library' : match($record->kind){'video'=>'videos','short'=>'shorts','post'=>'posts','poll'=>'polls','comment'=>'comments',default=>'media_library'},
             'archive_data'=>(bool)($metadata['archive_data']??false),'takeout_data'=>$metadata['takeout_data']??[],
+            'public_published'=>(bool)($metadata['public_published']??false),
+            'public_url'=>$publicUrl,
             'references'=>$presentation->references($record),
             'external_url' => $presentation->externalUrl($metadata ?? [], $record->source, $record->source_id, $record->kind),
             'has_local_video' => $assets->contains(fn ($asset) => $asset['kind'] === 'video' && $asset['available']),
@@ -92,7 +98,7 @@ class ImportedContentController extends Controller
             'import_enriched' => (bool) ($metadata['import_enriched'] ?? false),
             'import_versions' => \App\Models\SourceRecordSnapshot::where('source_record_id',$record->id)->latest()->limit(20)->get(['id','title','created_at'])
                 ->map(fn ($snapshot) => ['title'=>$snapshot->title,'created_at'=>$snapshot->created_at,'url'=>route('content.import-version',[$record,$snapshot])]),
-            'assets' => $assets, 'private' => true]);
+            'assets' => $assets, 'private' => $publicUrl===null]);
     }
 
     public function importVersion(SourceRecord $record, \App\Models\SourceRecordSnapshot $snapshot)

@@ -1,5 +1,9 @@
 <?php
 return [
+    'public_published'=>'Publish on the website',
+    'public_visible'=>'Published on the website.','public_open'=>'View on the website',
+    'public_ready_required'=>'Only ready videos and posts outside the private archive can be published.',
+    'public_published_hint'=>'Only ready videos and posts. Linked files become publicly accessible. Importing alone does not publish anything.',
     'progress_queued'=>'Waiting for a free background worker. Starts automatically; do not import again.',
     'progress_active'=>'Processing active · Update :seconds seconds ago',
     'progress_last'=>'Last update from this import :seconds seconds ago',

@@ -1,5 +1,12 @@
 <?php
 return [
+    'section_videos'=>'Videos','section_beitraege'=>'Beiträge','section_search'=>'Suche',
+    'section_buecher'=>'Bücher','section_live'=>'Livestreams','section_podcast'=>'Podcast','section_community'=>'Community',
+    'section_ueber-uns'=>'Über uns','section_unsere-mission'=>'Unsere Mission','section_kontakt'=>'Kontakt',
+    'section_datenschutz'=>'Datenschutz','section_impressum'=>'Impressum',
+    'no_published_content'=>'Noch keine veröffentlichten Inhalte. Importierte Materialien bleiben privat, bis sie ausdrücklich veröffentlicht werden.',
+    'section_pending'=>'Dieser Bereich wird vorbereitet.','newsletter_pending'=>'Die Newsletter-Anmeldung wird vorbereitet.',
+    'pagination'=>'Weitere Ergebnisse','previous'=>'Zurück','next'=>'Weiter',
     'hero_eyebrow'=>'CHRISTLICHE MEDIEN FÜR EIN BESSERES MORGEN',
     'hero_title_line1'=>'Glaube, der','hero_title_line2'=>'Leben verändert.',
     'hero_intro'=>'Manna Vom Himmel ist eine christliche Medienplattform mit Videos, Artikeln, Podcasts, Büchern und einer lebendigen Community – für alle, die Gott im Alltag erleben und tiefer im Glauben wachsen möchten.',

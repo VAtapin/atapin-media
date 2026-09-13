@@ -62,6 +62,11 @@ class ContentAssignment
         elseif ($origin === 'manual' && !isset($metadata['library_only'])) $metadata['library_only']=false;
         $kind=match($data['target_profile']??'') {'videos'=>'video','shorts'=>'short','posts'=>'post','polls'=>'poll','comments'=>'comment',default=>$data['kind']??$record->kind};
         if($origin==='ai' && ($metadata['takeout']??false))$kind=$record->kind;
+        if($origin==='manual'&&array_key_exists('public_published',$data)) {
+            abort_if($data['public_published']&&(!in_array($kind,['video','short','post'],true)||($data['status']??$record->status)!=='ready'||($metadata['archive_data']??false)||($metadata['library_only']??false)),422,__('imports.public_ready_required'));
+            $metadata['public_published']=(bool)$data['public_published'];
+            if($data['public_published'])$metadata['public_published_at']??=now()->toIso8601String();
+        }
         if (isset($data['summary'])) $metadata['summary'] = $data['summary'];
         if (isset($data['tags'])) $metadata['tags'] = $data['tags'];
         $record->update(['title' => $data['title'] ?? $record->title, 'body' => array_key_exists('body', $data) ? ($data['body'] ?? '') : $record->body,

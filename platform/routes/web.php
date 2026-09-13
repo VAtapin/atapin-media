@@ -7,7 +7,12 @@ use App\Http\Controllers\MediaController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ImportController;
 
-Route::get('/', fn () => view('home'))->name('home');
+Route::get('/', [\App\Http\Controllers\PublicWebsiteController::class,'home'])->name('home');
+foreach(['videos','beitraege','buecher','live','podcast','community','ueber-uns','unsere-mission','kontakt','datenschutz','impressum','suche'] as $section)
+    Route::get('/'.$section,[\App\Http\Controllers\PublicWebsiteController::class,'listing'])->defaults('section',$section==='suche'?'search':$section)->name('public.'.$section);
+Route::get('/videos/{slug}',[\App\Http\Controllers\PublicWebsiteController::class,'detail'])->defaults('section','videos')->name('public.video');
+Route::get('/beitraege/{slug}',[\App\Http\Controllers\PublicWebsiteController::class,'detail'])->defaults('section','beitraege')->name('public.article');
+Route::get('/media/public/{record}/{media}',[\App\Http\Controllers\PublicWebsiteController::class,'media'])->name('public.media');
 Route::get('/upload/{path?}', fn () => redirect('/desktop', 303))->where('path', '.*');
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class,'create'])->name('login');
