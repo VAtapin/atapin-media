@@ -35,10 +35,10 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Desktop · {{ config('platform.brand') }}</title>
     <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=4"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3"><link rel="stylesheet" href="/assets/desktop-settings.css?v=3">
-    <link rel="stylesheet" href="/assets/desktop-app.css?v=1"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=6"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=2">
+    <link rel="stylesheet" href="/assets/desktop-app.css?v=1"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=6"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=2"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=1">
     <script src="/assets/desktop-shortcuts.js?v=3" defer></script>
     <link rel="stylesheet" href="/assets/desktop-import-workflow.css?v=3">
-    <script src="/assets/desktop-os.js?v=13" defer></script><script src="/assets/settings-tabs.js?v=6" defer></script><script src="/assets/desktop-media-library.js?v=12" defer></script><script src="/assets/desktop-import-center.js?v=8" defer></script>
+    <script src="/assets/desktop-os.js?v=13" defer></script><script src="/assets/settings-tabs.js?v=6" defer></script><script src="/assets/desktop-media-library.js?v=12" defer></script><script src="/assets/desktop-import-center.js?v=8" defer></script><script src="/assets/desktop-live-studio.js?v=1" defer></script>
 </head>
 <body class="os-body">
 <main class="os-desktop" data-desktop data-storage-key="atapin.desktop.{{ auth()->id() }}.v1"
@@ -77,7 +77,44 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
         @include('desktop.import-center')
     </template>
     <template id="content-library-app-template">@include('desktop.content-library')</template>
-    <script>window.desktopImportLabels = @json(__('imports'));</script>
+    <template id="live-studio-app-template">
+        <section class="desktop-live-studio" data-live-studio data-api-index="{{ route('desktop.live.api.index') }}" data-api-base="{{ url('/api/desktop/live') }}" data-preview-base="{{ url('/live?event=') }}">
+            <header class="desktop-live-studio-head">
+                <div>
+                    <p class="desktop-live-eyebrow">{{ __('desktop-live.eyebrow') }}</p>
+                    <h1>{{ __('desktop-live.title') }}</h1>
+                    <p>{{ __('desktop-live.intro') }}</p>
+                </div>
+                <button class="desktop-button is-primary" type="button" data-live-new>{{ __('desktop-live.new') }}</button>
+            </header>
+            <div class="desktop-live-studio-grid">
+                <aside class="desktop-live-events">
+                    <div class="desktop-live-section-heading"><h2>{{ __('desktop-live.events') }}</h2><span data-live-count>0</span></div>
+                    <p class="desktop-live-status" data-live-list-status>{{ __('desktop-live.loading') }}</p>
+                    <div class="desktop-live-event-list" data-live-events></div>
+                </aside>
+                <section class="desktop-live-editor" aria-live="polite">
+                    <div class="desktop-live-feedback" data-live-feedback role="status" hidden></div>
+                    <div class="desktop-live-editor-empty" data-live-editor-empty>
+                        <span class="desktop-live-mark">✦</span><strong>{{ __('desktop-live.new') }}</strong><p>{{ __('desktop-live.empty') }}</p>
+                    </div>
+                    <form data-live-form hidden>
+                        <div class="desktop-live-editor-heading"><div><p class="desktop-live-eyebrow" data-live-editor-eyebrow>{{ __('desktop-live.new') }}</p><h2 data-live-editor-title>{{ __('desktop-live.new') }}</h2></div><button class="desktop-button" type="button" data-live-help>{{ __('desktop-live.help') }}</button></div>
+                        <input type="hidden" name="id">
+                        <div class="desktop-live-fields">
+                            <label>{{ __('desktop-live.title_label') }}<input name="title" required maxlength="255"></label>
+                            <label>{{ __('desktop-live.schedule_label') }}<input name="starts_at" type="datetime-local"></label>
+                            <label class="desktop-live-field-wide">{{ __('desktop-live.description_label') }}<textarea name="body" rows="5" maxlength="10000"></textarea></label>
+                        </div>
+                        <div class="desktop-live-options"><label><input name="published" type="checkbox">{{ __('desktop-live.publish') }}</label><label><input name="enabled" type="checkbox">{{ __('desktop-live.enable') }}</label><label data-live-rotate-wrap hidden><input name="rotate_key" type="checkbox">{{ __('desktop-live.rotate') }}</label></div>
+                        <div class="desktop-live-actions"><button class="desktop-button is-primary" type="submit">{{ __('desktop-live.save') }}</button><button class="desktop-button" type="button" data-live-preview hidden>{{ __('desktop-live.preview') }}</button></div>
+                    </form>
+                    <section class="desktop-live-ingest" data-live-ingest hidden><div><p class="desktop-live-eyebrow">{{ __('desktop-live.connection') }}</p><h2>{{ __('desktop-live.connection') }}</h2></div><div class="desktop-live-connection-grid"><div><span>{{ __('desktop-live.server') }}</span><code data-live-server></code></div><div><span>{{ __('desktop-live.stream_key') }}</span><code>{{ __('desktop-live.stream_key_empty') }}</code></div></div><div class="desktop-live-url-row"><code data-live-url></code><button class="desktop-button" type="button" data-live-copy>{{ __('desktop-live.copy') }}</button></div></section>
+                </section>
+            </div>
+        </section>
+    </template>
+    <script>window.desktopImportLabels = @json(__('imports')); window.desktopLiveLabels = @json(__('desktop-live'));</script>
     <script src="/assets/desktop-import-workflow.js?v=2" defer></script>
     <script src="/assets/desktop-content-lifecycle.js?v=1" defer></script>
     <script src="/assets/desktop-content-composite.js?v=2" defer></script>

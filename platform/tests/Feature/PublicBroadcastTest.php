@@ -17,8 +17,19 @@ class PublicBroadcastTest extends TestCase
         $this->assertNotEmpty($key);
         $this->get('/desktop/live/'.$event->id)->assertOk()->assertSee($key)
             ->assertSee('data-public-help="broadcast-help"',false)->assertSee('<dialog',false)
-            ->assertDontSee('SSH_BENUTZER')->assertSee('sichere OBS')->assertSee('proxy_buffering off;')->assertSee('minishlink/web-push');
+            ->assertDontSee('SSH_BENUTZER')->assertSee('OBS')->assertSee('Streamingdienst')->assertDontSee('plesk/php')->assertDontSee('proxy_buffering off;')->assertDontSee('minishlink/web-push');
         $this->get('/live?event='.$event->id)->assertOk()->assertDontSee($key);
+    }
+    public function test_desktop_live_studio_reads_and_writes_events_through_json_api(): void
+    {
+        app(\App\Services\Access::class)->seed();
+        $owner=User::factory()->create();$owner->roles()->attach(\App\Models\Role::where('name','Owner')->firstOrFail());
+        $this->actingAs($owner)->getJson('/api/desktop/live')->assertOk()->assertJsonPath('data',[]);
+        $created=$this->actingAs($owner)->postJson('/api/desktop/live',['title'=>'API stream','body'=>'Studio body','enabled'=>true,'published'=>true])->assertCreated()->assertJsonPath('data.title','API stream')->json('data');
+        $this->assertNotEmpty($created['id']);
+        $this->assertTrue($created['enabled']);$this->assertTrue($created['published']);
+        $this->actingAs($owner)->patchJson('/api/desktop/live/'.$created['id'],['title'=>'Updated API stream','body'=>'Updated body','starts_at'=>'2027-01-01T12:00','enabled'=>true,'published'=>true])->assertOk()->assertJsonPath('data.title','Updated API stream')->assertJsonPath('data.status','scheduled');
+        $this->actingAs($owner)->getJson('/api/desktop/live/'.$created['id'])->assertOk()->assertJsonPath('data.body','Updated body')->assertJsonStructure(['data'=>['ingest']]);
     }
     private function event(): SourceRecord {return SourceRecord::create(['source'=>'website','source_id'=>'live','kind'=>'video','title'=>'Live','status'=>'ready','metadata'=>['public_section'=>'live','public_published'=>true,'live_stream_enabled'=>true]]);}
     public function test_ingest_auth_requires_key_and_read_requires_publication(): void

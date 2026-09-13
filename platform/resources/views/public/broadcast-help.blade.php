@@ -6,19 +6,6 @@
 <ol>@foreach(['event','obs','finish'] as $step)<li><p>{{ __('public.broadcast_help_'.$step) }}</p></li>@endforeach</ol>
 <h3>{{ __('public.broadcast_help_admin') }}</h3>
 <p>{{ __('public.broadcast_help_server') }}</p>
-<pre><code>cd {{ dirname(base_path()) }}
-/opt/plesk/php/8.4/bin/php platform/artisan public:live-config
-bash platform/bin/live-server.sh install
-bash platform/bin/live-server.sh start
-bash platform/bin/live-server.sh status</code></pre>
 <p>{{ __('public.broadcast_help_rtmps_cert') }}</p>
-<p>{{ __('public.broadcast_help_nginx_where') }}</p>
-<pre><code>location /_live/ {
-    proxy_pass http://127.0.0.1:8888/;
-    proxy_http_version 1.1;
-    proxy_buffering off;
-}</code></pre>
-<p>{{ __('public.broadcast_help_nginx_why') }}</p>
 <p>{{ __('public.broadcast_help_diagnostics') }}</p>
-<h3>Composer</h3><p>{{ __('public.broadcast_help_composer') }}</p>
 </dialog>

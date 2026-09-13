@@ -400,6 +400,15 @@
 
       }
 
+      if (appId === 'live-studio') {
+        const liveStudioTemplate = document.querySelector('#live-studio-app-template');
+        const liveStudio = liveStudioTemplate?.content.firstElementChild.cloneNode(true);
+        if (liveStudio) {
+          windowElement.querySelector('.os-window-content').append(liveStudio);
+          window.initializeLiveStudio?.(liveStudio);
+        }
+      }
+
       if (appId === 'media') {
         const mediaTemplate = document.querySelector('#media-library-app-template');
         const mediaLibrary = mediaTemplate?.content.firstElementChild.cloneNode(true);
