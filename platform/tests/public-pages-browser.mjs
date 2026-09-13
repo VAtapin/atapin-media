@@ -36,13 +36,6 @@ try {
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`${route}: overflow at ${width}`);
       assert(await page.locator('.public-header').isVisible(),route);
       assert.equal(await page.locator('main').count(),1,route);
-      if(await page.locator('[data-public-help]').count()){
-        await page.locator('[data-public-help]').click();
-        assert(await page.locator('#broadcast-help').isVisible(),route);
-        assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`help overflow at ${width}`);
-        await page.screenshot({path:`tests/artifacts/live-help-${width}.png`});
-        await page.keyboard.press('Escape');assert.equal(await page.locator('#broadcast-help').isVisible(),false);
-      }
       await page.screenshot({path:`tests/artifacts/public-page-${index+1}-${width}${process.env.PUBLIC_DETAIL_ROUTES?'-filled':''}.png`,fullPage:true});
       const tabs=page.locator('[role=tab]');
       if(await tabs.count()>1){await tabs.nth(1).click();assert.equal(await tabs.nth(1).getAttribute('aria-selected'),'true',route);}

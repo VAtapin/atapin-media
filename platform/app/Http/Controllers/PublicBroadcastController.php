@@ -10,27 +10,15 @@ class PublicBroadcastController extends Controller
         $data=$request->validate(['path'=>'required|string|max:80','action'=>'required|in:publish,read','protocol'=>'required|in:rtmp,hls','user'=>'nullable|string|max:100','password'=>'nullable|string|max:200']);
         return response('', $broadcast->authorize($data)?204:401);
     }
-    public function index() {return view('public.broadcast-admin',['section'=>'live','events'=>SourceRecord::where('metadata->public_section','live')->latest('id')->paginate(20),'record'=>null]);}
     public function apiIndex()
     {
         return response()->json(['data'=>SourceRecord::where('metadata->public_section','live')->latest('id')->get()->map(fn($record)=>$this->eventData($record))->values()]);
-    }
-    public function show(SourceRecord $record,Settings $settings)
-    {
-        abort_unless(($record->metadata['public_section']??null)==='live',404);
-        $key=$settings->secret('live_publish_'.$record->id);
-        return response()->view('public.broadcast-admin',['section'=>'live','record'=>$record,'events'=>null,'key'=>$key,'ingest'=>app(PublicBroadcast::class)->ingest($record,$key)])->header('Cache-Control','private, no-store');
     }
     public function apiShow(SourceRecord $record,Settings $settings,PublicBroadcast $broadcast)
     {
         $this->assertLiveEvent($record);
         $key=$settings->secret('live_publish_'.$record->id);
         return response()->json(['data'=>$this->eventData($record,$broadcast->ingest($record,$key))])->header('Cache-Control','private, no-store');
-    }
-    public function store(Request $request,Settings $settings,?SourceRecord $record=null)
-    {
-        $record=$this->persist($request,$settings,$record);
-        return redirect()->route('public.broadcast-admin-show',$record);
     }
     public function apiStore(Request $request,Settings $settings,?SourceRecord $record=null)
     {

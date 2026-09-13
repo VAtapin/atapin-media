@@ -54,14 +54,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/konto/push/{subscription}',[\App\Http\Controllers\PublicAccountController::class,'cancelPush'])->name('public.account-push-cancel');
     Route::post('/logout', [AuthController::class,'destroy'])->name('logout');
     Route::get('/desktop', DesktopController::class)->middleware('can:desktop.view')->name('desktop');
-    Route::get('/desktop/live',[\App\Http\Controllers\PublicBroadcastController::class,'index'])->middleware('can:content.publish')->name('public.broadcast-admin');
     Route::get('/api/desktop/live',[\App\Http\Controllers\PublicBroadcastController::class,'apiIndex'])->middleware('can:content.publish')->name('desktop.live.api.index');
     Route::post('/api/desktop/live',[\App\Http\Controllers\PublicBroadcastController::class,'apiStore'])->middleware('can:content.publish')->name('desktop.live.api.store');
     Route::get('/api/desktop/live/{record}',[\App\Http\Controllers\PublicBroadcastController::class,'apiShow'])->middleware('can:content.publish')->name('desktop.live.api.show');
     Route::patch('/api/desktop/live/{record}',[\App\Http\Controllers\PublicBroadcastController::class,'apiStore'])->middleware('can:content.publish')->name('desktop.live.api.update');
-    Route::post('/desktop/live',[\App\Http\Controllers\PublicBroadcastController::class,'store'])->middleware('can:content.publish')->name('public.broadcast-create');
-    Route::get('/desktop/live/{record}',[\App\Http\Controllers\PublicBroadcastController::class,'show'])->middleware('can:content.publish')->name('public.broadcast-admin-show');
-    Route::post('/desktop/live/{record}',[\App\Http\Controllers\PublicBroadcastController::class,'store'])->middleware('can:content.publish')->name('public.broadcast-update');
     Route::get('/desktop/contact-messages',[\App\Http\Controllers\PublicContactController::class,'inbox'])->middleware('can:settings.manage')->name('contact.inbox');
     Route::post('/desktop/contact-messages/{message}/retry',[\App\Http\Controllers\PublicContactController::class,'retry'])->middleware(['can:settings.manage','throttle:10,1'])->name('contact.retry');
     Route::get('/desktop/wallpaper', [SettingsController::class, 'wallpaper'])->middleware('can:desktop.view')->name('desktop.wallpaper');

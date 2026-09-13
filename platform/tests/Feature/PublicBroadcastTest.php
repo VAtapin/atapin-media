@@ -8,17 +8,10 @@ use Tests\TestCase;
 class PublicBroadcastTest extends TestCase
 {
     use RefreshDatabase;
-    public function test_owner_can_create_event_without_exposing_ingest_key_publicly(): void
+    public function test_legacy_live_html_interface_is_not_exposed(): void
     {
-        app(\App\Services\Access::class)->seed();
-        $owner=User::factory()->create();$owner->roles()->attach(\App\Models\Role::where('name','Owner')->firstOrFail());
-        $this->actingAs($owner)->post('/desktop/live',['title'=>'New stream','enabled'=>true,'published'=>true])->assertRedirect();
-        $event=SourceRecord::firstOrFail();$key=app(Settings::class)->secret('live_publish_'.$event->id);
-        $this->assertNotEmpty($key);
-        $this->get('/desktop/live/'.$event->id)->assertOk()->assertSee($key)
-            ->assertSee('data-public-help="broadcast-help"',false)->assertSee('<dialog',false)
-            ->assertDontSee('SSH_BENUTZER')->assertSee('OBS')->assertSee('Streamingdienst')->assertDontSee('plesk/php')->assertDontSee('proxy_buffering off;')->assertDontSee('minishlink/web-push');
-        $this->get('/live?event='.$event->id)->assertOk()->assertDontSee($key);
+        $this->get('/desktop/live')->assertNotFound();
+        $this->get('/desktop/live/7340')->assertNotFound();
     }
     public function test_desktop_live_studio_reads_and_writes_events_through_json_api(): void
     {
@@ -39,7 +32,6 @@ class PublicBroadcastTest extends TestCase
         $this->postJson('/live/server-auth',$data)->assertUnauthorized();$this->postJson('/live/server-auth',[...$data,'password'=>'secret'])->assertNoContent();
         $read=['path'=>'live-'.$event->id,'action'=>'read','protocol'=>'hls'];$this->postJson('/live/server-auth',$read)->assertNoContent();
         $event->update(['metadata'=>[...$event->metadata,'public_published'=>false]]);$this->postJson('/live/server-auth',$read)->assertUnauthorized();
-        $this->get('/desktop/live/'.$event->id)->assertRedirect('/login');$this->actingAs(User::factory()->create())->get('/desktop/live/'.$event->id)->assertForbidden();
     }
     public function test_completed_recordings_are_registered_once_and_linked_without_copying(): void
     {
