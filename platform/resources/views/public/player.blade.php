@@ -13,14 +13,14 @@
 <div class="public-live-player-fallback" data-live-player-fallback><img src="{{ $liveFallbackImage }}" alt="{{ $record->title }}">@include('public.live-poster')</div>
 </div>
 @elseif($isEndedLive && $video)
-<video class="public-main-player" controls preload="metadata" @if($card['image']??null)poster="{{ $card['image'] }}" @endif src="{{ route('public.media',[$record,$video]) }}"></video>
+<video class="public-main-player" controls preload="none" poster="{{ $card['image']??$heroImage??config('public_ui.hero_image') }}" src="{{ route('public.media',[$record,$video]) }}"></video>
 @elseif($isLiveEvent)
 <div class="public-live-player-fallback public-live-player-fallback-static"><img src="{{ $liveFallbackImage }}" alt="{{ $record->title }}">@include('public.live-poster')</div>
 @elseif($record && ($video||$audio))
 
-@if($video)<video class="public-main-player" controls preload="metadata"
-data-view-url="{{ route('public.record-view',$record) }}" @if($card['image']??null)poster="{{ $card['image'] }}"
-@endif src="{{ route('public.media',[$record,$video]) }}" @auth data-progress-url="{{ route('public.record-state',$record) }}" data-resume="{{ $states['progress']['position']??0 }}" @endauth>
+@if($video)<video class="public-main-player" controls preload="none"
+data-view-url="{{ route('public.record-view',$record) }}" poster="{{ $card['image']??$heroImage??config('public_ui.hero_image') }}"
+src="{{ route('public.media',[$record,$video]) }}" @auth data-progress-url="{{ route('public.record-state',$record) }}" data-resume="{{ $states['progress']['position']??0 }}" @endauth>
 </video>
 @else<audio class="public-main-audio" controls preload="metadata" src="{{ route('public.media',[$record,$audio]) }}" @auth data-progress-url="{{ route('public.record-state',$record) }}" data-resume="{{ $states['progress']['position']??0 }}" @endauth>
 </audio>

@@ -20,7 +20,7 @@ class PublicWebsiteController extends Controller
         $articles=$content->forSection('beitraege')->latest()->limit(3)->get()->map($content->card(...));
         $books=app(PublicBooks::class);$book=$books->query()->latest()->first();
         $live=$content->nextLive();
-        $featuredRecord=$content->homepageVideos()->inRandomOrder()->first()??$content->latestRecording();
+        $featuredRecord=$content->homepageVideos()->latest()->first()??$content->forSection('videos')->latest()->first();
         return view('public.home',[...$this->shared(),'videos'=>$videos,'articles'=>$articles,
             'featured'=>$featuredRecord?$content->card($featuredRecord):null,'book'=>$book?$books->card($book):null,
             'live'=>$live?$content->card($live):null]);

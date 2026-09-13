@@ -36,17 +36,23 @@ class PublicPagesTest extends TestCase
         $this->get('/suche?q=Database')->assertOk()->assertSee('Database post');
         $this->get('/podcast?sort=bad')->assertRedirect();
     }
-    public function test_homepage_feature_uses_only_selected_published_videos(): void
+    public function test_homepage_feature_prefers_the_newest_selected_video(): void
     {
         $selected=[$this->record('video',['public_homepage'=>true]),$this->record('short',['public_homepage'=>true])];
         $this->record('video',['public_homepage'=>false]);
         $this->record('video',['public_homepage'=>true,'public_published'=>false]);
-        $this->get('/')->assertViewHas('featured',fn($card)=>in_array($card['id'],array_map(fn($record)=>$record->id,$selected),true));
+        $this->get('/')->assertViewHas('featured',fn($card)=>$card['id']===$selected[1]->id);
     }
-    public function test_homepage_feature_falls_back_to_an_ended_livestream_recording(): void
+    public function test_homepage_feature_falls_back_to_the_newest_published_video_and_ignores_livestreams(): void
     {
+        $video=$this->record('video');
         $live=$this->record('video',['public_section'=>'live','live_status'=>'ended']);
-        $this->get('/')->assertViewHas('featured',fn($card)=>$card['id']===$live->id);
+        $this->get('/')->assertViewHas('featured',fn($card)=>$card['id']===$video->id&&$card['id']!==$live->id);
+    }
+    public function test_homepage_feature_is_empty_when_only_a_livestream_exists(): void
+    {
+        $this->record('video',['public_section'=>'live','live_status'=>'ended']);
+        $this->get('/')->assertViewHas('featured',null);
     }
     public function test_live_player_starts_mediamtx_cookie_check_inside_proxy_prefix(): void
     {

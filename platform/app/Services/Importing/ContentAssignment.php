@@ -77,6 +77,12 @@ class ContentAssignment
         if (isset($data['tags'])) $metadata['tags'] = $data['tags'];
         $record->update(['title' => $data['title'] ?? $record->title, 'body' => array_key_exists('body', $data) ? ($data['body'] ?? '') : $record->body,
             'kind' => $kind, 'status' => $data['status'] ?? $record->status, 'metadata' => $metadata]);
+        if (in_array($kind, ['video','short'], true) && (($metadata['public_published'] ?? false) || ($metadata['public_homepage'] ?? false))) {
+            foreach (app(LocalMediaLinks::class)->ids($record) as $mediaId) {
+                if (Media::whereKey($mediaId)->where('kind','video')->exists())
+                    \App\Jobs\PreparePublicVideo::dispatch((string)$mediaId)->afterCommit();
+            }
+        }
         app(Audit::class)->record('content.assigned', (string) $record->id, ['origin' => $origin]);
     }
 }

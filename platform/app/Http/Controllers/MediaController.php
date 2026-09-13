@@ -167,13 +167,22 @@ class MediaController extends Controller
         return Storage::disk($location['disk'])->download($location['path'], $media->original_name,
             ['Content-Type' => 'application/octet-stream', 'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store']);
     }
-    public function preview(Media $media)
+    public function preview(Media $media, ?Request $request = null)
     {
+        $request ??= request();
         abort_unless(in_array($media->mime, self::PREVIEW_MIMES, true), 415);
-        $location=app(\App\Services\MediaOriginalLocator::class)->find($media); abort_unless($location,404);
+        $location=$media->kind==='video' ? app(\App\Services\PublicVideoOptimizer::class)->location($media) : app(\App\Services\MediaOriginalLocator::class)->find($media); abort_unless($location,404);
         $disk=Storage::disk($location['disk']);
-        $headers=['Content-Type'=>$media->mime,'X-Content-Type-Options'=>'nosniff','Cache-Control'=>'private, no-store','Content-Security-Policy'=>"sandbox; default-src 'none';"];
-        if(config('filesystems.disks.'.$location['disk'].'.driver')==='local')return response()->file(app(\App\Services\MediaOriginalLocator::class)->path($location),$headers);
+        $headers=['Content-Type'=>$media->mime,'X-Content-Type-Options'=>'nosniff','Cache-Control'=>'private, max-age=3600','Accept-Ranges'=>'bytes','Content-Security-Policy'=>"sandbox; default-src 'none';"];
+        if(config('filesystems.disks.'.$location['disk'].'.driver')==='local'){
+            $path=app(\App\Services\MediaOriginalLocator::class)->path($location);$size=filesize($path);$range=$request->header('Range');
+            if(!$range)return response()->file($path,$headers);
+            if(!preg_match('/bytes=(\d*)-(\d*)/',$range,$match)||str_contains($range,','))return response('',416,$headers+['Content-Range'=>'bytes */'.$size]);
+            $start=$match[1]===''?max(0,$size-(int)$match[2]):(int)$match[1];$end=$match[2]===''?$size-1:(int)$match[2];
+            if($start<0||$start>$end||$start>=$size)return response('',416,$headers+['Content-Range'=>'bytes */'.$size]);
+            $end=min($end,$size-1);$length=$end-$start+1;
+            return response()->stream(function()use($path,$start,$length){$handle=fopen($path,'rb');fseek($handle,$start);$remaining=$length;while($remaining>0&&!feof($handle)){ $chunk=fread($handle,min(1024*1024,$remaining));if($chunk==='')break;echo $chunk;$remaining-=strlen($chunk);}fclose($handle);},206,$headers+['Content-Length'=>$length,'Content-Range'=>"bytes {$start}-{$end}/{$size}"]);
+        }
         return $disk->response($location['path'],null,$headers);
     }
 }

@@ -70,11 +70,13 @@ class PublicBroadcast
         if(!is_file($resolved)||is_link($file)||strtolower(pathinfo($resolved,PATHINFO_EXTENSION))!=='mp4')throw new \RuntimeException('Invalid completed recording.');
         $relative=str_replace('\\','/',substr($resolved,strlen(rtrim(realpath($root),'/\\'))+1));
         if(!str_starts_with($relative,$path.'/'))throw new \RuntimeException('Recording belongs to another stream.');
-        DB::transaction(function()use($record,$resolved,$relative){
+        $media = DB::transaction(function()use($record,$resolved,$relative){
             $record=SourceRecord::lockForUpdate()->findOrFail($record->id);
             $media=Media::firstOrCreate(['source'=>'live','source_id'=>hash('sha256',$relative)],['disk'=>'live-recordings','path'=>$relative,'kind'=>'video','mime'=>'video/mp4','bytes'=>filesize($resolved),'title'=>$record->title,'original_name'=>basename($resolved),'status'=>'unsorted','metadata'=>['live_record_id'=>$record->id]]);
             $record->update(['metadata'=>[...$record->metadata,'media_ids'=>array_values(array_unique([...($record->metadata['media_ids']??[]),$media->id]))]]);
+            return $media;
         });
+        \App\Jobs\PreparePublicVideo::dispatch((string)$media->id);
     }
     public function configuration(): string
     {
