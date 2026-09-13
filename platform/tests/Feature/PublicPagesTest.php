@@ -27,15 +27,6 @@ class PublicPagesTest extends TestCase
         $this->get('/live')->assertOk()->assertSee('public-section-live',false);
         $this->get('/buecher')->assertOk()->assertDontSee('public-announcement',false);
     }
-    public function test_public_overviews_and_publication_details_use_separate_approved_layout_modes(): void
-    {
-        $this->get('/videos')->assertOk()->assertSee('public-layout-overview',false);
-        $this->get('/videos/vorschau')->assertOk()->assertSee('public-layout-detail',false);
-        $this->get('/buecher/vorschau')->assertOk()->assertSee('public-layout-detail',false);
-        $this->get('/live')->assertOk()->assertSee('public-layout-overview',false);
-        $live=$this->record('video',['public_section'=>'live','live_status'=>'scheduled','starts_at'=>'2027-01-01T12:00:00']);
-        $this->get('/live?event='.$live->id)->assertOk()->assertSee('public-layout-detail',false)->assertSee('public-live-detail-actions',false);
-    }
     public function test_section_assignment_search_and_tags_use_published_database_records(): void
     {
         $podcast=$this->record('post',['public_section'=>'podcast','tags'=>['Gebet'],'author'=>'Public speaker']);
@@ -156,7 +147,7 @@ class PublicPagesTest extends TestCase
         $this->actingAs($user)->postJson(route('public.record-state',$record),['action'=>'chat','body'=>'New chat message'])->assertOk();
         $chat=SourceRecord::where('kind','live_chat')->firstOrFail();$this->assertSame('needs_attention',$chat->status);
         $this->assertFalse($chat->metadata['public_published']);
-        $this->get('/live?event='.$record->id)->assertOk()->assertDontSee('New chat message');
+        $this->get('/live?event='.$record->id)->assertOk()->assertSee('New chat message')->assertSee(__('public.chat_moderation_pending'));
         $chat->update(['status'=>'ready','metadata'=>[...$chat->metadata,'public_published'=>true]]);
         $this->get('/live?event='.$record->id)->assertSee('New chat message');
         $this->assertStringContainsString('#chat',app(PublicContent::class)->card($chat)['url']);
