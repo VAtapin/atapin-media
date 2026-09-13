@@ -1,4 +1,4 @@
-<header class="public-header">
+<header class="public-header public-header-{{ $headerMode ?? 'overview' }}">
     <div class="public-header-inner">
         <a class="public-brand-link" href="/">@include('public.brand')</a>
         <button class="public-menu-button" type="button" aria-controls="public-navigation" aria-expanded="false" aria-label="{{ __('ui.menu') }}">☰</button>

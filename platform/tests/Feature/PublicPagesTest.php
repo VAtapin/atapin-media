@@ -27,6 +27,15 @@ class PublicPagesTest extends TestCase
         $this->get('/live')->assertOk()->assertSee('public-section-live',false);
         $this->get('/buecher')->assertOk()->assertDontSee('public-announcement',false);
     }
+    public function test_overview_and_detail_pages_use_the_two_shared_header_modes(): void
+    {
+        $this->get('/')->assertOk()->assertSee('public-header-overview',false)->assertSee('public-overview-hero',false);
+        $this->get('/live')->assertOk()->assertSee('public-header-overview',false)->assertSee('public-overview-hero-live',false);
+        $this->get('/videos/vorschau')->assertOk()->assertSee('public-header-detail',false)->assertDontSee('public-overview-hero',false);
+
+        $live=$this->record('video',['public_section'=>'live','live_status'=>'ended']);
+        $this->get('/live?event='.$live->id)->assertOk()->assertSee('public-header-detail',false)->assertDontSee('public-overview-hero',false);
+    }
     public function test_live_success_feedback_is_placed_in_chat_and_marked_for_auto_dismissal(): void
     {
         $live=$this->record('video',['public_section'=>'live','live_status'=>'ended']);

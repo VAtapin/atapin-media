@@ -1,7 +1,11 @@
 @extends('public.layout',['title'=>__('public.section_live'),'layoutMode'=>$layoutMode??'overview'])
 
 @section('content')
-@php($card=$featured)@php($liveStatus=$record?->metadata['live_status']??null)@php($liveDate=$record?->metadata['starts_at']?\Illuminate\Support\Carbon::parse($record->metadata['starts_at'])->timezone(config('app.timezone'))->format('d.m.Y H:i'):null)@php($liveStatusLabel=$liveStatus?__('public.live_'.$liveStatus):null)@php($viewer=auth()->user())@php($sessionId=request()->hasSession()?request()->session()->getId():null)<div class="public-live-top">
+@php($card=$featured)@php($liveStatus=$record?->metadata['live_status']??null)@php($liveDate=$record?->metadata['starts_at']?\Illuminate\Support\Carbon::parse($record->metadata['starts_at'])->timezone(config('app.timezone'))->format('d.m.Y H:i'):null)@php($liveStatusLabel=$liveStatus?__('public.live_'.$liveStatus):null)@php($viewer=auth()->user())@php($sessionId=request()->hasSession()?request()->session()->getId():null)
+@if(($layoutMode??'overview')==='overview')
+@include('public.hero',['section'=>'live'])
+@endif
+<div class="public-live-top">
 <div>
 @include('public.player')
 <div class="public-live-summary">

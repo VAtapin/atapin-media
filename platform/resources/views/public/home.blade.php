@@ -15,52 +15,9 @@
 </head>
 <body class="public-site public-editorial public-home public-layout-overview public-section-start">
 
-@include('public.header',['section'=>'start'])
+@include('public.header',['section'=>'start','headerMode'=>'overview'])
 <main>
-    <section class="public-hero">
-
-@if(!empty($heroImage))<img class="public-hero-background" src="{{ $heroImage }}" alt="">
-@endif
-        <div class="public-hero-inner">
-            <div class="public-hero-copy">
-<p class="public-eyebrow">{{ __('public.hero_eyebrow') }}</p>
-<h1>{{ __('public.hero_title_line1') }}<br>{{ __('public.hero_title_line2') }}</h1>
-<p class="public-hero-intro">{{ __('public.hero_intro') }}</p>
-<div class="public-hero-actions">
-<a class="public-button" href="/videos">
-@include('public.icon',['name'=>'video']) {{ __('public.discover') }} <span>→</span>
-</a>
-<a class="public-button public-button-secondary" href="/ueber-uns">{{ __('public.more_about') }} <span>→</span>
-</a>
-</div>
-<blockquote>
-<p>{{ __('public.hero_quote') }}</p>
-<cite>{{ __('public.hero_quote_source') }}</cite>
-</blockquote>
-</div>
-
-@if($featured)
-            <a class="public-feature" href="{{ $featured['url'] }}">
-@include('public.picture',['art'=>$featured['art']??null,'image'=>$featured['image']??null,'pictureClass'=>'public-feature-picture'])<div class="public-feature-content">
-<span class="public-feature-label">{{ __('public.featured_video') }}</span>
-<h2>{{ $featured['title'] }}</h2>
-<p>{{ $featured['excerpt']??'' }}</p>
-<div class="public-feature-author">{{ $featured['author']??'' }}<small>{{ $featured['meta']??'' }}</small>
-</div>
-</div>
-<span class="public-play" aria-label="{{ __('public.play') }}">▶</span>
-</a>
-
-@else
-            <div class="public-feature public-feature-empty">
-@include('public.empty',['url'=>'/videos/vorschau','hint'=>__('public.featured_video')])</div>
-
-@endif
-        </div>
-        <aside class="public-hero-side-copy">
-            <p>{{ __('public.hero_side_quote') }}</p>
-        </aside>
-    </section>
+    @include('public.hero',['section'=>'start'])
     <nav class="public-section-cards" aria-label="{{ __('public.sections') }}">
 @foreach(['video'=>'videos','article'=>'beitraege','book'=>'buecher','live'=>'live','podcast'=>'podcast','community'=>'community'] as $icon=>$key)<a href="{{ config('public_ui.navigation.'.$key.'.path') }}">
 <span class="public-section-icon">

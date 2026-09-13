@@ -414,3 +414,34 @@
 .public-account-history-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:16px}.public-account-history{min-width:0}.public-account-history-list{display:grid;gap:0;border-top:1px solid #e3eaf1}.public-account-history-item{padding:13px 0;border-bottom:1px solid #e3eaf1}.public-account-history-item strong{display:block;color:var(--public-navy);font-family:var(--public-heading);font-size:15px;line-height:1.25}.public-account-history-item strong a{color:inherit}.public-account-history-item small{display:block;margin-top:4px;color:#6980a2;font-size:11px}.public-account-history-item p{margin:7px 0 0;color:#526b90;font-size:12px;line-height:1.45}.public-account-history-link{display:inline-block;margin-top:7px;color:#a36d16;font-size:12px;font-weight:700}
 @media(max-width:800px){.public-account-history-grid{grid-template-columns:1fr}}
 .public-live-chat .public-chat-messages article{gap:8px;padding:4px 0;line-height:1.2}.public-live-chat .public-chat-messages .public-avatar{width:28px;height:28px}.public-live-chat .public-chat-messages p{margin:2px 0 0;line-height:1.2}.public-live-chat .public-chat-status{margin-top:2px}
+
+/* One reusable overview hero: the page changes its copy and feature, not its geometry. */
+.public-overview-hero{position:relative;isolation:isolate;background-image:var(--hero-image);background-size:cover;background-position:center}
+.public-overview-hero:after{display:none}
+.public-overview-hero .public-hero-background{opacity:1}
+.public-overview-hero-inner{position:relative;z-index:1;max-width:1232px;margin:auto;padding-top:12px;display:grid;grid-template-columns:560px minmax(0,1fr);gap:40px}
+.public-overview-copy{position:relative;isolation:isolate}
+.public-overview-copy:before{content:'';position:absolute;z-index:-1;pointer-events:none;inset:-42px -74px -18px -64px;background:radial-gradient(ellipse,#fffaf4f2 0%,#fffaf4c9 47%,#fffaf400 76%);filter:blur(13px)}
+.public-overview-intro{max-width:510px;line-height:1.4}
+.public-overview-actions{display:flex;gap:16px;margin-top:15px}
+.public-overview-feature{position:relative}
+.public-overview-feature .public-feature-link-wrap{position:absolute;inset:0;display:block;color:inherit}
+.public-overview-feature .public-feature-link-wrap>.public-photo,.public-overview-feature .public-feature-link-wrap>.public-photo-placeholder{width:100%;height:100%;object-fit:cover}
+.public-overview-feature>.public-empty-slot{height:100%;background:#eef3f6cc}
+.public-layout-overview .public-overview-hero{height:355px;padding-top:66px}
+.public-layout-overview .public-overview-hero-beitraege{height:332px}
+.public-layout-overview .public-overview-hero-buecher{height:333px}
+.public-layout-overview .public-overview-hero-podcast,.public-layout-overview .public-overview-hero-community{height:435px}
+.public-home .public-overview-hero{height:400px;padding-top:0;background-image:none}
+.public-home .public-overview-hero-inner{padding-top:95px}
+.public-home .public-overview-copy{padding-top:0}
+.public-home .public-overview-copy h1{font-size:48px}
+.public-home .public-overview-copy:before{inset:-42px -74px -18px -64px}
+@media(max-width:1550px){.public-overview-hero-inner{padding-left:24px;padding-right:24px;grid-template-columns:1fr 1fr}}
+@media(max-width:800px){
+ .public-layout-overview .public-overview-hero,.public-layout-overview .public-overview-hero-beitraege,.public-layout-overview .public-overview-hero-buecher,.public-layout-overview .public-overview-hero-podcast,.public-layout-overview .public-overview-hero-community{height:auto;padding-top:91px;padding-bottom:50px}
+ .public-overview-hero-inner{grid-template-columns:1fr;gap:25px;padding:25px 20px 0}
+ .public-home .public-overview-hero{height:auto;padding-top:0}
+ .public-home .public-overview-hero-inner{padding-top:95px}
+ .public-overview-copy:before{inset:-30px -25px -18px}
+}
