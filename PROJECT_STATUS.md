@@ -2,6 +2,8 @@
 
 ## Реализовано
 
+- Web Push Live: browser permission, event/browser opt-in and cancellation, encrypted subscriptions, restricted provider endpoints, stable private VAPID provisioning, scheduler and unique retryable jobs, publication/time rechecks and expired-subscription removal. 14 targeted public tests / 135 assertions, JS syntax and Composer audit passed. Commit: Add queued browser reminders for public live events. MediaMTX/ИИ-чат и 2→8→4→3→7 остаются в работе; production проверяет владелец.
+
 - Контактная форма автоматически ставит пересылку на settings.contact_email в очередь: три попытки, deduplication, сохранённый статус передачи/ошибки/отсутствия настройки, защищённый ручной повтор в inbox. Inbox сохраняется независимо от доставки; sender не подменяется посетителем, используется Reply-To. 9 целевых tests / 58 assertions и Blade compilation прошли, реальные письма не отправлялись. Commit: Forward contact enquiries through the existing queue. Web Push, ИИ-чат, MediaMTX ещё в работе.
 
 - Live reminders теперь допускают локальный PHP/sendmail transport без обязательного внешнего SMTP; log/array/failover не считаются доставкой. Проверка PublicLiveReminderTest — 4 tests. Выбран MediaMTX для OBS→наш сервер→плеер; контактный получатель берётся из contact_email настроек. Пересылка inbox, Web Push, ИИ-чат и MediaMTX integration ещё не реализованы. Связанный commit: Support local sendmail for live reminders.

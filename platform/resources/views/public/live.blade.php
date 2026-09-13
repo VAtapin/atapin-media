@@ -11,6 +11,7 @@
 </div>
 <div class="public-action-row">
 @include('public.state-button',['subject'=>$record,'action'=>'reminder','label'=>__('public.reminder')])</div>
+@include('public.push-button')
 </div>
 </div>
 <section class="public-panel public-live-chat" id="chat" @if($record) data-live-heartbeat="{{ route('public.live-heartbeat',$record) }}" @endif>
