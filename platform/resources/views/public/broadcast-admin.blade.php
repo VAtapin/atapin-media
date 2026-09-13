@@ -13,6 +13,13 @@
 @if($record)<label><input type="checkbox" name="rotate_key" value="1">{{ __('public.broadcast_rotate') }}</label>@endif
 <button class="public-button">{{ __('ui.save') }}</button>
 </form>
-@if($record)<p>{{ __('public.broadcast_obs') }}</p><code>rtmp://127.0.0.1:1935/live-{{ $record->id }}?user=publisher&amp;pass={{ $key }}</code><p>{{ __('public.broadcast_security') }}</p><a href="/live?event={{ $record->id }}">{{ __('public.broadcast_preview') }}</a>@endif
+@if($record)
+@if($ingest['configured'] ?? false)
+<p>{{ __('public.broadcast_obs') }}</p><code>{{ $ingest['url'] }}</code><p>{{ __('public.broadcast_security') }}</p>
+@else
+<p>{{ __('public.broadcast_rtmps_unavailable') }}</p>
+@endif
+<a href="/live?event={{ $record->id }}">{{ __('public.broadcast_preview') }}</a>
+@endif
 </section>
 @endsection

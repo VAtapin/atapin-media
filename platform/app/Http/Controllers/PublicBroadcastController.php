@@ -14,7 +14,8 @@ class PublicBroadcastController extends Controller
     public function show(SourceRecord $record,Settings $settings)
     {
         abort_unless(($record->metadata['public_section']??null)==='live',404);
-        return response()->view('public.broadcast-admin',['section'=>'live','record'=>$record,'events'=>null,'key'=>$settings->secret('live_publish_'.$record->id)])->header('Cache-Control','private, no-store');
+        $key=$settings->secret('live_publish_'.$record->id);
+        return response()->view('public.broadcast-admin',['section'=>'live','record'=>$record,'events'=>null,'key'=>$key,'ingest'=>app(PublicBroadcast::class)->ingest($record,$key)])->header('Cache-Control','private, no-store');
     }
     public function store(Request $request,Settings $settings,?SourceRecord $record=null)
     {

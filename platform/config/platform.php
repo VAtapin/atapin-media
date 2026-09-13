@@ -17,4 +17,8 @@ return [
     'takeout_folder' => env('TAKEOUT_FOLDER', dirname(base_path(), 2).'/private/Takeout'),
     'import_python' => env('IMPORT_PYTHON', dirname(base_path(), 2).'/private/manna-youtube-runtime/bin/python'),
     'import_node' => env('IMPORT_NODE', '/opt/plesk/node/22/bin/node'),
+    'live_rtmp_host' => env('LIVE_RTMP_HOST', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST) ?: 'localhost'),
+    'live_rtmp_port' => (int) env('LIVE_RTMP_PORT', 1936),
+    'live_rtmp_cert' => env('LIVE_RTMP_CERT', dirname(base_path(), 2).'/private/atapin-live/rtmps.crt'),
+    'live_rtmp_key' => env('LIVE_RTMP_KEY', dirname(base_path(), 2).'/private/atapin-live/rtmps.key'),
 ];

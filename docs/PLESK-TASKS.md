@@ -19,3 +19,13 @@
 Скрипт доступен только из CLI; HTTP-вызов возвращает 404. Он использует PHP, выбранный в Plesk, без запуска дочернего shell или внешней команды. Запуск обеих задач проверяется Linux CI, включая блокировку повторного запуска и обработку настоящего тестового задания.
 
 Документация Plesk: https://docs.plesk.com/en-US/obsidian/customer-guide/scheduling-tasks.65207/
+
+## MediaMTX Live auto-start
+
+Create a separate Plesk task of type **Run a command** under the subscription user. Do not use the PHP-script tasks above. Use cron-style schedule `* * * * *`, notifications only on errors, and this command:
+
+```bash
+/bin/bash /var/www/vhosts/mannavomhimmel.de/httpdocs/platform/bin/live-server.sh start
+```
+
+The command is safe to run every minute because `live-server.sh` uses the private lock. After a server reboot, MediaMTX is started automatically on the next scheduler tick; the task does not open SSH or expose the local RTMP port.

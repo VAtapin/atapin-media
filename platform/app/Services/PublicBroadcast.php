@@ -4,6 +4,21 @@ use App\Models\{SourceRecord,Media};
 use Illuminate\Support\Facades\{DB,Storage};
 class PublicBroadcast
 {
+    public function secureIngestReady(): bool
+    {
+        return is_readable((string) config('platform.live_rtmp_cert'))
+            && is_readable((string) config('platform.live_rtmp_key'));
+    }
+
+    public function ingest(SourceRecord $record, ?string $key): array
+    {
+        $host = (string) config('platform.live_rtmp_host');
+        $port = (int) config('platform.live_rtmp_port');
+        $url = 'rtmps://'.$host.':'.$port.'/live-'.$record->id.'?user=publisher&pass='.rawurlencode((string) $key);
+
+        return ['configured' => $this->secureIngestReady(), 'url' => $url, 'host' => $host, 'port' => $port];
+    }
+
     public function record(string $path): ?SourceRecord
     {
         if(!preg_match('/^live-([1-9][0-9]*)$/D',$path,$match))return null;
@@ -43,9 +58,15 @@ class PublicBroadcast
     {
         $hook=escapeshellarg(base_path('bin/live-hook.php'));
         $prefix='/opt/plesk/php/8.4/bin/php '.$hook;
-        $config=['logLevel'=>'warn','rtsp'=>false,'rtmp'=>true,'rtmpAddress'=>'127.0.0.1:1935','srt'=>false,'webrtc'=>false,'moq'=>false,'hls'=>true,'hlsAddress'=>'127.0.0.1:8888','hlsAlwaysRemux'=>true,'api'=>false,'playback'=>false,'authMethod'=>'http','authHTTPAddress'=>route('public.broadcast-auth'),'authHTTPExclude'=>[],
+        $secure=$this->secureIngestReady();
+        $config=['logLevel'=>'warn','rtsp'=>false,'rtmp'=>true,'rtmpEncryption'=>$secure?'optional':'no','rtmpAddress'=>'127.0.0.1:1935','srt'=>false,'webrtc'=>false,'moq'=>false,'hls'=>true,'hlsAddress'=>'127.0.0.1:8888','hlsAlwaysRemux'=>true,'api'=>false,'playback'=>false,'authMethod'=>'http','authHTTPAddress'=>route('public.broadcast-auth'),'authHTTPExclude'=>[],
             'pathDefaults'=>['source'=>'publisher','overridePublisher'=>false,'record'=>true,'recordPath'=>rtrim(Storage::disk('live-recordings')->path(''),'/\\').'/%path/%Y-%m-%d_%H-%M-%S-%f','recordFormat'=>'fmp4','recordSegmentDuration'=>'1h','recordDeleteAfter'=>'0s','runOnReady'=>$prefix.' ready','runOnNotReady'=>$prefix.' ended','runOnRecordSegmentComplete'=>$prefix.' recording'],
             'paths'=>['~^live-[1-9][0-9]*$'=>['source'=>'publisher']]];
+        if ($secure) {
+            $config['rtmpsAddress']=':'.(int) config('platform.live_rtmp_port');
+            $config['rtmpServerCert']=(string) config('platform.live_rtmp_cert');
+            $config['rtmpServerKey']=(string) config('platform.live_rtmp_key');
+        }
         // JSON is a YAML subset supported by MediaMTX; no second parser/dependency.
         return json_encode($config,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)."\n";
     }

@@ -17,7 +17,7 @@
 - Über uns, Mission и юридические тексты редактируются в настройках. Контактная форма сохраняет обращения в защищённый inbox и пересылает через очередь на settings.contact_email; повторные попытки, видимый статус и ручной retry. Email Live-напоминания поддерживают PHP/sendmail Plesk без обязательного внешнего SMTP.
 - Web Push Live: согласие и разрешение браузера, подписка/отмена на событие, encrypted subscriptions, приватные стабильные VAPID keys, scheduler и retryable jobs с проверками публикации/времени. Поддержаны ограниченные endpoints служб доставки Google/Mozilla/Apple/Microsoft.
 - Live: обновляемый модерируемый чат и счётчик активных browser sessions. ИИ-помощник использует существующий ключ/provider/model, отдельный запрос с согласием, приватный ответ, опубликованный текстовый контекст и общий дневной лимит вызовов; включается владельцем, не отвечает автоматически на каждое сообщение.
-- OBS → MediaMTX → локальный плеер: защищённое управление событиями и encrypted keys, ingest/HLS authorization, pinned installer/start/status, private recording hooks и регистрация MP4. RTMP/HLS слушают loopback, OBS подключается через SSH-туннель, зрители — через nginx /_live/. В /desktop/live есть кнопка ? с отдельной справкой стримера/администратора: OBS, SSH, Plesk/nginx, диагностика и назначение Composer.
+- OBS → MediaMTX → локальный плеер: защищённое управление событиями и encrypted keys, ingest/HLS authorization, pinned installer/start/status, private recording hooks и регистрация MP4. Публичный OBS-вход использует RTMPS на TCP 1936 с per-event ключом; локальный RTMP/SSH остаётся административным fallback, зрители — через nginx /_live/. В /desktop/live показывается полная RTMPS-адреса события, без SSH-инструкций для стримера. Сертификат/ключ и firewall остаются одноразовой серверной настройкой.
 - Посетители: регистрация без административной роли, email verification, личный /konto с собственными реакциями/закладками/прогрессом/напоминаниями, отменой подписок и изменением профиля; восстановление пароля через existing Laravel broker и encrypted queue.
 - Newsletter: double opt-in, queued confirmation, подписанные ссылки подтверждения/отмены, согласие, cooldown и статусы доставки.
 - Книги: защищённый редактор metadata/цены/статуса; verified читатели отправляют отзывы, изменения требуют повторной модерации. Community: вопросы/обсуждения посетителей, правила из настроек, защищённая publish/reject модерация с аудитом.
@@ -27,6 +27,7 @@
 - Self-hosted single-tenant; Manna Vom Himmel — первая установка, не отдельный Core. Основной UI немецкий, новые строки локализованы.
 - Blade и progressive JavaScript без обязательной Node-сборки. Composer используется для PHP-зависимостей Laravel, включая minishlink/web-push; не нужен при обычном обновлении текстов/Blade.
 - Production checkout: /var/www/vhosts/mannavomhimmel.de/httpdocs; document root: httpdocs/platform/public; runtime: private/atapin-platform. PHP: /opt/plesk/php/8.4/bin/php. Queue/scheduler — Plesk scheduled tasks, без самостоятельной установки systemd.
+- MediaMTX после reboot запускается отдельной Plesk command task каждую минуту; lock предотвращает второй процесс. RTMPS использует файлы private/atapin-live/rtmps.crt и rtmps.key, не входящие в Git.
 - Предпочтительный Takeout источник: /var/www/vhosts/mannavomhimmel.de/private/Takeout; TAKEOUT_FOLDER позволяет переопределить путь. Старые private/manna-youtube и private/youtube_zip_alle сохранены совместимыми. Originals, ZIP-отчёт и восемь частей экспорта не удалять при обновлении каталога.
 - Import регистрирует оригиналы, не означает автоматическую публикацию. Публичны только явно разрешённые материалы и опубликованные children с опубликованным родителем; архивные контоданные исключены из public и ИИ.
 - Видео/файлы публикуются с нашего сервера, без YouTube fallback/кнопок перехода. Адреса источников остаются provenance; приватные originals не раскрываются.
@@ -38,7 +39,7 @@
 - 100% pixel match не подтверждён; фон главной временный по разрешению владельца. Пустые блоки пока намеренно включены.
 - Оплачиваемый checkout не реализован: требуется выбор способа оплаты владельцем. Покупка пока через контакт; платные PDF не выдаются публично.
 - Newsletter campaign editor и массовая рассылка не реализованы; подписка/подтверждение/отмена реализованы.
-- Записи Live разбиваются на сегменты; объединённый replay отсутствует, текущий replay использует первый сегмент. Запуск MediaMTX после перезагрузки требует настройки владельцем в Plesk; installer/start/status сами её не создают.
+- Записи Live разбиваются на сегменты; объединённый replay отсутствует, текущий replay использует первый сегмент. Автозапуск MediaMTX требует одноразовой настройки Plesk command task, RTMPS — установки публичного сертификата и открытия TCP 1936 владельцем.
 - Полные native Desktop-интерфейсы проектов, задач и календаря ещё отсутствуют; Shop имеет редактор товаров/отзывов, но не полный интерфейс продаж. Podcast и Themen/Kategorien не имеют отдельных backend-модулей. Ярлык или безопасная конфигурация интеграции не означает готовый модуль/OAuth/публикацию во внешнюю службу.
 - Takeout проверен на немецкой схеме владельца и основных английских aliases, не на всех возможных языках/форматах. Отдельного достоверного Short-признака экспорт не гарантирует: прежние Shorts сохраняются, новые неопределённые видео требуют review.
 - Checkpoints сохраняются между единицами работы с мягким бюджетом 30 секунд; большой ZIP entry/hash/предварительная индексация могут выполняться дольше. Это не побайтовое возобновление ZIP. Старые дубли originals физически не удаляются.
@@ -50,7 +51,7 @@
 - Выбрать способ оплаты и завершить реальный checkout отдельным ограниченным блоком.
 - Затем, по приоритету владельца: newsletter campaigns, объединённый Live replay, визуальная доводка approved-страниц; к Media Library вернуться позже.
 - Для диагностики Takeout использовать Ergebnis im Detail → связи/ошибки/манифест и Lokale Videos prüfen → Alle im Browser prüfen; не очищать originals и не заменять проверку ручным просмотром сотен записей.
-- Инструкции стримера и администратора доступны непосредственно в /desktop/live через ?; установка MediaMTX/nginx и production-проверки выполняются владельцем.
+- Инструкции стримера и администратора доступны непосредственно в /desktop/live через ?; установка MediaMTX/nginx, сертификата/порта RTMPS и production-проверки выполняются владельцем.
 
 ## Проверки
 
@@ -63,10 +64,10 @@
 - Полная папка Takeout: 38 целевых tests / 320 assertions; JSON-тексты 3 279 реальных CSV-ячеек разобраны read-only без ошибок. Манифест и ZIP directories: 1 815 ожидаемых/присутствующих файлов, missing/extra 0; 244/244 video originals однозначно сопоставлены без распаковки 55 GB.
 - Импорт/Media Library: целевые tests и browser workflows покрывали retry/checkpoints, merge/manual preservation, trash/restore, replacement/cover, playlist/bulk, AI undo, progress/history и protected HTTP 206/frame/seek/playback. Полный массовый production import не запускался агентом.
 - Intake archive/auth/retired HTTP contract проходили; Python collector suite — 12 passed / 1 skipped (ffmpeg). Linux-specific Plesk-subfolder и /proc checks недоступны локально Windows.
-- При этом сохранении состояния изменена только документация: программные тесты не повторяются; выполняется git diff --check и просмотр diff.
+- Для direct RTMPS локально выполнены только read-only diff checks; PHP/Laravel tests и MediaMTX binary validation на Windows недоступны, потому что PHP не установлен.
 
 ## Последний связанный commit
 
-- Последняя реализация: 5aa0463 — Embed streamer and administrator setup help in Live.
+- Последняя реализация: Add direct secure RTMPS ingest for OBS.
 - Текущая ветка и upstream: main → origin/main. Сохранение этого статуса оформляется отдельным documentation commit: Consolidate current project status.
 

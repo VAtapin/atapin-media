@@ -17,7 +17,7 @@ class PublicBroadcastTest extends TestCase
         $this->assertNotEmpty($key);
         $this->get('/desktop/live/'.$event->id)->assertOk()->assertSee($key)
             ->assertSee('data-public-help="broadcast-help"',false)->assertSee('<dialog',false)
-            ->assertSee('SSH_BENUTZER')->assertSee('proxy_buffering off;')->assertSee('minishlink/web-push');
+            ->assertDontSee('SSH_BENUTZER')->assertSee('sichere OBS')->assertSee('proxy_buffering off;')->assertSee('minishlink/web-push');
         $this->get('/live?event='.$event->id)->assertOk()->assertDontSee($key);
     }
     private function event(): SourceRecord {return SourceRecord::create(['source'=>'website','source_id'=>'live','kind'=>'video','title'=>'Live','status'=>'ready','metadata'=>['public_section'=>'live','public_published'=>true,'live_stream_enabled'=>true]]);}
@@ -44,11 +44,32 @@ class PublicBroadcastTest extends TestCase
         Storage::fake('live-recordings');
         $config=json_decode(app(PublicBroadcast::class)->configuration(),true,512,JSON_THROW_ON_ERROR);
         $this->assertSame('127.0.0.1:1935',$config['rtmpAddress']);$this->assertSame('127.0.0.1:8888',$config['hlsAddress']);
+        $this->assertSame('no',$config['rtmpEncryption']);$this->assertArrayNotHasKey('rtmpsAddress',$config);
         $this->assertSame('0s',$config['pathDefaults']['recordDeleteAfter']);$this->assertFalse($config['api']);$this->assertSame('http',$config['authMethod']);
         if($binary=getenv('MEDIAMTX_VALIDATE_BIN')){
             Storage::disk('live-recordings')->put('validation.yml',app(PublicBroadcast::class)->configuration());
             $process=new \Symfony\Component\Process\Process([$binary,'--validate-conf',Storage::disk('live-recordings')->path('validation.yml')]);
             $process->run();$this->assertTrue($process->isSuccessful(),$process->getErrorOutput());
+        }
+    }
+
+    public function test_configuration_enables_public_rtmps_only_with_readable_certificate_files(): void
+    {
+        Storage::fake('live-recordings');
+        $cert=tempnam(sys_get_temp_dir(),'live-cert-');$key=tempnam(sys_get_temp_dir(),'live-key-');
+        file_put_contents($cert,'certificate');file_put_contents($key,'private key');
+        try {
+            config(['platform.live_rtmp_host'=>'mannavomhimmel.de','platform.live_rtmp_port'=>1936,'platform.live_rtmp_cert'=>$cert,'platform.live_rtmp_key'=>$key]);
+            $broadcast=app(PublicBroadcast::class);
+            $config=json_decode($broadcast->configuration(),true,512,JSON_THROW_ON_ERROR);
+            $this->assertTrue($broadcast->secureIngestReady());
+            $this->assertSame('optional',$config['rtmpEncryption']);$this->assertSame(':1936',$config['rtmpsAddress']);
+            $this->assertSame($cert,$config['rtmpServerCert']);$this->assertSame($key,$config['rtmpServerKey']);
+            $event=$this->event();$ingest=$broadcast->ingest($event,'secret');
+            $this->assertTrue($ingest['configured']);
+            $this->assertSame('rtmps://mannavomhimmel.de:1936/live-'.$event->id.'?user=publisher&pass=secret',$ingest['url']);
+        } finally {
+            @unlink($cert);@unlink($key);
         }
     }
 }

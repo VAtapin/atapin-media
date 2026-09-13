@@ -28,7 +28,10 @@ Artisan::command('public:live-config',function(){
     if(!is_dir($root))mkdir($root,0700,true);
     if(!is_dir($root.'/recordings'))mkdir($root.'/recordings',0700,true);
     file_put_contents($root.'/mediamtx.yml',app(\App\Services\PublicBroadcast::class)->configuration());chmod($root.'/mediamtx.yml',0600);
+    $broadcast=app(\App\Services\PublicBroadcast::class);
     $this->info('MediaMTX private configuration generated.');
+    if($broadcast->secureIngestReady())$this->info('Public RTMPS ingest is enabled on port '.config('platform.live_rtmp_port').'.');
+    else $this->warn('RTMPS certificate/key are not readable; only the local SSH fallback is enabled.');
 });
 Artisan::command('public:live-presence-prune',function(){\Illuminate\Support\Facades\DB::table('public_live_presence')->where('seen_at','<',now()->subDay())->delete();});
 Schedule::command('public:live-presence-prune')->daily()->withoutOverlapping();
