@@ -1,6 +1,6 @@
 <?php
 namespace App\Http\Controllers;
-use App\Models\SourceRecord;
+use App\Models\{Media,SourceRecord};
 use App\Services\{PublicBroadcast,Settings};
 use Illuminate\Http\Request;
 class PublicBroadcastController extends Controller
@@ -29,13 +29,17 @@ class PublicBroadcastController extends Controller
     }
     private function persist(Request $request,Settings $settings,?SourceRecord $record): SourceRecord
     {
-        $data=$request->validate(['title'=>'required|string|max:255','body'=>'nullable|string|max:10000','starts_at'=>'nullable|date','published'=>'nullable|boolean','enabled'=>'nullable|boolean','rotate_key'=>'nullable|boolean']);
+        $data=$request->validate(['title'=>'required|string|max:255','body'=>'nullable|string|max:10000','starts_at'=>'nullable|date','published'=>'nullable|boolean','enabled'=>'nullable|boolean','rotate_key'=>'nullable|boolean','cover_media_id'=>'nullable|uuid|exists:media,id']);
         if($record && !$record->exists)$record=null;
         $this->assertLiveEvent($record);
         $metadata=[...($record?->metadata??[]),'public_section'=>'live','public_published'=>$request->boolean('published'),'live_stream_enabled'=>$request->boolean('enabled'),'starts_at'=>$data['starts_at']??null];
         if(!isset($metadata['live_status'])||$metadata['live_status']!=='live')$metadata['live_status']=empty($metadata['starts_at'])?'draft':'scheduled';
         if(!$record)$record=SourceRecord::create(['source'=>'website','source_id'=>'live:'.\Illuminate\Support\Str::uuid(),'kind'=>'video','title'=>$data['title'],'body'=>$data['body']??'','status'=>'ready','metadata'=>$metadata]);
         else $record->update(['title'=>$data['title'],'body'=>$data['body']??'','status'=>'ready','metadata'=>$metadata]);
+        if (!empty($data['cover_media_id'])) {
+            app(\App\Services\Importing\ContentAssets::class)->change($record, ['action'=>'replace','role'=>'cover','media_id'=>$data['cover_media_id']]);
+            $record=$record->fresh();
+        }
         if(!$settings->hasSecret('live_publish_'.$record->id)||$request->boolean('rotate_key'))$settings->updateSecrets(['live_publish_'.$record->id=>bin2hex(random_bytes(24))]);
         return $record->fresh();
     }
@@ -46,6 +50,9 @@ class PublicBroadcastController extends Controller
     private function eventData(SourceRecord $record,?array $ingest=null): array
     {
         $metadata=$record->metadata??[];
-        return ['id'=>$record->id,'title'=>$record->title,'body'=>$record->body,'starts_at'=>$metadata['starts_at']??null,'published'=>(bool)($metadata['public_published']??false),'enabled'=>(bool)($metadata['live_stream_enabled']??false),'status'=>$metadata['live_status']??'draft','created_at'=>$record->created_at?->toIso8601String(),'updated_at'=>$record->updated_at?->toIso8601String(),'ingest'=>$ingest];
+        $cover=$metadata['cover_media_id']?Media::find($metadata['cover_media_id']):null;
+        $coverPreview=$cover && $cover->kind==='image' && app(\App\Services\MediaOriginalLocator::class)->find($cover)
+            ?route('media.preview',$cover):null;
+        return ['id'=>$record->id,'title'=>$record->title,'body'=>$record->body,'starts_at'=>$metadata['starts_at']??null,'published'=>(bool)($metadata['public_published']??false),'enabled'=>(bool)($metadata['live_stream_enabled']??false),'status'=>$metadata['live_status']??'draft','cover_media_id'=>$cover?->id,'cover_preview_url'=>$coverPreview,'created_at'=>$record->created_at?->toIso8601String(),'updated_at'=>$record->updated_at?->toIso8601String(),'ingest'=>$ingest];
     }
 }

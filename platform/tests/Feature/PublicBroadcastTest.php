@@ -24,6 +24,19 @@ class PublicBroadcastTest extends TestCase
         $this->actingAs($owner)->patchJson('/api/desktop/live/'.$created['id'],['title'=>'Updated API stream','body'=>'Updated body','starts_at'=>'2027-01-01T12:00','enabled'=>true,'published'=>true])->assertOk()->assertJsonPath('data.title','Updated API stream')->assertJsonPath('data.status','scheduled');
         $this->actingAs($owner)->getJson('/api/desktop/live/'.$created['id'])->assertOk()->assertJsonPath('data.body','Updated body')->assertJsonStructure(['data'=>['ingest']]);
     }
+    public function test_live_studio_cover_is_linked_to_the_event_and_returned_for_the_editor(): void
+    {
+        app(\App\Services\Access::class)->seed();
+        Storage::fake('local');Storage::disk('local')->put('posters/live.png','poster');
+        $owner=User::factory()->create();$owner->roles()->attach(\App\Models\Role::where('name','Owner')->firstOrFail());
+        $poster=Media::create(['source'=>'upload','source_id'=>'poster-upload','title'=>'Live poster','original_name'=>'live.png','disk'=>'local','path'=>'posters/live.png','kind'=>'image','mime'=>'image/png','bytes'=>6,'status'=>'unsorted']);
+        $created=$this->actingAs($owner)->postJson('/api/desktop/live',['title'=>'Poster stream','published'=>true,'cover_media_id'=>$poster->id])->assertCreated()->json('data');
+        $event=SourceRecord::findOrFail($created['id']);
+        $this->assertSame($poster->id,$event->metadata['cover_media_id']);
+        $this->assertContains($poster->id,$event->metadata['media_ids']);
+        $this->assertSame($poster->id,$created['cover_media_id']);
+        $this->assertSame(route('media.preview',$poster),$created['cover_preview_url']);
+    }
     private function event(): SourceRecord {return SourceRecord::create(['source'=>'website','source_id'=>'live','kind'=>'video','title'=>'Live','status'=>'ready','metadata'=>['public_section'=>'live','public_published'=>true,'live_stream_enabled'=>true]]);}
     public function test_ingest_auth_requires_key_and_read_requires_publication(): void
     {

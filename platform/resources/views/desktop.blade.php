@@ -78,7 +78,7 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     </template>
     <template id="content-library-app-template">@include('desktop.content-library')</template>
     <template id="live-studio-app-template">
-        <section class="desktop-live-studio" data-live-studio data-api-index="{{ route('desktop.live.api.index') }}" data-api-base="{{ url('/api/desktop/live') }}" data-preview-base="{{ url('/live?event=') }}">
+        <section class="desktop-live-studio" data-live-studio data-user-id="{{ auth()->id() }}" data-api-index="{{ route('desktop.live.api.index') }}" data-api-base="{{ url('/api/desktop/live') }}" data-preview-base="{{ url('/live?event=') }}">
             <header class="desktop-live-studio-head">
                 <div>
                     <p class="desktop-live-eyebrow">{{ __('desktop-live.eyebrow') }}</p>
@@ -101,10 +101,16 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
                     <form data-live-form hidden>
                         <div class="desktop-live-editor-heading"><div><p class="desktop-live-eyebrow" data-live-editor-eyebrow>{{ __('desktop-live.new') }}</p><h2 data-live-editor-title>{{ __('desktop-live.new') }}</h2></div><button class="desktop-button" type="button" data-live-help>{{ __('desktop-live.help') }}</button></div>
                         <input type="hidden" name="id">
+                        <input type="hidden" name="cover_media_id">
                         <div class="desktop-live-fields">
                             <label>{{ __('desktop-live.title_label') }}<input name="title" required maxlength="255"></label>
                             <label>{{ __('desktop-live.schedule_label') }}<input name="starts_at" type="datetime-local"></label>
                             <label class="desktop-live-field-wide">{{ __('desktop-live.description_label') }}<textarea name="body" rows="5" maxlength="10000"></textarea></label>
+                        </div>
+                        <div class="desktop-live-poster">
+                            <div><p class="desktop-live-eyebrow">{{ __('desktop-live.poster_eyebrow') }}</p><h3>{{ __('desktop-live.poster_title') }}</h3><p>{{ __('desktop-live.poster_hint') }}</p></div>
+                            <div class="desktop-live-poster-row"><div class="desktop-live-poster-preview" data-live-poster-preview hidden><img data-live-poster-image alt=""></div><div class="desktop-live-poster-empty" data-live-poster-empty>{{ __('desktop-live.poster_empty') }}</div><label class="desktop-button">{{ __('desktop-live.poster_choose') }}<input type="file" name="poster_file" accept="image/jpeg,image/png,image/webp,image/gif" data-live-poster-file hidden></label></div>
+                            <p class="desktop-live-poster-status" data-live-poster-status role="status"></p>
                         </div>
                         <div class="desktop-live-options"><label><input name="published" type="checkbox">{{ __('desktop-live.publish') }}</label><label><input name="enabled" type="checkbox">{{ __('desktop-live.enable') }}</label><label data-live-rotate-wrap hidden><input name="rotate_key" type="checkbox">{{ __('desktop-live.rotate') }}</label></div>
                         <div class="desktop-live-actions"><button class="desktop-button is-primary" type="submit">{{ __('desktop-live.save') }}</button><button class="desktop-button" type="button" data-live-preview hidden>{{ __('desktop-live.preview') }}</button></div>

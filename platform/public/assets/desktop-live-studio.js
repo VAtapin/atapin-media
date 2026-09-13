@@ -22,6 +22,11 @@
     const ingest = root.querySelector('[data-live-ingest]');
     const rotateWrap = root.querySelector('[data-live-rotate-wrap]');
     const preview = root.querySelector('[data-live-preview]');
+    const posterFile = root.querySelector('[data-live-poster-file]');
+    const posterPreview = root.querySelector('[data-live-poster-preview]');
+    const posterImage = root.querySelector('[data-live-poster-image]');
+    const posterEmpty = root.querySelector('[data-live-poster-empty]');
+    const posterStatus = root.querySelector('[data-live-poster-status]');
     let current = null;
 
     const setFeedback = (message, error = false) => {
@@ -58,6 +63,21 @@
       root.querySelector('[data-live-server]').textContent = `${parsed.protocol}//${parsed.host}${parsed.pathname}`;
       root.querySelector('[data-live-url]').textContent = value.url;
     };
+    const showPoster = data => {
+      form.elements.cover_media_id.value = data.cover_media_id || '';
+      if (data.cover_preview_url) {
+        posterImage.src = data.cover_preview_url;
+        posterPreview.hidden = false;
+        posterEmpty.hidden = true;
+      } else {
+        posterImage.removeAttribute('src');
+        posterPreview.hidden = true;
+        posterEmpty.hidden = false;
+      }
+      posterStatus.textContent = '';
+      posterStatus.classList.remove('is-error');
+      posterFile.value = '';
+    };
     const fillForm = data => {
       current = data;
       empty.hidden = true;
@@ -72,6 +92,7 @@
       rotateWrap.hidden = !data.id;
       preview.hidden = !data.id;
       preview.dataset.url = `${root.dataset.previewBase}${data.id}`;
+      showPoster(data);
       root.querySelector('[data-live-editor-eyebrow]').textContent = data.id ? labels().edit : labels().new;
       root.querySelector('[data-live-editor-title]').textContent = data.title || labels().new;
       showIngest(data);
@@ -105,6 +126,21 @@
       try { await navigator.clipboard.writeText(url); event.currentTarget.textContent = labels().copied; setTimeout(() => { event.currentTarget.textContent = labels().copy; }, 1800); }
       catch { setFeedback(labels().copy, true); }
     });
+    posterFile.addEventListener('change', () => {
+      const file = posterFile.files?.[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        posterFile.value = '';
+        posterStatus.textContent = labels().poster_upload_error;
+        posterStatus.classList.add('is-error');
+        return;
+      }
+      posterImage.src = URL.createObjectURL(file);
+      posterPreview.hidden = false;
+      posterEmpty.hidden = true;
+      posterStatus.textContent = labels().poster_uploaded;
+      posterStatus.classList.remove('is-error');
+    });
     preview.addEventListener('click', () => window.open(preview.dataset.url, '_blank', 'noopener'));
     root.querySelector('[data-live-help]').addEventListener('click', () => document.querySelector('[data-open-app="help-live-studio"]')?.click());
     events.addEventListener('click', event => { const button = event.target.closest('[data-live-event]'); if (button) loadEvent(button.dataset.liveEvent); });
@@ -120,7 +156,20 @@
       delete payload.id;
       const method = id ? 'PATCH' : 'POST';
       try {
-        const data = await request(id ? `${root.dataset.apiBase}/${id}` : root.dataset.apiBase, {method, body:JSON.stringify(payload)});
+        const file = posterFile.files?.[0];
+        delete payload.cover_media_id;
+        delete payload.poster_file;
+        let data = await request(id ? `${root.dataset.apiBase}/${id}` : root.dataset.apiBase, {method, body:JSON.stringify(payload)});
+        if (file) {
+          if (typeof window.uploadDesktopMedia !== 'function') throw new Error(labels().poster_upload_error);
+          posterStatus.textContent = labels().poster_uploading;
+          const mediaId = await window.uploadDesktopMedia(file, root.dataset.userId, (offset, total) => {
+            posterStatus.textContent = `${labels().poster_uploading} ${Math.floor(offset / total * 100)} %`;
+          });
+          data = await request(`${root.dataset.apiBase}/${data.id}`, {method:'PATCH', body:JSON.stringify({
+            title:data.title, body:data.body, starts_at:data.starts_at, published:data.published, enabled:data.enabled, cover_media_id:mediaId,
+          })});
+        }
         const index = await request(root.dataset.apiIndex);
         window.liveStudioEvents = index;
         fillForm(data);
