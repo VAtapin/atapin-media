@@ -32,6 +32,12 @@ class PublicCatalog
             $key=['podcast'=>'episode','live'=>'event','community'=>'discussion'][$section];
             $request->validate([$key=>'nullable|integer|min:1']);
             $record=$request->filled($key)?$this->content->forSection($section)->findOrFail($request->integer($key)):null;
+            if(!$record&&$section==='live'){
+                $record=$this->content->forSection('live')->whereIn('metadata->live_status',['live','scheduled'])->get()->sortBy(function($item){
+                    $status=$item->metadata['live_status']??null;$starts=$item->metadata['starts_at']??null;$time=$starts?strtotime((string)$starts):PHP_INT_MAX;
+                    return [$status==='live'?0:1,$time,(int)$item->id];
+                })->first();
+            }
             if(!$record&&$featured)$record=$this->content->forSection($section)->find($featured['id']);
             if($record)$featured=$this->content->card($record);
         }
@@ -42,7 +48,7 @@ class PublicCatalog
         $resumeState=$request->user()?PublicContentState::where('user_id',$request->user()->id)->where('subject_type','record')->where('action','progress')->whereIn('subject_id',$this->content->forSection('podcast')->select('id'))->latest('updated_at')->first():null;
         $resumeRecord=$resumeState?$this->content->forSection('podcast')->find($resumeState->subject_id):null;
         return ['items'=>$items,'featured'=>$featured,'readingBooks'=>$readingBooks,'resume'=>$resumeRecord?[...$this->content->card($resumeRecord),'position'=>$resumeState->value['position']??0]:null,
-            'popular'=>($section==='buecher'?$this->books->query()->latest():$this->content->forSection($section)->orderByDesc('metadata->views')->latest())->limit(5)->get()->map($mapper),
+            'popular'=>($section==='buecher'?$this->books->query()->latest():($section==='live'?$this->content->forSection('live')->where('metadata->live_status','ended')->latest():$this->content->forSection($section)->orderByDesc('metadata->views')->latest()))->limit(5)->get()->map($mapper),
             'topics'=>$section==='buecher'?[]:$this->topics($section),'series'=>$this->series($section),
             'record'=>$record,'assets'=>$record?$this->content->assets($record):collect(),
             'comments'=>$record?$this->content->children($record)->latest()->paginate(20,['*'],'comments_page')->withQueryString()->fragment('comments'):collect(),

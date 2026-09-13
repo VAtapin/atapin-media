@@ -38,12 +38,18 @@ class PublicPagesTest extends TestCase
     public function test_live_player_starts_mediamtx_cookie_check_inside_proxy_prefix(): void
     {
         $live=$this->record('video',['public_section'=>'live','live_stream_enabled'=>true,'live_status'=>'live']);
-        $this->get('/live?event='.$live->id)->assertOk()->assertSee('/_live/live-'.$live->id.'/?cookieCheck=1',false);
+        $this->get('/live?event='.$live->id)->assertOk()->assertSee('/_live/live/?cookieCheck=1',false);
     }
     public function test_ended_live_uses_the_branded_fallback_instead_of_an_empty_video_player(): void
     {
         $live=$this->record('video',['public_section'=>'live','live_stream_enabled'=>true,'live_status'=>'ended']);
         $this->get('/live?event='.$live->id)->assertOk()->assertSee('public-live-player-fallback-static',false)->assertSee('/assets/brand/owner/desktop/wallpapers/manna-mountains.png',false)->assertDontSee('<video',false);
+    }
+    public function test_scheduled_live_events_are_not_listed_as_recordings(): void
+    {
+        $scheduled=$this->record('video',['public_section'=>'live','live_status'=>'scheduled','starts_at'=>'2027-01-01T12:00:00']);
+        $ended=$this->record('video',['public_section'=>'live','live_status'=>'ended']);
+        $this->get('/live?event='.$scheduled->id)->assertOk()->assertViewHas('popular',fn($items)=>!$items->contains('id',$scheduled->id)&&$items->contains('id',$ended->id));
     }
     public function test_active_books_render_and_drafts_do_not(): void
     {

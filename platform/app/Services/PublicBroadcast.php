@@ -4,45 +4,67 @@ use App\Models\{SourceRecord,Media};
 use Illuminate\Support\Facades\{DB,Storage};
 class PublicBroadcast
 {
+    public const SHARED_PATH = 'live';
+
     public function secureIngestReady(): bool
     {
         return is_readable((string) config('platform.live_rtmp_cert'))
             && is_readable((string) config('platform.live_rtmp_key'));
     }
 
-    public function ingest(SourceRecord $record, ?string $key): array
+    public function ensureSharedKey(Settings $settings, bool $rotate = false): string
+    {
+        if (!$settings->hasSecret('live_publish_shared') || $rotate) {
+            $settings->updateSecrets(['live_publish_shared' => bin2hex(random_bytes(24))]);
+        }
+        return (string) $settings->secret('live_publish_shared');
+    }
+
+    public function ingest(SourceRecord $record, Settings $settings, bool $rotate = false): array
     {
         $host = (string) config('platform.live_rtmp_host');
         $port = (int) config('platform.live_rtmp_port');
-        $url = 'rtmps://'.$host.':'.$port.'/live-'.$record->id.'?user=publisher&pass='.rawurlencode((string) $key);
+        $key = $this->ensureSharedKey($settings, $rotate);
+        $url = 'rtmps://'.$host.':'.$port.'/'.self::SHARED_PATH.'?user=publisher&pass='.rawurlencode($key);
 
-        return ['configured' => $this->secureIngestReady(), 'url' => $url, 'host' => $host, 'port' => $port];
+        return ['configured' => $this->secureIngestReady(), 'url' => $url, 'path' => self::SHARED_PATH, 'host' => $host, 'port' => $port];
     }
 
     public function record(string $path): ?SourceRecord
     {
+        if ($path === self::SHARED_PATH) return $this->activeRecord() ?? $this->candidateRecord();
         if(!preg_match('/^live-([1-9][0-9]*)$/D',$path,$match))return null;
         return SourceRecord::whereKey($match[1])->where('metadata->public_section','live')->where('metadata->live_stream_enabled',true)->first();
     }
     public function authorize(array $data): bool
     {
-        $record=$this->record($data['path']??'');if(!$record)return false;
-        if(($data['action']??'')==='read')return ($data['protocol']??'')==='hls'&&app(PublicContent::class)->visible($record);
+        $path=$data['path']??'';
+        if(($data['action']??'')==='read'){
+            $record=$this->record($path);return $record&&($data['protocol']??'')==='hls'&&app(PublicContent::class)->visible($record);
+        }
         if(($data['action']??'')!=='publish'||($data['user']??'')!=='publisher')return false;
-        $key=app(Settings::class)->secret('live_publish_'.$record->id);
-        return is_string($key)&&is_string($data['password']??null)&&hash_equals($key,$data['password']);
+        $record=$path===self::SHARED_PATH?null:$this->record($path);
+        $key=$path===self::SHARED_PATH?app(Settings::class)->secret('live_publish_shared'):app(Settings::class)->secret('live_publish_'.($record?->id ?? ''));
+        if(!is_string($key)||!is_string($data['password']??null)||!hash_equals($key,$data['password']))return false;
+        return (bool)($path===self::SHARED_PATH?$this->activateSharedRecord():$record);
     }
     public function signal(string $path,bool $ready): void
     {
-        $record=$this->record($path);if(!$record)return;
+        $record=$path===self::SHARED_PATH?$this->activeRecord():$this->record($path);if(!$record)return;
         DB::transaction(function()use($record,$ready){
             $record=SourceRecord::lockForUpdate()->findOrFail($record->id);
-            $record->update(['metadata'=>[...$record->metadata,'live_status'=>$ready?'live':'ended','live_signal_at'=>now()->toIso8601String()]]);
+            $metadata=[...$record->metadata,'live_status'=>$ready?'live':'ended','live_signal_at'=>now()->toIso8601String()];
+            if ($ready) unset($metadata['live_recording_pending']);
+            else {
+                unset($metadata['live_ingest_active']);
+                $metadata['live_recording_pending']=true;
+            }
+            $record->update(['metadata'=>$metadata]);
         });
     }
     public function recording(string $path,string $file): void
     {
-        $record=$this->record($path);if(!$record)return;
+        $record=$path===self::SHARED_PATH?$this->recordingRecord():$this->record($path);if(!$record)return;
         $root=Storage::disk('live-recordings')->path('');
         $resolved=\App\Services\Importing\ImportPath::resolve($root,$file);
         if(!is_file($resolved)||is_link($file)||strtolower(pathinfo($resolved,PATHINFO_EXTENSION))!=='mp4')throw new \RuntimeException('Invalid completed recording.');
@@ -61,7 +83,7 @@ class PublicBroadcast
         $secure=$this->secureIngestReady();
         $config=['logLevel'=>'warn','rtsp'=>false,'rtmp'=>true,'rtmpEncryption'=>$secure?'optional':'no','rtmpAddress'=>'127.0.0.1:1935','srt'=>false,'webrtc'=>false,'moq'=>false,'hls'=>true,'hlsAddress'=>'127.0.0.1:8888','hlsAlwaysRemux'=>true,'api'=>false,'playback'=>false,'authMethod'=>'http','authHTTPAddress'=>route('public.broadcast-auth'),'authHTTPExclude'=>[],
             'pathDefaults'=>['source'=>'publisher','overridePublisher'=>false,'record'=>true,'recordPath'=>rtrim(Storage::disk('live-recordings')->path(''),'/\\').'/%path/%Y-%m-%d_%H-%M-%S-%f','recordFormat'=>'fmp4','recordSegmentDuration'=>'1h','recordDeleteAfter'=>'0s','runOnReady'=>$prefix.' ready','runOnNotReady'=>$prefix.' ended','runOnRecordSegmentComplete'=>$prefix.' recording'],
-            'paths'=>['~^live-[1-9][0-9]*$'=>['source'=>'publisher']]];
+            'paths'=>['~^live$'=>['source'=>'publisher'],'~^live-[1-9][0-9]*$'=>['source'=>'publisher']]];
         if ($secure) {
             $config['rtmpsAddress']=':'.(int) config('platform.live_rtmp_port');
             $config['rtmpServerCert']=(string) config('platform.live_rtmp_cert');
@@ -69,5 +91,39 @@ class PublicBroadcast
         }
         // JSON is a YAML subset supported by MediaMTX; no second parser/dependency.
         return json_encode($config,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)."\n";
+    }
+
+    private function activeRecord(): ?SourceRecord
+    {
+        return SourceRecord::where('metadata->public_section','live')->where('metadata->live_stream_enabled',true)
+            ->where('metadata->live_ingest_active',true)->where(function($query){$query->whereNull('metadata->live_status')->orWhere('metadata->live_status','!=','ended');})->first();
+    }
+
+    private function recordingRecord(): ?SourceRecord
+    {
+        return $this->activeRecord() ?? SourceRecord::where('metadata->public_section','live')
+            ->where('metadata->live_stream_enabled',true)->where('metadata->live_recording_pending',true)
+            ->latest('metadata->live_signal_at')->first();
+    }
+
+    private function candidateRecord(): ?SourceRecord
+    {
+        $records=SourceRecord::where('metadata->public_section','live')->where('metadata->live_stream_enabled',true)
+            ->where(function($query){$query->whereNull('metadata->live_status')->orWhereIn('metadata->live_status',['draft','scheduled','live']);})->get();
+        return $records->sortBy(function(SourceRecord $record){
+            $status=$record->metadata['live_status']??null;
+            $starts=$record->metadata['starts_at']??null;
+            $time=$starts?strtotime((string)$starts):PHP_INT_MAX;
+            return [$status==='live'?0:($starts&&$time<=time()?1:2),$time,(int)$record->id];
+        })->first();
+    }
+
+    private function activateSharedRecord(): ?SourceRecord
+    {
+        if ($active=$this->activeRecord()) return $active;
+        $record=$this->candidateRecord();
+        if (!$record) return null;
+        $record->update(['metadata'=>[...$record->metadata,'live_ingest_active'=>true]]);
+        return $record->fresh();
     }
 }

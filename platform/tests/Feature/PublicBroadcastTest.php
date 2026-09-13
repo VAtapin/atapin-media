@@ -22,7 +22,9 @@ class PublicBroadcastTest extends TestCase
         $this->assertNotEmpty($created['id']);
         $this->assertTrue($created['enabled']);$this->assertTrue($created['published']);
         $this->actingAs($owner)->patchJson('/api/desktop/live/'.$created['id'],['title'=>'Updated API stream','body'=>'Updated body','starts_at'=>'2027-01-01T12:00','enabled'=>true,'published'=>true])->assertOk()->assertJsonPath('data.title','Updated API stream')->assertJsonPath('data.status','scheduled');
-        $this->actingAs($owner)->getJson('/api/desktop/live/'.$created['id'])->assertOk()->assertJsonPath('data.body','Updated body')->assertJsonStructure(['data'=>['ingest']]);
+        $this->actingAs($owner)->getJson('/api/desktop/live/'.$created['id'])->assertOk()->assertJsonPath('data.body','Updated body')->assertJsonPath('data.ingest.path','live')->assertJsonStructure(['data'=>['ingest']]);
+        $second=$this->actingAs($owner)->postJson('/api/desktop/live',['title'=>'Second stream','enabled'=>true,'published'=>true])->assertCreated()->json('data');
+        $this->assertSame($created['ingest']['url'],$second['ingest']['url']);
     }
     public function test_live_studio_cover_is_linked_to_the_event_and_returned_for_the_editor(): void
     {
@@ -46,6 +48,28 @@ class PublicBroadcastTest extends TestCase
         $read=['path'=>'live-'.$event->id,'action'=>'read','protocol'=>'hls'];$this->postJson('/live/server-auth',$read)->assertNoContent();
         $event->update(['metadata'=>[...$event->metadata,'public_published'=>false]]);$this->postJson('/live/server-auth',$read)->assertUnauthorized();
     }
+    public function test_shared_ingest_selects_an_enabled_event_without_creating_event_specific_keys(): void
+    {
+        $first=$this->event();$first->update(['metadata'=>[...$first->metadata,'live_status'=>'live']]);$second=SourceRecord::create(['source'=>'website','source_id'=>'live-second','kind'=>'video','title'=>'Second','status'=>'ready','metadata'=>['public_section'=>'live','public_published'=>true,'live_stream_enabled'=>true,'live_status'=>'scheduled','starts_at'=>'2027-01-01T12:00:00']]);
+        app(Settings::class)->updateSecrets(['live_publish_shared'=>'shared-secret']);
+        $publish=['path'=>'live','action'=>'publish','protocol'=>'rtmp','user'=>'publisher','password'=>'shared-secret'];
+        $this->postJson('/live/server-auth',$publish)->assertNoContent();
+        $this->assertTrue((bool)($first->fresh()->metadata['live_ingest_active']??false));
+        $this->postJson('/live/server-auth',['path'=>'live','action'=>'read','protocol'=>'hls'])->assertNoContent();
+        app(PublicBroadcast::class)->signal('live',false);
+        $this->assertSame('ended',$first->fresh()->metadata['live_status']);
+        $this->assertArrayNotHasKey('live_ingest_active',$first->fresh()->metadata);
+        $this->assertFalse(app(Settings::class)->hasSecret('live_publish_'.$first->id));
+        $this->assertFalse(app(Settings::class)->hasSecret('live_publish_'.$second->id));
+    }
+    public function test_shared_recording_is_linked_after_the_end_signal(): void
+    {
+        Storage::fake('live-recordings');$event=$this->event();$event->update(['metadata'=>[...$event->metadata,'live_status'=>'live','live_ingest_active'=>true]]);
+        $broadcast=app(PublicBroadcast::class);$broadcast->signal('live',false);
+        $path='live/segment.mp4';Storage::disk('live-recordings')->put($path,'completed recording');$file=Storage::disk('live-recordings')->path($path);
+        $broadcast->recording('live',$file);
+        $this->assertContains(Media::firstOrFail()->id,$event->fresh()->metadata['media_ids']);
+    }
     public function test_completed_recordings_are_registered_once_and_linked_without_copying(): void
     {
         Storage::fake('live-recordings');$event=$this->event();$path='live-'.$event->id;
@@ -62,6 +86,7 @@ class PublicBroadcastTest extends TestCase
         $this->assertSame('127.0.0.1:1935',$config['rtmpAddress']);$this->assertSame('127.0.0.1:8888',$config['hlsAddress']);
         $this->assertSame('no',$config['rtmpEncryption']);$this->assertArrayNotHasKey('rtmpsAddress',$config);
         $this->assertSame('0s',$config['pathDefaults']['recordDeleteAfter']);$this->assertFalse($config['api']);$this->assertSame('http',$config['authMethod']);
+        $this->assertArrayHasKey('~^live$',$config['paths']);
         if($binary=getenv('MEDIAMTX_VALIDATE_BIN')){
             Storage::disk('live-recordings')->put('validation.yml',app(PublicBroadcast::class)->configuration());
             $process=new \Symfony\Component\Process\Process([$binary,'--validate-conf',Storage::disk('live-recordings')->path('validation.yml')]);
@@ -81,9 +106,9 @@ class PublicBroadcastTest extends TestCase
             $this->assertTrue($broadcast->secureIngestReady());
             $this->assertSame('optional',$config['rtmpEncryption']);$this->assertSame(':1936',$config['rtmpsAddress']);
             $this->assertSame($cert,$config['rtmpServerCert']);$this->assertSame($key,$config['rtmpServerKey']);
-            $event=$this->event();$ingest=$broadcast->ingest($event,'secret');
+            $event=$this->event();app(Settings::class)->updateSecrets(['live_publish_shared'=>'secret']);$ingest=$broadcast->ingest($event,app(Settings::class));
             $this->assertTrue($ingest['configured']);
-            $this->assertSame('rtmps://mannavomhimmel.de:1936/live-'.$event->id.'?user=publisher&pass=secret',$ingest['url']);
+            $this->assertSame('rtmps://mannavomhimmel.de:1936/live?user=publisher&pass=secret',$ingest['url']);
         } finally {
             @unlink($cert);@unlink($key);
         }

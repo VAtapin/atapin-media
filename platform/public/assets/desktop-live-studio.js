@@ -53,7 +53,7 @@
         events.innerHTML = `<p class="desktop-live-list-empty">${escapeHtml(labels().empty)}</p>`;
         return;
       }
-      events.innerHTML = items.map(item => `<button class="desktop-live-event${current && current.id === item.id ? ' is-active' : ''}" type="button" data-live-event="${item.id}"><span class="desktop-live-event-dot status-${escapeHtml(item.status)}"></span><span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(displayDate(item.starts_at))}</small></span><span class="desktop-live-event-arrow">→</span></button>`).join('');
+      events.innerHTML = items.map(item => `<button class="desktop-live-event${current && current.id === item.id ? ' is-active' : ''}" type="button" data-live-event="${item.id}"><span class="desktop-live-event-dot status-${escapeHtml(item.status)}"></span><span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(displayDate(item.starts_at))} · ${escapeHtml(labels()['status_'+item.status] || item.status)}</small></span><span class="desktop-live-event-arrow">→</span></button>`).join('');
     };
     const showIngest = data => {
       const value = data.ingest;
