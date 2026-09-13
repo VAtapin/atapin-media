@@ -43,5 +43,10 @@ class PublicBroadcastTest extends TestCase
         $config=json_decode(app(PublicBroadcast::class)->configuration(),true,512,JSON_THROW_ON_ERROR);
         $this->assertSame('127.0.0.1:1935',$config['rtmpAddress']);$this->assertSame('127.0.0.1:8888',$config['hlsAddress']);
         $this->assertSame('0s',$config['pathDefaults']['recordDeleteAfter']);$this->assertFalse($config['api']);$this->assertSame('http',$config['authMethod']);
+        if($binary=getenv('MEDIAMTX_VALIDATE_BIN')){
+            Storage::disk('live-recordings')->put('validation.yml',app(PublicBroadcast::class)->configuration());
+            $process=new \Symfony\Component\Process\Process([$binary,'--validate-conf',Storage::disk('live-recordings')->path('validation.yml')]);
+            $process->run();$this->assertTrue($process->isSuccessful(),$process->getErrorOutput());
+        }
     }
 }

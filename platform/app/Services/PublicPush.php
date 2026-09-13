@@ -10,9 +10,10 @@ class PublicPush
     public function validEndpoint(string $url): bool
     {
         $parts=parse_url($url);
+        $host=strtolower($parts['host']??'');
         return $parts&&($parts['scheme']??'')==='https'&&!isset($parts['user'],$parts['pass'])&&!isset($parts['fragment'])
             &&!isset($parts['user'])&&!isset($parts['pass'])&&($parts['port']??443)===443
-            &&in_array(strtolower($parts['host']??''),['fcm.googleapis.com','updates.push.services.mozilla.com','push.services.mozilla.com','web.push.apple.com'],true);
+            &&(in_array($host,['fcm.googleapis.com','updates.push.services.mozilla.com','push.services.mozilla.com','web.push.apple.com'],true)||preg_match('/^[a-z0-9-]+\.notify\.windows\.com$/D',$host)===1);
     }
     public function dispatchDue(): int
     {

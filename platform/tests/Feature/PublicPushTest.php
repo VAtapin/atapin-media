@@ -39,6 +39,8 @@ class PublicPushTest extends TestCase
         $push=app(PublicPush::class);
         foreach(['https://fcm.googleapis.com.evil.test/a','http://fcm.googleapis.com/a','https://user@fcm.googleapis.com/a','https://fcm.googleapis.com:8080/a','https://fcm.googleapis.com/a#fragment'] as $url)$this->assertFalse($push->validEndpoint($url));
         $this->assertTrue($push->validEndpoint('https://web.push.apple.com/example'));
+        $this->assertTrue($push->validEndpoint('https://wns2-am2p.notify.windows.com/w/?token=example'));
+        $this->assertFalse($push->validEndpoint('https://notify.windows.com.evil.test/w/'));
     }
     public function test_delivery_job_records_success_and_does_not_send_after_cancellation(): void
     {
