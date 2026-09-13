@@ -1,7 +1,7 @@
 <?php
 return [
     'live_unavailable'=>'This live content is no longer publicly available.','live_connection_pending'=>'Reconnecting …',
-    'reminder_hint'=>'Email approximately 15 minutes before the event. Click again to cancel.','reminder_unavailable'=>'Email reminders require SMTP and a future scheduled event.','reminder_failed'=>'Email delivery failed.','reminder_mail_subject'=>'Live reminder: :title','reminder_mail_date'=>'Starts: :date','reminder_mail_manage'=>'You requested this reminder. You can cancel it on the event page.',
+    'reminder_hint'=>'Email approximately 15 minutes before the event. Click again to cancel.','reminder_unavailable'=>'Email reminders require configured mail delivery and a future scheduled event.','reminder_failed'=>'Email delivery failed.','reminder_mail_subject'=>'Live reminder: :title','reminder_mail_date'=>'Starts: :date','reminder_mail_manage'=>'You requested this reminder. You can cancel it on the event page.',
     'contact_name'=>'Your name','contact_subject'=>'Subject','contact_body'=>'Your message','contact_privacy'=>'I consent to processing my details to handle this enquiry.','contact_received'=>'Your enquiry has been saved. Thank you!','contact_inbox'=>'Contact enquiries','contact_more'=>'Load more enquiries','page_texts'=>'Public website content',
     'no_data'=>'No data yet','no_local_playback'=>'No local video or audio file available.',
     'views'=>'views','topics'=>'Current topics','sort'=>'Sort order','sort_latest'=>'Newest first','sort_oldest'=>'Oldest first','sort_popular'=>'Most popular first',

@@ -10,6 +10,17 @@ use Tests\TestCase;
 class PublicLiveReminderTest extends TestCase
 {
     use RefreshDatabase;
+    public function test_local_sendmail_is_supported_but_logging_is_not_delivery(): void
+    {
+        config(['mail.default'=>'sendmail']);
+        $this->assertTrue(app(PublicLiveReminders::class)->mailReady());
+        config(['mail.mailers.sendmail.path'=>'']);
+        $this->assertFalse(app(PublicLiveReminders::class)->mailReady());
+        foreach(['log','array','failover'] as $mailer){
+            config(['mail.default'=>$mailer]);
+            $this->assertFalse(app(PublicLiveReminders::class)->mailReady());
+        }
+    }
     private function event(): SourceRecord
     {
         config(['mail.default'=>'smtp']);$this->freezeTime();

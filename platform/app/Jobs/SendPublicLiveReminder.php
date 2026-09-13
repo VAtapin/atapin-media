@@ -21,7 +21,7 @@ class SendPublicLiveReminder implements ShouldQueue,ShouldBeUnique
         if(!$state||$state->subject_type!=='record'||$state->action!=='reminder'||!($state->value['enabled']??false)||($state->value['sent_for']??null)===$this->startsAt)return;
         $record=$content->forSection('live')->find($state->subject_id);$time=$record?$reminders->time($record):null;
         if(!$time||$time->timestamp!==$this->startsAt||$time->isPast())return;
-        if(!$reminders->mailReady())throw new \RuntimeException('SMTP mail delivery is not configured.');
+        if(!$reminders->mailReady())throw new \RuntimeException('Email delivery is not configured.');
         $user=User::find($state->user_id);if(!$user)return;
         $locale=$state->value['locale']??'de';if(!in_array($locale,config('platform.locales'))) $locale='de';
         $mail=(new PublicLiveReminderMail($record->title,$time->copy()->timezone(config('platform.timezone'))->format('d.m.Y H:i T'),$content->card($record)['url']))->locale($locale);

@@ -1,12 +1,12 @@
 # Public Live
 
-Email reminders use the existing Laravel scheduler and queue (Plesk scheduled PHP tasks); no separate daemon or paid service is installed.
+Email reminders use the existing Laravel scheduler and queue (Plesk scheduled PHP tasks); no separate daemon or paid service is installed. Local PHP sendmail is supported with MAIL_MAILER=sendmail and the actual Plesk sendmail path; external SMTP is optional. This is configuration readiness, not proof of server delivery.
 
 - A signed-in visitor opts in on a published future scheduled Live event. Clicking again cancels.
 - `public:live-reminders` runs every minute and queues candidates within 15 minutes of starts_at. Time without a zone uses platform.timezone.
 - The job rechecks publication, consent and the unchanged event time. Successful SMTP submission is recorded per event time; rescheduling can generate a new reminder. Unique queue locks suppress simultaneous duplicates. SMTP submission is not proof of inbox delivery; mail protocols cannot guarantee exactly-once delivery after a process crash.
 - Three job attempts are allowed. A terminal failure is visible and does not restart every minute; cancel/re-enable opts into a retry.
-- MAIL_MAILER must be smtp, with the deployment's actual MAIL_HOST/MAIL_PORT, sender and required authentication/TLS settings. Do not use log/array as real delivery. Store credentials only in the existing private environment, never Git. If settings change, clear Laravel configuration cache.
+- MAIL_MAILER can be sendmail for local Plesk delivery, or smtp with the deployment's actual MAIL_HOST/MAIL_PORT and authentication/TLS settings. Do not use log/array as real delivery. Store credentials only in the private environment, never Git. If settings change, clear Laravel configuration cache. Local sendmail must be available to the Plesk PHP worker; configuring a path does not verify delivery.
 - Existing Plesk scheduler/queue tasks must be enabled. Diagnostic: `/opt/plesk/php/8.4/bin/php platform/artisan public:live-reminders`. The command does not configure SMTP or modify Plesk.
 
 Live chat and page presence refresh every 15 seconds using a CSRF-protected heartbeat. Only published reviewed chat is returned; publication revocations are respected by fresh snapshots. Online counts distinct browser sessions seen within 120 seconds, not proven video viewers. Only a one-way session hash is stored; expired rows are pruned daily. No WebSocket daemon is required.

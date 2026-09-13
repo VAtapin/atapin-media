@@ -5,7 +5,14 @@ use App\Jobs\SendPublicLiveReminder;
 use Illuminate\Support\Carbon;
 class PublicLiveReminders
 {
-    public function mailReady(): bool {return config('mail.default')==='smtp'&&!empty(config('mail.mailers.smtp.host'));}
+    public function mailReady(): bool
+    {
+        return match(config('mail.default')) {
+            'smtp' => !empty(config('mail.mailers.smtp.host')),
+            'sendmail' => !empty(config('mail.mailers.sendmail.path')),
+            default => false,
+        };
+    }
     public function time(SourceRecord $record): ?Carbon
     {
         if(($record->metadata['live_status']??null)!=='scheduled'||!is_string($record->metadata['starts_at']??null))return null;
