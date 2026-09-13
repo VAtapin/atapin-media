@@ -57,6 +57,9 @@
 
 @endif
         </div>
+        <aside class="public-hero-side-copy">
+            <p>{{ __('public.hero_side_quote') }}</p>
+        </aside>
     </section>
     <nav class="public-section-cards" aria-label="{{ __('public.sections') }}">
 @foreach(['video'=>'videos','article'=>'beitraege','book'=>'buecher','live'=>'live','podcast'=>'podcast','community'=>'community'] as $icon=>$key)<a href="{{ config('public_ui.navigation.'.$key.'.path') }}">
@@ -106,8 +109,8 @@
 <h3 class="public-live-title">{{ $live['title'] }}</h3>
 <p class="public-live-excerpt">{{ $live['excerpt']??'' }}</p>
 <div class="public-live-meta">
-<span>{{ $live['date']??'' }}</span>
-<span>{{ $live['viewers']??'' }}</span>
+@if($live['date']??'')<span>@include('public.icon',['name'=>'calendar'])<time>{{ $live['date'] }}</time></span>@endif
+@if(($live['viewers']??'')!=='')<span>@include('public.icon',['name'=>'community'])<span>{{ number_format((int)$live['viewers'],0,',','.') }} {{ __('public.viewers') }}</span></span>@endif
 </div>
 <a class="public-button public-live-cta" href="{{ $live['url'] }}">{{ __('public.join_live') }} →</a>
 @else

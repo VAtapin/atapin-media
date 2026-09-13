@@ -67,6 +67,11 @@ class ContentAssignment
             $metadata['public_published']=(bool)$data['public_published'];
             if($data['public_published'])$metadata['public_published_at']??=now()->toIso8601String();
         }
+        if($origin==='manual'&&array_key_exists('public_homepage',$data)) {
+            abort_if($data['public_homepage']&&!in_array($kind,['video','short'],true),422,__('imports.public_homepage_video_only'));
+            $metadata['public_homepage']=(bool)$data['public_homepage'];
+        }
+        if(!in_array($kind,['video','short'],true))unset($metadata['public_homepage']);
         if($origin==='manual'&&isset($data['public_section']))$metadata['public_section']=$data['public_section'];
         if (isset($data['summary'])) $metadata['summary'] = $data['summary'];
         if (isset($data['tags'])) $metadata['tags'] = $data['tags'];

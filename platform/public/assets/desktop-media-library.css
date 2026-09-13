@@ -41,6 +41,9 @@
 .media-library-more-filters[open]{grid-column:1 / -1}.media-library-filter-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px}
 .media-inspector{margin-top:14px;padding-top:10px;border-top:1px solid var(--ml-line);font-size:12px}.media-inspector summary{cursor:pointer}.media-inspector p,.media-inspector small{overflow-wrap:anywhere}
 .content-assignment{display:grid;gap:12px;margin-top:20px;padding-top:16px;border-top:1px solid var(--desktop-border, #ddd)}
+.content-assignment-checkbox{display:flex!important;align-items:flex-start;grid-template-columns:auto 1fr;column-gap:8px}
+.content-assignment-checkbox input{width:16px!important;min-width:16px;height:16px;margin-top:1px;accent-color:#ae741d}
+.content-assignment-checkbox small{grid-column:2;color:#6d8097}
 .content-assignment label{display:grid;gap:6px}
 .content-assignment input,.content-assignment select,.content-assignment textarea{width:100%;min-width:0;box-sizing:border-box}
 .desktop-media-library [data-library-content-container]{flex:1;min-height:0}

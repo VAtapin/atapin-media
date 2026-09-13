@@ -30,12 +30,18 @@
       for(const value of ['','media_library','videos','shorts','posts','polls','comments'])destination.append(new Option(value ? (text[value]||value) : text.keep_section,value));
       label.append(destination);form.insertBefore(label,form.querySelector('.media-library-toolbar-row'));
     }
-    let publication;
+    let publication, homepage, homepageLabel;
     if(type==='record' && !item.archive_data && ['video','short','post','poll','comment','live_chat'].includes(item.kind) && details.closest('[data-content-library]')?.querySelector('[data-can-publish]')){
       const label=document.createElement('label');publication=document.createElement('input');publication.type='checkbox';publication.checked=Boolean(item.public_published);
       label.append(publication,document.createTextNode(text.public_published));
       const hint=document.createElement('small');hint.textContent=text.public_published_hint;label.append(hint);
       form.insertBefore(label,form.querySelector('.media-library-toolbar-row'));
+      if(['video','short'].includes(item.kind)){
+        homepageLabel=document.createElement('label');homepageLabel.className='content-assignment-checkbox';homepage=document.createElement('input');homepage.type='checkbox';homepage.checked=Boolean(item.public_homepage);
+        homepageLabel.append(homepage,document.createTextNode(text.public_homepage));
+        const homepageHint=document.createElement('small');homepageHint.textContent=text.public_homepage_hint;homepageLabel.append(homepageHint);
+        form.insertBefore(homepageLabel,form.querySelector('.media-library-toolbar-row'));
+      }
       if(['video','short','post'].includes(item.kind)){
         const sectionLabel=document.createElement('label');sectionLabel.textContent=text.public_section;
         const section=document.createElement('select');section.name='public_section';
@@ -45,8 +51,9 @@
           section.replaceChildren(...values.map(value=>new Option(text['public_section_'+value],value)));
           section.value=values.includes(current)?current:values[0];
         };
-        updateSection();kindField.addEventListener('change',updateSection);
+        updateSection();
         sectionLabel.append(section);form.insertBefore(sectionLabel,label);
+        kindField.addEventListener('change',()=>{updateSection();if(homepageLabel){const eligible=['video','short'].includes(kindField.value);homepageLabel.hidden=!eligible;homepage.disabled=!eligible;if(!eligible)homepage.checked=false;}});
       }
     }
     form.addEventListener('input', () => {details.dataset.dirty = 'true';});
@@ -62,6 +69,7 @@
       const data = Object.fromEntries(new FormData(form)); data.tags = [...new Set(data.tags.split(',').map(tag => tag.trim()).filter(Boolean))];
       if(data.target_profile==='')delete data.target_profile;
       if(publication)data.public_published=publication.checked;
+      if(homepage)data.public_homepage=homepage.checked;
       perform(async () => {await request(`/desktop/${type === 'media' ? 'media' : 'content'}/${item.id}`,data,'PATCH'); message.textContent = text.saved;});
     });
     form.querySelector('[data-ai]').addEventListener('click', () => {

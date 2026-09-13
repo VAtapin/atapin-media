@@ -6,6 +6,7 @@ return [
     'public_visible'=>'Published on the website.','public_open'=>'View on the website',
     'public_ready_required'=>'Only ready videos and posts outside the private archive can be published.',
     'public_published_hint'=>'Only ready content. Linked files become publicly accessible. Comments require a published parent. Importing alone does not publish anything.',
+    'public_homepage'=>'Show on homepage','public_homepage_hint'=>'If several videos are selected, one is chosen at random for the large homepage feature.','public_homepage_video_only'=>'Only videos or shorts can be shown on the homepage.',
     'progress_queued'=>'Waiting for a free background worker. Starts automatically; do not import again.',
     'progress_active'=>'Processing active · Update :seconds seconds ago',
     'progress_last'=>'Last update from this import :seconds seconds ago',
@@ -271,4 +272,6 @@ return [
     'stage_files' => 'Registering files in the library',
     'stage_metadata' => 'Reading descriptions and content',
     'worker_stopped' => 'The background worker ended or reached its time limit. Saved files are kept; please retry.',
+    'publication_filter'=>'Publication','all_publication_states'=>'All publication states','publication_published'=>'Published on the website','publication_unpublished'=>'Not published on the website',
+    'all_content'=>'Show all content','section_only'=>'Show this section only',
 ];

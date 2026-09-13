@@ -10,6 +10,7 @@ class ImportedContentController extends Controller
     {
         $data = $request->validate(['q' => 'nullable|string|max:120', 'kind' => 'nullable|in:'.implode(',',SourceRecord::KINDS).',archive_data',
             'section' => 'nullable|in:videos,posts,community', 'status' => 'nullable|in:unsorted,review,ready,needs_attention',
+            'publication' => 'nullable|in:published,unpublished',
             'source' => 'nullable|string|max:32', 'page' => 'nullable|integer|min:1','trash'=>'nullable|in:active,deleted']);
         $query = SourceRecord::query()->where('source','!=','catalog-reset')->latest();
         if(($data['trash']??'active')==='deleted')$query->onlyTrashed();
@@ -18,22 +19,25 @@ class ImportedContentController extends Controller
         if(($data['kind']??'')==='archive_data') {$query->where('metadata->archive_data',true);unset($data['kind']);}
         elseif(empty($data['kind']))$query->where(fn($q)=>$q->whereNull('metadata->archive_data')->orWhere('metadata->archive_data',false));
         foreach (['kind', 'source', 'status'] as $field) if ($data[$field] ?? '') $query->where($field, $data[$field]);
+        if (($data['publication'] ?? '') === 'published') $query->where('metadata->public_published', true);
+        if (($data['publication'] ?? '') === 'unpublished') $query->where(fn ($q) => $q->whereNull('metadata->public_published')->orWhere('metadata->public_published', false));
         if ($data['q'] ?? '') $query->where(fn ($q) => $q->where('title', 'like', '%'.$data['q'].'%')->orWhere('body', 'like', '%'.$data['q'].'%'));
         $page = $query->paginate(30);
         return response()->json(['data' => $page->getCollection()->map(fn ($record) => [
             'id' => $record->id, 'title' => $record->title, 'body' => mb_substr($record->body ?? '', 0, 250),
             'kind' => $record->kind, 'source' => $record->source, 'status' => $record->status,
+            'public_published' => (bool) ($record->metadata['public_published'] ?? false),
             'detail_url' => route('content.show', $record),
         ]), 'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total()]]);
     }
 
     public function update(Request $request, SourceRecord $record, \App\Services\Importing\ContentAssignment $assignment)
     {
-        if($request->hasAny(['public_published','public_section'])||($record->metadata['public_published']??false))\Illuminate\Support\Facades\Gate::authorize('content.publish');
+        if($request->hasAny(['public_published','public_section','public_homepage'])||($record->metadata['public_published']??false)||($record->metadata['public_homepage']??false))\Illuminate\Support\Facades\Gate::authorize('content.publish');
         $assignment->record($record, $request->validate(['title' => 'required|string|max:255', 'body' => 'nullable|string|max:1000000',
             'kind' => 'required|in:'.implode(',',SourceRecord::KINDS), 'status' => 'required|in:unsorted,ready,needs_attention',
             'target_profile'=>'nullable|in:media_library,videos,shorts,posts,polls,comments',
-            'public_published'=>'sometimes|boolean',
+            'public_published'=>'sometimes|boolean','public_homepage'=>'sometimes|boolean',
             'public_section'=>'sometimes|in:videos,beitraege,podcast,live,community',
             'tags' => 'nullable|array|max:30', 'tags.*' => 'string|max:100']));
         return response()->json(['status' => 'saved']);
@@ -87,7 +91,7 @@ class ImportedContentController extends Controller
             'author' => $metadata['author'] ?? null, 'tags' => $metadata['tags'] ?? [], 'classification' => $metadata['classification'] ?? null,
             'target_profile'=>($metadata['library_only']??false) ? 'media_library' : match($record->kind){'video'=>'videos','short'=>'shorts','post'=>'posts','poll'=>'polls','comment'=>'comments',default=>'media_library'},
             'archive_data'=>(bool)($metadata['archive_data']??false),'takeout_data'=>$metadata['takeout_data']??[],
-            'public_published'=>(bool)($metadata['public_published']??false),
+            'public_published'=>(bool)($metadata['public_published']??false),'public_homepage'=>(bool)($metadata['public_homepage']??false),
             'public_section'=>$publicContent->section($record),
             'public_url'=>$publicUrl,
             'references'=>$presentation->references($record),

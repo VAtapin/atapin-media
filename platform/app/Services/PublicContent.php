@@ -27,6 +27,14 @@ class PublicContent
         if($section==='community')return $query->whereIn('kind',['post','poll'])->where(fn($q)=>$q->where('metadata->public_section','community')->orWhere(fn($q)=>$q->where('kind','poll')->whereNull('metadata->public_section')));
         return $query->whereIn('kind',['video','short','post'])->where('metadata->public_section',$section);
     }
+    public function homepageVideos(): \Illuminate\Database\Eloquent\Builder
+    {
+        return $this->query()->whereIn('kind',['video','short'])->where('metadata->public_homepage',true);
+    }
+    public function latestRecording(): ?SourceRecord
+    {
+        return $this->forSection('live')->where('metadata->live_status','ended')->latest()->first();
+    }
     public function nextLive(): ?SourceRecord
     {
         return $this->forSection('live')->whereIn('metadata->live_status',['live','scheduled'])->get()->sortBy(function(SourceRecord $record){

@@ -8,5 +8,6 @@
 @case('live')<path d="M6 4a11 11 0 0 0 0 16M18 4a11 11 0 0 1 0 16M8 7a7 7 0 0 0 0 10m8-10a7 7 0 0 1 0 10M12 14v8"/><circle cx="12" cy="11" r="2" fill="currentColor"/>@break
 @case('podcast')<rect x="8" y="2" width="8" height="13" rx="4"/><path d="M5 10v2a7 7 0 0 0 14 0v-2m-7 9v3m-4 0h8"/>@break
 @case('newsletter')<path d="m3 10 19-8-6 20-5-8-8-4Zm8 4L22 2M11 14v7l3-3"/>@break
+@case('calendar')<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>@break
 @endswitch
 </svg>

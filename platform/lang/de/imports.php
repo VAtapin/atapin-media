@@ -6,6 +6,7 @@ return [
     'public_visible'=>'Auf der Website veröffentlicht.','public_open'=>'Auf der Website ansehen',
     'public_ready_required'=>'Nur fertige Videos und Beiträge außerhalb des privaten Archivs können veröffentlicht werden.',
     'public_published_hint'=>'Nur mit Status Bereit. Verknüpfte Dateien werden öffentlich zugänglich. Kommentare benötigen einen veröffentlichten Elterninhalt. Import allein veröffentlicht nichts.',
+    'public_homepage'=>'Auf der Startseite anzeigen','public_homepage_hint'=>'Bei mehreren ausgewählten Videos wird eines zufällig für den großen Startseiten-Bereich gewählt.','public_homepage_video_only'=>'Nur Videos oder Shorts können auf der Startseite angezeigt werden.',
     'progress_queued'=>'Wartet auf einen freien Hintergrundprozess. Startet automatisch; bitte nicht erneut importieren.',
     'progress_active'=>'Verarbeitung aktiv · Rückmeldung vor :seconds Sekunden',
     'progress_last'=>'Letzte Rückmeldung dieses Imports vor :seconds Sekunden',
@@ -274,4 +275,6 @@ return [
     'stage_files' => 'Dateien werden in der Bibliothek registriert',
     'stage_metadata' => 'Beschreibungen und Inhalte werden eingelesen',
     'worker_stopped' => 'Der Hintergrundprozess wurde beendet oder hat sein Zeitlimit erreicht. Gespeicherte Dateien bleiben erhalten; bitte erneut versuchen.',
+    'publication_filter'=>'Veröffentlichung','all_publication_states'=>'Alle Veröffentlichungszustände','publication_published'=>'Auf der Website veröffentlicht','publication_unpublished'=>'Nicht auf der Website veröffentlicht',
+    'all_content'=>'Alle Inhalte anzeigen','section_only'=>'Nur diesen Bereich anzeigen',
 ];

@@ -55,6 +55,9 @@ class PublicWebsiteTest extends TestCase
         $this->patchJson('/desktop/content/'.$record->id,[...$data,'status'=>'ready','public_published'=>true])->assertOk();
         $this->assertTrue($record->fresh()->metadata['public_published']);
         $this->getJson('/desktop/content/'.$record->id)->assertOk()->assertJsonPath('private',false);
+        $this->patchJson('/desktop/content/'.$record->id,[...$data,'status'=>'ready','public_published'=>true,'public_homepage'=>true])->assertOk();
+        $this->assertTrue($record->fresh()->metadata['public_homepage']);
+        $this->getJson('/desktop/content/'.$record->id)->assertJsonPath('public_homepage',true);
         $this->patchJson('/desktop/content/'.$record->id,[...$data,'status'=>'ready','public_published'=>false])->assertOk();
         $this->assertFalse($record->fresh()->metadata['public_published']);
     }

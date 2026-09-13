@@ -307,3 +307,34 @@
 .public-home .public-hero-copy h1{font-size:48px}
 .public-home .public-section-cards{margin:0 auto 11px}
 @media(max-width:800px){.public-home .public-hero{height:auto}.public-home .public-hero-inner{padding-top:95px}.public-home .public-section-cards{margin-left:16px;margin-right:16px}}
+
+.public-brand{display:flex;align-items:center;gap:8px;width:238px;height:66px;overflow:hidden}
+.public-brand>img{display:block;width:82px;height:62px;object-fit:contain;flex-shrink:0}
+.public-brand-copy{display:flex;flex-direction:column;min-width:0;color:var(--public-navy);line-height:.9}
+.public-brand-copy strong{font:700 20px/.92 'Playfair Display',Georgia,serif;letter-spacing:.4px}
+.public-brand-copy small{margin-top:5px;font-size:8px;line-height:1;white-space:nowrap;letter-spacing:.1px}
+.public-footer .public-brand{width:176px;height:58px;gap:6px}
+.public-footer .public-brand>img{width:58px;height:54px}
+.public-footer .public-brand-copy strong{font-size:15px}
+.public-footer .public-brand-copy small{font-size:6px;margin-top:3px}
+
+/* Homepage refinements follow the approved frontend-gold-b/01-start composition. */
+.public-home .public-header{background:transparent;border-bottom:0}
+.public-home .public-header-inner{background:rgba(255,255,255,.88);border-radius:0 0 8px 8px}
+.public-home .public-hero:after{display:none}
+.public-home .public-hero-inner{position:relative;z-index:1}
+.public-home .public-hero-copy{position:relative;isolation:isolate}
+.public-home .public-hero-copy:before,.public-home .public-hero-side-copy:before{content:'';position:absolute;z-index:-1;pointer-events:none;background:radial-gradient(ellipse,#fffaf4f2 0%,#fffaf4c9 47%,#fffaf400 76%);filter:blur(13px)}
+.public-home .public-hero-copy:before{inset:-42px -74px -18px -64px}
+.public-hero-side-copy{position:absolute;z-index:2;right:max(18px,calc((100% - 1590px)/2));top:84px;width:150px;isolation:isolate;text-align:center}
+.public-hero-side-copy:before{inset:-20px -28px -20px}
+.public-hero-side-copy p{position:relative;color:var(--public-navy);font:italic 25px/1.22 'Segoe Script','Bradley Hand','Comic Sans MS',cursive;transform:rotate(-4deg)}
+.public-section-cards>a{min-width:0;overflow:hidden}
+.public-section-cards>a>div{min-width:0}
+.public-section-cards h2,.public-section-cards p{overflow-wrap:anywhere}
+.public-section-icon{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:#fff8ed;color:#b67d22;flex-shrink:0}
+.public-section-arrow{flex-shrink:0}
+.public-live-meta{align-items:center;gap:18px}
+.public-live-meta>span{display:inline-flex;align-items:center;gap:7px;min-width:0}
+.public-live-meta .public-icon{width:18px;height:18px;color:#10294d;flex-shrink:0}
+@media(max-width:800px){.public-home .public-header-inner{border-radius:0}.public-hero-side-copy{position:relative;top:auto;right:auto;width:240px;margin:-30px auto 10px}.public-hero-side-copy p{font-size:22px}}
