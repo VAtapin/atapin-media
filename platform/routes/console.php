@@ -7,6 +7,12 @@ use App\Services\Access;
 
 Artisan::command('platform:access', function () { app(Access::class)->seed(); $this->info('Roles and permissions ready.'); });
 Schedule::command('queue:prune-failed --hours=720')->daily();
+Artisan::command('public:live-reminders',function(){
+    $service=app(\App\Services\PublicLiveReminders::class);
+    if(!$service->mailReady()){$this->warn('SMTP delivery is not configured; no reminders were dispatched.');return;}
+    $this->info('Due reminder candidates: '.$service->dispatchDue());
+});
+Schedule::command('public:live-reminders')->everyMinute()->withoutOverlapping();
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());

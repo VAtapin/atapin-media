@@ -34,6 +34,13 @@ class PublicParticipation
             $value=['position'=>(int)($data['position']??0)];
         }
         else $value=['enabled'=>(bool)($data['enabled']??true)];
+        if($action==='reminder'){
+            $time=app(PublicLiveReminders::class)->time($subject);
+            if($value['enabled'])abort_unless($time&&$time->isFuture()&&app(PublicLiveReminders::class)->mailReady(),422,__('public.reminder_unavailable'));
+            $previous=$this->states($subject)->where('user_id',$user->id)->where('action','reminder')->first()?->value??[];
+            $value=[...$previous,...$value,'locale'=>app()->getLocale(),'channel'=>'email'];
+            if($value['enabled']&&!($previous['enabled']??false))unset($value['failed_for'],$value['delivery']);
+        }
         PublicContentState::updateOrCreate(['user_id'=>$user->id,'subject_type'=>$subject instanceof Product?'book':'record','subject_id'=>$subject->id,'action'=>$action],['value'=>$value]);
     }
     public function comment(User $user,SourceRecord $parent,string $body,string $kind='comment'): void
