@@ -340,3 +340,14 @@
 .public-live-meta>span{display:inline-flex;align-items:center;gap:7px;min-width:0}
 .public-live-meta .public-icon{width:18px;height:18px;color:#10294d;flex-shrink:0}
 @media(max-width:800px){.public-home .public-header-inner{border-radius:0}.public-hero-side-copy{position:relative;top:auto;right:auto;width:240px;margin:-30px auto 10px}.public-hero-side-copy p{font-size:22px}}
+
+/* Keep the approved header geometry stable on every public screen. */
+.public-editorial .public-header-inner{background:rgba(255,255,255,.88);border-radius:0 0 8px 8px}
+.public-header-inner{padding-right:16px}
+.public-button .public-icon{flex:0 0 24px;width:24px;height:24px;overflow:visible}
+.public-join{padding-left:16px;padding-right:16px;overflow:visible}
+.public-section-live{background-color:#fff;background-image:linear-gradient(180deg,#ffffff1a 0,#ffffffd9 520px,#fff 900px),var(--public-live-image);background-size:100% 100%,cover;background-position:center top;background-attachment:scroll,fixed}
+.public-section-live .public-header{background:rgba(255,255,255,.86);border-bottom:1px solid rgba(255,255,255,.72)}
+.public-section-live .public-header-inner{background:transparent}
+@media(max-width:1550px){.public-header-inner{padding-right:24px}}
+@media(max-width:800px){.public-header-inner{padding-right:16px}.public-section-live{background-image:linear-gradient(180deg,#fff 0,#fff 520px),none}.public-section-live .public-header{background:#fff}}

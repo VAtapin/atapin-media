@@ -21,6 +21,12 @@ class PublicPagesTest extends TestCase
             $this->get($url)->assertOk()->assertSee(__('public.no_data'))->assertDontSee('public.heading_')->assertDontSee('public.filters_');
         }
     }
+    public function test_public_header_shell_is_shared_without_empty_book_announcement(): void
+    {
+        $this->get('/')->assertOk()->assertSee('public-section-start',false);
+        $this->get('/live')->assertOk()->assertSee('public-section-live',false);
+        $this->get('/buecher')->assertOk()->assertDontSee('public-announcement',false);
+    }
     public function test_section_assignment_search_and_tags_use_published_database_records(): void
     {
         $podcast=$this->record('post',['public_section'=>'podcast','tags'=>['Gebet'],'author'=>'Public speaker']);
