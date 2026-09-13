@@ -12,6 +12,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->validateCsrfTokens(except:['live/server-auth']);
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo('/desktop');
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);

@@ -13,6 +13,18 @@ Live chat and page presence refresh every 15 seconds using a CSRF-protected hear
 
 Web Push uses minishlink/web-push, private encrypted subscriptions and the existing queue. Run `public:push-key` once after migration to generate a stable private VAPID pair (existing pairs are preserved). HTTPS and notification permission are required; signed-in visitors can subscribe/cancel per event and browser. `/public-push-sw.js` only handles notifications; it does not cache private/public pages. Scheduler queues reminders within 15 minutes of starts_at, rechecks publication/time/cancellation, and removes expired subscriptions. Provider acceptance is not proof of notification display. Endpoint hosts are restricted to Google, Mozilla and Apple; redirects are disabled.
 
-Broadcast ingest remains unimplemented; the owner selected OBS → MediaMTX on our server → local website player. No production email or push notification was sent by local tests.
+Broadcast uses OBS → MediaMTX → the local HLS player. Settings → System → Live management opens /desktop/live (content.publish permission). Create an event, enable ingest, copy its private OBS server URL; leave OBS stream key empty. Rotate invalidates the old key. HLS reading requires explicit public publication, publishing requires the encrypted event key. RTMP and HLS listen only on loopback; do not expose unencrypted RTMP publicly.
+
+Run public:live-config, then bash platform/bin/live-server.sh install and start as the Plesk subscription user. Installation pins official MediaMTX 1.21.0 and verifies its SHA-256. No Docker, root ownership changes or systemd installation. Start is detached with a lock; status and private/atapin-live/server.log expose process state. After reboot start must be invoked again, e.g. through an owner-configured Plesk scheduled task. The script does not configure Plesk.
+
+Plesk additional nginx directives (owner applies):
+```nginx
+location /_live/ {
+    proxy_pass http://127.0.0.1:8888/;
+    proxy_http_version 1.1;
+    proxy_buffering off;
+}
+```
+OBS runs through an SSH tunnel from the broadcaster's computer: ssh -N -L 1935:127.0.0.1:1935 YOUR_PLESK_SSH_USER@mannavomhimmel.de. Use H.264/AAC and a two-second keyframe interval. The website embeds only /_live/live-ID/, not YouTube. MediaMTX hooks update live/ended status and register completed MP4 segments in Media Library without copying. Originals have no automatic expiry; monitor disk usage. Long broadcasts produce multiple one-hour segments, all linked to the event; the existing replay selects the first playable original, not a merged recording. HLS has buffering latency; no server transcoding or paid AI is involved.
 
 AI assistant: Settings → AI contains a separate opt-in switch and whole-site daily request cap (default 20; zero disables new requests). The existing provider/key/model are reused. Signed-in visitors explicitly consent and ask via the AI form (`@Assistent` prefix is accepted there). Answers are labelled AI and private to the requesting visitor, not automatically published to the public chat. Only bounded published article/video text is passed as context; no media analysis or tools/private archive access. Each queued request has one API attempt, at most 400 output tokens and a 1,000-character question; failures still consume the reservation to prevent retry loops. The cap limits calls, not an exact currency amount; configure provider-side spending limits separately. Disabling the assistant before processing prevents the call. Local tests use Http fakes, never paid requests.

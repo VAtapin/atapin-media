@@ -126,6 +126,7 @@
                 @endforeach
                 <button class="desktop-settings-primary" data-settings-save>{{ __('ui.save') }}</button>
             </form>
+            @can('content.publish')<p><a href="{{ route('public.broadcast-admin') }}" target="_blank" rel="noopener">{{ __('public.broadcast_manage') }}</a></p>@endcan
             <section data-contact-inbox>
                 <h3>{{ __('public.contact_inbox') }} ({{ $contactInbox?->total()??0 }})</h3>
                 <div data-contact-entries>

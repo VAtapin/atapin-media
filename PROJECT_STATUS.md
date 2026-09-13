@@ -2,6 +2,8 @@
 
 ## Реализовано
 
+- MediaMTX: protected /desktop/live manages events and encrypted OBS keys; HTTP ingest/HLS publication authorization, local player, recording hooks and private disk without copying/expiry. Pinned SHA-256 installer/start/status supports Plesk subscription user, no root/systemd or public RTMP. Owner applies nginx proxy and SSH tunnel; after reboot start is required. Multi-segment replay is not merged. Related commit: Integrate authenticated local MediaMTX broadcasts.
+
 - Live AI assistant uses existing key/provider/model, owner toggle and atomic whole-site daily call cap. Explicit visitor consent, authenticated private answers, bounded published context only, no media analysis/tools, one API attempt and 400 max output tokens. `@Assistent` is accepted in the separate AI form; public-chat automatic AI publication is intentionally not enabled. 10 targeted tests / 105 assertions, JS syntax and Blade compilation passed with mocked HTTP (no paid calls). Commit: Add a bounded opt-in AI assistant to live chat. MediaMTX and 2→8→4→3→7 remain.
 
 - Web Push Live: browser permission, event/browser opt-in and cancellation, encrypted subscriptions, restricted provider endpoints, stable private VAPID provisioning, scheduler and unique retryable jobs, publication/time rechecks and expired-subscription removal. 14 targeted public tests / 135 assertions, JS syntax and Composer audit passed. Commit: Add queued browser reminders for public live events. MediaMTX/ИИ-чат и 2→8→4→3→7 остаются в работе; production проверяет владелец.

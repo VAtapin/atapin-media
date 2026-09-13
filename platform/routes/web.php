@@ -20,6 +20,7 @@ Route::post('/public/books/{product}/state',[\App\Http\Controllers\PublicInterac
 Route::get('/upload/{path?}', fn () => redirect('/desktop', 303))->where('path', '.*');
 Route::post('/kontakt',[\App\Http\Controllers\PublicContactController::class,'store'])->middleware('throttle:3,1')->name('public.contact-submit');
 Route::post('/live/{record}/heartbeat',[\App\Http\Controllers\PublicLiveController::class,'heartbeat'])->middleware('throttle:120,1')->name('public.live-heartbeat');
+Route::post('/live/server-auth',[\App\Http\Controllers\PublicBroadcastController::class,'authenticate'])->middleware('throttle:240,1')->name('public.broadcast-auth');
 Route::post('/live/{record}/push',[\App\Http\Controllers\PublicPushController::class,'toggle'])->middleware(['auth','throttle:20,1'])->name('public.live-push');
 Route::post('/live/{record}/assistant',[\App\Http\Controllers\PublicAiChatController::class,'store'])->middleware(['auth','throttle:3,1'])->name('public.ai-chat');
 Route::get('/public/assistant/{entry}',[\App\Http\Controllers\PublicAiChatController::class,'show'])->middleware(['auth','throttle:60,1'])->name('public.ai-chat-status');
@@ -30,6 +31,10 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class,'destroy'])->name('logout');
     Route::get('/desktop', DesktopController::class)->middleware('can:desktop.view')->name('desktop');
+    Route::get('/desktop/live',[\App\Http\Controllers\PublicBroadcastController::class,'index'])->middleware('can:content.publish')->name('public.broadcast-admin');
+    Route::post('/desktop/live',[\App\Http\Controllers\PublicBroadcastController::class,'store'])->middleware('can:content.publish')->name('public.broadcast-create');
+    Route::get('/desktop/live/{record}',[\App\Http\Controllers\PublicBroadcastController::class,'show'])->middleware('can:content.publish')->name('public.broadcast-admin-show');
+    Route::post('/desktop/live/{record}',[\App\Http\Controllers\PublicBroadcastController::class,'store'])->middleware('can:content.publish')->name('public.broadcast-update');
     Route::get('/desktop/contact-messages',[\App\Http\Controllers\PublicContactController::class,'inbox'])->middleware('can:settings.manage')->name('contact.inbox');
     Route::post('/desktop/contact-messages/{message}/retry',[\App\Http\Controllers\PublicContactController::class,'retry'])->middleware(['can:settings.manage','throttle:10,1'])->name('contact.retry');
     Route::get('/desktop/wallpaper', [SettingsController::class, 'wallpaper'])->middleware('can:desktop.view')->name('desktop.wallpaper');

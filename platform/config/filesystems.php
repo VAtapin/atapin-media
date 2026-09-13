@@ -29,6 +29,7 @@ return [
     */
 
     'disks' => [
+        'live-recordings'=>['driver'=>'local','root'=>env('LIVE_RECORDINGS_ROOT',dirname(base_path(),2).'/private/atapin-live/recordings'),'throw'=>true,'serve'=>false],
         'intake' => [
             'driver'=>'local', 'root'=>env('INTAKE_ROOT',dirname(base_path(),2).'/private/manna-intake'),
             'throw'=>true, 'serve'=>false,
