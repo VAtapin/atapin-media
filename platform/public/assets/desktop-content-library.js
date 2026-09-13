@@ -9,9 +9,26 @@
     const details = root.querySelector('[data-content-details]');
     const summary = root.querySelector('[data-content-summary]');
     const pagination = root.querySelector('[data-content-pagination]');
-    if (root.dataset.section && root.dataset.section !== 'videos') form.querySelector('[value="playlist"]').remove();
     const sectionKinds={videos:['video','short','playlist'],posts:['post'],community:['poll','comment','live_chat']};
-    if(sectionKinds[root.dataset.section])form.querySelectorAll('[name="kind"] option').forEach(option=>{if(option.value&&!sectionKinds[root.dataset.section].includes(option.value))option.remove();});
+    const section=root.dataset.section||'';
+    let allContent=!section;
+    const scopeToggle=document.createElement('button');
+    scopeToggle.type='button'; scopeToggle.className='desktop-button'; scopeToggle.dataset.contentScope='';
+    if(section){
+      form.append(scopeToggle);
+      const updateScope=()=>{
+        const allowed=sectionKinds[section]||[];
+        form.querySelectorAll('[name="kind"] option').forEach(option=>{
+          option.hidden=!allContent&&Boolean(option.value)&&!allowed.includes(option.value);
+          option.disabled=option.hidden;
+        });
+        const kind=form.querySelector('[name="kind"]');
+        if(kind.selectedOptions[0]?.disabled)kind.value='';
+        scopeToggle.textContent=text[allContent?'section_only':'all_content'];
+      };
+      scopeToggle.addEventListener('click',()=>{allContent=!allContent;updateScope();load();});
+      updateScope();
+    }
     let page = 1;
     let controller;
     let playlistUrl = null;
@@ -26,7 +43,7 @@
       const active = controller;
       const params = new URLSearchParams(new FormData(form));
       params.set('page', number);
-      if (root.dataset.section) params.set('section', root.dataset.section);
+      if (section&&!allContent) params.set('section', section); else params.delete('section');
       try {
         const deleted=params.get('trash')==='deleted';
         const playlistOption=form.querySelector('[value="playlist"]');if(playlistOption)playlistOption.disabled=deleted;
@@ -39,7 +56,7 @@
         if (active.signal.aborted || !root.isConnected) return;
         page = data.meta.current_page;
         summary.textContent = `${data.meta.total} ${text.records}`;
-        list.innerHTML = data.data.length ? data.data.map(item => `<li><button type="button" class="media-library-item" data-content-detail="${escape(item.detail_url)}"><span class="media-library-item-main"><strong>${escape(item.title)}</strong><small>${escape(text[`kind_${item.kind}`] || item.kind)} · ${escape(item.source)} · ${escape(item.body)}</small></span><span class="media-library-status">${escape(text[item.status] || item.status)}</span></button></li>`).join('') : `<li class="media-library-empty">${escape(text.empty)}</li>`;
+        list.innerHTML = data.data.length ? data.data.map(item => `<li><button type="button" class="media-library-item" data-content-detail="${escape(item.detail_url)}"><span class="media-library-item-main"><strong>${escape(item.title)}</strong><small>${escape(text[`kind_${item.kind}`] || item.kind)} · ${escape(item.source)} · ${escape(item.body)}${item.public_published ? ` · ${escape(text.public_visible)}` : ''}</small></span><span class="media-library-status">${escape(text[item.status] || item.status)}</span></button></li>`).join('') : `<li class="media-library-empty">${escape(text.empty)}</li>`;
         root.dispatchEvent(new CustomEvent('content-list-loaded',{bubbles:true,detail:{items:data.data,playlist}}));
         pagination.innerHTML = `<button type="button" data-content-page="${page - 1}" ${page <= 1 ? 'disabled' : ''}>‹</button><span>${page} / ${data.meta.last_page}</span><button type="button" data-content-page="${page + 1}" ${page >= data.meta.last_page ? 'disabled' : ''}>›</button>`;
       } catch (error) { summary.textContent = error.message; }

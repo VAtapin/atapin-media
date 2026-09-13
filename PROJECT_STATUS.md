@@ -73,7 +73,7 @@
 
 ## Последний связанный commit
 
-- Доводка approved home hero и выбора homepage-видео: Refine approved homepage hero and homepage video selection.
+- Фильтр публикации и просмотр всех типов в Content Library: Add content publication filters.
 - Текущая ветка и upstream: main → origin/main.
-- Для Content Library добавлены фильтр публикации и режим просмотра всех типов контента; проверка и commit/push ожидают завершения текущей задачи.
+- Для Content Library добавлены фильтр публикации, видимая отметка опубликованных записей и режим просмотра всех типов контента; локально проверен JavaScript, Laravel Feature-тест добавлен, но не запускается без PHP на Windows.
 

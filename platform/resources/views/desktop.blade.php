@@ -125,7 +125,7 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <script src="/assets/desktop-import-workflow.js?v=2" defer></script>
     <script src="/assets/desktop-content-lifecycle.js?v=1" defer></script>
     <script src="/assets/desktop-content-composite.js?v=2" defer></script>
-    <script src="/assets/desktop-content-library.js?v=8" defer></script>
+    <script src="/assets/desktop-content-library.js?v=9" defer></script>
     <script src="/assets/desktop-content-organization.js?v=2" defer></script>
     <script src="/assets/desktop-local-links.js?v=1" defer></script>
     <script src="/assets/desktop-media-technical.js?v=1" defer></script>

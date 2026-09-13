@@ -9,6 +9,7 @@
             @foreach([...\App\Models\SourceRecord::KINDS,'archive_data'] as $kind)<option value="{{ $kind }}">{{ __('imports.kind_'.$kind) }}</option>@endforeach
         </select>
         <select name="status" aria-label="Status"><option value="">{{ __('imports.all_status') }}</option><option value="unsorted">{{ __('imports.unsorted') }}</option><option value="review">{{ __('ui.import_review') }}</option><option value="ready">{{ __('imports.ready') }}</option><option value="needs_attention">{{ __('imports.needs_attention') }}</option></select>
+        <select name="publication" aria-label="{{ __('imports.publication_filter') }}"><option value="">{{ __('imports.all_publication_states') }}</option><option value="published">{{ __('imports.publication_published') }}</option><option value="unpublished">{{ __('imports.publication_unpublished') }}</option></select>
         <button type="submit" class="media-library-primary">{{ __('imports.refresh') }}</button>
         <select name="trash" aria-label="{{ __('imports.trash_title') }}"><option value="active">{{ __('imports.trash_active') }}</option><option value="deleted">{{ __('imports.trash_title') }}</option></select>
         @can('media.edit')<button type="button" class="media-library-primary" data-classify-batch="record">{{ __('imports.ai_batch') }}</button>@endcan
