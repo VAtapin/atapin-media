@@ -11,7 +11,7 @@
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg>
             <label class="public-sr-only" for="public-q">{{ __('ui.search') }}</label><input id="public-q" name="q" type="search" placeholder="{{ __('public.search_placeholder') }}" value="{{ request('q') }}">
         </form>
-        <a class="public-signin" href="/login">{{ __('ui.login') }}</a>
+        <a class="public-signin" href="{{ auth()->check()?'/konto':'/login' }}">{{ auth()->check()?__('public.account'):__('ui.login') }}</a>
         <a class="public-button public-join" href="/community">@include('public.icon',['name'=>'community']) {{ __('public.join') }}</a>
     </div>
 </header>

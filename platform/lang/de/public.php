@@ -1,5 +1,6 @@
 <?php
 return [
+    'account'=>'Mein Konto','account_register'=>'Konto erstellen','account_consent'=>'Ich akzeptiere die Datenschutzhinweise.','account_verify'=>'Bitte bestätigen Sie Ihre E-Mail-Adresse über den zugesandten Link.','account_verified'=>'E-Mail-Adresse bestätigt.','account_verify_mail'=>"Bitte bestätigen Sie Ihre E-Mail-Adresse (48 Stunden):\n:link",'account_resend'=>'Bestätigung erneut senden','account_activity'=>'Meine Merkliste, Reaktionen und Fortschritte','account_remove'=>'Entfernen / abbestellen','account_push'=>'Meine Browser-Erinnerungen','account_profile'=>'Profil und Passwort','password_confirm'=>'Passwort wiederholen','current_password'=>'Aktuelles Passwort','new_password'=>'Neues Passwort (optional)',
     'newsletter_consent'=>'Ich möchte den Newsletter erhalten. Abmeldung jederzeit möglich.',
     'newsletter_requested'=>'Wenn eine Bestätigung erforderlich ist, erhalten Sie eine E-Mail. Bitte auch Spam prüfen.',
     'newsletter_confirmed'=>'Ihre Newsletter-Anmeldung wurde bestätigt.',

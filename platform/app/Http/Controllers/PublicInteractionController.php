@@ -8,6 +8,7 @@ class PublicInteractionController extends Controller
 {
     public function record(Request $request,SourceRecord $record,PublicContent $content,PublicParticipation $participation)
     {
+        \Illuminate\Support\Facades\Gate::authorize('public.participate');
         abort_unless($content->visible($record),404);
         $data=$this->data($request);
         if(in_array($data['action'],['comment','chat'])){

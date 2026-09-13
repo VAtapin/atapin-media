@@ -1,5 +1,6 @@
 <?php
 return [
+    'account'=>'My account','account_register'=>'Create account','account_consent'=>'I accept the privacy notice.','account_verify'=>'Please verify your email using the emailed link.','account_verified'=>'Email verified.','account_verify_mail'=>"Please verify your email (48 hours):\n:link",'account_resend'=>'Resend verification','account_activity'=>'My bookmarks, reactions and progress','account_remove'=>'Remove / cancel','account_push'=>'My browser reminders','account_profile'=>'Profile and password','password_confirm'=>'Repeat password','current_password'=>'Current password','new_password'=>'New password (optional)',
     'newsletter_consent'=>'I want to receive the newsletter. Unsubscribe at any time.',
     'newsletter_requested'=>'If confirmation is needed, you will receive an email. Please also check spam.',
     'newsletter_confirmed'=>'Your newsletter subscription is confirmed.',

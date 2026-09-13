@@ -21,7 +21,7 @@ class AuthController extends Controller
             throw ValidationException::withMessages(['email' => __('ui.login_failed')]);
         }
         RateLimiter::clear($key); $request->session()->regenerate(); $audit->record('auth.login');
-        return redirect()->intended('/desktop');
+        return redirect()->intended($request->user()->hasPermission('desktop.view')?'/desktop':'/konto');
     }
     public function destroy(Request $request, Audit $audit)
     {

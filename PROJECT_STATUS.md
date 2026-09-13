@@ -2,6 +2,8 @@
 
 ## Реализовано
 
+- Public /konto: role-free visitor registration, queued signed email verification, own public bookmarks/reactions/progress/reminders with guarded removal and Push cancellation, password-confirmed name/password changes. Unverified visitors cannot submit public interactions/AI; existing staff roles remain compatible. Login redirects visitors to account, not Desktop. Password recovery and purchases need their later checkout/auth workflows. Related commit: Add public visitor accounts and personal activity.
+
 - Public newsletter forms: consent + double opt-in, encrypted confirmation queue payload, signed expiring confirmation, POST cancellation, request cooldown and no disclosure of existing email membership. Uses existing sendmail/SMTP readiness and retryable jobs with delivery status. Campaign editor/bulk newsletters are not part of this subscription implementation. Related commit: Connect public newsletter double opt-in.
 
 - MediaMTX: protected /desktop/live manages events and encrypted OBS keys; HTTP ingest/HLS publication authorization, local player, recording hooks and private disk without copying/expiry. Pinned SHA-256 installer/start/status supports Plesk subscription user, no root/systemd or public RTMP. Owner applies nginx proxy and SSH tunnel; after reboot start is required. Multi-segment replay is not merged. 4 targeted tests / 25 assertions and shell syntax passed; admin layout shared values fixed after creation test exposed missing view data. Related commit: Fix broadcast administration layout context (integration c9df193).

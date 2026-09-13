@@ -26,13 +26,21 @@ Route::post('/kontakt',[\App\Http\Controllers\PublicContactController::class,'st
 Route::post('/live/{record}/heartbeat',[\App\Http\Controllers\PublicLiveController::class,'heartbeat'])->middleware('throttle:120,1')->name('public.live-heartbeat');
 Route::post('/live/server-auth',[\App\Http\Controllers\PublicBroadcastController::class,'authenticate'])->middleware('throttle:240,1')->name('public.broadcast-auth');
 Route::post('/live/{record}/push',[\App\Http\Controllers\PublicPushController::class,'toggle'])->middleware(['auth','throttle:20,1'])->name('public.live-push');
-Route::post('/live/{record}/assistant',[\App\Http\Controllers\PublicAiChatController::class,'store'])->middleware(['auth','throttle:3,1'])->name('public.ai-chat');
+Route::post('/live/{record}/assistant',[\App\Http\Controllers\PublicAiChatController::class,'store'])->middleware(['auth','can:public.participate','throttle:3,1'])->name('public.ai-chat');
 Route::get('/public/assistant/{entry}',[\App\Http\Controllers\PublicAiChatController::class,'show'])->middleware(['auth','throttle:60,1'])->name('public.ai-chat-status');
 Route::middleware('guest')->group(function () {
+    Route::get('/registrieren',[\App\Http\Controllers\PublicAccountController::class,'registration'])->name('public.registration');
+    Route::post('/registrieren',[\App\Http\Controllers\PublicAccountController::class,'register'])->middleware('throttle:3,1');
     Route::get('/login', [AuthController::class,'create'])->name('login');
     Route::post('/login', [AuthController::class,'store']);
 });
 Route::middleware('auth')->group(function () {
+    Route::get('/konto',[\App\Http\Controllers\PublicAccountController::class,'index'])->name('public.account');
+    Route::get('/konto/verify/{user}/{hash}',[\App\Http\Controllers\PublicAccountController::class,'verify'])->middleware(['signed','throttle:10,1'])->name('public.account-verify');
+    Route::post('/konto/verify',[\App\Http\Controllers\PublicAccountController::class,'resend'])->middleware('throttle:1,15')->name('public.account-resend');
+    Route::patch('/konto/profile',[\App\Http\Controllers\PublicAccountController::class,'profile'])->middleware('throttle:5,1')->name('public.account-profile');
+    Route::delete('/konto/state/{state}',[\App\Http\Controllers\PublicAccountController::class,'remove'])->name('public.account-state-remove');
+    Route::delete('/konto/push/{subscription}',[\App\Http\Controllers\PublicAccountController::class,'cancelPush'])->name('public.account-push-cancel');
     Route::post('/logout', [AuthController::class,'destroy'])->name('logout');
     Route::get('/desktop', DesktopController::class)->middleware('can:desktop.view')->name('desktop');
     Route::get('/desktop/live',[\App\Http\Controllers\PublicBroadcastController::class,'index'])->middleware('can:content.publish')->name('public.broadcast-admin');

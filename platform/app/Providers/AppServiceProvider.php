@@ -45,6 +45,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::define('public.participate',fn($user)=>$user->email_verified_at!==null||$user->roles()->exists());
         foreach (Access::PERMISSIONS as $permission) Gate::define($permission, fn ($user) => $user->hasPermission($permission));
         Paginator::defaultView('components.pagination');
         foreach ([\App\Models\Media::class => 'media', \App\Models\SourceRecord::class => 'record'] as $model => $type) {

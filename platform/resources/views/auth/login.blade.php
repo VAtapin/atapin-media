@@ -5,4 +5,4 @@
 <label>{{ __('ui.email') }}<input type="email" name="email" value="{{ old('email') }}" required autocomplete="username" autofocus></label>
 <label>{{ __('ui.password') }}<input type="password" name="password" required maxlength="72" autocomplete="current-password"></label>
 <label class="checkbox"><input type="checkbox" name="remember" value="1">{{ __('ui.remember') }}</label>
-<button class="button full">{{ __('ui.login') }}</button></form><a class="back-link" href="/">{{ __('ui.public_website') }}</a></main></body></html>
+<button class="button full">{{ __('ui.login') }}</button></form><a href="/registrieren">{{ __('public.account_register') }}</a><a class="back-link" href="/">{{ __('ui.public_website') }}</a></main></body></html>
