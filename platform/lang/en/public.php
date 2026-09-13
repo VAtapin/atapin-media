@@ -1,5 +1,6 @@
 <?php
 return [
+    'contact_name'=>'Your name','contact_subject'=>'Subject','contact_body'=>'Your message','contact_privacy'=>'I consent to processing my details to handle this enquiry.','contact_received'=>'Your enquiry has been saved. Thank you!','contact_inbox'=>'Contact enquiries','contact_more'=>'Load more enquiries','page_texts'=>'Public website content',
     'no_data'=>'No data yet','no_local_playback'=>'No local video or audio file available.',
     'views'=>'views','topics'=>'Current topics','sort'=>'Sort order','sort_latest'=>'Newest first','sort_oldest'=>'Oldest first','sort_popular'=>'Most popular first',
     'heading_videos'=>"Videos that\nbring hope.",'heading_beitraege'=>"Articles that strengthen\nfaith in everyday life.",

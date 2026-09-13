@@ -15,6 +15,7 @@ class SettingsController extends Controller
     {
         $canManageUsers = Gate::allows('users.manage');
         return ['settings' => $settings->all(), 'currentUser' => auth()->user()?->load('profile'),
+            'contactInbox'=>Gate::allows('settings.manage')?\App\Models\ContactMessage::latest('id')->paginate(20):null,
             'roles' => $canManageUsers ? Role::with('permissions')->orderBy('name')->get() : collect(),
             'users' => $canManageUsers ? User::with('roles')->orderBy('name')->get() : collect(),
             'permissions' => $canManageUsers ? Permission::orderBy('name')->get() : collect(), 'secretStatus' => [
@@ -38,6 +39,7 @@ class SettingsController extends Controller
             default => abort(404),
         };
         $values = $request->validate($rules);
+        if($section==='system')$values=[...$values,...$request->validate(['about_text'=>'nullable|string|max:50000','mission_text'=>'nullable|string|max:50000'])];
         if ($request->boolean('reset_wallpaper')) $values['desktop_wallpaper'] = 'mountains';
         if (in_array($section, ['desktop_design', 'legacy'], true) && $values['desktop_wallpaper'] === 'custom' && !$request->hasFile('desktop_custom_wallpaper') && !$settings->get('desktop_custom_wallpaper')) {
             return back()->withErrors(['desktop_custom_wallpaper' => __('ui.desktop_custom_wallpaper_required')])->withInput();
@@ -63,9 +65,12 @@ class SettingsController extends Controller
                 'impressum' => $this->sanitizeLegalMarkup($values['impressum'] ?? ''),
                 'privacy_policy' => $this->sanitizeLegalMarkup($values['privacy_policy'] ?? ''),
                 'editorial_policy' => $this->sanitizeLegalMarkup($values['editorial_policy'] ?? ''),
+                'about_text' => $this->sanitizeLegalMarkup(array_key_exists('about_text',$values)?$values['about_text']:($documents[$values['legal_locale']]['about_text']??'')),
+                'mission_text' => $this->sanitizeLegalMarkup(array_key_exists('mission_text',$values)?$values['mission_text']:($documents[$values['legal_locale']]['mission_text']??'')),
             ]);
             $values['legal_documents'] = $documents;
             unset($values['legal_locale'], $values['impressum'], $values['privacy_policy'], $values['editorial_policy']);
+            unset($values['about_text'],$values['mission_text']);
         }
         $secretKeys = ['ai_api_key'];
         $secrets = array_intersect_key($values, array_flip($secretKeys));

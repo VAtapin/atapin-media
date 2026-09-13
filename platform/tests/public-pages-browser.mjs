@@ -8,7 +8,7 @@ const server=spawn(process.env.PHP_BINARY||'php',['-S','127.0.0.1:8795','-t','.'
 let output='',browser;
 server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>output+=data);
 const detail=JSON.parse(process.env.PUBLIC_DETAIL_ROUTES||'{}');
-const routes=['/','/videos',detail.videos||'/videos/vorschau','/beitraege',detail.beitraege||'/beitraege/vorschau','/buecher',detail.buecher||'/buecher/vorschau','/live','/podcast','/community'];
+const routes=process.env.PUBLIC_ROUTES?JSON.parse(process.env.PUBLIC_ROUTES):['/','/videos',detail.videos||'/videos/vorschau','/beitraege',detail.beitraege||'/beitraege/vorschau','/buecher',detail.buecher||'/buecher/vorschau','/live','/podcast','/community'];
 try {
   let ready=false;
   for(let i=0;i<60;i++){
@@ -35,5 +35,5 @@ try {
     }
   }
   assert.deepEqual(errors,[]);
-  console.log('All ten public screens: desktop/mobile, tabs, assets and JavaScript passed.');
+  console.log(`${routes.length} public screens: desktop/mobile, tabs, assets and JavaScript passed.`);
 } finally {await browser?.close();server.kill();}

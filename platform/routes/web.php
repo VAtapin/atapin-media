@@ -18,6 +18,7 @@ Route::get('/media/public/{record}/{media}',[\App\Http\Controllers\PublicWebsite
 Route::post('/public/records/{record}/state',[\App\Http\Controllers\PublicInteractionController::class,'record'])->middleware(['auth','throttle:30,1'])->name('public.record-state');
 Route::post('/public/books/{product}/state',[\App\Http\Controllers\PublicInteractionController::class,'book'])->middleware(['auth','throttle:30,1'])->name('public.book-state');
 Route::get('/upload/{path?}', fn () => redirect('/desktop', 303))->where('path', '.*');
+Route::post('/kontakt',[\App\Http\Controllers\PublicContactController::class,'store'])->middleware('throttle:3,1')->name('public.contact-submit');
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class,'create'])->name('login');
     Route::post('/login', [AuthController::class,'store']);
@@ -25,6 +26,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class,'destroy'])->name('logout');
     Route::get('/desktop', DesktopController::class)->middleware('can:desktop.view')->name('desktop');
+    Route::get('/desktop/contact-messages',[\App\Http\Controllers\PublicContactController::class,'inbox'])->middleware('can:settings.manage')->name('contact.inbox');
     Route::get('/desktop/wallpaper', [SettingsController::class, 'wallpaper'])->middleware('can:desktop.view')->name('desktop.wallpaper');
     Route::patch('/desktop/profile', [\App\Http\Controllers\UserController::class,'updateProfile'])->name('profile.update');
     Route::get('/desktop/profile/avatar', [\App\Http\Controllers\UserController::class,'avatar'])->name('profile.avatar');

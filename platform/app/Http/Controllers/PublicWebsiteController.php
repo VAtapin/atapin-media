@@ -36,7 +36,7 @@ class PublicWebsiteController extends Controller
         if($data['q']??'')$query->where(fn($q)=>$q->where('title','like','%'.$data['q'].'%')->orWhere('body','like','%'.$data['q'].'%'));
         $page=$query->latest()->paginate(12)->withQueryString();
         $settings=app(\App\Services\Settings::class);
-        $key=['impressum'=>'impressum','datenschutz'=>'privacy_policy'][$section]??null;
+        $key=['impressum'=>'impressum','datenschutz'=>'privacy_policy','ueber-uns'=>'about_text','unsere-mission'=>'mission_text'][$section]??null;
         $document=$key?($settings->get('legal_documents',[])[app()->getLocale()][$key]??''):'';
         $request->validate(['book'=>'nullable|integer|min:1']);
         $orderBook=$request->filled('book')?app(PublicBooks::class)->query()->findOrFail($request->integer('book')):null;

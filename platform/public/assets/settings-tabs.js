@@ -137,6 +137,19 @@
       const form = select.closest('form');
       configureConnection(form, select.dataset.providerSelect, select.value);
     }));
+    app.querySelector('[data-contact-next]')?.addEventListener('click',async event=>{
+      const button=event.currentTarget;button.disabled=true;
+      try{
+        const response=await fetch(button.dataset.contactNext,{headers:{Accept:'application/json'}});
+        if(!response.ok)throw new Error(String(response.status));
+        const data=await response.json(),entries=app.querySelector('[data-contact-entries]');
+        for(const entry of data.data){
+          const details=document.createElement('details'),summary=document.createElement('summary'),author=document.createElement('p'),body=document.createElement('p');
+          summary.textContent=entry.created_at+' · '+entry.subject;author.textContent=entry.name+' · '+entry.email;body.textContent=entry.body;body.style.whiteSpace='pre-wrap';details.append(summary,author,body);entries.append(details);
+        }
+        if(data.next_page_url)button.dataset.contactNext=data.next_page_url;else button.hidden=true;
+      }catch(error){button.title=error.message;}finally{button.disabled=false;}
+    });
     const legalLocale = app.querySelector('[data-legal-locale]');
     let legalDocuments = {};
     if (legalLocale) {

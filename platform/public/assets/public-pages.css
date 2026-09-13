@@ -237,6 +237,13 @@
 .public-feature-label{display:inline-block;background:linear-gradient(#d9a13e,#96621a);border-radius:6px;padding:6px 10px;color:#fff;font-size:11px;letter-spacing:0}
 .public-video-widget .public-cards{display:block}
 .public-video-widget .public-content-card{display:block}
+.public-contact-form{max-width:760px;display:flex;flex-direction:column;gap:16px}
+.public-contact-form label{display:flex;flex-direction:column;gap:6px}
+.public-contact-form input,.public-contact-form textarea{border:1px solid #cbd6e2;border-radius:8px;padding:10px;font:inherit;max-width:100%;width:100%;color:inherit;background:#fff}
+.public-contact-form .public-consent{display:block;font-size:12px;line-height:1.6}
+.public-contact-form .public-consent input{width:auto}
+.public-contact-form .public-consent a{text-decoration:underline}
+.public-contact-form button{align-self:start}
 .public-book-poll .public-poll form{display:flex;flex:1;flex-wrap:wrap;gap:8px 16px;align-items:center}
 .public-book-poll .public-poll label{margin:0;white-space:nowrap}
 .public-book-poll .public-poll h2{font-size:18px;max-width:340px}

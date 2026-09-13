@@ -1,5 +1,6 @@
 <?php
 return [
+    'contact_name'=>'Dein Name','contact_subject'=>'Betreff','contact_body'=>'Deine Nachricht','contact_privacy'=>'Ich stimme der Verarbeitung meiner Angaben zur Bearbeitung dieser Anfrage zu.','contact_received'=>'Deine Anfrage wurde gespeichert. Vielen Dank!','contact_inbox'=>'Kontaktanfragen','contact_more'=>'Weitere Anfragen laden','page_texts'=>'Texte der öffentlichen Website',
     'no_data'=>'Noch keine Daten','no_local_playback'=>'Keine lokale Video- oder Audiodatei verfügbar.',
     'views'=>'Aufrufe','topics'=>'Aktuelle Themen','sort'=>'Sortierung','sort_latest'=>'Neueste zuerst','sort_oldest'=>'Älteste zuerst','sort_popular'=>'Beliebteste zuerst',
     'heading_videos'=>"Videos, die\nHoffnung schenken.",'heading_beitraege'=>"Beiträge, die den\nGlauben im Alltag stärken.",
