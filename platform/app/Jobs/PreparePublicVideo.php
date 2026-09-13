@@ -4,10 +4,10 @@ namespace App\Jobs;
 
 use App\Models\Media;
 use App\Services\PublicVideoOptimizer;
-use Illuminate\Bus\Dispatchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
 class PreparePublicVideo implements ShouldQueue, ShouldBeUnique
