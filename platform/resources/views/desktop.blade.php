@@ -35,10 +35,10 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Desktop · {{ config('platform.brand') }}</title>
     <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=4"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3"><link rel="stylesheet" href="/assets/desktop-settings.css?v=3">
-    <link rel="stylesheet" href="/assets/desktop-app.css?v=1"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=6"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=2"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=1">
+    <link rel="stylesheet" href="/assets/desktop-app.css?v=1"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=6"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=2"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=2">
     <script src="/assets/desktop-shortcuts.js?v=3" defer></script>
     <link rel="stylesheet" href="/assets/desktop-import-workflow.css?v=3">
-    <script src="/assets/desktop-os.js?v=13" defer></script><script src="/assets/settings-tabs.js?v=6" defer></script><script src="/assets/desktop-media-library.js?v=12" defer></script><script src="/assets/desktop-import-center.js?v=8" defer></script><script src="/assets/desktop-live-studio.js?v=1" defer></script>
+    <script src="/assets/desktop-os.js?v=13" defer></script><script src="/assets/settings-tabs.js?v=6" defer></script><script src="/assets/desktop-media-library.js?v=12" defer></script><script src="/assets/desktop-import-center.js?v=8" defer></script><script src="/assets/desktop-live-studio.js?v=2" defer></script>
 </head>
 <body class="os-body">
 <main class="os-desktop" data-desktop data-storage-key="atapin.desktop.{{ auth()->id() }}.v1"
@@ -110,7 +110,8 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
                         <div class="desktop-live-poster">
                             <div><p class="desktop-live-eyebrow">{{ __('desktop-live.poster_eyebrow') }}</p><h3>{{ __('desktop-live.poster_title') }}</h3><p>{{ __('desktop-live.poster_hint') }}</p></div>
                             <div class="desktop-live-poster-row"><div class="desktop-live-poster-preview" data-live-poster-preview hidden><img data-live-poster-image alt=""></div><div class="desktop-live-poster-empty" data-live-poster-empty>{{ __('desktop-live.poster_empty') }}</div><label class="desktop-button">{{ __('desktop-live.poster_choose') }}<input type="file" name="poster_file" accept="image/jpeg,image/png,image/webp,image/gif" data-live-poster-file hidden></label></div>
-                            <p class="desktop-live-poster-status" data-live-poster-status role="status"></p>
+                            <p class="desktop-live-poster-status" data-live-poster-status role="status" aria-live="polite"></p>
+                            <progress class="desktop-live-poster-progress" data-live-poster-progress max="100" value="0" hidden aria-label="{{ __('desktop-live.poster_progress') }}"></progress>
                         </div>
                         <div class="desktop-live-options"><label><input name="published" type="checkbox">{{ __('desktop-live.publish') }}</label><label><input name="enabled" type="checkbox">{{ __('desktop-live.enable') }}</label><label data-live-rotate-wrap hidden><input name="rotate_key" type="checkbox">{{ __('desktop-live.rotate') }}</label></div>
                         <div class="desktop-live-actions"><button class="desktop-button is-primary" type="submit">{{ __('desktop-live.save') }}</button><button class="desktop-button" type="button" data-live-preview hidden>{{ __('desktop-live.preview') }}</button></div>

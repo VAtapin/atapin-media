@@ -39,6 +39,19 @@ class PublicBroadcastTest extends TestCase
         $this->assertSame($poster->id,$created['cover_media_id']);
         $this->assertSame(route('media.preview',$poster),$created['cover_preview_url']);
     }
+    public function test_live_studio_can_upload_and_attach_a_poster_through_the_resumable_flow(): void
+    {
+        app(\App\Services\Access::class)->seed();Storage::fake('local');
+        $owner=User::factory()->create();$owner->roles()->attach(\App\Models\Role::where('name','Owner')->firstOrFail());
+        $bytes=base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jvyoAAAAASUVORK5CYII=');
+        $start=$this->actingAs($owner)->postJson('/desktop/media/uploads',['request_key'=>(string)\Illuminate\Support\Str::uuid(),'name'=>'livestream-poster.png','size'=>strlen($bytes)])->assertOk();
+        $uploadId=$start->json('id');
+        $this->call('POST',"/desktop/media/uploads/$uploadId/chunk",[],[],[],['CONTENT_TYPE'=>'application/octet-stream','HTTP_X_UPLOAD_OFFSET'=>'0','HTTP_X_CHUNK_SHA256'=>hash('sha256',$bytes)],$bytes)->assertOk();
+        $mediaId=$this->postJson("/desktop/media/uploads/$uploadId/finish")->assertOk()->json('media_id');
+        $created=$this->postJson('/api/desktop/live',['title'=>'Poster upload','published'=>true])->assertCreated()->json('data');
+        $updated=$this->patchJson('/api/desktop/live/'.$created['id'],['title'=>$created['title'],'body'=>$created['body'],'starts_at'=>$created['starts_at'],'published'=>true,'enabled'=>false,'cover_media_id'=>$mediaId])->assertOk()->json('data');
+        $this->assertSame($mediaId,$updated['cover_media_id']);$this->assertSame($mediaId,\App\Models\SourceRecord::findOrFail($created['id'])->metadata['cover_media_id']);
+    }
     private function event(): SourceRecord {return SourceRecord::create(['source'=>'website','source_id'=>'live','kind'=>'video','title'=>'Live','status'=>'ready','metadata'=>['public_section'=>'live','public_published'=>true,'live_stream_enabled'=>true]]);}
     public function test_ingest_auth_requires_key_and_read_requires_publication(): void
     {
