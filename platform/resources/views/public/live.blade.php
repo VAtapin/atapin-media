@@ -1,17 +1,19 @@
 @extends('public.layout',['title'=>__('public.section_live')])
 
 @section('content')
-@php($card=$featured)<div class="public-live-top">
+@php($card=$featured)@php($liveStatus=$record?->metadata['live_status']??null)@php($liveDate=$record?->metadata['starts_at']?\Illuminate\Support\Carbon::parse($record->metadata['starts_at'])->timezone(config('app.timezone'))->format('d.m.Y H:i'):null)@php($liveStatusLabel=$liveStatus?__('public.live_'.$liveStatus):null)<div class="public-live-top">
 <div>
 @include('public.player')<div class="public-title-actions">
-<div>
+<div class="public-live-summary">
 <h1>{{ $record?->title??'—' }}</h1>
-<p class="public-record-meta">{{ $card['author']??__('public.no_data') }} · {{ $record?->metadata['starts_at']??'—' }}</p>
-<p class="public-live-status">{{ __('public.live_status') }}: {{ in_array($record?->metadata['live_status']??null,['live','scheduled','ended'])?__('public.live_'.$record->metadata['live_status']):__('public.no_data') }}</p>
+@if($liveDate)<time class="public-record-meta" datetime="{{ $record->metadata['starts_at'] }}">{{ $liveDate }}</time>@endif
+@if($record?->body)<p class="public-live-description">{{ $record->body }}</p>@endif
+@if($liveStatusLabel)<p class="public-live-status"><span class="public-live-status-dot status-{{ $liveStatus }}" aria-hidden="true"></span><span>{{ $liveStatusLabel }}</span></p>@endif
 </div>
-<div class="public-action-row">
+<div class="public-live-actions"><div class="public-action-row">
 @include('public.state-button',['subject'=>$record,'action'=>'reminder','label'=>__('public.reminder')])</div>
 @include('public.push-button')
+</div>
 </div>
 </div>
 <section class="public-panel public-live-chat" id="chat" @if($record) data-live-heartbeat="{{ route('public.live-heartbeat',$record) }}" @endif>
@@ -31,13 +33,14 @@
 @empty
 @include('public.empty')
 @endforelse</div>
-@if($record)<form method="post" action="{{ route('public.record-state',$record) }}">@csrf<input type="hidden" name="action" value="chat">
+@if($record)
+@auth
+<form method="post" action="{{ route('public.record-state',$record) }}">@csrf<input type="hidden" name="action" value="chat">
 <label class="public-sr-only" for="chat-body">{{ __('public.write_message') }}</label>
 <input id="chat-body" name="body" required minlength="2" maxlength="5000" placeholder="{{ __('public.write_message') }}">
 <button class="public-button">{{ __('public.send') }} →</button>
 </form>
 <small>{{ __('public.moderation_hint') }}</small>
-@auth
 @if(app(\App\Services\PublicAiChat::class)->available())
 <form method="post" action="{{ route('public.ai-chat',$record) }}" data-ai-form>@csrf
 <label for="ai-question">{{ __('public.ai_chat_label') }}</label>
@@ -47,9 +50,12 @@
 <p data-ai-answer role="status"></p>
 </form>
 @endif
+@else<a class="public-button public-button-secondary" href="/login">{{ __('ui.login') }}</a><small>{{ __('public.chat_login_hint') }}</small>
 @endauth
 @else<input placeholder="{{ __('public.write_message') }}" disabled>
-@endif<div class="public-action-row">
+@endif
+@can('community.moderate')<a class="public-moderation-link" href="{{ route('public.community-moderation') }}">{{ __('public.chat_moderation') }} →</a>@endcan
+<div class="public-action-row">
 <button class="public-button public-button-secondary" data-share>{{ __('public.share') }}</button>
 @include('public.state-button',['subject'=>$record,'action'=>'like','label'=>__('public.like')])
 @include('public.state-button',['subject'=>$record,'action'=>'bookmark','label'=>__('public.bookmark')])</div>

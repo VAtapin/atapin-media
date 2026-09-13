@@ -44,7 +44,7 @@ return [
     'content'=>'Content','description'=>'Description','chapters'=>'Chapters','materials'=>'Materials','comments'=>'Comments',
     'contents'=>'Table of contents','reviews'=>'Reader reviews','related_materials'=>'Related materials',
     'share'=>'Share','watch_later'=>'Watch later','bookmark'=>'Save','download'=>'Download','pdf_download'=>'Download PDF','read_aloud'=>'Read aloud',
-    'write_comment'=>'Write a comment','write_message'=>'Write a message …','send'=>'Send','moderation_hint'=>'Sign-in required. New messages are reviewed before publication.',
+    'write_comment'=>'Write a comment','write_message'=>'Write a message …','send'=>'Send','moderation_hint'=>'Your message will be reviewed before publication.','chat_login_hint'=>'Please sign in to write a message. It will then be moderated.','chat_moderation'=>'Open moderation queue',
     'comment_pending'=>'Saved. Your message will be reviewed before publication.','saved'=>'Saved.',
     'current_poll'=>'CURRENT POLL','vote'=>'Vote now','votes'=>'votes','poll_closed'=>'This poll is closed.',
     'author'=>'Author','pdf'=>'PDF','ebook'=>'E-book','purchase_hint'=>'Available formats and prices come from the catalog. No automatic checkout.',

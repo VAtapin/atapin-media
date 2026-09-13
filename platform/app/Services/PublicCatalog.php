@@ -32,12 +32,7 @@ class PublicCatalog
             $key=['podcast'=>'episode','live'=>'event','community'=>'discussion'][$section];
             $request->validate([$key=>'nullable|integer|min:1']);
             $record=$request->filled($key)?$this->content->forSection($section)->findOrFail($request->integer($key)):null;
-            if(!$record&&$section==='live'){
-                $record=$this->content->forSection('live')->whereIn('metadata->live_status',['live','scheduled'])->get()->sortBy(function($item){
-                    $status=$item->metadata['live_status']??null;$starts=$item->metadata['starts_at']??null;$time=$starts?strtotime((string)$starts):PHP_INT_MAX;
-                    return [$status==='live'?0:1,$time,(int)$item->id];
-                })->first();
-            }
+            if(!$record&&$section==='live')$record=$this->content->nextLive();
             if(!$record&&$featured)$record=$this->content->forSection($section)->find($featured['id']);
             if($record)$featured=$this->content->card($record);
         }

@@ -38,7 +38,14 @@ class PublicPagesTest extends TestCase
     public function test_live_player_starts_mediamtx_cookie_check_inside_proxy_prefix(): void
     {
         $live=$this->record('video',['public_section'=>'live','live_stream_enabled'=>true,'live_status'=>'live']);
-        $this->get('/live?event='.$live->id)->assertOk()->assertSee('/_live/live/?cookieCheck=1',false);
+        $this->get('/live?event='.$live->id)->assertOk()->assertSee('/_live/live/?cookieCheck=1',false)->assertSee('Real database body')->assertDontSee('Der Livestream wird vorbereitet',false)->assertDontSee('name="body"',false);
+    }
+    public function test_scheduled_live_player_shows_event_details_and_cover_instead_of_technical_fallback(): void
+    {
+        Storage::fake('local');Storage::disk('local')->put('posters/next.jpg','poster');
+        $poster=Media::create(['source'=>'upload','source_id'=>'next-poster','title'=>'Next poster','original_name'=>'next.jpg','disk'=>'local','path'=>'posters/next.jpg','kind'=>'image','mime'=>'image/jpeg','bytes'=>6,'status'=>'ready']);
+        $live=$this->record('video',['public_section'=>'live','live_stream_enabled'=>true,'live_status'=>'scheduled','starts_at'=>'2026-09-20T18:30:00','cover_media_id'=>$poster->id,'media_ids'=>[$poster->id]]);
+        $this->get('/live?event='.$live->id)->assertOk()->assertSee('Database video')->assertSee('20.09.2026 18:30')->assertSee(route('public.media',[$live,$poster]),false)->assertDontSee('Bitte später erneut versuchen',false);
     }
     public function test_ended_live_uses_the_branded_fallback_instead_of_an_empty_video_player(): void
     {

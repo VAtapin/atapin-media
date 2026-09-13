@@ -18,7 +18,7 @@ class PublicWebsiteController extends Controller
         $videos=$content->forSection('videos')->latest()->limit(3)->get()->map($content->card(...));
         $articles=$content->forSection('beitraege')->latest()->limit(3)->get()->map($content->card(...));
         $books=app(PublicBooks::class);$book=$books->query()->latest()->first();
-        $live=$content->forSection('live')->whereIn('metadata->live_status',['live','scheduled'])->latest()->first();
+        $live=$content->nextLive();
         return view('public.home',[...$this->shared(),'videos'=>$videos,'articles'=>$articles,'featured'=>$videos->first(),'book'=>$book?$books->card($book):null,'live'=>$live?$content->card($live):null]);
     }
     public function listing(Request $request,PublicContent $content)

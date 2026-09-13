@@ -27,6 +27,13 @@ class PublicContent
         if($section==='community')return $query->whereIn('kind',['post','poll'])->where(fn($q)=>$q->where('metadata->public_section','community')->orWhere(fn($q)=>$q->where('kind','poll')->whereNull('metadata->public_section')));
         return $query->whereIn('kind',['video','short','post'])->where('metadata->public_section',$section);
     }
+    public function nextLive(): ?SourceRecord
+    {
+        return $this->forSection('live')->whereIn('metadata->live_status',['live','scheduled'])->get()->sortBy(function(SourceRecord $record){
+            $status=$record->metadata['live_status']??null;$starts=$record->metadata['starts_at']??null;$time=$starts?strtotime((string)$starts):PHP_INT_MAX;
+            return [$status==='live'?0:1,$time,(int)$record->id];
+        })->first();
+    }
     public function children(SourceRecord $record,string $kind='comment'): \Illuminate\Database\Eloquent\Builder
     {
         return $this->query()->where('source',$record->source)->where('metadata->parent_source_id',$record->source_id)->where('kind',$kind);
@@ -58,12 +65,16 @@ class PublicContent
             $parent=$this->query()->where('source',$record->source)->where('source_id',$record->metadata['parent_source_id']??'')->whereIn('kind',['video','short','post'])->first();
             if($parent)$url=$this->card($parent)['url'].($record->kind==='live_chat'?'#chat':'#comments');
         }
+        $meta=$section==='live'&&($record->metadata['starts_at']??null)
+            ?\Illuminate\Support\Carbon::parse($record->metadata['starts_at'])->format('d.m.Y H:i')
+            :(isset($record->metadata['public_published_at'])?\Illuminate\Support\Carbon::parse($record->metadata['public_published_at'])->format('d.m.Y'):'');
+        $date=$section==='live'&&($record->metadata['starts_at']??null)?$meta:($record->metadata['starts_at']??'');
         return ['id'=>$record->id,'kind'=>$record->kind,'section'=>$section,'title'=>$record->title,'excerpt'=>Str::limit($record->body??'',140),
             'url'=>$url,'author'=>is_string($author)?$author:($author['name']??''),
             'tags'=>array_values(array_filter($record->metadata['tags']??[],'is_string')),
             'duration'=>$record->metadata['duration']??null,'views'=>is_numeric($record->metadata['views']??null)?(int)$record->metadata['views']:null,
-            'date'=>$record->metadata['starts_at']??'','viewers'=>is_numeric($record->metadata['viewer_count']??null)?(int)$record->metadata['viewer_count']:'',
+            'date'=>$date,'viewers'=>is_numeric($record->metadata['viewer_count']??null)?(int)$record->metadata['viewer_count']:'',
             'image'=>$image?route('public.media',[$record,$image]):null,
-            'meta'=>isset($record->metadata['public_published_at'])?\Illuminate\Support\Carbon::parse($record->metadata['public_published_at'])->format('d.m.Y'):''];
+            'meta'=>$meta];
     }
 }

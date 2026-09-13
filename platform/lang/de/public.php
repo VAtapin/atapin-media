@@ -44,7 +44,7 @@ return [
     'content'=>'Inhalt','description'=>'Beschreibung','chapters'=>'Kapitel','materials'=>'Materialien','comments'=>'Kommentare',
     'contents'=>'Inhaltsverzeichnis','reviews'=>'Stimmen der Leser','related_materials'=>'Verwandte Materialien',
     'share'=>'Teilen','watch_later'=>'Später ansehen','bookmark'=>'Merken','download'=>'Download','pdf_download'=>'PDF herunterladen','read_aloud'=>'Vorlesen',
-    'write_comment'=>'Kommentar schreiben','write_message'=>'Schreibe eine Nachricht …','send'=>'Senden','moderation_hint'=>'Anmeldung erforderlich. Neue Nachrichten werden vor der Veröffentlichung geprüft.',
+    'write_comment'=>'Kommentar schreiben','write_message'=>'Schreibe eine Nachricht …','send'=>'Senden','moderation_hint'=>'Deine Nachricht wird vor der Veröffentlichung geprüft.','chat_login_hint'=>'Bitte anmelden, um eine Nachricht zu schreiben. Sie wird anschließend moderiert.','chat_moderation'=>'Moderationswarteschlange öffnen',
     'comment_pending'=>'Gespeichert. Dein Beitrag wird vor der Veröffentlichung geprüft.','saved'=>'Gespeichert.',
     'current_poll'=>'AKTUELLE UMFRAGE','vote'=>'Jetzt abstimmen','votes'=>'Stimmen','poll_closed'=>'Diese Umfrage ist geschlossen.',
     'author'=>'Autor','pdf'=>'PDF','ebook'=>'E-Book','purchase_hint'=>'Verfügbare Formate und Preise stammen aus dem Katalog. Kein automatischer Zahlungsabschluss.',
