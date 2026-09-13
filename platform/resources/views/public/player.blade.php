@@ -1,7 +1,7 @@
 @php($video=$assets->firstWhere('kind','video'))@php($audio=$assets->firstWhere('kind','audio'))
 
 @if($record && ($record->metadata['live_stream_enabled']??false)&&($record->metadata['live_status']??'')==='live')
-<iframe class="public-main-player" src="/_live/live-{{ $record->id }}/" title="{{ $record->title }}" allow="autoplay; fullscreen" allowfullscreen></iframe>
+<iframe class="public-main-player" src="/_live/live-{{ $record->id }}/?cookieCheck=1" title="{{ $record->title }}" allow="autoplay; fullscreen" allowfullscreen></iframe>
 @elseif($record && ($video||$audio))
 
 @if($video)<video class="public-main-player" controls preload="metadata"

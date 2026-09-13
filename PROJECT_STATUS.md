@@ -13,7 +13,7 @@
 - Lokale Videos prüfen: серверный отчёт по registered originals, размерам и ffprobe; отдельная браузерная проверка same-origin HTTP Range, декодированного кадра, seek и короткого воспроизведения с сохранённым результатом.
 - ИИ-разметка импорта: экономная обработка имеющихся текстов/метаданных/готовых субтитров и небольших изображений; журналы, snapshots и защищённая отмена. Takeout не запускает автоматические платные ИИ-задания и не превращает отдельные картинки в самостоятельные Beiträge.
 - Старый /upload/ отключён: страница перенаправляет в Desktop, API возвращает 410; приватный intake archive сохранён, прежний интерфейс доступен в Git.
-- Public Website: все 10 approved-страниц — главная, Videos/detail, Beiträge/detail, Bücher/detail, Live, Podcast, Community. Каталоги, детали, поиск, фильтры, пагинация, вкладки и локальные плееры читают БД; пустые блоки видимы с обозначением отсутствия данных. Public CSS/JS изолированы от Desktop.
+- Public Website: все 10 approved-страниц — главная, Videos/detail, Beiträge/detail, Bücher/detail, Live, Podcast, Community. Каталоги, детали, поиск, фильтры, пагинация, вкладки и локальные плееры читают БД; пустые блоки видимы с обозначением отсутствия данных. Live-плеер передаёт MediaMTX cookie-check внутри `/_live/`, а nginx-инструкция явно переписывает служебные редиректы обратно в этот префикс. Public CSS/JS изолированы от Desktop.
 - Brand background: предоставленная владельцем панорама `manna-mountains.png` установлена как единый hero-фон главной и публичных разделов, а также стандартные горные обои Desktop; прежний временный фон больше не используется в этих местах.
 - Über uns, Mission и юридические тексты редактируются в настройках. Контактная форма сохраняет обращения в защищённый inbox и пересылает через очередь на settings.contact_email; повторные попытки, видимый статус и ручной retry. Email Live-напоминания поддерживают PHP/sendmail Plesk без обязательного внешнего SMTP.
 - Web Push Live: согласие и разрешение браузера, подписка/отмена на событие, encrypted subscriptions, приватные стабильные VAPID keys, scheduler и retryable jobs с проверками публикации/времени. Поддержаны ограниченные endpoints служб доставки Google/Mozilla/Apple/Microsoft.
@@ -66,9 +66,10 @@
 - Импорт/Media Library: целевые tests и browser workflows покрывали retry/checkpoints, merge/manual preservation, trash/restore, replacement/cover, playlist/bulk, AI undo, progress/history и protected HTTP 206/frame/seek/playback. Полный массовый production import не запускался агентом.
 - Intake archive/auth/retired HTTP contract проходили; Python collector suite — 12 passed / 1 skipped (ffmpeg). Linux-specific Plesk-subfolder и /proc checks недоступны локально Windows.
 - Для Live Studio локально прошли `node --check` для новых и изменённых JavaScript-файлов и `git diff --check`; PHP/Laravel Feature tests недоступны на Windows, потому что PHP не установлен. Для direct RTMPS локально выполнены только read-only diff checks; MediaMTX binary validation на Windows недоступна.
+- Для HLS-диагностики публичный плейлист `/_live/live-7340/index.m3u8?cookieCheck=1` read-only вернул HTTP 200 и видео-вариант; до исправления первый cookie-check редирект выпадал из `/_live/` в Laravel 404.
 
 ## Последний связанный commit
 
-- Последняя реализация: Connect Live Studio to desktop JSON API.
+- Последняя реализация: Keep MediaMTX HLS cookie-check inside the public proxy.
 - Текущая ветка и upstream: main → origin/main. Сохранение этого статуса оформляется отдельным documentation commit: Consolidate current project status.
 

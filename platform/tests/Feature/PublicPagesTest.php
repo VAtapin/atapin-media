@@ -35,6 +35,11 @@ class PublicPagesTest extends TestCase
         $this->get('/suche?q=Database')->assertOk()->assertSee('Database post');
         $this->get('/podcast?sort=bad')->assertRedirect();
     }
+    public function test_live_player_starts_mediamtx_cookie_check_inside_proxy_prefix(): void
+    {
+        $live=$this->record('video',['public_section'=>'live','live_stream_enabled'=>true,'live_status'=>'live']);
+        $this->get('/live?event='.$live->id)->assertOk()->assertSee('/_live/live-'.$live->id.'/?cookieCheck=1',false);
+    }
     public function test_active_books_render_and_drafts_do_not(): void
     {
         $book=Product::create(['title'=>'Database book','description'=>'Book description','price_cents'=>990,'currency'=>'EUR','status'=>'active']);
