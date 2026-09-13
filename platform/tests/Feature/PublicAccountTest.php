@@ -27,7 +27,8 @@ class PublicAccountTest extends TestCase {
         SourceRecord::create(['source'=>'website','source_id'=>'account-comment','kind'=>'comment','title'=>'Meine Antwort','body'=>'Meine persönliche Nachricht','status'=>'ready','metadata'=>['parent_source_id'=>$parent->source_id,'author_user_id'=>$user->id,'public_published'=>true]]);
         BookReview::create(['product_id'=>$book->id,'user_id'=>$user->id,'rating'=>5,'body'=>'Meine Rezension','status'=>'pending']);
         PublicAiChatRequest::create(['user_id'=>$user->id,'record_id'=>$parent->id,'question'=>'Meine Frage','answer'=>'Meine Antwort','status'=>'completed']);
-        $this->actingAs($user)->get('/konto')->assertOk()->assertSee('Meine Käufe')->assertSee('Meine Abonnements')->assertSee('Meine Beiträge und Nachrichten')->assertSee('Meine Antwort')->assertSee('Meine Buchrezensionen')->assertSee('Meine Rezension')->assertSee('Meine Fragen an den Assistenten')->assertSee('Meine Frage')->assertDontSee('public.account_');
+        $response=$this->actingAs($user)->get('/konto');$response->assertOk()->assertSee('Meine Käufe')->assertSee('Meine Abonnements')->assertSee('Meine Beiträge und Nachrichten')->assertSee('Meine Antwort')->assertSee('Meine Buchrezensionen')->assertSee('Meine Rezension')->assertSee('Meine Fragen an den Assistenten')->assertSee('Meine Frage')->assertDontSee('public.account_');
+        $response->assertViewHas('messages',fn($history)=>method_exists($history,'perPage')&&$history->perPage()===10)->assertViewHas('reviews',fn($history)=>method_exists($history,'perPage')&&$history->perPage()===10)->assertViewHas('aiChats',fn($history)=>method_exists($history,'perPage')&&$history->perPage()===10);
     }
     public function test_registration_verifies_email_without_granting_admin_permissions(): void {
         Queue::fake();$this->get('/registrieren')->assertOk();
