@@ -127,7 +127,7 @@
             <section data-contact-inbox>
                 <h3>{{ __('public.contact_inbox') }} ({{ $contactInbox?->total()??0 }})</h3>
                 <div data-contact-entries>
-                @forelse($contactInbox??[] as $entry)<details><summary>{{ $entry->created_at->format('d.m.Y H:i') }} · {{ $entry->subject }}</summary><p>{{ $entry->name }} · <a href="mailto:{{ $entry->email }}">{{ $entry->email }}</a></p><p style="white-space:pre-wrap">{{ $entry->body }}</p></details>
+                @forelse($contactInbox??[] as $entry)<details><summary>{{ $entry->created_at->format('d.m.Y H:i') }} · {{ $entry->subject }} · {{ __('public.contact_delivery_'.$entry->delivery_status) }}</summary><p>{{ $entry->name }} · <a href="mailto:{{ $entry->email }}">{{ $entry->email }}</a></p><p style="white-space:pre-wrap">{{ $entry->body }}</p>@if(!$entry->delivered_at)<form method="post" action="{{ route('contact.retry',$entry) }}">@csrf<button type="submit">{{ __('public.contact_retry') }}</button></form>@endif</details>
                 @empty<p>{{ __('public.no_data') }}</p>@endforelse
                 </div>
                 @if($contactInbox?->hasMorePages())<button type="button" data-contact-next="{{ route('contact.inbox',['page'=>2]) }}">{{ __('public.contact_more') }}</button>@endif

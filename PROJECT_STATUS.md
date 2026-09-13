@@ -2,6 +2,8 @@
 
 ## Реализовано
 
+- Контактная форма автоматически ставит пересылку на settings.contact_email в очередь: три попытки, deduplication, сохранённый статус передачи/ошибки/отсутствия настройки, защищённый ручной повтор в inbox. Inbox сохраняется независимо от доставки; sender не подменяется посетителем, используется Reply-To. 9 целевых tests / 58 assertions и Blade compilation прошли, реальные письма не отправлялись. Commit: Forward contact enquiries through the existing queue. Web Push, ИИ-чат, MediaMTX ещё в работе.
+
 - Live reminders теперь допускают локальный PHP/sendmail transport без обязательного внешнего SMTP; log/array/failover не считаются доставкой. Проверка PublicLiveReminderTest — 4 tests. Выбран MediaMTX для OBS→наш сервер→плеер; контактный получатель берётся из contact_email настроек. Пересылка inbox, Web Push, ИИ-чат и MediaMTX integration ещё не реализованы. Связанный commit: Support local sendmail for live reminders.
 
 - Public frontend, часть этапа 5: Live-чат получает актуальный опубликованный snapshot каждые 15 секунд; снятые с публикации сообщения исчезают, новые остаются на проверке до публикации. Online — число отдельных активных browser sessions за 120 секунд, не выдуманный счётчик просмотра видео; DB хранит только hash session, без IP/user identifiers в API. CSRF/throttle/publication guards сохранены, stale presence очищается scheduler. 19 целевых public tests / 187 assertions и JS syntax прошли. Приём самого потока НЕ реализован: требуется выбрать OBS→сервер RTMP/SRT либо готовый локальный stream endpoint; вопрос задан владельцу. Этапы 2/8/4/3/7 ещё не начаты, порядок сохранён. Связанный commit — `Refresh public live chat and count active visitors`.

@@ -28,6 +28,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class,'destroy'])->name('logout');
     Route::get('/desktop', DesktopController::class)->middleware('can:desktop.view')->name('desktop');
     Route::get('/desktop/contact-messages',[\App\Http\Controllers\PublicContactController::class,'inbox'])->middleware('can:settings.manage')->name('contact.inbox');
+    Route::post('/desktop/contact-messages/{message}/retry',[\App\Http\Controllers\PublicContactController::class,'retry'])->middleware(['can:settings.manage','throttle:10,1'])->name('contact.retry');
     Route::get('/desktop/wallpaper', [SettingsController::class, 'wallpaper'])->middleware('can:desktop.view')->name('desktop.wallpaper');
     Route::patch('/desktop/profile', [\App\Http\Controllers\UserController::class,'updateProfile'])->name('profile.update');
     Route::get('/desktop/profile/avatar', [\App\Http\Controllers\UserController::class,'avatar'])->name('profile.avatar');

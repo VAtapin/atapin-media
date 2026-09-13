@@ -145,7 +145,7 @@
         const data=await response.json(),entries=app.querySelector('[data-contact-entries]');
         for(const entry of data.data){
           const details=document.createElement('details'),summary=document.createElement('summary'),author=document.createElement('p'),body=document.createElement('p');
-          summary.textContent=entry.created_at+' · '+entry.subject;author.textContent=entry.name+' · '+entry.email;body.textContent=entry.body;body.style.whiteSpace='pre-wrap';details.append(summary,author,body);entries.append(details);
+          summary.textContent=entry.created_at+' · '+entry.subject+' · '+entry.delivery_label;author.textContent=entry.name+' · '+entry.email;body.textContent=entry.body;body.style.whiteSpace='pre-wrap';details.append(summary,author,body);entries.append(details);
         }
         if(data.next_page_url)button.dataset.contactNext=data.next_page_url;else button.hidden=true;
       }catch(error){button.title=error.message;}finally{button.disabled=false;}
