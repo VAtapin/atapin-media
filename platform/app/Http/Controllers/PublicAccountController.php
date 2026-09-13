@@ -19,7 +19,10 @@ class PublicAccountController extends Controller {
     public function index(Request $request,PublicContent $content,PublicBooks $books){
         $states=PublicContentState::where('user_id',$request->user()->id)->latest('updated_at')->paginate(30);
         $items=collect();foreach($states as $state){$subject=$state->subject_type==='book'?$books->query()->find($state->subject_id):$content->query()->find($state->subject_id);if(!$subject||($subject instanceof SourceRecord&&!$content->visible($subject)))continue;$card=$subject instanceof Product?$books->card($subject):$content->card($subject);$items->push(['state'=>$state,'card'=>$card]);}
-        $push=PublicPushSubscription::where('user_id',$request->user()->id)->get()->filter(fn($entry)=>($event=SourceRecord::find($entry->record_id))&&$content->visible($event));
+        $push=PublicPushSubscription::where('user_id',$request->user()->id)->get()->map(function($entry)use($content){
+            $event=SourceRecord::find($entry->record_id);
+            return $event&&$content->visible($event)?['subscription'=>$entry,'card'=>$content->card($event)]:null;
+        })->filter()->values();
         return response()->view('public.account',[...$this->shared(),'items'=>$items,'states'=>$states,'push'=>$push])->header('Cache-Control','private, no-store');
     }
     public function remove(Request $request,PublicContentState $state){abort_unless($state->user_id===$request->user()->id,404);$state->delete();return back()->with('public_status',__('public.saved'));}

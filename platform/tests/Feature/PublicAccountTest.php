@@ -19,8 +19,9 @@ class PublicAccountTest extends TestCase {
         $mine=User::factory()->create();$other=User::factory()->create();
         $record=SourceRecord::create(['source'=>'website','source_id'=>'public','kind'=>'post','title'=>'Public article','status'=>'ready','metadata'=>['public_published'=>true]]);
         $state=PublicContentState::create(['user_id'=>$mine->id,'subject_type'=>'record','subject_id'=>$record->id,'action'=>'bookmark','value'=>['enabled'=>true]]);
+        PublicContentState::create(['user_id'=>$mine->id,'subject_type'=>'record','subject_id'=>$record->id,'action'=>'progress','value'=>['position'=>42]]);
         $this->actingAs($other)->get('/konto')->assertOk()->assertDontSee('Public article');$this->delete('/konto/state/'.$state->id)->assertNotFound();
-        $this->actingAs($mine)->get('/konto')->assertOk()->assertSee('Public article');
+        $this->actingAs($mine)->get('/konto')->assertOk()->assertSee('Public article')->assertSee('Fortschritt')->assertSee('00:42')->assertDontSee('public.progress')->assertDontSee('{"position":42}');
         $record->update(['metadata'=>['public_published'=>false]]);$this->get('/konto')->assertDontSee('Public article');
         $this->delete('/konto/state/'.$state->id)->assertRedirect();$this->assertDatabaseMissing('public_content_states',['id'=>$state->id]);
     }
