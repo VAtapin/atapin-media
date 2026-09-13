@@ -1,4 +1,4 @@
-@extends('public.layout',['title'=>$record?->title??__('public.no_data')])
+@extends('public.layout',['title'=>$record?->title??__('public.no_data'),'layoutMode'=>'detail'])
 
 @section('content')
 <div class="public-detail-layout public-video-detail">

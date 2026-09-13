@@ -58,14 +58,6 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <div class="os-shortcut-menu" data-shortcut-menu role="menu" aria-label="{{ __('ui.shortcut_menu') }}"
          data-add-label="{{ __('ui.add_shortcut') }}" data-remove-label="{{ __('ui.remove_shortcut') }}" hidden></div>
 
-    @if(($videoHealth['ok'] ?? true) === false)
-    <aside class="desktop-health-alert" role="alert">
-        <strong>{{ __('ui.public_video_health_title') }}</strong>
-        @foreach($videoHealth['issues'] as $issue)<span>{{ $issue }}</span>@endforeach
-        <small>{{ __('ui.public_video_health_checked', ['time' => \Illuminate\Support\Carbon::parse($videoHealth['checked_at'])->format('d.m.Y H:i')]) }}</small>
-    </aside>
-    @endif
-
     <section class="os-start-menu" data-start-menu hidden>
         <header><img src="/assets/brand/owner/logo-mark.png" alt=""><div><strong>Manna Media</strong><span>Programme</span></div></header>
         <div class="os-program-grid">

@@ -35,7 +35,8 @@ class PublicWebsiteController extends Controller
         $section=$request->route('section');
         if(in_array($section,['videos','beitraege','buecher','live','podcast','community','search'])){
             $data=app(PublicCatalog::class)->listing($request,$section);
-            return view('public.'.($section==='search'?'section':$section),[...$this->shared(),'section'=>$section,...$data]);
+            return view('public.'.($section==='search'?'section':$section),[...$this->shared(),'section'=>$section,
+                'layoutMode'=>$section==='live'&&$request->filled('event')?'detail':'overview',...$data]);
         }
         $data=$request->validate(['q'=>'nullable|string|max:120']);
         $section=$request->route('section');$query=$content->query();
@@ -55,12 +56,12 @@ class PublicWebsiteController extends Controller
     public function detail(Request $request,string $slug,PublicContent $content)
     {
         $section=$request->route('section');
-        if($slug==='vorschau')return view('public.'.($section==='videos'?'video':'beitrag'),[...$this->shared(),'section'=>$section,...app(PublicCatalog::class)->detail($request,null,$section)]);
+        if($slug==='vorschau')return view('public.'.($section==='videos'?'video':'beitrag'),[...$this->shared(),'section'=>$section,'layoutMode'=>'detail',...app(PublicCatalog::class)->detail($request,null,$section)]);
         abort_unless(preg_match('/-(\d+)$/',$slug,$matches),404);
         $section=$request->route('section');
         $record=$content->forSection($section)->findOrFail($matches[1]);
         $card=$content->card($record);if($request->url()!==$card['url'])return redirect($card['url'],301);
-        return view('public.'.($section==='videos'?'video':'beitrag'),[...$this->shared(),'section'=>$section,...app(PublicCatalog::class)->detail($request,$record,$section)]);
+        return view('public.'.($section==='videos'?'video':'beitrag'),[...$this->shared(),'section'=>$section,'layoutMode'=>'detail',...app(PublicCatalog::class)->detail($request,$record,$section)]);
     }
     public function media(SourceRecord $record,Media $media,PublicContent $content)
     {
@@ -74,7 +75,7 @@ class PublicWebsiteController extends Controller
             abort_unless(preg_match('/-(\d+)$/',$slug,$matches),404);$book=$books->query()->findOrFail($matches[1]);
             $url=$books->card($book)['url'];if($url!==$request->url())return redirect($url,301);
         }
-        return view('public.buch',[...$this->shared(),'section'=>'buecher',...$catalog->bookDetail($request,$book)]);
+        return view('public.buch',[...$this->shared(),'section'=>'buecher','layoutMode'=>'detail',...$catalog->bookDetail($request,$book)]);
     }
     public function bookMedia(\App\Models\Product $product,Media $media,PublicBooks $books)
     {

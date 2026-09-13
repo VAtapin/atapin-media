@@ -341,6 +341,44 @@
 .public-live-meta .public-icon{width:18px;height:18px;color:#10294d;flex-shrink:0}
 @media(max-width:800px){.public-home .public-header-inner{border-radius:0}.public-hero-side-copy{position:relative;top:auto;right:auto;width:240px;margin:-30px auto 10px}.public-hero-side-copy p{font-size:22px}}
 
+/* Approved shell split: overview pages keep the homepage navigation over the editorial hero. */
+.public-layout-overview .public-header{position:absolute;top:0;left:0;right:0;background:transparent;border-bottom:0}
+.public-layout-overview .public-header-inner{background:rgba(255,255,255,.88);border-radius:0 0 8px 8px}
+.public-layout-overview .public-category-hero{height:355px;padding-top:66px}
+.public-layout-overview .public-category-hero-beitraege{height:332px}
+.public-layout-overview .public-category-hero-buecher{height:333px}
+.public-layout-overview .public-category-hero-podcast,.public-layout-overview .public-category-hero-community{height:435px}
+
+/* Detail pages use a calm, full-width navigation bar and put the publication first. */
+.public-layout-detail{min-height:calc(100vh - 66px);background-image:linear-gradient(180deg,#ffffffb8 0,#fffdfbf2 720px,#fffdfb 100%),var(--public-live-image);background-size:100% 100%,cover;background-position:center top;background-attachment:scroll,fixed}
+.public-layout-detail .public-header{position:relative;background:rgba(255,255,255,.96);border-bottom:1px solid #e5eaf0}
+.public-layout-detail .public-header-inner{background:transparent;border-radius:0}
+.public-layout-detail .public-detail-layout{margin-top:14px}
+.public-layout-detail .public-breadcrumb{color:#506889;padding-bottom:11px}
+.public-layout-detail .public-video-detail .public-main-player{aspect-ratio:2.3/1;box-shadow:0 8px 24px #132b4d18}
+.public-layout-detail .public-video-detail .public-title-actions{margin-top:13px}
+.public-layout-detail .public-video-detail .public-title-actions h1{font-size:36px}
+.public-layout-detail .public-article-detail{max-width:1480px}
+.public-layout-detail .public-article-cover{height:300px;margin-bottom:20px;box-shadow:0 8px 24px #132b4d14}
+.public-layout-detail .public-article-detail h1{font-size:44px}
+.public-layout-detail .public-book-detail{max-width:1480px}
+.public-layout-detail .public-book-intro{min-height:410px;grid-template-columns:300px minmax(0,1fr);align-items:start}
+.public-layout-detail .public-book-detail h1{margin:12px 0 9px;font-size:45px}
+.public-layout-detail .public-book-cover .public-photo{max-height:400px}
+.public-layout-detail .public-purchase{min-height:395px}
+.public-layout-detail .public-live-top{margin-top:14px}
+.public-layout-detail .public-live-top .public-live-chat{box-shadow:0 8px 24px #132b4d14}
+.public-layout-detail .public-live-detail-actions{margin-top:12px;align-items:center}
+.public-layout-detail .public-live-detail-actions .public-action-row{gap:8px}
+
+@media(max-width:800px){
+ .public-layout-overview .public-category-hero,.public-layout-overview .public-category-hero-beitraege,.public-layout-overview .public-category-hero-buecher,.public-layout-overview .public-category-hero-podcast,.public-layout-overview .public-category-hero-community{height:auto;padding-top:91px}
+ .public-layout-detail{background-image:linear-gradient(180deg,#fff 0,#fff 720px),none}
+ .public-layout-detail .public-article-cover{height:220px}
+ .public-layout-detail .public-video-detail .public-main-player{aspect-ratio:16/9}
+ .public-layout-detail .public-book-intro{min-height:0}
+}
+
 /* Keep the approved header geometry stable on every public screen. */
 .public-editorial .public-header-inner{background:rgba(255,255,255,.88);border-radius:0 0 8px 8px}
 .public-header-inner{padding-right:16px}
@@ -353,4 +391,5 @@
 .public-section-live .public-header-inner{background:transparent}
 @media(max-width:1550px){.public-header-inner{padding-right:24px}}
 @media(max-width:800px){.public-header-inner{padding-right:16px}.public-section-live{background-image:linear-gradient(180deg,#fff 0,#fff 520px),none}.public-section-live .public-header{background:#fff}}
+.public-layout-detail .public-header-inner{background:transparent;border-radius:0}
 @media(max-width:600px){.public-account-staff-only .public-panel{width:100%;padding:28px 18px}.public-account-staff-only .public-button{width:100%;text-align:center}}

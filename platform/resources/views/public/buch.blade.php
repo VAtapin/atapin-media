@@ -1,4 +1,4 @@
-@extends('public.layout',['title'=>$bookRecord?->title??__('public.no_data')])
+@extends('public.layout',['title'=>$bookRecord?->title??__('public.no_data'),'layoutMode'=>'detail'])
 
 @section('content')
 @php($card=$card??['image'=>null,'author'=>'','price'=>null,'excerpt'=>__('public.no_data')])

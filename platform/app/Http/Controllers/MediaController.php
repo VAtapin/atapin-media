@@ -171,7 +171,7 @@ class MediaController extends Controller
     {
         $request ??= request();
         abort_unless(in_array($media->mime, self::PREVIEW_MIMES, true), 415);
-        $location=$media->kind==='video' ? app(\App\Services\PublicVideoOptimizer::class)->location($media) : app(\App\Services\MediaOriginalLocator::class)->find($media); abort_unless($location,404);
+        $location=app(\App\Services\MediaOriginalLocator::class)->find($media); abort_unless($location,404);
         $disk=Storage::disk($location['disk']);
         $headers=['Content-Type'=>$media->mime,'X-Content-Type-Options'=>'nosniff','Cache-Control'=>'private, max-age=3600','Accept-Ranges'=>'bytes','Content-Security-Policy'=>"sandbox; default-src 'none';"];
         if(config('filesystems.disks.'.$location['disk'].'.driver')==='local'){

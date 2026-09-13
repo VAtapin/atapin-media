@@ -8,12 +8,12 @@
 <link rel="stylesheet" href="/assets/fonts/fonts.css">
 <link rel="stylesheet" href="/assets/brand/ui-kit.css">
 <link rel="stylesheet" href="/assets/public.css">
-<link rel="stylesheet" href="/assets/public-pages.css?v=5">
+<link rel="stylesheet" href="/assets/public-pages.css?v=6">
 <link rel="icon" href="/favicon.png">
 <script src="/assets/public.js?v=2" defer>
 </script>
 </head>
-<body class="public-site public-editorial public-home public-section-start">
+<body class="public-site public-editorial public-home public-layout-overview public-section-start">
 
 @include('public.header',['section'=>'start'])
 <main>

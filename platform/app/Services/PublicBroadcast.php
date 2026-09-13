@@ -76,7 +76,6 @@ class PublicBroadcast
             $record->update(['metadata'=>[...$record->metadata,'media_ids'=>array_values(array_unique([...($record->metadata['media_ids']??[]),$media->id]))]]);
             return $media;
         });
-        \App\Jobs\PreparePublicVideo::dispatch((string)$media->id);
     }
     public function configuration(): string
     {
