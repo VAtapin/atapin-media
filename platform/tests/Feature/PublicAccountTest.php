@@ -1,17 +1,23 @@
 <?php
 namespace Tests\Feature;
-use App\Models\{User,SourceRecord,PublicContentState};
+use App\Models\{User,Role,SourceRecord,PublicContentState};
 use App\Jobs\VerifyPublicAccount;
+use App\Services\Access;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\{Queue,URL};
 use Tests\TestCase;
 class PublicAccountTest extends TestCase {
     use RefreshDatabase;
+    public function test_staff_account_is_not_asked_to_verify_email_or_manage_media_in_public_account(): void {
+        app(Access::class)->seed();$owner=User::factory()->create(['email_verified_at'=>null]);$owner->roles()->attach(Role::where('name','Owner')->firstOrFail());
+        Queue::fake();$this->actingAs($owner)->get('/konto')->assertOk()->assertSee('Administratorkonto')->assertSee('Media Desktop öffnen')->assertDontSee('Bestätigung ausstehend')->assertDontSee('Bestätigung erneut senden');
+        $this->post('/konto/verify')->assertRedirect();Queue::assertNotPushed(VerifyPublicAccount::class);
+    }
     public function test_registration_verifies_email_without_granting_admin_permissions(): void {
         Queue::fake();$this->get('/registrieren')->assertOk();
         $this->post('/registrieren',['name'=>'Reader','email'=>'reader@example.test','password'=>'long-password-123','password_confirmation'=>'long-password-123','consent'=>true])->assertRedirect('/konto');
         $user=User::firstOrFail();$this->assertNull($user->email_verified_at);$this->assertFalse($user->hasPermission('desktop.view'));
-        Queue::assertPushed(VerifyPublicAccount::class);$this->get('/konto')->assertOk();$this->get('/desktop')->assertForbidden();
+        Queue::assertPushed(VerifyPublicAccount::class);$this->get('/konto')->assertOk();$this->get('/desktop')->assertForbidden();$this->post('/desktop/media')->assertForbidden();
         $link=URL::temporarySignedRoute('public.account-verify',now()->addHour(),['user'=>$user->id,'hash'=>sha1($user->email)]);
         $this->get($link)->assertRedirect('/konto');$this->assertNotNull($user->fresh()->email_verified_at);
     }

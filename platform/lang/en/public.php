@@ -84,5 +84,6 @@ return [
     'section_pending'=>'This section is being prepared.','pagination'=>'More results','previous'=>'Previous','next'=>'Next',
     'nav_start'=>'Home','nav_videos'=>'Videos','nav_beitraege'=>'Articles','nav_buecher'=>'Books','nav_live'=>'Livestreams',
     'nav_podcast'=>'Podcast','nav_community'=>'Community','nav_about'=>'About us',
+    'account_staff_label'=>'Administrator account','account_staff_title'=>'Administrator account','account_staff_hint'=>'Manage published media, livestreams and files in Media Desktop. This page contains personal user data only.','account_staff_link'=>'Open Media Desktop',
     'search_placeholder'=>'Search videos, articles, topics …','join'=>'Join us',
 ];

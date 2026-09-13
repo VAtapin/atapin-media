@@ -21,6 +21,11 @@ class User extends Authenticatable
     {
         return $this->roles()->whereHas('permissions', fn ($q) => $q->where('name', $permission))->exists();
     }
+
+    public function isStaffAccount(): bool
+    {
+        return $this->hasPermission('users.manage') || $this->hasPermission('settings.manage');
+    }
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 

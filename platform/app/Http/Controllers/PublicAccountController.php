@@ -15,7 +15,7 @@ class PublicAccountController extends Controller {
         Auth::login($user);$request->session()->regenerate();return redirect('/konto')->with('public_status',__('public.account_verify'));
     }
     public function verify(Request $request,User $user,string $hash){abort_unless($request->user()->id===$user->id&&hash_equals(sha1($user->email),$hash),403);$user->forceFill(['email_verified_at'=>now()])->save();return redirect('/konto')->with('public_status',__('public.account_verified'));}
-    public function resend(Request $request){$user=$request->user();if(!$user->email_verified_at)\App\Jobs\VerifyPublicAccount::dispatch($user->id,$user->email,app()->getLocale());return back()->with('public_status',__('public.account_verify'));}
+    public function resend(Request $request){$user=$request->user();if($user->isStaffAccount())return back()->with('public_status',__('public.saved'));if(!$user->email_verified_at)\App\Jobs\VerifyPublicAccount::dispatch($user->id,$user->email,app()->getLocale());return back()->with('public_status',__('public.account_verify'));}
     public function index(Request $request,PublicContent $content,PublicBooks $books){
         $states=PublicContentState::where('user_id',$request->user()->id)->latest('updated_at')->paginate(30);
         $items=collect();foreach($states as $state){$subject=$state->subject_type==='book'?$books->query()->find($state->subject_id):$content->query()->find($state->subject_id);if(!$subject||($subject instanceof SourceRecord&&!$content->visible($subject)))continue;$card=$subject instanceof Product?$books->card($subject):$content->card($subject);$items->push(['state'=>$state,'card'=>$card]);}
@@ -23,7 +23,8 @@ class PublicAccountController extends Controller {
             $event=SourceRecord::find($entry->record_id);
             return $event&&$content->visible($event)?['subscription'=>$entry,'card'=>$content->card($event)]:null;
         })->filter()->values();
-        return response()->view('public.account',[...$this->shared(),'items'=>$items,'states'=>$states,'push'=>$push])->header('Cache-Control','private, no-store');
+        $isStaffAccount=$request->user()->isStaffAccount();
+        return response()->view('public.account',[...$this->shared(),'items'=>$items,'states'=>$states,'push'=>$push,'isStaffAccount'=>$isStaffAccount,'requiresEmailVerification'=>!$isStaffAccount&&!$request->user()->email_verified_at])->header('Cache-Control','private, no-store');
     }
     public function remove(Request $request,PublicContentState $state){abort_unless($state->user_id===$request->user()->id,404);$state->delete();return back()->with('public_status',__('public.saved'));}
     public function cancelPush(Request $request,PublicPushSubscription $subscription){abort_unless($subscription->user_id===$request->user()->id,404);$subscription->delete();return back()->with('public_status',__('public.saved'));}
