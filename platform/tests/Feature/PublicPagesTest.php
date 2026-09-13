@@ -27,6 +27,13 @@ class PublicPagesTest extends TestCase
         $this->get('/live')->assertOk()->assertSee('public-section-live',false);
         $this->get('/buecher')->assertOk()->assertDontSee('public-announcement',false);
     }
+    public function test_live_success_feedback_is_placed_in_chat_and_marked_for_auto_dismissal(): void
+    {
+        $live=$this->record('video',['public_section'=>'live','live_status'=>'ended']);
+        $response=$this->withSession(['public_status'=>'Nachricht gesendet.'])->get('/live?event='.$live->id);
+        $response->assertOk()->assertSee('public-chat-feedback',false)->assertSee('data-dismiss-feedback',false);
+        $this->assertSame(1,substr_count($response->getContent(),'data-auto-dismiss'));
+    }
     public function test_section_assignment_search_and_tags_use_published_database_records(): void
     {
         $podcast=$this->record('post',['public_section'=>'podcast','tags'=>['Gebet'],'author'=>'Public speaker']);

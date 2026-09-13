@@ -7,9 +7,15 @@ publicMenu?.addEventListener('click', () => {
 document.addEventListener('keydown',event=>{
   if(event.key==='Escape'){publicMenu?.setAttribute('aria-expanded','false');document.querySelector('.public-navigation')?.classList.remove('opened');}
 });
+let publicFeedbackTimer;
+const hidePublicFeedback=node=>{if(node){node.hidden=true;node.setAttribute('aria-hidden','true');}};
 const publicFeedback=message=>{
-  const node=document.querySelector('[data-public-feedback]');if(node){node.hidden=false;node.textContent=message;}
+  const node=document.querySelector('[data-public-feedback]');if(node){node.hidden=false;node.removeAttribute('aria-hidden');node.textContent=message;clearTimeout(publicFeedbackTimer);publicFeedbackTimer=setTimeout(()=>hidePublicFeedback(node),2500);}
 };
+for(const node of document.querySelectorAll('[data-auto-dismiss]')){
+  const timer=setTimeout(()=>hidePublicFeedback(node),2500);
+  node.querySelector('[data-dismiss-feedback]')?.addEventListener('click',()=>{clearTimeout(timer);hidePublicFeedback(node);});
+}
 for(const set of document.querySelectorAll('[data-public-tabs]')){
   const tabs=[...set.querySelectorAll('[role=tab]')];
   const activate=tab=>{

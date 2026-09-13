@@ -37,7 +37,7 @@
  <label class="public-sr-only" for="chat-body">{{ __('public.write_message') }}</label>
  <input id="chat-body" name="body" required minlength="2" maxlength="5000" placeholder="{{ __('public.write_message') }}">
  <button type="submit" class="public-button public-chat-send">{{ __('public.send') }}</button>
- </form><small>{{ __('public.chat_guest_hint') }}</small>@endif
+ </form><small>{{ __('public.chat_guest_hint') }}</small>@if(session('public_status'))<p class="public-chat-feedback public-feedback" data-auto-dismiss role="status"><span>{{ session('public_status') }}</span><button type="button" class="public-feedback-close" data-dismiss-feedback aria-label="{{ __('public.close') }}" title="{{ __('public.close') }}">×</button></p>@endif @endif
  @auth
  @if(app(\App\Services\PublicAiChat::class)->available())
 <form method="post" action="{{ route('public.ai-chat',$record) }}" data-ai-form>@csrf
