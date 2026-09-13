@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="/assets/brand/ui-kit.css">
 <link rel="stylesheet" href="/assets/public.css">
 <link rel="stylesheet" href="/assets/public-pages.css?v=2">
-<script src="/assets/public.js?v=4" defer>
+<script src="/assets/public.js?v=5" defer>
 </script>
 <script src="/assets/public-push.js?v=1" defer></script>
 <script src="/assets/public-ai-chat.js?v=1" defer></script>

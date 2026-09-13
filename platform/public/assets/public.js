@@ -58,6 +58,21 @@ for(const player of document.querySelectorAll('[data-progress-url]')){
   };
   player.addEventListener('pause',save);player.addEventListener('timeupdate',()=>{if(player.currentTime>0)save();});
 }
+for(const shell of document.querySelectorAll('[data-live-player]')){
+  const frame=shell.querySelector('iframe'),fallback=shell.querySelector('[data-live-player-fallback]'),url=shell.dataset.hlsUrl;
+  if(!frame||!fallback||!url)continue;
+  let failures=0;
+  const check=async()=>{
+    try{
+      const response=await fetch(url,{cache:'no-store',credentials:'same-origin'}),text=await response.text();
+      const ready=response.ok&&text.includes('#EXTM3U')&&(text.includes('#EXTINF')||text.includes('#EXT-X-STREAM-INF'));
+      failures=ready?0:failures+1;
+      if(failures>=2){frame.hidden=true;fallback.hidden=false;}
+      else if(ready){frame.hidden=false;fallback.hidden=true;}
+    }catch{failures++;if(failures>=2){frame.hidden=true;fallback.hidden=false;}}
+  };
+  check();setInterval(check,10000);
+}
 window.addEventListener('pagehide',()=>{if('speechSynthesis' in window)speechSynthesis.cancel();});
 for(const button of document.querySelectorAll('[data-public-help]')){
   const dialog=document.getElementById(button.dataset.publicHelp);

@@ -40,6 +40,11 @@ class PublicPagesTest extends TestCase
         $live=$this->record('video',['public_section'=>'live','live_stream_enabled'=>true,'live_status'=>'live']);
         $this->get('/live?event='.$live->id)->assertOk()->assertSee('/_live/live-'.$live->id.'/?cookieCheck=1',false);
     }
+    public function test_ended_live_uses_the_branded_fallback_instead_of_an_empty_video_player(): void
+    {
+        $live=$this->record('video',['public_section'=>'live','live_stream_enabled'=>true,'live_status'=>'ended']);
+        $this->get('/live?event='.$live->id)->assertOk()->assertSee('public-live-player-fallback-static',false)->assertSee('/assets/brand/owner/desktop/wallpapers/manna-mountains.png',false)->assertDontSee('<video',false);
+    }
     public function test_active_books_render_and_drafts_do_not(): void
     {
         $book=Product::create(['title'=>'Database book','description'=>'Book description','price_cents'=>990,'currency'=>'EUR','status'=>'active']);
