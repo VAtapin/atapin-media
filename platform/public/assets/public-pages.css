@@ -54,7 +54,7 @@
 .public-content-card h3{font-size:15px;margin:6px 0 2px;overflow-wrap:anywhere}
 .public-content-card small{display:block;font-size:11px;color:#607599;margin-top:3px}
 .public-content-card p{font-size:12px;line-height:1.5;margin:8px 0}
-.public-card-image{display:block;position:relative}
+.public-card-image{display:block;position:relative;align-self:start}
 .public-card-image .public-photo{aspect-ratio:2.4/1}
 .public-duration{position:absolute;right:3px;bottom:3px;background:#091320e6;color:#fff;border-radius:3px;font-size:10px;padding:2px 4px}
 .public-content-card strong{display:block;margin:5px 0}
@@ -230,6 +230,25 @@
 .public-series>.public-empty-slot{min-height:64px}
 .public-editorial .public-footer{margin-top:10px}
 .public-book-feature{display:grid;grid-template-columns:130px minmax(0,1fr);gap:14px}.public-book-feature .public-photo{aspect-ratio:2/3;object-fit:contain}.public-book-feature h3{margin:8px 0}.public-book-feature p{font-size:12px;line-height:1.5}.public-book-feature strong{display:block;margin:10px 0}.public-book-feature .public-button{font-size:12px;padding:8px 12px}.public-live-title{margin:10px 0}.public-live-excerpt{font-size:12px}.public-live-meta{display:flex;justify-content:space-between;margin:12px 0;font-size:11px}.public-live-cta{width:100%;font-size:12px}
+/* Match the editorial density of the approved desktop screens without hiding empty sections. */
+.public-editorial .public-panel-heading h2{font-size:20px;line-height:1.15}
+.public-ranked .public-content-card h3{font-size:13px;line-height:1.2;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.public-content-card p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.public-feature-label{display:inline-block;background:linear-gradient(#d9a13e,#96621a);border-radius:6px;padding:6px 10px;color:#fff;font-size:11px;letter-spacing:0}
+.public-video-widget .public-cards{display:block}
+.public-video-widget .public-content-card{display:block}
+.public-book-poll .public-poll form{display:flex;flex:1;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.public-book-poll .public-poll label{margin:0;white-space:nowrap}
+.public-book-poll .public-poll h2{font-size:18px;max-width:340px}
+@media(min-width:1551px){
+ .public-ranked .public-content-card{grid-template-columns:86px minmax(0,1fr);gap:9px;padding-bottom:5px}
+ .public-ranked .public-cards{gap:7px}
+ .public-book-ranked .public-cards>.public-empty-slot{min-height:100px}
+ .public-books-top .public-cards>.public-empty-slot{min-height:165px}
+ .public-editorial .public-newsletter:not(.public-newsletter-compact){min-height:52px;padding:9px 28px;margin-top:6px}
+ .public-editorial .public-footer{min-height:48px;margin-top:4px}
+ .public-category-hero-buecher .public-category-copy blockquote{display:none}
+}
 @media(max-width:1550px){
  .public-wide{margin-left:24px;margin-right:24px}.public-category-hero-inner{padding-left:24px;padding-right:24px;grid-template-columns:1fr 1fr}
  .public-detail-layout,.public-live-top{margin-left:24px;margin-right:24px}.public-filters{flex-wrap:wrap}

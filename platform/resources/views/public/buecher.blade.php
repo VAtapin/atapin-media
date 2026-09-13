@@ -1,10 +1,12 @@
 @extends('public.layout',['title'=>__('public.section_buecher')])
 
-@section('content')
+@section('announcement')
 <div class="public-announcement">
 @if($featured)<a href="{{ $featured['url'] }}">{{ __('public.new_in_library') }}: {{ $featured['title'] }} →</a>
 @else ◇ {{ __('public.no_data') }} · {{ __('public.new_in_library') }}
 @endif</div>
+@endsection
+@section('content')
 @include('public.hero')<div class="public-wide">
 <section class="public-panel public-book-poll">
 @include('public.poll')</section>
@@ -28,7 +30,7 @@
 @include('public.empty',['hint'=>__('public.account_progress_hint')])
 @endforelse
 </div></section>
-@include('public.cards',['heading'=>__('public.book_meets_video'),'cards'=>$relatedVideo?[$relatedVideo]:[],'listingUrl'=>'/videos'])</aside>
+@include('public.cards',['heading'=>__('public.book_meets_video'),'cards'=>$relatedVideo?[$relatedVideo]:[],'listingUrl'=>'/videos','panelClass'=>'public-video-widget'])</aside>
 </div>
 @include('public.newsletter')</div>
 
