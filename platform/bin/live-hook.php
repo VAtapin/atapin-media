@@ -8,4 +8,5 @@ try {
     if(($argv[1]??'')==='recording')$broadcast->recording($path,getenv('MTX_SEGMENT_PATH')?:'');
     elseif(in_array($argv[1]??'',['ready','ended'],true))$broadcast->signal($path,$argv[1]==='ready');
     else exit(1);
+    if (in_array($argv[1]??'', ['ready','ended'], true)) $app->make(App\Services\Publishing\YouTubeLiveRelay::class)->reconcile();
 }catch(Throwable){fwrite(STDERR,"Live hook failed; check platform configuration.\n");exit(1);}

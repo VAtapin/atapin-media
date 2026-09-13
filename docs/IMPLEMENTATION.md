@@ -6,7 +6,7 @@
 - [ ] Workflow: проекты, задачи, календарь, продолжение работы.
 - [ ] Content: редактор, темы, книги/PDF, импорт, публичные страницы, поиск.
 - [ ] Media: видео, Shorts, плейлисты, обработка, Podcast.
-- [ ] Publishing: реальные подключения, начиная с YouTube.
+- [x] Publishing: очередь исходящих публикаций, Website/YouTube/Facebook/Instagram/Telegram connectors, OAuth YouTube, обратная синхронизация YouTube в review и reusable YouTube Live relay.
 - [ ] KI: провайдер, предложения с подтверждением.
 - [ ] Audience: подписчики, аккаунты, Community, модерация, опросы.
 - [ ] Live: OBS, провайдер, записи, Live, чат.

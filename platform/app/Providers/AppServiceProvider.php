@@ -57,5 +57,26 @@ class AppServiceProvider extends ServiceProvider
                 }
             });
         }
+
+        // A website publication is the source of truth for outbound automation.
+        // Queueing here also covers imports, Live Studio and future API writers.
+        \App\Models\SourceRecord::created(function (\App\Models\SourceRecord $record) {
+            if ((($record->metadata ?? [])['public_published'] ?? false) && $record->status === 'ready') {
+                app(\App\Services\Publishing\PublishingService::class)->queueForRecord(
+                    $record,
+                    ($record->metadata ?? [])['publishing_targets'] ?? null
+                );
+            }
+        });
+        \App\Models\SourceRecord::updated(function (\App\Models\SourceRecord $record) {
+            if (! $record->wasChanged('metadata') || ! (($record->metadata ?? [])['public_published'] ?? false)) return;
+            $before = $record->getOriginal('metadata');
+            if (is_string($before)) $before = json_decode($before, true) ?: [];
+            if (is_array($before) && ($before['public_published'] ?? false)) return;
+            app(\App\Services\Publishing\PublishingService::class)->queueForRecord(
+                $record->fresh(),
+                ($record->metadata ?? [])['publishing_targets'] ?? null
+            );
+        });
     }
 }

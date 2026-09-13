@@ -36,6 +36,16 @@ Artisan::command('public:live-config',function(){
 Artisan::command('public:live-presence-prune',function(){\Illuminate\Support\Facades\DB::table('public_live_presence')->where('seen_at','<',now()->subDay())->delete();});
 Schedule::command('public:live-presence-prune')->daily()->withoutOverlapping();
 
+Artisan::command('publishing:youtube-sync', function () {
+    \App\Jobs\SyncYouTubeChannel::dispatch();
+    $this->info('YouTube synchronization queued.');
+});
+Schedule::command('publishing:youtube-sync')->everyFiveMinutes()->withoutOverlapping();
+Artisan::command('publishing:live-relay-reconcile', function () {
+    app(\App\Services\Publishing\YouTubeLiveRelay::class)->reconcile();
+});
+Schedule::command('publishing:live-relay-reconcile')->everyMinute()->withoutOverlapping();
+
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');

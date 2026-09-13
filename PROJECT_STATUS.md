@@ -50,7 +50,7 @@
 - Публикация материалов не автоматическая; только published ready records/children видны на сайте, архивные контоданные исключены из public и ИИ. По решению владельца бесплатные бинарные медиа публично адресуемы независимо от редакционного статуса. Документы, архивы и staging остаются private. Платные video/audio потребуют отдельного защищённого storage/выдачи с удалением публичной копии, не просто флажка на странице.
 - Видео/файлы публикуются с нашего сервера, без YouTube fallback/кнопок перехода. Адреса источников остаются provenance; приватные originals не раскрываются.
 - Платное прослушивание/анализ audio/video не входит в текущий план. Реальные production-письма, Push и вещание проверяет владелец; отсутствие этих проверок у агента не считается недоработкой реализации.
-- Текущий блок — завершение физического public storage и пообъектного импорта после сброса каталога. Publishing изменяется параллельно отдельной задачей; его незакоммиченный код не включается в commit хранения/импорта. По разрешению владельца общий отчёт объединён без удаления записей Publishing. Секреты и клиентские данные не входят в Git.
+- Текущий блок — завершение Publishing-интеграции поверх физического public storage. Канонические media URL и переименование входящих файлов сохранены; Publishing не использует `manna-youtube-runtime`. Секреты и клиентские данные не входят в Git.
 
 ## Известные ограничения
 
@@ -80,8 +80,7 @@
 - `static-media-browser.mjs` на Edge создал настоящий MP4: прямой `/media/<sha256>.mp4`, без redirect, decoded frame/playback и отсутствие overflow при 1672×941 / 390px. Просмотрены screenshots обоих размеров. PHP development server не доказывает nginx Range.
 - Общий Laravel прогон: 184 passed / 6 failed (1412 assertions); известные отдельные Foundation/PublicAccount/PublicPages сбои перечислены выше. Общий public browser прогон остановился на mobile overflow книги; Import Center browser workflow — на upload queue. Эти проверки не объявляются успешными.
 - Ранее read-only проверены реальные Takeout CSV и состав 1 815 файлов / 244 видео без массовой распаковки; это не результат нового полного импорта 56 GB.
-- Publishing: соседняя задача добавила migration, connectors/queue, Desktop UI, YouTube reverse-sync/review и Live relay/reconcile hooks; в её отчёте заявлены JS syntax/diff checks. Её собственные тесты и внешние сервисы не входят в подтверждённые проверки этого storage-блока.
-- Массовый production import, production nginx Range/seek и реальный outbound publishing агентом не выполнялись.
+- Publishing: эта задача добавила migration, connectors/queue, Desktop UI, YouTube reverse-sync/review и Live relay/reconcile hooks. Целевой `PublishingTest` прошёл (2 tests / 9 assertions), полный `composer test` через `.local/php84/php.exe` завершился с 187 passed / 6 известными сбоями / 1433 assertions; `node --check` двух Desktop JS-файлов и `git diff --check` прошли. Реальные внешние публикации не выполнялись.
 
 ## Последний связанный commit
 
