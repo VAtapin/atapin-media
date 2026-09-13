@@ -30,7 +30,8 @@ class PublicPagesTest extends TestCase
     public function test_overview_and_detail_pages_use_the_two_shared_header_modes(): void
     {
         $this->get('/')->assertOk()->assertSee('public-header-overview',false)->assertSee('public-overview-hero',false);
-        $this->get('/live')->assertOk()->assertSee('public-header-overview',false)->assertSee('public-overview-hero-live',false);
+        $this->get('/live')->assertOk()->assertSee('public-header-overview',false)->assertSee('public-overview-hero-live',false)->assertDontSee('public-live-top',false)->assertDontSee('public-live-chat',false);
+        $this->get('/ueber-uns')->assertOk()->assertSee('public-header-overview',false)->assertSee('public-overview-hero-ueber-uns',false)->assertSee('Über uns')->assertDontSee('public.heading_',false);
         $this->get('/videos/vorschau')->assertOk()->assertSee('public-header-detail',false)->assertDontSee('public-overview-hero',false);
 
         $live=$this->record('video',['public_section'=>'live','live_status'=>'ended']);

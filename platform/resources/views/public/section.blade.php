@@ -1,7 +1,10 @@
 @extends('public.layout',['title'=>__('public.section_'.$section)])
 @section('content')
+@if(in_array($section,['ueber-uns','unsere-mission'],true))
+@include('public.hero',['section'=>$section,'featured'=>null,'assets'=>collect(),'record'=>null,'poll'=>null])
+@endif
 <div class="public-page">
-<h1>{{ __('public.section_'.$section) }}</h1>
+@if(!in_array($section,['ueber-uns','unsere-mission'],true))<h1>{{ __('public.section_'.$section) }}</h1>@endif
 @if(in_array($section,['videos','beitraege','search']))
 <form class="public-catalog-search" method="get"><label for="catalog-q">{{ __('ui.search') }}</label><input id="catalog-q" type="search" name="q" maxlength="120" value="{{ request('q') }}"><button class="public-button">{{ __('ui.search') }}</button></form>
 <div class="public-catalog">@forelse($items as $item)<article class="public-panel"><a href="{{ $item['url'] }}">@include('public.picture',['image'=>$item['image']])<h2>{{ $item['title'] }}</h2><p>{{ $item['excerpt'] }}</p><small>{{ $item['meta'] }}</small></a></article>@empty<p class="public-empty">{{ __('public.no_published_content') }}</p>@endforelse</div>

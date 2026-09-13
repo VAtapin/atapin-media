@@ -14,10 +14,10 @@
 </div>
 <div class="public-overview-feature {{ $isHome?'public-feature':'public-feature public-category-feature' }}">
 @if($isHome)
-@if($featured)<a class="public-feature-link-wrap" href="{{ $featured['url'] }}">@include('public.picture',['art'=>$featured['art']??null,'image'=>$featured['image']??null,'pictureClass'=>'public-feature-picture'])<div class="public-feature-content"><span class="public-feature-label">{{ __('public.featured_video') }}</span><h2>{{ $featured['title'] }}</h2><p>{{ $featured['excerpt']??'' }}</p><div class="public-feature-author">{{ $featured['author']??'' }}<small>{{ $featured['meta']??'' }}</small></div></div><span class="public-play" aria-label="{{ __('public.play') }}">▶</span></a>@else@include('public.empty',['url'=>'/videos/vorschau','hint'=>__('public.featured_video')])@endif
+@if($featured??null)<a class="public-feature-link-wrap" href="{{ $featured['url'] }}">@include('public.picture',['art'=>$featured['art']??null,'image'=>$featured['image']??null,'pictureClass'=>'public-feature-picture'])<div class="public-feature-content"><span class="public-feature-label">{{ __('public.featured_video') }}</span><h2>{{ $featured['title'] }}</h2><p>{{ $featured['excerpt']??'' }}</p><div class="public-feature-author">{{ $featured['author']??'' }}<small>{{ $featured['meta']??'' }}</small></div></div><span class="public-play" aria-label="{{ __('public.play') }}">▶</span></a>@else@include('public.empty',['url'=>'/videos/vorschau','hint'=>__('public.featured_video')])@endif
 @elseif($section==='community')
 @include('public.poll',['poll'=>$poll])
-@elseif($featured)
+@elseif($featured??null)
 @include('public.picture',['image'=>$featured['image']])<div class="public-feature-content"><span class="public-feature-label">{{ __('public.featured_'.$section) }}</span><h2><a href="{{ $featured['url'] }}">{{ $featured['title'] }}</a></h2><p>{{ $featured['excerpt'] }}</p><div class="public-feature-author">{{ $featured['author']?:'—' }}<small>{{ $featured['meta']?:'—' }}</small></div></div>@if($section==='podcast'&&($audio=$assets->firstWhere('kind','audio')))<audio controls preload="metadata" src="{{ route('public.media',[$record,$audio]) }}"></audio>@else<a class="public-feature-link" href="{{ $featured['url'] }}">{{ __('public.view_now') }} →</a>@endif
 @else@include('public.empty',['url'=>match($section){'videos'=>'/videos/vorschau','beitraege'=>'/beitraege/vorschau','buecher'=>'/buecher/vorschau',default=>'#catalog'},'hint'=>__('public.featured_'.$section)])
 @endif

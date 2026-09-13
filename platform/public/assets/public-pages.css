@@ -428,6 +428,8 @@
 .public-overview-feature .public-feature-link-wrap{position:absolute;inset:0;display:block;color:inherit}
 .public-overview-feature .public-feature-link-wrap>.public-photo,.public-overview-feature .public-feature-link-wrap>.public-photo-placeholder{width:100%;height:100%;object-fit:cover}
 .public-overview-feature>.public-empty-slot{height:100%;background:#eef3f6cc}
+.public-layout-overview.public-section-live .public-header{background:transparent;border-bottom:0}
+.public-layout-overview.public-section-live .public-header-inner{background:rgba(255,255,255,.88);border-radius:0 0 8px 8px}
 .public-layout-overview .public-overview-hero{height:355px;padding-top:66px}
 .public-layout-overview .public-overview-hero-beitraege{height:332px}
 .public-layout-overview .public-overview-hero-buecher{height:333px}

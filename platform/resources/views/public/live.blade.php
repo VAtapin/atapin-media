@@ -5,6 +5,7 @@
 @if(($layoutMode??'overview')==='overview')
 @include('public.hero',['section'=>'live'])
 @endif
+@if(($layoutMode??'overview')==='detail')
 <div class="public-live-top">
 <div>
 @include('public.player')
@@ -63,6 +64,7 @@
 @endauth</div>
 </section>
 </div>
+@endif
 <div class="public-wide">
 <div class="public-live-bottom">
 @include('public.cards',['heading'=>__('public.next_live'),'cards'=>$upcoming,'panelClass'=>'public-related','listingUrl'=>'/live'])<section class="public-panel">
