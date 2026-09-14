@@ -45,7 +45,7 @@ return [
     'account_progress_hint'=>'Sign in and choose a book to save reading progress.','book_meets_video'=>'Book meets video',
     'content'=>'Content','description'=>'Description','chapters'=>'Chapters','materials'=>'Materials','comments'=>'Comments','progress'=>'Progress',
     'contents'=>'Table of contents','reviews'=>'Reader reviews','related_materials'=>'Related materials',
-    'share'=>'Share','watch_later'=>'Watch later','bookmark'=>'Save','download'=>'Download','pdf_download'=>'Download PDF','read_aloud'=>'Read aloud',
+    'share'=>'Share','watch_later'=>'Watch later','bookmark'=>'Save','download'=>'Download','pdf_download'=>'Download PDF','read_aloud'=>'Read aloud','article_images'=>'Images in this article','image_viewer'=>'Image viewer','image_open'=>'Open image','image_close'=>'Close image viewer','image_previous'=>'Previous image','image_next'=>'Next image',
     'write_comment'=>'Write a comment','write_message'=>'Write a message …','send'=>'Send','close'=>'Close','moderation_hint'=>'Please be respectful.','chat_guest_hint'=>'You can write without signing in.','chat_login_hint'=>'You can write without signing in.','chat_moderation'=>'Open moderation queue','chat_moderation_pending'=>'Under review …','chat_blocked'=>'Blocked','chat_blocked_three'=>'After three blocked messages, you can no longer write.',
     'comment_pending'=>'Saved. Your message will be reviewed before publication.','message_sent'=>'Message sent.','ai_moderation_unavailable'=>'Automatic moderation is currently unavailable.','ai_moderation_error'=>'Automatic moderation could not be completed.','saved'=>'Saved.',
     'current_poll'=>'CURRENT POLL','vote'=>'Vote now','votes'=>'votes','poll_closed'=>'This poll is closed.',

@@ -4,6 +4,8 @@
 
 ## Реализовано
 
+- Public Beiträge: обложка и дополнительные изображения статьи показываются без принудительного обрезания, открываются в доступном lightbox с полноразмерным просмотром, Esc/крестиком, стрелками и мобильной адаптацией. Добавлена регрессия SSR-галереи/lightbox; JS syntax и git diff --check прошли. PHP/Blade tests и browser-check в этом окружении не запускались: PHP 8.4 binary отсутствует. Последний связанный commit будет указан после фиксации задачи.
+
 - Publishing: окно явно объясняет, что публикуется только выбранный готовый материал и чем отличаются Website, внешние каналы и Live-цели; Publishing получил собственную вертикальную прокрутку для длинного содержимого. Проверки: PublishingTest 13/86, существующий Publishing browser-check на Edge, Blade view:cache и git diff --check прошли.
 
 - Content Library: в каждой строке видео/Short видны значки публикации и статуса Startseite с явными активными/неактивными подписями; отсутствующие Kurzbeschreibungen автоматически ставятся в существующую AI-очередь при открытии списка, без повторной постановки завершённых или недостаточных записей. Проверки: ContentLibraryPublicationFilterTest и ContentEnhancementsTest прошли; browser-check не запущен из-за отсутствующего Playwright Chromium. Последний связанный commit будет указан после фиксации задачи.
@@ -141,6 +143,6 @@
 
 ## Последний связанный commit
 
-- Текущий atomic-блок: Publishing explanation and scrollable window; hash сообщается после commit/push. Предыдущий commit `fffad90` — Show content publication states and auto-generate short descriptions.
+- Текущий atomic-блок: Public Beiträge image lightbox and gallery; hash сообщается после commit/push. Предыдущий commit — Publishing explanation and scrollable window.
 - Ветка/upstream: main → origin/main. Изменение применяется git pull + PHP 8.4 view:clear; dependencies/migrations/Node build/cron/config/routes не менялись.
 

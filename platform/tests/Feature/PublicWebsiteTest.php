@@ -33,6 +33,18 @@ class PublicWebsiteTest extends TestCase
         }
         $record->update(['metadata'=>['public_published'=>true],'status'=>'unsorted']);$this->get($url)->assertNotFound();
     }
+    public function test_public_article_images_render_in_a_clickable_gallery_and_lightbox(): void
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('originals/article-cover.jpg','cover');
+        Storage::disk('local')->put('originals/article-detail.jpg','detail');
+        $cover=Media::create(['title'=>'Article cover','original_name'=>'article-cover.jpg','kind'=>'image','mime'=>'image/jpeg','bytes'=>5,'disk'=>'local','path'=>'originals/article-cover.jpg','source'=>'upload','source_id'=>'article-cover']);
+        $detail=Media::create(['title'=>'Article detail','original_name'=>'article-detail.jpg','kind'=>'image','mime'=>'image/jpeg','bytes'=>6,'disk'=>'local','path'=>'originals/article-detail.jpg','source'=>'upload','source_id'=>'article-detail']);
+        $record=$this->record(['kind'=>'post','title'=>'Visible article','metadata'=>['public_published'=>true,'media_ids'=>[$cover->id,$detail->id],'cover_media_id'=>$cover->id]]);
+        $response=$this->get(app(PublicContent::class)->card($record)['url'])->assertOk();
+        $response->assertSee('data-image-lightbox-dialog',false)->assertSee('data-image-lightbox',false)->assertSee('public-article-media-gallery',false)->assertSee('data-image-lightbox-next',false);
+        $response->assertSee(route('public.media',[$record,$detail]),false);
+    }
     public function test_public_media_requires_a_published_parent_and_exact_connection(): void
     {
         Storage::fake('local');Storage::disk('local')->put('originals/local.mp4','0123456789');
