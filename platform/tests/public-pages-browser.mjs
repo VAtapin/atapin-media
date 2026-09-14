@@ -37,6 +37,18 @@ try {
       assert.equal(overflow.ok,true,`${route}: overflow at ${width}: ${JSON.stringify(overflow.offenders)}`);
       assert(await page.locator('.public-header').isVisible(),route);
       assert.equal(await page.locator('main').count(),1,route);
+      if(route==='/'||route==='/buecher'){
+        const decorated=page.locator('.public-section-cards, .public-panel-heading, .public-empty-slot');
+        for(const text of await decorated.allTextContents())assert(!text.includes('→'),`${route}: decorative arrow remains`);
+      }
+      if(route==='/'){
+        const quote=await page.evaluate(()=>{
+          const feature=document.querySelector('.public-overview-feature'),side=document.querySelector('.public-hero-side-copy');
+          const a=feature.getBoundingClientRect(),b=side.getBoundingClientRect();
+          return {width:innerWidth,feature:{x:a.x,y:a.y,width:a.width,height:a.height},quote:{x:b.x,y:b.y,width:b.width,height:b.height},overlaps:Math.min(a.right,b.right)>Math.max(a.left,b.left)&&Math.min(a.bottom,b.bottom)>Math.max(a.top,b.top),fallback:!!feature.querySelector('.public-empty-slot'),fallbackBackground:feature.querySelector('.public-empty-slot')?getComputedStyle(feature.querySelector('.public-empty-slot')).backgroundImage:null};
+        });
+        console.log('Home quote diagnosis:',JSON.stringify(quote));
+      }
       if(await page.locator('.public-overview-hero').count()){
         const shell=await page.evaluate(()=>{
           const header=document.querySelector('.public-header'),panel=header.querySelector('.public-header-inner');

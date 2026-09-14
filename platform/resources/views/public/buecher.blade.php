@@ -15,7 +15,7 @@
 <section class="public-panel">
 <div class="public-panel-heading">
 <h2>{{ __('public.reading_progress') }}</h2>
-<a href="#reading">{{ __('public.bookshelf') }} →</a>
+<a href="#reading">{{ __('public.bookshelf') }}</a>
 </div>
 <div id="reading">
 @forelse($readingBooks as $readingBook)

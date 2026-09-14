@@ -26,7 +26,6 @@
 <h2>{{ __('public.card_'.$key) }}</h2>
 <p>{{ __('public.card_'.$key.'_hint') }}</p>
 </div>
-<span class="public-section-arrow">→</span>
 </a>
 @endforeach</nav>
     <div class="public-grid public-home-grid">
@@ -37,7 +36,7 @@
         <section class="public-panel">
 <div class="public-panel-heading">
 <h2>{{ __('public.book_recommendation') }}</h2>
-<a href="/buecher">{{ __('public.all_books') }} <span>→</span>
+<a href="/buecher">{{ __('public.all_books') }}
 </a>
 </div>
 @if($book)<div class="public-book-feature">
@@ -58,7 +57,7 @@
         <section class="public-panel">
 <div class="public-panel-heading">
 <h2>{{ __('public.next_live') }}</h2>
-<a href="/live">{{ __('public.all_live') }} <span>→</span>
+<a href="/live">{{ __('public.all_live') }}
 </a>
 </div>
 @if($live)<a href="{{ $live['url'] }}">
