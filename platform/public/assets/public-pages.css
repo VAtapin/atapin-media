@@ -297,6 +297,7 @@
  .public-video-overview,.public-post-overview,.public-detail-layout,.public-live-top,.public-books-top,.public-podcast-grid,.public-community-grid,.public-live-bottom{display:grid;grid-template-columns:1fr}
  .public-video-overview>.public-right-sidebar,.public-post-overview>.public-right-sidebar,.public-books-overview>.public-right-sidebar{grid-template-columns:1fr}.public-overview-series{grid-column:1}
  .public-detail-layout,.public-live-top{width:auto;margin-left:16px;margin-right:16px;margin-top:20px}.public-detail-layout>*{min-width:0}.public-empty-player{min-height:220px;aspect-ratio:16/9}.public-main-player{aspect-ratio:16/9}
+ .public-post-grid .public-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 14px}.public-content-card-post{display:block}.public-content-card-post .public-photo{aspect-ratio:4/5;height:auto;min-height:0}.public-content-card-post h3{font-size:16px;line-height:1.16;margin-top:8px}
  .public-title-actions{grid-template-columns:1fr}.public-live-actions{min-width:0}.public-title-actions h1,.public-article-detail h1{font-size:30px}.public-article-intro{font-size:18px}.public-article-cover{height:200px}.public-article-body{font-size:17px}
  .public-tabs{gap:0;overflow:auto}.public-tabs button{font-size:12px;padding:12px 7px;min-width:85px}.public-materials>a{flex-wrap:wrap}
  .public-related .public-content-card{grid-template-columns:120px 1fr}.public-books-top .public-cards,.public-book-ranked .public-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
