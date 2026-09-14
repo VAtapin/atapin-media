@@ -415,35 +415,38 @@
 @media(max-width:800px){.public-account-history-grid{grid-template-columns:1fr}}
 .public-live-chat .public-chat-messages article{gap:8px;padding:4px 0;line-height:1.2}.public-live-chat .public-chat-messages .public-avatar{width:28px;height:28px}.public-live-chat .public-chat-messages p{margin:2px 0 0;line-height:1.2}.public-live-chat .public-chat-status{margin-top:2px}
 
-/* One reusable overview hero: the page changes its copy and feature, not its geometry. */
-.public-overview-hero{position:relative;isolation:isolate;overflow:clip;background-image:var(--hero-image);background-size:cover;background-position:center}
-.public-overview-hero:after{display:none}
-.public-overview-hero .public-hero-background{opacity:1}
-.public-overview-hero-inner{position:relative;z-index:1;max-width:1232px;margin:auto;padding-top:12px;display:grid;grid-template-columns:560px minmax(0,1fr);gap:40px}
-.public-overview-copy{position:relative;isolation:isolate}
+/* Every overview page uses the same hero geometry; only its page data changes. */
+.public-overview-hero{height:400px!important;padding-top:0!important;position:relative;isolation:isolate;overflow:hidden;background-image:none!important;background-color:#c8d5dc}
+.public-overview-hero:after{content:'';display:block!important;position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,#fffaf4e8,#fffaf4b3 43%,#ffffff20)}
+.public-overview-hero-background{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;object-position:center;display:block}
+.public-overview-hero-inner{position:relative;z-index:1;max-width:1232px;height:100%;margin:auto;padding:88px 0 27px!important;display:grid;grid-template-columns:560px minmax(0,1fr);gap:40px}
+.public-overview-copy{min-width:0;padding-top:0!important;position:relative;isolation:isolate}
 .public-overview-copy:before{content:'';position:absolute;z-index:-1;pointer-events:none;inset:-42px -74px -18px -64px;background:radial-gradient(ellipse,#fffaf4f2 0%,#fffaf4c9 47%,#fffaf400 76%);filter:blur(13px)}
-.public-overview-intro{max-width:510px;line-height:1.4}
+.public-overview-copy h1{font-size:44px;line-height:1.04;margin:9px 0 12px;font-weight:500;white-space:pre-line}
+.public-overview-intro{max-width:510px;font-size:14px;line-height:1.4}
 .public-overview-actions{display:flex;gap:16px;margin-top:15px}
-.public-overview-feature{position:relative}
+.public-overview-feature{height:285px!important;min-width:0;position:relative;overflow:hidden;border-radius:15px;background:#203851;color:#fff;box-shadow:0 8px 24px #102c4a35}
+.public-overview-feature>.public-photo,.public-overview-feature>.public-photo-placeholder,.public-overview-feature .public-feature-picture{width:100%;height:100%;object-fit:cover;display:block}
 .public-overview-feature .public-feature-link-wrap{position:absolute;inset:0;display:block;color:inherit}
-.public-overview-feature .public-feature-link-wrap>.public-photo,.public-overview-feature .public-feature-link-wrap>.public-photo-placeholder{width:100%;height:100%;object-fit:cover}
-.public-overview-feature>.public-empty-slot{height:100%;background:#eef3f6cc}
-.public-layout-overview.public-section-live .public-header{background:transparent;border-bottom:0}
-.public-layout-overview.public-section-live .public-header-inner{background:rgba(255,255,255,.88);border-radius:0 0 8px 8px}
-.public-layout-overview .public-overview-hero{height:355px;padding-top:66px}
-.public-layout-overview .public-overview-hero-beitraege{height:332px}
-.public-layout-overview .public-overview-hero-buecher{height:333px}
-.public-layout-overview .public-overview-hero-podcast,.public-layout-overview .public-overview-hero-community{height:435px}
-.public-home .public-overview-hero{height:400px;padding-top:0;background-image:none}
-.public-home .public-overview-hero-inner{padding-top:95px}
-.public-home .public-overview-copy{padding-top:0}
-.public-home .public-overview-copy h1{font-size:48px}
-.public-home .public-overview-copy:before{inset:-42px -74px -18px -64px}
-@media(max-width:1550px){.public-overview-hero-inner{padding-left:24px;padding-right:24px;grid-template-columns:1fr 1fr}}
+.public-overview-feature>.public-empty-slot{height:100%;min-height:0;border:0;border-radius:15px;background:linear-gradient(90deg,#132c45e8,#244661c9),var(--hero-image);background-position:center;background-size:cover;color:#fff!important}
+.public-overview-feature>.public-empty-slot .public-empty-symbol{color:#e2ad4c;font-size:42px}
+.public-overview-feature>.public-poll{height:100%;min-height:0;padding:18px 24px;background:#18334aeb;overflow:auto;color:#fff}
+.public-overview-feature>.public-poll h2{color:#fff}
+.public-overview-feature>.public-poll .public-empty-slot{min-height:145px;background:#294256;color:#c9d7e5!important;border-color:#566d80}
+.public-overview-feature .public-feature-content{position:absolute;inset:0;padding:27px;background:linear-gradient(90deg,#0c234ecc,#0c234e20)}
+.public-overview-feature .public-feature-content h2{color:#fff;font-size:30px;max-width:370px;margin:12px 0}
+.public-overview-feature .public-feature-content p{max-width:340px;font-size:12px}
+.public-overview-feature .public-feature-author{margin-top:18px;font-size:12px}
+.public-overview-feature .public-feature-author small{display:block}
+.public-overview-feature .public-feature-link{position:absolute;right:20px;bottom:18px;background:#bd8523;padding:9px 18px;border-radius:8px;color:#fff}
+.public-overview-feature audio{position:absolute;bottom:7px;left:12px;width:calc(100% - 24px);height:40px}
+.public-overview-hero .public-hero-side-copy{top:84px}
+@media(max-width:1550px){.public-overview-hero-inner{padding-left:24px!important;padding-right:24px!important;grid-template-columns:1fr 1fr}}
 @media(max-width:800px){
- .public-layout-overview .public-overview-hero,.public-layout-overview .public-overview-hero-beitraege,.public-layout-overview .public-overview-hero-buecher,.public-layout-overview .public-overview-hero-podcast,.public-layout-overview .public-overview-hero-community{height:auto;padding-top:91px;padding-bottom:50px}
- .public-overview-hero-inner{grid-template-columns:1fr;gap:25px;padding:25px 20px 0}
- .public-home .public-overview-hero{height:auto;padding-top:0}
- .public-home .public-overview-hero-inner{padding-top:95px}
- .public-overview-copy:before{inset:-30px -25px -18px}
+ .public-overview-hero{height:auto!important;min-height:0;padding-bottom:42px!important}
+ .public-overview-hero-inner{height:auto;grid-template-columns:1fr;gap:25px;padding:91px 20px 0!important}
+ .public-overview-copy h1{font-size:37px}
+ .public-overview-intro{font-size:14px}
+ .public-overview-feature{height:250px!important}
+ .public-overview-hero .public-hero-side-copy{position:relative;top:auto;right:auto;width:240px;margin:-30px auto 10px}
 }
