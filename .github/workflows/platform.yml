@@ -107,6 +107,21 @@ jobs:
           CACHE_STORE: file
           QUEUE_CONNECTION: database
           SESSION_SECURE_COOKIE: 'false'
+      - name: Public live overview browser
+        run: |
+          touch /tmp/public-live-browser-ci.sqlite
+          php artisan migrate --force
+          php tests/public-live-overview-fixture.php
+          timeout 60 node tests/public-live-overview-browser.mjs
+        env:
+          APP_ENV: testing
+          APP_LOCALE: de
+          APP_URL: http://127.0.0.1:8801
+          DB_CONNECTION: sqlite
+          DB_DATABASE: /tmp/public-live-browser-ci.sqlite
+          CACHE_STORE: file
+          QUEUE_CONNECTION: database
+          SESSION_SECURE_COOKIE: 'false'
       - uses: actions/upload-artifact@v4
         if: always()
         with:

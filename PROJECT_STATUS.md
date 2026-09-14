@@ -4,6 +4,8 @@
 
 ## Реализовано
 
+- Public Live: активный эфир отмечен «Jetzt live» в меню и homepage-карточке; меню проверяет только публичный live-status каждые 30 секунд без записи presence. `/live` overview использует существующий HLS-плеер непосредственно в hero, с прежними manifest checks/афишей; existing heartbeat обновляет статус и останавливает iframe после ended. Desktop/mobile UI проверен, видеообработка и storage contract не менялись.
+
 - Social Media forms используют общий provider schema для UI/validation: OAuth YouTube/X, ID+token Facebook/Instagram, Bot Token+Chat-ID Telegram; public URL необязательна. Лишние поля скрываются/отключаются и отклоняются сервером; смена provider очищает unsaved credentials, blank/partial save сохраняет secrets/OAuth metadata. TikTok/LinkedIn profile-only и Telegram Mini App-only не считаются Publishing connection.
 - Telegram video/Short/Beiträge-with-video announcements отправляют cover либо текст, заголовок/Kurzbeschreibung и public Website URL без видеофайла. Настроенная Main Mini App добавляет deep link record_<id>; текущий сайт/плеер получили минимальный Telegram SDK viewport/safe-area/Back режим. Public resolver проверяет опубликованность, не принимает arbitrary URL и не аутентифицирует пользователей. Старые сообщения и native text/image/audio сохранены. Инструкции: docs/PUBLISHING.md.
 - Согласованный media/public-блок реализован: бесплатные фоновые cover-кадры без замены существующих обложек; отдельная ручная генерация ИИ с общим редактируемым стилем проекта. Canonical public/media/SHA-256 и прямые original MP4 URLs сохранены, оптимизация видео не возвращалась.
@@ -71,6 +73,8 @@
 
 ## Известные ограничения
 
+- Задержка старта конкретной записи Live пока не диагностирована: read-only проверка 14.09.2026 показала пустой публичный `/live`, контрольный `/media/playback-check-20260914.mp4` возвращает 404. Нужна доступная ссылка `/live?event=...`, чтобы проверить её URL/Range/timing/MP4 atoms. Код сохраняет MediaMTX fMP4 сегмент без изменений; это особенность контейнера, не доказательство причины и не подтверждение большого OBS-файла. Remux/transcoding/оптимизация не добавлялись.
+
 - На ширине 820 px верхнее desktop-меню главной выходит за viewport; существующие header-стили в исправлении боковой надписи не менялись. Требуется отдельная корректировка breakpoint меню.
 - 100% pixel match не подтверждён; пустые блоки пока намеренно включены.
 - Оплачиваемый checkout не реализован: требуется выбор способа оплаты владельцем. Покупка пока через контакт; платные PDF не выдаются публично.
@@ -93,6 +97,8 @@
 - Инструкции стримера и администратора доступны непосредственно в Live Studio внутри `/desktop`; установка MediaMTX/nginx, сертификата/порта RTMPS и production-проверки выполняются владельцем.
 
 ## Проверки
+
+- Public Live overview: 39 целевых Feature tests / 301 assertions passed; Edge 1672×941 и 390×844 — встроенный hero-плеер, отсутствие overflow, обновление LIVE без reload и отключение iframe/смена статуса после ended. HLS/heartbeat browser transport mocked; настоящий live/replay не проверен. PHP/JS syntax, Blade/routes cache и diff checks прошли.
 
 - Media/public-блок: полный совместный SQLite suite через PHP 8.4.25 — 301 tests / 2255 assertions passed; 52 целевых / 365 assertions passed, затем после защиты community author/body — 49 целевых / 306 assertions passed. HTTP ИИ/image и ffmpeg процессы mocked; реальных платных API вызовов и ffmpeg/decoder этого блока локально не запускали (ffmpeg отсутствует). Проверены IDs/batching/manual-stale edits, covers/dedupe, AAC copy/audio-only conversion, Podcast, image SSRF/redirect/type/retry и ownership/AI moderation comments.
 - Edge: content-enhancements browser passed при 1672×941 и 390×844 — hero frame/author/Play, отсутствие overflow/перекрытия copy-author, настройки и native Podcast поля, раскрытие оригинального описания, две AJAX реакции, комментарий pending и неизменный player DOM. Desktop/mobile screenshots просмотрены; browser video не является playback fixture. PHP/JS syntax, Blade view:cache, route:cache/clear прошли. Проверка добавлена в CI на изолированной SQLite; production не обновлялся.
@@ -127,6 +133,6 @@
 
 ## Последний связанный commit
 
-- Текущий atomic-блок: компактный Live Studio список с сегодняшним фильтром, календарём, «Alle geplant», независимым блоком Live и пагинацией; commit hash будет сообщён после commit/push. Предыдущий commit `2b1cfde` — Simplify social connections and add Telegram Mini App.
-- Ветка/upstream: main → origin/main. Telegram/Social применяются получением кода и PHP 8.4 view:clear; dependencies/migrations/Node build/новый cron не нужны. Регистрация Main Mini App в BotFather отдельная. Для предыдущего media-блока остаётся его deployment: config:clear/view:clear и media:prepare-missing.
+- Текущий atomic-блок: Public Live overview player/status indicator; hash сообщается после commit/push. Предыдущий commit `9cc1986` — Add compact live stream list filters.
+- Ветка/upstream: main → origin/main. Этот Public Live блок применяется git pull + PHP 8.4 route:clear/view:clear; dependencies/migrations/Node build/новый cron и изменение MediaMTX configuration не нужны. Диагностика конкретного replay остаётся открытой.
 

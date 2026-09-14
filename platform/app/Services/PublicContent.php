@@ -150,6 +150,7 @@ class PublicContent
             'author_image'=>$project->get('public_author_image'),
             'tags'=>array_values(array_filter($record->metadata['tags']??[],'is_string')),
             'duration'=>$record->metadata['duration']??null,'views'=>$this->viewCount($record),
+            'live_status'=>$section==='live'?($record->metadata['live_status']??null):null,
             'date'=>$date,'viewers'=>is_numeric($record->metadata['viewer_count']??null)?(int)$record->metadata['viewer_count']:'',
             'image'=>$image?($image->publicUrl() ?? route('public.media',[$record,$image])):null,
             'meta'=>$meta];

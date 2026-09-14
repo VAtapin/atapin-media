@@ -8,9 +8,9 @@
 <link rel="stylesheet" href="/assets/fonts/fonts.css">
 <link rel="stylesheet" href="/assets/brand/ui-kit.css">
 <link rel="stylesheet" href="/assets/public.css">
-<link rel="stylesheet" href="/assets/public-pages.css?v=12">
+<link rel="stylesheet" href="/assets/public-pages.css?v=14">
 <link rel="icon" href="/favicon.png">
-<script src="/assets/public.js?v=2" defer>
+<script src="/assets/public.js?v=13" defer>
 </script>
 </head>
 <body class="public-site public-editorial public-home public-layout-overview public-section-start">
@@ -56,12 +56,13 @@
 @endif</section>
         <section class="public-panel">
 <div class="public-panel-heading">
-<h2>{{ __('public.next_live') }}</h2>
+<h2>{{ ($live['live_status']??null)==='live'?__('public.live_now'):__('public.next_live') }}</h2>
 <a href="/live">{{ __('public.all_live') }}
 </a>
 </div>
 @if($live)<a href="{{ $live['url'] }}">
 @include('public.picture',['art'=>$live['art']??null,'image'=>$live['image']??null])</a>
+@if(($live['live_status']??null)==='live')<span class="public-live-badge">{{ __('public.live_now') }}</span>@endif
 <h3 class="public-live-title">{{ $live['title'] }}</h3>
 <p class="public-live-excerpt">{{ $live['excerpt']??'' }}</p>
 <div class="public-live-meta">

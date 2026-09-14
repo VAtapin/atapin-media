@@ -4,7 +4,12 @@
         <button class="public-menu-button" type="button" aria-controls="public-navigation" aria-expanded="false" aria-label="{{ __('ui.menu') }}">☰</button>
         <nav id="public-navigation" class="public-navigation" aria-label="{{ __('ui.navigation') }}">
             @foreach(config('public_ui.navigation') as $key=>$item)
-                <a href="{{ $item['path'] }}" @class(['current'=>($section??'start')===$key]) @if(($section??'start')===$key)aria-current="page"@endif>{{ __('public.nav_'.$key) }}</a>
+                <a href="{{ $item['path'] }}" @class(['current'=>($section??'start')===$key]) @if(($section??'start')===$key)aria-current="page"@endif>{{ __('public.nav_'.$key) }}
+                @if($key==='live')
+                    @php($currentLiveVisible=($live['live_status']??null)==='live'||(($record?->metadata['public_section']??null)==='live'&&($record?->metadata['live_status']??null)==='live'))
+                    <span class="public-live-badge" data-current-live="{{ route('public.live-current') }}" @if(!$currentLiveVisible) hidden @endif>{{ __('public.live_now') }}</span>
+                @endif
+                </a>
             @endforeach
         </nav>
         <form class="public-search" method="get" action="/suche" role="search">

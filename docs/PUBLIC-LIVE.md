@@ -1,5 +1,9 @@
 # Public Live
 
+The navigation displays `Jetzt live` while a published, enabled event has live status; a lightweight `/live/current` check refreshes it every 30 seconds without writing viewer presence. The homepage live card also labels an active event. The `/live` overview embeds the existing HLS player directly in its hero when the selected event is live; scheduled/ended events retain their cover cards. The existing event heartbeat updates both the hero caption and fallback poster and detaches the iframe after the event ends. No new scheduler or MediaMTX configuration is needed.
+
+Completed recordings currently retain MediaMTX's fMP4 container and use direct canonical MP4 URLs. A container issue must be diagnosed against the actual recording (HTTP Range, startup timing, MP4 metadata and codec), not inferred from OBS resolution or duration. No remux/transcoding or automatic video optimization was added by the overview/status update.
+
 Email reminders use the existing Laravel scheduler and queue (Plesk scheduled PHP tasks); no separate daemon or paid service is installed. Local PHP sendmail is supported with MAIL_MAILER=sendmail and the actual Plesk sendmail path; external SMTP is optional. This is configuration readiness, not proof of server delivery.
 
 - A signed-in visitor opts in on a published future scheduled Live event. Clicking again cancels.

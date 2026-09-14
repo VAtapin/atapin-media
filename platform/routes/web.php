@@ -29,6 +29,7 @@ Route::post('/public/books/{product}/state',[\App\Http\Controllers\PublicInterac
 Route::get('/upload/{path?}', fn () => redirect('/desktop', 303))->where('path', '.*');
 Route::post('/kontakt',[\App\Http\Controllers\PublicContactController::class,'store'])->middleware('throttle:3,1')->name('public.contact-submit');
 Route::post('/live/{record}/heartbeat',[\App\Http\Controllers\PublicLiveController::class,'heartbeat'])->middleware('throttle:120,1')->name('public.live-heartbeat');
+Route::get('/live/current',[\App\Http\Controllers\PublicLiveController::class,'current'])->middleware('throttle:30,1')->name('public.live-current');
 Route::get('/public/{record}/comments',[\App\Http\Controllers\PublicCommentsController::class,'index'])->name('public.comments');
 Route::post('/live/server-auth',[\App\Http\Controllers\PublicBroadcastController::class,'authenticate'])->middleware('throttle:broadcast-auth')->name('public.broadcast-auth');
 Route::post('/live/{record}/push',[\App\Http\Controllers\PublicPushController::class,'toggle'])->middleware(['auth','throttle:20,1'])->name('public.live-push');

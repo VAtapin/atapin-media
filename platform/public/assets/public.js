@@ -99,6 +99,22 @@ for(const player of document.querySelectorAll('[data-progress-url]')){
   };
   player.addEventListener('pause',save);player.addEventListener('timeupdate',()=>{if(player.currentTime>0)save();});
 }
+for(const badge of document.querySelectorAll('[data-current-live]')){
+  let active=true,timer,controller;
+  const check=async()=>{
+    if(!active)return;
+    if(!document.hidden){
+      controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),5000);
+      try{const response=await fetch(badge.dataset.currentLive,{cache:'no-store',signal:controller.signal,headers:{Accept:'application/json'}});
+        if(response.ok){const data=await response.json();if(typeof data.live==='boolean')badge.hidden=!data.live;}
+      }catch{}finally{clearTimeout(timeout);}
+    }
+    if(active)timer=setTimeout(check,30000);
+  };
+  window.addEventListener('pagehide',()=>{active=false;clearTimeout(timer);controller?.abort();});
+  window.addEventListener('pageshow',event=>{if(event.persisted){active=true;check();}});
+  check();
+}
 for(const shell of document.querySelectorAll('[data-live-player]')){
   const frame=shell.querySelector('iframe'),fallback=shell.querySelector('[data-live-player-fallback]'),url=shell.dataset.hlsUrl,frameSrc=frame?.dataset.src||frame?.getAttribute('src');
   if(!frame||!fallback||!url)continue;
@@ -143,18 +159,23 @@ for(const root of document.querySelectorAll('[data-live-heartbeat]')){
         const response=await fetch(root.dataset.liveHeartbeat,{method:'POST',signal:controller.signal,headers:{Accept:'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content}});
         if(response.status===404){active=false;publicFeedback(window.publicLabels.live_unavailable);return;}
         if(!response.ok)throw new Error(String(response.status));
-        const data=await response.json();root.querySelector('[data-live-online]').textContent=String(data.online);
+        const data=await response.json();const online=root.querySelector('[data-live-online]');if(online)online.textContent=String(data.online);
         if(data.status&&data.status!==lastStatus){
           lastStatus=data.status;
-          const statusLine=document.querySelector('[data-live-status-line]'),statusLabel=statusLine?.querySelector('[data-live-status-label]'),statusDot=statusLine?.querySelector('[data-live-status-dot]'),label=window.publicLabels[`live_${data.status}`];
-          if(statusLabel&&label)statusLabel.textContent=label;
-          if(statusDot)statusDot.className=`public-live-status-dot status-${data.status}`;
+          const label=window.publicLabels[`live_${data.status}`];
+          for(const statusLine of document.querySelectorAll('[data-live-status-line]')){
+            const statusLabel=statusLine.querySelector('[data-live-status-label]'),statusDot=statusLine.querySelector('[data-live-status-dot]');
+            if(statusLabel&&label)statusLabel.textContent=label;
+            statusLine.dataset.status=data.status;
+            if(statusDot)statusDot.className=`public-live-status-dot status-${data.status}`;
+          }
           document.dispatchEvent(new CustomEvent('public-live-status',{detail:{status:data.status}}));
         }
         if(data.status==='ended'){active=false;clearTimeout(timer);}
         const next=JSON.stringify(data.chat);
-        if(next!==signature){
-          signature=next;const messages=root.querySelector('.public-chat-messages'),bottom=messages.scrollHeight-messages.scrollTop-messages.clientHeight<50;
+        const messages=root.querySelector('.public-chat-messages');
+        if(next!==signature&&messages){
+          signature=next;const bottom=messages.scrollHeight-messages.scrollTop-messages.clientHeight<50;
           if(data.chat.length){messages.replaceChildren(...data.chat.map(message=>{
             const article=document.createElement('article'),avatar=document.createElement('span'),body=document.createElement('div'),author=document.createElement('strong'),time=document.createElement('small'),text=document.createElement('p');
             article.className=message.blocked?'public-chat-message is-blocked':message.pending?'public-chat-message is-pending':'public-chat-message';
@@ -162,7 +183,7 @@ for(const root of document.querySelectorAll('[data-live-heartbeat]')){
           }));if(bottom)messages.scrollTop=messages.scrollHeight;}
           else{const empty=document.createElement('p');empty.className='public-empty';empty.textContent='◇ '+window.publicLabels.no_data;messages.replaceChildren(empty);}
         }
-      }catch{root.querySelector('[data-live-online]').textContent=window.publicLabels.live_connection_pending;}
+      }catch{const online=root.querySelector('[data-live-online]');if(online)online.textContent=window.publicLabels.live_connection_pending;}
       finally{clearTimeout(timeout);running=false;if(queued){queued=false;return pulse();}}
     }
     if(active)timer=setTimeout(pulse,15000);

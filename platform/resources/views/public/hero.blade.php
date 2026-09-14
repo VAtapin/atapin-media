@@ -56,6 +56,11 @@ $emptyHint=match($section){
 </a>
 @elseif($section==='community')
 @include('public.poll',['poll'=>$poll])
+@elseif($section==='live' && ($record?->metadata['live_stream_enabled']??false) && ($record?->metadata['live_status']??null)==='live')
+<div class="public-live-overview-player">
+@include('public.player',['card'=>$featured])
+</div>
+<div class="public-live-overview-caption" data-live-heartbeat="{{ route('public.live-heartbeat',$record) }}"><span class="public-live-badge" data-live-status-line><span data-live-status-label>{{ __('public.live_now') }}</span></span><h2><a href="{{ $featured['url'] }}">{{ $featured['title'] }}</a></h2></div>
 @elseif($featured??null)
 @include('public.picture',['image'=>$featured['image']])
 <div class="public-feature-content">
