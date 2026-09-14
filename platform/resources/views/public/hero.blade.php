@@ -68,8 +68,8 @@ $emptyHint=match($section){
 @include('public.empty',['url'=>$emptyUrl,'hint'=>$emptyHint,'emptyClass'=>'public-overview-empty-slot'])
 @endif
 </div>
+</div>
 @if($isHome)
 <aside class="public-hero-side-copy"><p>{{ __('public.hero_side_quote') }}</p></aside>
 @endif
-</div>
 </section>

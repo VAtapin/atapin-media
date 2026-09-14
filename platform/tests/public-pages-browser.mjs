@@ -28,7 +28,7 @@ try {
     await page.locator('form button').click();await page.waitForURL('**/desktop');
   }
   await fs.mkdir('tests/artifacts',{recursive:true});
-  for(const width of [1672,390]){
+  for(const width of JSON.parse(process.env.PUBLIC_WIDTHS||'[1672,390]')){
     await page.setViewportSize({width,height:width===1672?941:844});
     for(const [index,route] of routes.entries()){
       await page.goto('http://127.0.0.1:8795'+route);await page.evaluate(()=>document.fonts.ready);
@@ -47,7 +47,10 @@ try {
           const a=feature.getBoundingClientRect(),b=side.getBoundingClientRect();
           return {width:innerWidth,feature:{x:a.x,y:a.y,width:a.width,height:a.height},quote:{x:b.x,y:b.y,width:b.width,height:b.height},overlaps:Math.min(a.right,b.right)>Math.max(a.left,b.left)&&Math.min(a.bottom,b.bottom)>Math.max(a.top,b.top),fallback:!!feature.querySelector('.public-empty-slot'),fallbackBackground:feature.querySelector('.public-empty-slot')?getComputedStyle(feature.querySelector('.public-empty-slot')).backgroundImage:null};
         });
-        console.log('Home quote diagnosis:',JSON.stringify(quote));
+        assert.equal(quote.overlaps,false,`Home quote overlaps media at ${width}: ${JSON.stringify(quote)}`);
+        assert(quote.quote.x>=0&&quote.quote.x+quote.quote.width<=width,`Home quote outside viewport at ${width}`);
+        if(width>1600)assert(quote.quote.x>=quote.feature.x+quote.feature.width+12,`Home quote must be to the right of media at ${width}`);
+        else assert(quote.quote.y>=quote.feature.y+quote.feature.height+12,`Home quote must follow media at ${width}`);
       }
       if(await page.locator('.public-overview-hero').count()){
         const shell=await page.evaluate(()=>{

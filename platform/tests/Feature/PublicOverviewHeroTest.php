@@ -38,4 +38,14 @@ class PublicOverviewHeroTest extends TestCase
             $this->assertGreaterThan(0, $xpath->query('//a[contains(@class, "public-empty-slot") and @href]')->length);
         }
     }
+
+    public function test_home_side_quote_is_anchored_to_the_full_hero_not_the_media_grid(): void
+    {
+        $response = $this->get('/')->assertOk()->assertSee(__('public.hero_side_quote'));
+        $document = new \DOMDocument;
+        @$document->loadHTML('<?xml encoding="UTF-8">'.$response->getContent());
+        $xpath = new \DOMXPath($document);
+        $this->assertSame(1, $xpath->query('//section[contains(@class, "public-overview-hero")]/aside[@class="public-hero-side-copy"]')->length);
+        $this->assertSame(0, $xpath->query('//div[@class="public-overview-hero-inner"]//aside')->length);
+    }
 }

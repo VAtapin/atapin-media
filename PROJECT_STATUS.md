@@ -4,6 +4,7 @@
 
 ## Реализовано
 
+- Рукописная надпись главной вынесена из внутренней hero-сетки к правому краю, вне featured-медиа, согласно approved `01-start.png`. Сохранены её текст, начертание и локальная полупрозрачная подложка; на ширине ≤1600 px надпись следует ниже медиа с безопасным отступом. CSS cache version обновлена.
 - Убраны маленькие декоративные стрелки у шести карточек разделов главной, в общих ссылках заголовков контентных панелей, Bücherregal и заглушках; ссылки сохранены. Стрелки кнопок действий и пагинации не менялись.
 - Назначение по длительности в Import Center использует существующие переводы imports.posts/videos/shorts вместо отсутствующих imports.target_*; список показывает Beiträge, Videos, Shorts, а не translation keys.
 - Карточка Google Takeout в Import Center содержит только краткую подпись. Подробная инструкция перенесена в существующую справку «?» окна; дублирующий текст убран из выбранного Takeout-панеля. Справка de/en актуализирована для private/Takeout, SHA-256-копирования, прямой выдачи public/media и настроенного правила длительности.
@@ -59,7 +60,7 @@
 
 ## Известные ограничения
 
-- Правая рукописная надпись главной перекрывает featured-блок: absolute-позиция привязана к внутреннему hero-контейнеру. Browser-измерения одинаковы с пустым fallback и заполненной featured-карточкой; отсутствие плеера не причина. Пустой блок уже содержит фирменную панораму как CSS-background. Положение/текст надписи по команде владельца пока не менялись.
+- На ширине 820 px верхнее desktop-меню главной выходит за viewport; существующие header-стили в исправлении боковой надписи не менялись. Требуется отдельная корректировка breakpoint меню.
 - 100% pixel match не подтверждён; пустые блоки пока намеренно включены.
 - Оплачиваемый checkout не реализован: требуется выбор способа оплаты владельцем. Покупка пока через контакт; платные PDF не выдаются публично.
 - Newsletter campaign editor и массовая рассылка не реализованы; подписка/подтверждение/отмена реализованы.
@@ -83,6 +84,7 @@
 
 Локальные проверки, кроме отдельно указанного read-only nginx-теста.
 
+- Перенос боковой надписи: 27 целевых Feature tests / 297 assertions, Blade `view:cache`, JS syntax и `git diff --check` passed. Edge: девять overview-страниц при 1672×941/390×844 с пустыми и заполненными данными; главная дополнительно при ширинах 1920, 1601, 1600, 1590, 1280, 1024, 800, 390. Проверены отсутствие наложения надписи на медиа, безопасный отступ, assets/JS и overflow; просмотрены desktop/mobile screenshots и approved UI. Отдельная проверка 820 px обнаружила overflow существующего меню, не изменявшегося этим блоком. Production не обновлялся.
 - Удаление декоративных стрелок: 26 целевых Feature tests / 293 assertions, Blade `view:cache`, JS syntax и `git diff --check` passed. Edge проверил девять overview-страниц desktop/mobile на пустой и заполненной изолированной SQLite fixture; отсутствие отмеченных стрелок на главной/Bücher, assets/JS и overflow проверены. Просмотрены снимки; измерено неизменное наложение правой надписи. Production не обновлялся.
 - Переводы назначения по длительности: Import Center browser workflow на Edge passed с отдельной проверкой всех трёх подписей options. `node --check` browser test и `git diff --check` passed. Production и полный suite для этой одноточечной Blade-правки не запускались.
 - Компактный Takeout UI: существующий Import Center browser workflow на Edge passed, включая короткую карточку, отсутствие подробного текста в рабочей форме и открытие инструкции через «?». PHP syntax четырёх translation files, JS syntax browser test и git diff --check passed. Production/массовый Takeout import не запускались.
@@ -109,5 +111,5 @@
 - Предыдущие связанные commits: `e40cb5a` — Serve physical public media and import complete Takeout objects; `7ca7003` — Add Manna fifteen-second post classification guidance; `1b0cae2` — Fix publication retries and live relay.
 - Текущая ветка и upstream: main → origin/main.
 - Последние связанные commits: `2ed3195` — Configure automatic import sorting and pass pre-import checks; `704329a` — Unify public overview hero layout; `79de793` — Document import readiness review; `223faf0` — Consume desktop deep links after opening apps; `f2309a3` — Move Takeout instructions into desktop help. Текущий блок: Fix translated import duration destinations; deployment требует получения кода и view:clear, без migration/изменения .env/очередей.
-- Последний связанный public commit: `56d03bd` — Fix overview header and vivid hero background. Текущий atomic-блок: Remove decorative public card and panel arrows; deployment требует только получения кода и Blade `view:clear`.
+- Последний связанный public commit: `1d9b3fe` — Remove decorative public card and panel arrows. Текущий atomic-блок: Move homepage hero quote outside featured media; deployment требует только получения кода и Blade `view:clear`.
 
