@@ -483,12 +483,12 @@
  .public-overview-hero .public-hero-side-copy{margin:20px auto 10px}
 }
 .public-lightbox-trigger{display:block;width:100%;padding:0;border:0;background:transparent;color:inherit;cursor:zoom-in;text-align:inherit}
-.public-article-cover-trigger{display:flex;align-items:center;justify-content:center;height:300px;margin-bottom:20px;border-radius:7px;background:#e8f0f5;overflow:hidden;position:relative;isolation:isolate}
-.public-article-cover-trigger:before,.public-article-media-item .public-lightbox-trigger:before{content:'';position:absolute;z-index:-1;inset:-24px;background-image:linear-gradient(135deg,#fffaf0c7,#dcebf4b8),var(--article-image,none);background-position:center;background-size:cover;filter:blur(18px) saturate(.72);opacity:.9;transform:scale(1.08)}
+.public-article-cover-trigger{display:flex;align-items:center;justify-content:center;height:300px;margin-bottom:20px;border-radius:7px;background:#eef5f8;overflow:hidden;position:relative;isolation:isolate}
+.public-article-cover-trigger:before,.public-article-media-item .public-lightbox-trigger:before{content:'';position:absolute;z-index:-1;inset:-28px;background-image:linear-gradient(135deg,#fffdf9b0,#eef7fbc2),var(--article-image,none);background-position:center;background-size:cover;filter:blur(28px) saturate(.55) brightness(1.08);opacity:.48;transform:scale(1.12)}
 .public-article-cover-trigger .public-article-cover{position:relative;z-index:1;height:100%;margin:0;object-fit:contain}
 .public-article-media-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:24px 0;border-top:1px solid #dce3eb;padding-top:18px}
 .public-article-media-item{margin:0;min-width:0}
-.public-article-media-item .public-lightbox-trigger{height:220px;border-radius:7px;background:#e8f0f5;overflow:hidden;position:relative;isolation:isolate}
+.public-article-media-item .public-lightbox-trigger{height:220px;border-radius:7px;background:#eef5f8;overflow:hidden;position:relative;isolation:isolate}
 .public-article-media-item img{display:block;width:100%;height:100%;max-height:none;margin:0;object-fit:contain}
 .public-article-media-item figcaption{margin-top:6px;color:#58708f;font-size:12px;overflow-wrap:anywhere}
 .public-image-lightbox{width:min(94vw,1400px);max-width:none;height:min(92vh,900px);max-height:none;margin:auto;padding:0;border:0;border-radius:14px;background:#10253aef;overflow:hidden}

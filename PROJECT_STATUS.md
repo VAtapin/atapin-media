@@ -18,7 +18,7 @@
 - Media Library/imports: protected preview/download/Range, resumable files/folders/archives, pause/resume/stop/retry, trash/restore, SHA-256 dedupe, playlist links, checkpoints и пообъектные отчёты. Импорт сам по себе не публикует материалы. Canonical public/media/SHA-256 и прямые original MP4 URLs сохранены, документы приватны. Takeout сохраняет originals/source revisions/manual edits/trash/exclusions и сообщает неизвестные schemas. Podcast audio, frame covers и explicit AI cover/short-description используют existing background jobs.
 - Public Website: approved branding/owner assets, десять data-driven страниц, детали/каталоги/фильтры/поиск/пагинация, local video/audio, comments/reactions/newsletter/account, AJAX forms, Live HLS/heartbeat и афиша/fallback. Article covers/gallery показываются целиком и открываются в accessible lightbox. Mobile book overflow устранён; Public/Desktop CSS изолированы.
 - Mobile Beiträge cards keep their two-column grid but switch each card to image-above-text, with a readable 4:5 preview and wider title/excerpt area; desktop card layout is unchanged. Video details keep a wide shell while contained portrait playback gets a blurred poster backdrop; public-pages stylesheet cache version is v19.
-- Public article image containers keep full `contain` rendering and use a subtle blurred, translucent color backdrop derived from the same image.
+- Public article image containers keep full `contain` rendering and use a very light, translucent, softly blurred color backdrop derived from the same image; the neutral background remains dominant.
 - Live Studio: native events/edit/publication/OBS credentials/poster upload, MediaMTX/nginx hooks, recording segments и public statuses. Telegram announcements используют cover/text + Website URL без video upload; optional registered Main Mini App deep links — через protected public resolver.
 
 ## Важные решения
@@ -54,5 +54,5 @@
 ## Последний связанный commit
 
 - Предшествующий commit: 4f9f855 — Move OAuth app credentials to admin settings; article lightbox ранее в bdb3516.
-- Последний функциональный commit: `d8a5bdc` — Add blurred poster backdrop to video player. Предшествующий `7b4397c` — Improve mobile article card layout; branch/upstream main → origin/main.
+- Последний функциональный commit: article image backdrop softening; hash будет указан после commit/push. Предшествующий `d8a5bdc` — Add blurred poster backdrop to video player; branch/upstream main → origin/main.
 
