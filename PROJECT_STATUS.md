@@ -4,7 +4,7 @@
 
 ## Реализовано
 
-- Рукописная надпись главной вынесена из внутренней hero-сетки к правому краю, вне featured-медиа, согласно approved `01-start.png`. Сохранены её текст, начертание и локальная полупрозрачная подложка; на ширине ≤1600 px надпись следует ниже медиа с безопасным отступом. CSS cache version обновлена.
+- Все девять overview-страниц используют общую рукописную надпись вне featured-медиа: справа на desktop, ниже медиа на ширине ≤1600 px. Главная сохраняет свою фразу; Videos, Beiträge, Bücher, Live, Podcast, Community, Über uns и Mission получили разные короткие христианские тексты de/en. Белое облачко усилено под основным hero-текстом и боковыми надписями, сохраняя мягкое затухание и яркий фон вне текста. CSS cache version обновлена.
 - Убраны маленькие декоративные стрелки у шести карточек разделов главной, в общих ссылках заголовков контентных панелей, Bücherregal и заглушках; ссылки сохранены. Стрелки кнопок действий и пагинации не менялись.
 - Назначение по длительности в Import Center использует существующие переводы imports.posts/videos/shorts вместо отсутствующих imports.target_*; список показывает Beiträge, Videos, Shorts, а не translation keys.
 - Карточка Google Takeout в Import Center содержит только краткую подпись. Подробная инструкция перенесена в существующую справку «?» окна; дублирующий текст убран из выбранного Takeout-панеля. Справка de/en актуализирована для private/Takeout, SHA-256-копирования, прямой выдачи public/media и настроенного правила длительности.
@@ -75,6 +75,7 @@
 
 ## Рекомендуемый следующий этап
 
+- Согласованный план Hero-Sprüche (пока НЕ реализован): добавить в существующую админку сайта редактирование рукописных христианских фраз отдельно для главной и каждого overview-раздела, с сохранением текущих фраз как defaults и поддержкой локализации. Пользователь просил сейчас только записать этот план; интерфейс редактора и хранение пользовательских текстов сделать отдельной будущей задачей.
 - Согласованный следующий блок Public Video (пока НЕ реализован; программирование приостановлено до завершения соседних изменений Publishing/public UI):
   - Не показывать публичные кнопки/ссылки «скачать видео», включая материалы вебинаров. Это изменение интерфейса, не запрет самостоятельного сохранения напрямую отдаваемого MP4; admin download сохраняется. Удаление отдельных текстовых/PDF/субтитровых материалов этим пунктом не согласовано.
   - Комментарии и реакции отправлять без перезагрузки страницы. Кнопка отправки запускает запрос; краткое состояние отправки/успех/ошибка показывается возле неё, не общим баннером вверху сайта. Не допускать повторного клика во время запроса; при ошибке сохранять текст. После успешной отправки комментарий виден автору в состоянии проверки.
@@ -91,6 +92,7 @@
 
 Локальные проверки, кроме отдельно указанного read-only nginx-теста.
 
+- Светлые hero-подложки и разные фразы разделов: 28 целевых Feature tests / 377 assertions passed, включая de/en, уникальность фраз и отсутствие надписи на detail-страницах. Edge проверил девять overview-страниц с пустыми и заполненными данными при ширинах 1672, 1280, 390: локальный белый gradient, blur, отсутствие наложения на медиа и overflow, assets/JS. Просмотрены desktop/mobile screenshots. PHP/JS syntax, Blade `view:cache` и `git diff --check` passed. Админ-редактор не реализован; план сохранён. Production не обновлялся.
 - Перенос боковой надписи: 27 целевых Feature tests / 297 assertions, Blade `view:cache`, JS syntax и `git diff --check` passed. Edge: девять overview-страниц при 1672×941/390×844 с пустыми и заполненными данными; главная дополнительно при ширинах 1920, 1601, 1600, 1590, 1280, 1024, 800, 390. Проверены отсутствие наложения надписи на медиа, безопасный отступ, assets/JS и overflow; просмотрены desktop/mobile screenshots и approved UI. Отдельная проверка 820 px обнаружила overflow существующего меню, не изменявшегося этим блоком. Production не обновлялся.
 - Удаление декоративных стрелок: 26 целевых Feature tests / 293 assertions, Blade `view:cache`, JS syntax и `git diff --check` passed. Edge проверил девять overview-страниц desktop/mobile на пустой и заполненной изолированной SQLite fixture; отсутствие отмеченных стрелок на главной/Bücher, assets/JS и overflow проверены. Просмотрены снимки; измерено неизменное наложение правой надписи. Production не обновлялся.
 - Переводы назначения по длительности: Import Center browser workflow на Edge passed с отдельной проверкой всех трёх подписей options. `node --check` browser test и `git diff --check` passed. Production и полный suite для этой одноточечной Blade-правки не запускались.
@@ -119,5 +121,5 @@
 - Предыдущие связанные commits: `e40cb5a` — Serve physical public media and import complete Takeout objects; `7ca7003` — Add Manna fifteen-second post classification guidance; `1b0cae2` — Fix publication retries and live relay.
 - Текущая ветка и upstream: main → origin/main.
 - Последние связанные commits: `2ed3195` — Configure automatic import sorting and pass pre-import checks; `704329a` — Unify public overview hero layout; `79de793` — Document import readiness review; `223faf0` — Consume desktop deep links after opening apps; `f2309a3` — Move Takeout instructions into desktop help. Текущий блок: Fix translated import duration destinations; deployment требует получения кода и view:clear, без migration/изменения .env/очередей.
-- Последний связанный public commit: `1d9b3fe` — Remove decorative public card and panel arrows. Текущий atomic-блок: Move homepage hero quote outside featured media; deployment требует только получения кода и Blade `view:clear`.
+- Последний связанный public commit: `3bec710` — Move homepage hero quote outside featured media. Текущий atomic-блок: Brighten hero text clouds and add section encouragements; deployment требует только получения кода и Blade `view:clear`.
 

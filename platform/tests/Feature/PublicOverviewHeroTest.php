@@ -48,4 +48,23 @@ class PublicOverviewHeroTest extends TestCase
         $this->assertSame(1, $xpath->query('//section[contains(@class, "public-overview-hero")]/aside[@class="public-hero-side-copy"]')->length);
         $this->assertSame(0, $xpath->query('//div[@class="public-overview-hero-inner"]//aside')->length);
     }
+
+    public function test_each_overview_has_a_distinct_localized_encouragement(): void
+    {
+        foreach (['de', 'en'] as $locale) {
+            app()->setLocale($locale);
+            $quotes = [];
+            foreach (['start'=>'/', 'videos'=>'/videos', 'beitraege'=>'/beitraege', 'buecher'=>'/buecher', 'live'=>'/live', 'podcast'=>'/podcast', 'community'=>'/community', 'ueber-uns'=>'/ueber-uns', 'unsere-mission'=>'/unsere-mission'] as $section=>$url) {
+                $key = $section === 'start' ? 'public.hero_side_quote' : 'public.hero_side_quote_'.$section;
+                $quote = __($key);
+                $this->assertNotSame($key, $quote);
+                $this->get($url)->assertOk()->assertSee($quote)->assertSee('public-hero-side-copy', false);
+                $quotes[] = $quote;
+            }
+            $this->assertCount(9, array_unique($quotes));
+        }
+        foreach (['/videos/vorschau', '/beitraege/vorschau', '/buecher/vorschau'] as $url) {
+            $this->get($url)->assertOk()->assertDontSee('public-hero-side-copy', false);
+        }
+    }
 }

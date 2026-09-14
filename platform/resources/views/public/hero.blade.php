@@ -2,6 +2,7 @@
 $section=$section??'start';
 $isHome=$section==='start';
 $heroTitle=$isHome?__('public.hero_title_line1')."\n".__('public.hero_title_line2'):__('public.heading_'.$section);
+$sideQuote=$isHome?__('public.hero_side_quote'):__('public.hero_side_quote_'.$section);
 $emptyUrl=match($section){
     'start'=>'/videos/vorschau',
     'videos'=>'/videos/vorschau',
@@ -69,7 +70,5 @@ $emptyHint=match($section){
 @endif
 </div>
 </div>
-@if($isHome)
-<aside class="public-hero-side-copy"><p>{{ __('public.hero_side_quote') }}</p></aside>
-@endif
+<aside class="public-hero-side-copy"><p>{{ $sideQuote }}</p></aside>
 </section>

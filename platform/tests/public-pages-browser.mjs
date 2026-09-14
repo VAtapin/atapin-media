@@ -41,13 +41,15 @@ try {
         const decorated=page.locator('.public-section-cards, .public-panel-heading, .public-empty-slot');
         for(const text of await decorated.allTextContents())assert(!text.includes('→'),`${route}: decorative arrow remains`);
       }
-      if(route==='/'){
+      if(await page.locator('.public-overview-hero').count()){
         const quote=await page.evaluate(()=>{
           const feature=document.querySelector('.public-overview-feature'),side=document.querySelector('.public-hero-side-copy');
           const a=feature.getBoundingClientRect(),b=side.getBoundingClientRect();
-          return {width:innerWidth,feature:{x:a.x,y:a.y,width:a.width,height:a.height},quote:{x:b.x,y:b.y,width:b.width,height:b.height},overlaps:Math.min(a.right,b.right)>Math.max(a.left,b.left)&&Math.min(a.bottom,b.bottom)>Math.max(a.top,b.top),fallback:!!feature.querySelector('.public-empty-slot'),fallbackBackground:feature.querySelector('.public-empty-slot')?getComputedStyle(feature.querySelector('.public-empty-slot')).backgroundImage:null};
+          return {width:innerWidth,feature:{x:a.x,y:a.y,width:a.width,height:a.height},quote:{x:b.x,y:b.y,width:b.width,height:b.height},backdrop:getComputedStyle(side,'::before').backgroundImage,blur:getComputedStyle(side,'::before').filter,overlaps:Math.min(a.right,b.right)>Math.max(a.left,b.left)&&Math.min(a.bottom,b.bottom)>Math.max(a.top,b.top),fallback:!!feature.querySelector('.public-empty-slot'),fallbackBackground:feature.querySelector('.public-empty-slot')?getComputedStyle(feature.querySelector('.public-empty-slot')).backgroundImage:null};
         });
         assert.equal(quote.overlaps,false,`Home quote overlaps media at ${width}: ${JSON.stringify(quote)}`);
+        assert.match(quote.backdrop,/rgba\(255, 255, 255, 0\.98\).*rgba\(255, 255, 255, 0\.88\)/,'Home quote keeps a brighter local white cloud');
+        assert.equal(quote.blur,'blur(13px)');
         assert(quote.quote.x>=0&&quote.quote.x+quote.quote.width<=width,`Home quote outside viewport at ${width}`);
         if(width>1600)assert(quote.quote.x>=quote.feature.x+quote.feature.width+12,`Home quote must be to the right of media at ${width}`);
         else assert(quote.quote.y>=quote.feature.y+quote.feature.height+12,`Home quote must follow media at ${width}`);
@@ -75,6 +77,7 @@ try {
         assert.equal(shell.imagePosition,'50% 0%',route);
         assert(shell.imageLoaded,route);
         assert.match(shell.textBackdrop,/radial-gradient/,route);
+        assert.match(shell.textBackdrop,/rgba\(255, 255, 255, 0\.98\).*rgba\(255, 255, 255, 0\.88\)/,`${route}: brighter local backdrop behind hero copy`);
       }
       await page.screenshot({path:`tests/artifacts/public-page-${index+1}-${width}${process.env.PUBLIC_DETAIL_ROUTES?'-filled':''}.png`,fullPage:true});
       const tabs=page.locator('[role=tab]');

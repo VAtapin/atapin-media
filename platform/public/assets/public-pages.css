@@ -341,10 +341,10 @@
 .public-home .public-hero:after{display:none}
 .public-home .public-hero-inner{position:relative;z-index:1}
 .public-home .public-hero-copy{position:relative;isolation:isolate}
-.public-home .public-hero-copy:before,.public-home .public-hero-side-copy:before{content:'';position:absolute;z-index:-1;pointer-events:none;background:radial-gradient(ellipse,#fffaf4f2 0%,#fffaf4c9 47%,#fffaf400 76%);filter:blur(13px)}
+.public-home .public-hero-copy:before,.public-overview-hero .public-hero-side-copy:before{content:'';position:absolute;z-index:-1;pointer-events:none;background:radial-gradient(ellipse,#fffaf4f2 0%,#fffaf4c9 47%,#fffaf400 76%);filter:blur(13px)}
 .public-home .public-hero-copy:before{inset:-42px -74px -18px -64px}
 .public-hero-side-copy{position:absolute;z-index:2;right:max(18px,calc((100% - 1590px)/2));top:84px;width:150px;isolation:isolate;text-align:center}
-.public-hero-side-copy:before{inset:-20px -28px -20px}
+.public-overview-hero .public-hero-side-copy:before{inset:-20px -28px -20px;background:radial-gradient(ellipse,#fffffffa 0%,#ffffffe0 48%,#ffffff00 82%)}
 .public-hero-side-copy p{position:relative;color:var(--public-navy);font:italic 25px/1.22 'Segoe Script','Bradley Hand','Comic Sans MS',cursive;transform:rotate(-4deg)}
 .public-section-cards>a{min-width:0;overflow:hidden}
 .public-section-cards>a>div{min-width:0}
@@ -423,7 +423,7 @@
 .public-overview-hero-background{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;object-position:center top;display:block}
 .public-overview-hero-inner{position:relative;z-index:1;max-width:1232px;height:100%;margin:auto;padding:88px 0 27px!important;display:grid;grid-template-columns:560px minmax(0,1fr);gap:40px}
 .public-overview-copy{min-width:0;padding-top:0!important;position:relative;isolation:isolate}
-.public-overview-copy:before{content:'';position:absolute;z-index:-1;pointer-events:none;inset:-42px -74px -18px -64px;background:radial-gradient(ellipse,#fffaf4f2 0%,#fffaf4c9 47%,#fffaf400 76%);filter:blur(13px)}
+.public-overview-copy:before{content:'';position:absolute;z-index:-1;pointer-events:none;inset:-42px -74px -18px -64px;background:radial-gradient(ellipse,#fffffffa 0%,#ffffffe0 48%,#ffffff00 82%);filter:blur(13px)}
 .public-overview-copy h1{font-size:44px;line-height:1.04;margin:9px 0 12px;font-weight:500;white-space:pre-line}
 .public-overview-intro{max-width:510px;font-size:14px;line-height:1.4}
 .public-overview-actions{display:flex;gap:16px;margin-top:15px}
@@ -444,8 +444,8 @@
 .public-overview-feature audio{position:absolute;bottom:7px;left:12px;width:calc(100% - 24px);height:40px}
 .public-overview-hero .public-hero-side-copy{top:230px;transform:translateY(-50%)}
 @media(max-width:1600px){
- .public-overview-hero-start{height:auto!important}
- .public-overview-hero-start .public-overview-hero-inner{height:auto}
+ .public-overview-hero{height:auto!important}
+ .public-overview-hero-inner{height:auto}
  .public-overview-hero .public-hero-side-copy{position:relative;top:auto;right:auto;transform:none;width:240px;margin:0 24px 20px auto}
  .public-overview-hero .public-hero-side-copy p{font-size:22px}
 }
