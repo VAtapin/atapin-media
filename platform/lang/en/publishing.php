@@ -12,4 +12,8 @@ return [
     'saved' => 'Publication was queued.', 'sync_queued' => 'YouTube synchronization started.', 'error' => 'Publishing failed.',
     'no_destination' => 'Select at least one destination.', 'retry' => 'Retry', 'attempts' => 'Attempts', 'last_attempt' => 'Last attempt', 'published_at' => 'Published at',
     'youtube_not_connected' => 'YouTube is not connected yet.', 'unsupported' => 'Unavailable for this content',
+    'youtube_connected' => 'YouTube connected.', 'oauth_cancelled' => 'YouTube connection cancelled.',
+    'channel_unavailable' => 'No YouTube channel is available.', 'retry_unavailable' => 'Only failed transfers to connected destinations can be retried.',
+    'scheduled' => 'Announced', 'relaying' => 'Relaying live signal', 'relay_failed' => 'Live relay interrupted',
+    'ended' => 'Ended', 'not_started' => 'Ended without streaming',
 ];

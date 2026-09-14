@@ -4,10 +4,10 @@ namespace App\Jobs;
 
 use App\Services\Publishing\PublishingService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\{ShouldBeUnique, ShouldQueue};
+use Illuminate\Contracts\Queue\{ShouldBeUniqueUntilProcessing, ShouldQueue};
 use Illuminate\Foundation\Bus\Dispatchable;
 
-class PublishToPlatform implements ShouldQueue, ShouldBeUnique
+class PublishToPlatform implements ShouldQueue, ShouldBeUniqueUntilProcessing
 {
     use Dispatchable, Queueable;
 
@@ -25,5 +25,10 @@ class PublishToPlatform implements ShouldQueue, ShouldBeUnique
     public function handle(PublishingService $publishing): void
     {
         $publishing->execute($this->publicationId);
+    }
+
+    public function failed(?\Throwable $error): void
+    {
+        app(PublishingService::class)->fail($this->publicationId, $error ?? new \RuntimeException('Publication worker stopped.'));
     }
 }

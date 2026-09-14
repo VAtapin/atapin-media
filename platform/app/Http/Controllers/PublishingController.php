@@ -15,7 +15,7 @@ class PublishingController extends Controller
     {
         return response()->json([
             'records' => $publishing->records()->map(fn (SourceRecord $record) => [
-                'id' => $record->id, 'title' => $record->title, 'kind' => $record->kind,
+                'id' => $record->id, 'title' => $record->title, 'kind' => $record->publishingKind(),
                 'public_published' => (bool) ($record->metadata['public_published'] ?? false),
             ])->values(),
             'destinations' => [
@@ -29,6 +29,7 @@ class PublishingController extends Controller
             'publications' => Publication::with('record')->latest('updated_at')->limit(100)->get()->map(fn (Publication $item) => [
                 'id' => $item->id, 'record_id' => $item->source_record_id, 'title' => $item->record?->title,
                 'provider' => $item->provider, 'direction' => $item->direction, 'status' => $item->status,
+                'remote_status' => $item->remote_status,
                 'external_id' => $item->external_id, 'external_url' => $item->external_url, 'error' => $item->error,
                 'attempts' => $item->attempts, 'published_at' => $item->published_at?->toIso8601String(),
                 'last_attempt_at' => $item->last_attempt_at?->toIso8601String(), 'next_attempt_at' => $item->next_attempt_at?->toIso8601String(),
@@ -64,7 +65,7 @@ class PublishingController extends Controller
 
     public function retry(Publication $publication, PublishingService $publishing)
     {
-        $publishing->retry($publication);
+        abort_unless($publishing->retry($publication), 409, __('publishing.retry_unavailable'));
         return response()->json(['status' => 'queued', 'publication_id' => $publication->id]);
     }
 
@@ -84,19 +85,26 @@ class PublishingController extends Controller
 
     public function youtubeCallback(Request $request, YouTubeClient $client, ConnectionStore $connections, Settings $settings)
     {
-        abort_unless(hash_equals((string) $request->session()->pull('publishing.youtube.oauth_state'), (string) $request->query('state')), 419);
-        if ($request->query('error')) return redirect('/desktop')->with('status', 'YouTube OAuth was cancelled.');
+        $expected = $request->session()->pull('publishing.youtube.oauth_state');
+        $state = $request->query('state');
+        abort_unless(is_string($expected) && $expected !== '' && is_string($state) && $state !== '' && hash_equals($expected, $state), 419);
+        if ($request->query('error')) return redirect('/desktop')->with('status', __('publishing.oauth_cancelled'));
+        $request->validate(['code' => 'required|string']);
         $credentials = $client->exchangeCode((string) $request->query('code'));
-        $connections->saveCredentials('youtube', $credentials);
-        $channel = $client->channel();
+        $channel = $client->channel($credentials);
+        abort_unless(is_string($channel['id'] ?? null) && $channel['id'] !== '', 422, __('publishing.channel_unavailable'));
         $social = $settings->get('social_connections', []);
+        $sameChannel = ($social['youtube']['external_id'] ?? null) === $channel['id'];
         $social['youtube'] = array_filter([
             'provider' => 'youtube', 'external_id' => $channel['id'] ?? null,
-            'public_url' => isset($channel['snippet']['customUrl']) ? 'https://www.youtube.com/'.ltrim($channel['snippet']['customUrl'], '@') : null,
+            'public_url' => isset($channel['snippet']['customUrl']) ? 'https://www.youtube.com/'.$channel['snippet']['customUrl'] : 'https://www.youtube.com/channel/'.$channel['id'],
             'configured_at' => now()->toIso8601String(),
         ]);
-        $settings->update(['social_connections' => $social]);
-        return redirect('/desktop')->with('status', 'YouTube connected.');
+        DB::transaction(function () use ($connections, $credentials, $sameChannel, $settings, $social) {
+            $connections->saveCredentials('youtube', $credentials, ! $sameChannel);
+            $settings->update(['social_connections' => $social]);
+        });
+        return redirect('/desktop')->with('status', __('publishing.youtube_connected'));
     }
 
     public function youtubeDisconnect(ConnectionStore $connections)

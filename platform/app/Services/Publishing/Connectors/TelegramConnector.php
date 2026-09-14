@@ -26,12 +26,13 @@ class TelegramConnector implements PublishingConnector
     public function publish(Publication $publication): array
     {
         $record = $publication->record;
+        if (! $this->connections->connected('telegram')) throw new UnsupportedCapability('Telegram is disconnected.');
         $connection = $this->connections->connection('telegram');
         $credentials = $this->connections->credentials('telegram');
         $token = $credentials['api_key'] ?? $credentials['access_token'] ?? null;
         $chat = $connection['external_id'] ?? null;
         if (! is_string($token) || $token === '' || ! is_string($chat) || $chat === '') throw new \RuntimeException('Telegram connection is incomplete.');
-        if ($record->kind === 'live') throw new UnsupportedCapability('Telegram Live output is not configured.');
+        if ($record->publishingKind() === 'live') throw new UnsupportedCapability('Telegram Live output is not configured.');
         $base = rtrim((string) config('publishing.telegram.api_base'), '/').'/bot'.$token;
         $caption = trim($record->title."\n\n".(string) ($record->body ?? ''));
         if (in_array($record->kind, ['video', 'short'], true) && ($video = app(MediaResolver::class)->video($record))) {

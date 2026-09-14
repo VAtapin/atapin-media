@@ -104,6 +104,14 @@ class PublicBroadcastTest extends TestCase
         $broadcast->recording('live',$file);
         $this->assertContains(Media::firstOrFail()->id,$event->fresh()->metadata['media_ids']);
     }
+    public function test_restarting_a_ready_hook_does_not_reopen_an_ended_event(): void
+    {
+        $event = $this->event();
+        $broadcast = app(PublicBroadcast::class);
+        $broadcast->signal('live-'.$event->id, false);
+        $broadcast->signal('live-'.$event->id, true);
+        $this->assertSame('ended', $event->fresh()->metadata['live_status']);
+    }
     public function test_completed_recordings_are_moved_to_public_media_once_and_linked(): void
     {
         Storage::fake('live-recordings');$event=$this->event();$path='live-'.$event->id;
@@ -123,6 +131,9 @@ class PublicBroadcastTest extends TestCase
         $this->assertSame('no',$config['rtmpEncryption']);$this->assertArrayNotHasKey('rtmpsAddress',$config);
         $this->assertSame('0s',$config['pathDefaults']['recordDeleteAfter']);$this->assertFalse($config['api']);$this->assertSame('http',$config['authMethod']);
         $this->assertArrayHasKey('~^live$',$config['paths']);
+        $this->assertStringEndsWith(' ready', $config['pathDefaults']['runOnAvailable']);
+        $this->assertTrue($config['pathDefaults']['runOnAvailableRestart']);
+        $this->assertStringEndsWith(' ended', $config['pathDefaults']['runOnUnavailable']);
         if($binary=getenv('MEDIAMTX_VALIDATE_BIN')){
             Storage::disk('live-recordings')->put('validation.yml',app(PublicBroadcast::class)->configuration());
             $process=new \Symfony\Component\Process\Process([$binary,'--validate-conf',Storage::disk('live-recordings')->path('validation.yml')]);

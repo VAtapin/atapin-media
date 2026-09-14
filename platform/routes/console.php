@@ -41,10 +41,10 @@ Artisan::command('publishing:youtube-sync', function () {
     $this->info('YouTube synchronization queued.');
 });
 Schedule::command('publishing:youtube-sync')->everyFiveMinutes()->withoutOverlapping();
-Artisan::command('publishing:live-relay-reconcile', function () {
-    app(\App\Services\Publishing\YouTubeLiveRelay::class)->reconcile();
+Artisan::command('publishing:retry-due', function () {
+    $this->info('Publication retries queued: '.app(\App\Services\Publishing\PublishingService::class)->dispatchDue());
 });
-Schedule::command('publishing:live-relay-reconcile')->everyMinute()->withoutOverlapping();
+Schedule::command('publishing:retry-due')->everyMinute()->withoutOverlapping();
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());

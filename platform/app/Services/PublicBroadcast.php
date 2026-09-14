@@ -53,6 +53,7 @@ class PublicBroadcast
         $record=$path===self::SHARED_PATH?$this->activeRecord():$this->record($path);if(!$record)return;
         DB::transaction(function()use($record,$ready){
             $record=SourceRecord::lockForUpdate()->findOrFail($record->id);
+            if ($ready && ($record->metadata['live_status'] ?? null) === 'ended') return;
             $metadata=[...$record->metadata,'live_status'=>$ready?'live':'ended','live_signal_at'=>now()->toIso8601String()];
             if ($ready) unset($metadata['live_recording_pending']);
             else {
@@ -93,7 +94,7 @@ class PublicBroadcast
         $prefix='/opt/plesk/php/8.4/bin/php '.$hook;
         $secure=$this->secureIngestReady();
         $config=['logLevel'=>'warn','rtsp'=>false,'rtmp'=>true,'rtmpEncryption'=>$secure?'optional':'no','rtmpAddress'=>'127.0.0.1:1935','srt'=>false,'webrtc'=>false,'moq'=>false,'hls'=>true,'hlsAddress'=>'127.0.0.1:8888','hlsAlwaysRemux'=>true,'api'=>false,'playback'=>false,'authMethod'=>'http','authHTTPAddress'=>route('public.broadcast-auth'),'authHTTPExclude'=>[],
-            'pathDefaults'=>['source'=>'publisher','overridePublisher'=>false,'record'=>true,'recordPath'=>rtrim(Storage::disk('live-recordings')->path(''),'/\\').'/%path/%Y-%m-%d_%H-%M-%S-%f','recordFormat'=>'fmp4','recordSegmentDuration'=>'1h','recordDeleteAfter'=>'0s','runOnReady'=>$prefix.' ready','runOnNotReady'=>$prefix.' ended','runOnRecordSegmentComplete'=>$prefix.' recording'],
+            'pathDefaults'=>['source'=>'publisher','overridePublisher'=>false,'record'=>true,'recordPath'=>rtrim(Storage::disk('live-recordings')->path(''),'/\\').'/%path/%Y-%m-%d_%H-%M-%S-%f','recordFormat'=>'fmp4','recordSegmentDuration'=>'1h','recordDeleteAfter'=>'0s','runOnAvailable'=>$prefix.' ready','runOnAvailableRestart'=>true,'runOnUnavailable'=>$prefix.' ended','runOnRecordSegmentComplete'=>$prefix.' recording'],
             'paths'=>['~^live$'=>['source'=>'publisher'],'~^live-[1-9][0-9]*$'=>['source'=>'publisher']]];
         if ($secure) {
             $config['rtmpsAddress']=':'.(int) config('platform.live_rtmp_port');

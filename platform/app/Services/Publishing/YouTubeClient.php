@@ -46,9 +46,9 @@ class YouTubeClient
         return $this->tokenPayload($response->json());
     }
 
-    public function channel(): array
+    public function channel(?array $credentials = null): array
     {
-        return $this->request()->get($this->url('channels'), ['part' => 'id,snippet,contentDetails', 'mine' => 'true'])
+        return $this->request($credentials)->get($this->url('channels'), ['part' => 'id,snippet,contentDetails', 'mine' => 'true'])
             ->throw()->json('items.0', []);
     }
 
@@ -69,7 +69,7 @@ class YouTubeClient
         if (! $handle) throw new \RuntimeException('YouTube upload source cannot be opened.');
         try {
             return $this->request()->withHeaders(['Content-Type' => $mime, 'Content-Length' => (string) filesize($path)])
-                ->withOptions(['body' => $handle])->put($location)->throw()->json();
+                ->withBody($handle, $mime)->put($location)->throw()->json();
         } finally {
             fclose($handle);
         }
@@ -82,7 +82,7 @@ class YouTubeClient
         if (! $handle) return;
         try {
             $this->request()->withHeaders(['Content-Type' => mime_content_type($path) ?: 'image/jpeg'])
-                ->withOptions(['body' => $handle])->post($this->uploadUrl('thumbnails/set').'?uploadType=media&videoId='.rawurlencode($videoId))->throw();
+                ->withBody($handle, mime_content_type($path) ?: 'image/jpeg')->post($this->uploadUrl('thumbnails/set').'?uploadType=media&videoId='.rawurlencode($videoId))->throw();
         } finally {
             fclose($handle);
         }
@@ -96,6 +96,7 @@ class YouTubeClient
         $stream = $this->request()->post($this->url('liveStreams').'?part=snippet,cdn,contentDetails,status', [
             'snippet' => ['title' => 'Atapin Media reusable live stream'],
             'cdn' => ['frameRate' => '30fps', 'ingestionType' => 'rtmp', 'resolution' => '1080p'],
+            'contentDetails' => ['isReusable' => true],
         ])->throw()->json();
         $stored = [
             'id' => $stream['id'] ?? null,
@@ -124,6 +125,24 @@ class YouTubeClient
     public function transitionBroadcast(string $broadcastId, string $status): array
     {
         return $this->request()->post($this->url('liveBroadcasts').'/transition?part=id,snippet,contentDetails,status&broadcastStatus='.rawurlencode($status).'&id='.rawurlencode($broadcastId))->throw()->json();
+    }
+
+    public function video(string $id): array
+    {
+        return $this->request()->get($this->url('videos'), ['part' => 'status', 'id' => $id])->throw()->json('items.0', []);
+    }
+
+    public function completeBroadcast(string $id): string
+    {
+        $status = $this->request()->get($this->url('liveBroadcasts'), ['part' => 'status', 'id' => $id])
+            ->throw()->json('items.0.status.lifeCycleStatus');
+        if ($status === 'complete') return 'ended';
+        if (in_array($status, ['live', 'testing'], true)) {
+            $this->transitionBroadcast($id, 'complete');
+            return 'ended';
+        }
+        if (in_array($status, ['created', 'ready'], true)) return 'not_started';
+        throw new \RuntimeException('YouTube broadcast completion status is unavailable.');
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -158,9 +177,10 @@ class YouTubeClient
         return $data;
     }
 
-    private function request(): PendingRequest
+    private function request(?array $credentials = null): PendingRequest
     {
-        $credentials = $this->connections->credentials('youtube');
+        if ($credentials === null && ! $this->connections->connected('youtube')) throw new \RuntimeException('YouTube is disconnected.');
+        $credentials ??= $this->connections->credentials('youtube');
         $expiresAt = (int) ($credentials['expires_at'] ?? 0);
         if ((! is_string($credentials['access_token'] ?? null) || $expiresAt && $expiresAt <= now()->addMinute()->timestamp) && ! empty($credentials['refresh_token'])) {
             $response = Http::asForm()->timeout(30)->post((string) config('publishing.youtube.oauth_token'), [
@@ -170,12 +190,13 @@ class YouTubeClient
                 'grant_type' => 'refresh_token',
             ]);
             if (! $response->successful()) throw new \RuntimeException('YouTube OAuth token refresh failed.');
+            if (! $this->connections->connected('youtube')) throw new \RuntimeException('YouTube was disconnected during token refresh.');
             $refreshed = $this->tokenPayload([...$response->json(), 'refresh_token' => $credentials['refresh_token']]);
             $this->connections->saveCredentials('youtube', $refreshed);
             $credentials = [...$credentials, ...$refreshed];
         }
         if (! is_string($credentials['access_token'] ?? null) || $credentials['access_token'] === '') throw new \RuntimeException('YouTube is not connected.');
-        return Http::acceptJson()->withToken($credentials['access_token'])->timeout(120);
+        return Http::acceptJson()->withToken($credentials['access_token'])->timeout(3500);
     }
 
     private function url(string $resource): string

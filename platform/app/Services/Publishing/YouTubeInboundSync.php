@@ -2,7 +2,7 @@
 
 namespace App\Services\Publishing;
 
-use App\Models\{ExternalItem, SourceRecord};
+use App\Models\{ExternalItem, Publication, SourceRecord};
 use App\Services\CanonicalMediaStorage;
 use App\Services\Importing\ImportedMediaRegistry;
 use Illuminate\Support\Facades\Storage;
@@ -36,7 +36,10 @@ class YouTubeInboundSync
         $item->kind = 'video';
         $item->remote_published_at = $remoteDate;
         $item->payload = $video;
-        $record = SourceRecord::firstOrCreate(['source' => 'youtube', 'source_id' => $id], [
+        $outbound = Publication::where('provider', 'youtube')->where('direction', 'outbound')->where('external_id', $id)->first();
+        // A video sent by this installation belongs to the original record, not a second review copy.
+        if ($outbound && ! $outbound->record) return;
+        $record = $outbound?->record ?? SourceRecord::firstOrCreate(['source' => 'youtube', 'source_id' => $id], [
             'kind' => 'video',
             'title' => $snippet['title'] ?? $id,
             'body' => $snippet['description'] ?? '',
@@ -44,6 +47,20 @@ class YouTubeInboundSync
             'metadata' => ['public_published' => false, 'external_sync_pending_review' => true, 'youtube_api' => $video, 'youtube_id' => $id, 'published_at' => $remoteDate],
         ]);
         $item->source_record_id = $record->id;
+        if (! $outbound) {
+            Publication::firstOrCreate(['source_record_id' => $record->id, 'provider' => 'youtube', 'direction' => 'outbound'], [
+                'status' => 'published', 'external_id' => $id, 'external_url' => 'https://www.youtube.com/watch?v='.rawurlencode($id),
+                'remote_status' => $video['status']['privacyStatus'] ?? 'public', 'published_at' => $remoteDate ?? now(),
+                'payload' => ['video_id' => $id, 'origin' => 'youtube_sync'],
+            ]);
+        }
+        $sentByUs = $outbound && ($outbound->payload['origin'] ?? null) !== 'youtube_sync';
+        if ($sentByUs || (($snippet['liveBroadcastContent'] ?? 'none') !== 'none' && empty($video['liveStreamingDetails']['actualEndTime']))) {
+            $item->status = $sentByUs ? 'imported' : 'discovered';
+            $item->error = null;
+            $item->save();
+            return;
+        }
         if (! ($record->metadata['external_sync_pending_review'] ?? true)) $item->status = 'imported';
         if (! $this->media->video($record)) {
             try {
@@ -54,11 +71,12 @@ class YouTubeInboundSync
                 $item->error = null;
             } catch (\Throwable $error) {
                 $item->status = 'failed';
-                $item->error = mb_substr($error->getMessage(), 0, 4000);
+                $item->error = app(ConnectionStore::class)->safeError($error);
             }
         } else {
             $item->status = 'imported';
             $item->imported_at ??= now();
+            $item->error = null;
         }
         $item->save();
     }

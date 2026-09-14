@@ -12,4 +12,8 @@ return [
     'saved' => 'Veröffentlichung wurde in die Warteschlange gestellt.', 'sync_queued' => 'YouTube-Synchronisierung wurde gestartet.', 'error' => 'Publishing konnte nicht ausgeführt werden.',
     'no_destination' => 'Mindestens ein Ziel auswählen.', 'retry' => 'Erneut versuchen', 'attempts' => 'Versuche', 'last_attempt' => 'Letzter Versuch', 'published_at' => 'Veröffentlicht am',
     'youtube_not_connected' => 'YouTube ist noch nicht verbunden.', 'unsupported' => 'Für diesen Inhalt nicht verfügbar',
+    'youtube_connected' => 'YouTube verbunden.', 'oauth_cancelled' => 'YouTube-Verbindung abgebrochen.',
+    'channel_unavailable' => 'Kein YouTube-Kanal verfügbar.', 'retry_unavailable' => 'Nur fehlgeschlagene Übertragungen an verbundene Ziele können wiederholt werden.',
+    'scheduled' => 'Angekündigt', 'relaying' => 'Live-Signal wird übertragen', 'relay_failed' => 'Live-Übertragung unterbrochen',
+    'ended' => 'Beendet', 'not_started' => 'Ohne Übertragung beendet',
 ];

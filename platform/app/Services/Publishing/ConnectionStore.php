@@ -30,30 +30,44 @@ class ConnectionStore
 
     public function connected(string $provider): bool
     {
-        return (bool) $this->connection($provider) && (bool) $this->credentials($provider);
+        return (bool) $this->connection($provider)
+            && empty($this->connection($provider)['revoked_at'])
+            && (bool) $this->credentials($provider);
     }
 
-    public function saveCredentials(string $provider, array $credentials): void
+    public function saveCredentials(string $provider, array $credentials, bool $replace = false): void
     {
-        $current = $this->credentials($provider);
+        $current = $replace ? [] : $this->credentials($provider);
         $merged = array_filter([...$current, ...$credentials], static fn ($value) => $value !== null && $value !== '');
         $this->settings->updateSecrets(['social_'.$provider => json_encode($merged, JSON_THROW_ON_ERROR)]);
-        $connections = $this->settings->get('social_connections', []);
-        if (is_array($connections) && isset($connections[$provider]['revoked_at'])) {
-            unset($connections[$provider]['revoked_at']);
-            $this->settings->update(['social_connections' => $connections]);
-        }
     }
 
     public function forgetCredentials(string $provider): void
     {
-        // Settings intentionally has no destructive secret API. Marking a connection revoked
-        // prevents new work while preserving an audit-safe record for the owner.
+        $this->settings->updateSecrets(['social_'.$provider => '{}']);
         $connections = $this->settings->get('social_connections', []);
         if (isset($connections[$provider])) {
             $connections[$provider]['revoked_at'] = now()->toIso8601String();
             $this->settings->update(['social_connections' => $connections]);
         }
+    }
+
+    public function safeError(\Throwable $error): string
+    {
+        $message = $error->getMessage();
+        $secrets = [(string) config('publishing.youtube.client_secret')];
+        foreach ($this->publicConnections() as $connection) {
+            $credentials = $this->credentials($connection['provider']);
+            array_walk_recursive($credentials, static function ($value) use (&$secrets) {
+                if (is_string($value) && strlen($value) >= 4) $secrets[] = $value;
+            });
+        }
+        foreach (array_filter($secrets) as $secret) {
+            $message = str_replace([$secret, rawurlencode($secret)], '[redacted]', $message);
+        }
+        $message = preg_replace('~(/bot)[^/\s]+~', '$1[redacted]', $message);
+        $message = preg_replace('~((?:access_token|refresh_token|client_secret|password|Authorization)["\s:=]+)[^\s&,"}]+~i', '$1[redacted]', $message);
+        return mb_substr($message, 0, 4000);
     }
 
     public function publicConnections(): array

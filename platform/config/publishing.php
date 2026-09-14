@@ -9,7 +9,6 @@ return [
         'oauth_authorize' => 'https://accounts.google.com/o/oauth2/v2/auth',
         'oauth_token' => 'https://oauth2.googleapis.com/token',
         'scope' => 'https://www.googleapis.com/auth/youtube',
-        'sync_interval_minutes' => (int) env('YOUTUBE_SYNC_INTERVAL_MINUTES', 5),
         'downloader' => env('YOUTUBE_SYNC_DOWNLOADER', 'yt-dlp'),
     ],
     'meta' => [

@@ -7,6 +7,10 @@ class SourceRecord extends Model
     use \Illuminate\Database\Eloquent\SoftDeletes;
     protected $guarded=[];
     protected function casts():array{return ['metadata'=>'array'];}
+    public function publishingKind(): string
+    {
+        return ($this->metadata['public_section'] ?? null) === 'live' ? 'live' : $this->kind;
+    }
     public function classifications(){return $this->hasMany(RecordClassification::class);}
     public function publicViews(){return $this->hasMany(PublicContentView::class,'record_id');}
 }

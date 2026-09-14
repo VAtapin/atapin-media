@@ -77,6 +77,7 @@ jobs:
           php tests/cron-smoke.php
           timeout 150 node tests/browser.mjs
           node tests/media-upload-controls.mjs
+          timeout 30 node tests/publishing-browser.mjs
           timeout 150 node tests/import-center-browser.mjs
           timeout 150 node tests/import-workflow-browser.mjs
           timeout 150 node tests/public-home-browser.mjs
