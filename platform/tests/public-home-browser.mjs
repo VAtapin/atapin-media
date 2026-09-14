@@ -2,13 +2,19 @@ import { chromium } from '../../.local/node_modules/playwright/index.mjs';
 import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import http from 'node:http';
 
 const server=spawn(process.env.PHP_BINARY||'php',['-S','127.0.0.1:8794','-t','.','../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php'],{cwd:'public',stdio:'pipe'});
 let output='',browser;server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>output+=data);
 try {
   let ready=false;
   for(let i=0;i<60;i++){
-    try{if((await fetch('http://127.0.0.1:8794/',{signal:AbortSignal.timeout(1000)})).ok){ready=true;break;}}catch{}
+    const status=await new Promise(resolve=>{
+      const request=http.get('http://127.0.0.1:8794/',response=>{response.resume();resolve(response.statusCode);});
+      request.on('error',()=>resolve(0));
+      request.setTimeout(1000,()=>{request.destroy();resolve(0);});
+    });
+    if(status===200){ready=true;break;}
     await new Promise(resolve=>setTimeout(resolve,500));
   }
   assert(ready,output);

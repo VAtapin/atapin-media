@@ -37,6 +37,30 @@ try {
       assert.equal(overflow.ok,true,`${route}: overflow at ${width}: ${JSON.stringify(overflow.offenders)}`);
       assert(await page.locator('.public-header').isVisible(),route);
       assert.equal(await page.locator('main').count(),1,route);
+      if(await page.locator('.public-overview-hero').count()){
+        const shell=await page.evaluate(()=>{
+          const header=document.querySelector('.public-header'),panel=header.querySelector('.public-header-inner');
+          const hero=document.querySelector('.public-overview-hero'),image=hero.querySelector('.public-overview-hero-background');
+          return {
+            headerBackground:getComputedStyle(header).backgroundColor,
+            panelBackground:getComputedStyle(panel).backgroundColor,
+            panelRadius:getComputedStyle(panel).borderBottomLeftRadius,
+            panelWidth:panel.getBoundingClientRect().width,
+            overlay:getComputedStyle(hero,'::after').display,
+            imagePosition:getComputedStyle(image).objectPosition,
+            imageLoaded:image.complete&&image.naturalWidth>0,
+            textBackdrop:getComputedStyle(hero.querySelector('.public-overview-copy'),'::before').backgroundImage,
+          };
+        });
+        assert.equal(shell.headerBackground,'rgba(0, 0, 0, 0)',route);
+        assert.equal(shell.panelBackground,'rgba(255, 255, 255, 0.88)',route);
+        assert.equal(shell.panelRadius,'8px',route);
+        if(width===1672)assert(shell.panelWidth<width,route);
+        assert.equal(shell.overlay,'none',route);
+        assert.equal(shell.imagePosition,'50% 0%',route);
+        assert(shell.imageLoaded,route);
+        assert.match(shell.textBackdrop,/radial-gradient/,route);
+      }
       await page.screenshot({path:`tests/artifacts/public-page-${index+1}-${width}${process.env.PUBLIC_DETAIL_ROUTES?'-filled':''}.png`,fullPage:true});
       const tabs=page.locator('[role=tab]');
       if(await tabs.count()>1){await tabs.nth(1).click();assert.equal(await tabs.nth(1).getAttribute('aria-selected'),'true',route);}

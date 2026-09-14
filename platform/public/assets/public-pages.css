@@ -416,9 +416,11 @@
 .public-live-chat .public-chat-messages article{gap:8px;padding:4px 0;line-height:1.2}.public-live-chat .public-chat-messages .public-avatar{width:28px;height:28px}.public-live-chat .public-chat-messages p{margin:2px 0 0;line-height:1.2}.public-live-chat .public-chat-status{margin-top:2px}
 
 /* Every overview page uses the same hero geometry; only its page data changes. */
+.public-layout-overview .public-header{background:transparent;border-bottom:0}
+.public-layout-overview .public-header-inner{background:rgba(255,255,255,.88);border-radius:0 0 8px 8px}
 .public-overview-hero{height:400px!important;padding-top:0!important;position:relative;isolation:isolate;overflow:hidden;background-image:none!important;background-color:#c8d5dc}
-.public-overview-hero:after{content:'';display:block!important;position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,#fffaf4e8,#fffaf4b3 43%,#ffffff20)}
-.public-overview-hero-background{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;object-position:center;display:block}
+.public-overview-hero:after{display:none}
+.public-overview-hero-background{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;object-position:center top;display:block}
 .public-overview-hero-inner{position:relative;z-index:1;max-width:1232px;height:100%;margin:auto;padding:88px 0 27px!important;display:grid;grid-template-columns:560px minmax(0,1fr);gap:40px}
 .public-overview-copy{min-width:0;padding-top:0!important;position:relative;isolation:isolate}
 .public-overview-copy:before{content:'';position:absolute;z-index:-1;pointer-events:none;inset:-42px -74px -18px -64px;background:radial-gradient(ellipse,#fffaf4f2 0%,#fffaf4c9 47%,#fffaf400 76%);filter:blur(13px)}
