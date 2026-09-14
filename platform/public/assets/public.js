@@ -64,6 +64,7 @@ const publicFormError=(result,response)=>{
   if(result?.errors)return Object.values(result.errors).flat()[0];
   return `Request failed (${response.status})`;
 };
+const publicResetKinds=new Set(['newsletter','community','contact','review']);
 for(const form of document.querySelectorAll('[data-public-form],[data-public-ajax]'))form.addEventListener('submit',async event=>{
   event.preventDefault();
   const button=form.querySelector('button[type="submit"],button:not([type])');
@@ -79,7 +80,8 @@ for(const form of document.querySelectorAll('[data-public-form],[data-public-aja
     }else if(form.dataset.publicForm!==undefined&&result.kind==='state'&&typeof result.enabled==='boolean'){
       button?.classList.toggle('current',result.enabled);
     }
-    if(form.dataset.publicAjax!=='message')form.reset();
+    if(form.dataset.publicAjax==='account-remove')form.closest('.public-account-item')?.remove();
+    if(publicResetKinds.has(form.dataset.publicAjax))form.reset();
     if(form.dataset.publicAjax!=='message')publicFeedback(result.message||window.publicLabels.saved);
   }catch(error){
     if(form.dataset.publicAjax==='message')publicFormMessage(form,error.message);else publicFeedback(error.message);
@@ -115,9 +117,9 @@ for(const button of document.querySelectorAll('[data-public-help]')){
   button.addEventListener('click',()=>{if(dialog&&!dialog.open)dialog.showModal();});
 }
 for(const root of document.querySelectorAll('[data-live-heartbeat]')){
-  let timer,controller,active=true,signature='',running=false;
+  let timer,controller,active=true,signature='',running=false,queued=false;
   const pulse=async()=>{
-    clearTimeout(timer);if(!active||running)return;
+    clearTimeout(timer);if(!active)return;if(running){queued=true;return;}
     if(!document.hidden){
       running=true;controller=new AbortController();const current=controller,timeout=setTimeout(()=>current.abort(),5000);
       try{
@@ -136,7 +138,7 @@ for(const root of document.querySelectorAll('[data-live-heartbeat]')){
           else{const empty=document.createElement('p');empty.className='public-empty';empty.textContent='◇ '+window.publicLabels.no_data;messages.replaceChildren(empty);}
         }
       }catch{root.querySelector('[data-live-online]').textContent=window.publicLabels.live_connection_pending;}
-      finally{clearTimeout(timeout);running=false;}
+      finally{clearTimeout(timeout);running=false;if(queued){queued=false;return pulse();}}
     }
     if(active)timer=setTimeout(pulse,15000);
   };

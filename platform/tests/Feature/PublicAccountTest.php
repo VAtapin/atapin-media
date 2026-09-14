@@ -50,6 +50,6 @@ class PublicAccountTest extends TestCase {
         $this->actingAs($other)->get('/konto')->assertOk()->assertDontSee('Public article');$this->delete('/konto/state/'.$state->id)->assertNotFound();
         $this->actingAs($mine)->get('/konto')->assertOk()->assertSee('Public article')->assertSee('Fortschritt')->assertSee('00:42')->assertDontSee('public.progress')->assertDontSee('{"position":42}');
         $record->update(['metadata'=>['public_published'=>false]]);$this->get('/konto')->assertDontSee('Public article');
-        $this->delete('/konto/state/'.$state->id)->assertRedirect();$this->assertDatabaseMissing('public_content_states',['id'=>$state->id]);
+        $this->deleteJson('/konto/state/'.$state->id)->assertOk()->assertJson(['kind'=>'account-remove']);$this->assertDatabaseMissing('public_content_states',['id'=>$state->id]);
     }
 }

@@ -4,7 +4,7 @@
 
 ## Реализовано
 
-- Public-Website forms for live chat/comments, newsletter, contact, community, reviews and account state actions submit through AJAX without document reloads. Live chat clears only its input, shows the sender status and triggers an immediate heartbeat; JSON responses retain the normal redirect fallback for no-JavaScript clients. Public JS cache version is `v=9`.
+- Public-Website forms for live chat/comments, newsletter, contact, community, reviews and account actions submit through AJAX without document reloads. Live chat clears only its input, shows the sender status and triggers an immediate heartbeat (queued if another heartbeat is already running); JSON responses retain the normal redirect fallback for no-JavaScript clients. Public JS cache version is `v=11`.
 - Все девять overview-страниц используют общую рукописную надпись вне featured-медиа: справа на desktop, ниже медиа на ширине ≤1600 px. Главная сохраняет свою фразу; Videos, Beiträge, Bücher, Live, Podcast, Community, Über uns и Mission получили разные короткие христианские тексты de/en. Белое облачко усилено под основным hero-текстом и боковыми надписями, сохраняя мягкое затухание и яркий фон вне текста. CSS cache version обновлена.
 - Убраны маленькие декоративные стрелки у шести карточек разделов главной, в общих ссылках заголовков контентных панелей, Bücherregal и заглушках; ссылки сохранены. Стрелки кнопок действий и пагинации не менялись.
 - Назначение по длительности в Import Center использует существующие переводы imports.posts/videos/shorts вместо отсутствующих imports.target_*; список показывает Beiträge, Videos, Shorts, а не translation keys.

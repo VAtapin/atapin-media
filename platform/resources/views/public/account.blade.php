@@ -26,7 +26,7 @@
     <section class="public-account-notice" role="status">
         <span class="public-account-notice-icon">!</span>
         <div><strong>{{ __('public.account_verify_title') }}</strong><p>{{ __('public.account_verify') }}</p></div>
-        <form method="post" action="{{ route('public.account-resend') }}">@csrf<button class="public-button">{{ __('public.account_resend') }}</button></form>
+        <form method="post" action="{{ route('public.account-resend') }}" data-public-ajax="account">@csrf<button class="public-button">{{ __('public.account_resend') }}</button></form>
     </section>
     @endif
 
@@ -42,7 +42,7 @@
                             · {{ __('public.account_progress_position', ['position' => gmdate('i:s', (int) $position)]) }}
                         @endif
                     </small></div>
-                    <form method="post" action="{{ route('public.account-state-remove', $item['state']) }}">@csrf @method('DELETE')<button class="public-icon-button" aria-label="{{ __('public.account_remove') }}" title="{{ __('public.account_remove') }}">×</button></form>
+                    <form method="post" action="{{ route('public.account-state-remove', $item['state']) }}" data-public-ajax="account-remove">@csrf @method('DELETE')<button class="public-icon-button" aria-label="{{ __('public.account_remove') }}" title="{{ __('public.account_remove') }}">×</button></form>
                 </article>
                 @empty
                     @include('public.empty', ['hint' => __('public.account_activity_empty')])
@@ -57,7 +57,7 @@
             <div class="public-account-section-heading"><div><p class="public-account-eyebrow">{{ __('public.account_reminders_eyebrow') }}</p><h2>{{ __('public.account_push') }}</h2></div><span class="public-account-count">{{ $push->count() }}</span></div>
             <div class="public-account-list">
                 @forelse($push as $entry)
-                <article class="public-account-item"><span class="public-account-item-icon">@include('public.icon', ['name' => 'calendar'])</span><div class="public-account-item-copy"><a href="{{ $entry['card']['url'] }}">{{ $entry['card']['title'] }}</a><small>{{ $entry['card']['meta'] ?: __('public.account_reminder_active') }}</small></div><form method="post" action="{{ route('public.account-push-cancel', $entry['subscription']) }}">@csrf @method('DELETE')<button class="public-icon-button" aria-label="{{ __('public.account_remove') }}" title="{{ __('public.account_remove') }}">×</button></form></article>
+                <article class="public-account-item"><span class="public-account-item-icon">@include('public.icon', ['name' => 'calendar'])</span><div class="public-account-item-copy"><a href="{{ $entry['card']['url'] }}">{{ $entry['card']['title'] }}</a><small>{{ $entry['card']['meta'] ?: __('public.account_reminder_active') }}</small></div><form method="post" action="{{ route('public.account-push-cancel', $entry['subscription']) }}" data-public-ajax="account-remove">@csrf @method('DELETE')<button class="public-icon-button" aria-label="{{ __('public.account_remove') }}" title="{{ __('public.account_remove') }}">×</button></form></article>
                 @empty
                     @include('public.empty', ['hint' => __('public.account_reminders_empty')])
                 @endforelse
@@ -141,7 +141,7 @@
     <section class="public-panel public-account-profile">
         <div class="public-account-section-heading"><div><p class="public-account-eyebrow">{{ __('public.account_profile_eyebrow') }}</p><h2>{{ __('public.account_profile') }}</h2></div></div>
         <p class="public-account-form-hint">{{ __('public.account_password_hint') }}</p>
-        <form class="public-account-form" method="post" action="{{ route('public.account-profile') }}">@csrf @method('PATCH')<label>{{ __('ui.name') }}<input name="name" required maxlength="120" value="{{ auth()->user()->name }}"></label><label>{{ __('public.current_password') }}<input name="current_password" type="password" required autocomplete="current-password"></label><label>{{ __('public.new_password') }}<input name="password" type="password" minlength="12" maxlength="72" autocomplete="new-password"></label><label>{{ __('public.password_confirm') }}<input name="password_confirmation" type="password" autocomplete="new-password"></label><div class="public-account-form-actions"><button class="public-button">{{ __('ui.save') }}</button></div></form>
+        <form class="public-account-form" method="post" action="{{ route('public.account-profile') }}" data-public-ajax="account-profile">@csrf @method('PATCH')<label>{{ __('ui.name') }}<input name="name" required maxlength="120" value="{{ auth()->user()->name }}"></label><label>{{ __('public.current_password') }}<input name="current_password" type="password" required autocomplete="current-password"></label><label>{{ __('public.new_password') }}<input name="password" type="password" minlength="12" maxlength="72" autocomplete="new-password"></label><label>{{ __('public.password_confirm') }}<input name="password_confirmation" type="password" autocomplete="new-password"></label><div class="public-account-form-actions"><button class="public-button">{{ __('ui.save') }}</button></div></form>
         <form method="post" action="/logout">@csrf<button class="public-button public-button-secondary" type="submit">{{ __('ui.logout') }}</button></form>
     </section>
 </div>
