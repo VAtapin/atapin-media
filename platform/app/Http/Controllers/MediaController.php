@@ -94,7 +94,8 @@ class MediaController extends Controller
             'assets' => $media->assets->map($asset), 'collections' => $media->collections->map(fn ($item) => ['id' => $item->id, 'title' => $item->title]),
             'cover_url' => route('media.cover', $media),
             'originals' => $media->originals()->get(['disk','path','source','original_name','sha256','bytes']),
-            'usages' => $records->map(fn ($item) => ['title' => $item->title, 'kind' => $item->kind, 'detail_url' => route('content.show', $item)]),
+            'document_import'=>$media->metadata['document_import']??null,
+            'usages' => $records->map(fn ($item) => ['title' => $item->title, 'kind' => $item->kind, 'detail_url' => route('content.show', $item)])->concat(\App\Models\Product::whereIn('id',$media->usages->where('subject_type',\App\Models\Product::class)->pluck('subject_id'))->get()->map(fn($book)=>['title'=>$book->title,'kind'=>'book','detail_url'=>'/desktop/books/'.$book->id])),
             'classifications' => $media->classifications()->latest()->limit(20)->get()->map(fn ($log) => [
                 'id'=>$log->id, 'provider'=>$log->provider, 'model'=>$log->model, 'status'=>$log->status, 'confidence'=>$log->confidence,
                 'proposal'=>$log->proposal, 'created_at'=>$log->created_at,

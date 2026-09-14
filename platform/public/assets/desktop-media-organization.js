@@ -138,7 +138,7 @@
           usageList.replaceChildren();
           for (const usage of data.usages) {
             const button=document.createElement('button'); button.type='button'; button.className='desktop-button';
-            button.dataset.openLocalContent=usage.detail_url; button.textContent=usage.title; usageList.append(button);
+            if(usage.kind==='book'){button.onclick=()=>window.DesktopWorkspaces.open('books-pdf',{id:Number(usage.detail_url.split('/').pop())});}else button.dataset.openLocalContent=usage.detail_url; button.textContent=usage.title; usageList.append(button);
           }
         }
         node.dispatchEvent(new CustomEvent('media-inspector-loaded',{bubbles:true,detail:{data,item}}));

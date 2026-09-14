@@ -50,7 +50,7 @@ class ImportedContentController extends Controller
         if($request->hasAny(['public_published','public_section','public_homepage'])||($record->metadata['public_published']??false)||($record->metadata['public_homepage']??false))\Illuminate\Support\Facades\Gate::authorize('content.publish');
         if($request->has('platform_metadata'))\Illuminate\Support\Facades\Gate::authorize('content.publish');
         $assignment->record($record, $request->validate(['title' => 'required|string|max:255', 'body' => 'nullable|string|max:1000000',
-            'kind' => 'required|in:'.implode(',',SourceRecord::KINDS), 'status' => 'required|in:unsorted,ready,needs_attention',
+            'kind' => 'required|in:'.implode(',',SourceRecord::KINDS), 'status' => 'required|in:unsorted,review,ready,needs_attention',
             'target_profile'=>'nullable|in:media_library,videos,shorts,posts,polls,comments,podcast',
             'public_published'=>'sometimes|boolean','public_homepage'=>'sometimes|boolean',
             'public_section'=>'sometimes|in:videos,beitraege,podcast,live,community',
@@ -101,6 +101,7 @@ class ImportedContentController extends Controller
         $publicUrl=$publicContent->visible($record)?$publicContent->card($record)['url']:null;
         $version=app(\App\Services\Importing\ContentState::class)->version($record);
         return response()->json(['id' => $record->id, 'title' => $record->title, 'body' => ($metadata['body_format']??'plain')==='html'?app(\App\Services\RichContent::class)->sanitize($record->body??''):$record->body,
+            ...array_intersect_key($metadata,array_flip(['workflow_stage','slug','locale','episode_number','season'])),
             ...array_intersect_key($metadata,array_flip(['author','seo_title','seo_description','transcript','guest','external_podcast_url','cover_media_id','taxonomy_term_ids'])),
             'short_description'=>$metadata['short_description']??'', 'short_description_job'=>$metadata['short_description_job']['state']??null,
             'project_id'=>$record->project_id,'editor'=>array_intersect_key($metadata,array_flip(['author','seo_title','seo_description','transcript','guest','external_podcast_url','cover_media_id','taxonomy_term_ids'])),
@@ -114,7 +115,7 @@ class ImportedContentController extends Controller
             'archive_data'=>(bool)($metadata['archive_data']??false),'takeout_data'=>$metadata['takeout_data']??[],
             'public_published'=>(bool)($metadata['public_published']??false),'public_homepage'=>(bool)($metadata['public_homepage']??false),
             'public_section'=>$publicContent->section($record),
-            'public_url'=>$publicUrl,
+            'public_url'=>$publicUrl,'preview_url'=>in_array($record->kind,['video','short','post'])?route('content.preview',$record):null,
             'references'=>$presentation->references($record),
             'external_url' => $presentation->externalUrl($metadata ?? [], $record->source, $record->source_id, $record->kind),
             'has_local_video' => $assets->contains(fn ($asset) => $asset['kind'] === 'video' && $asset['available']),

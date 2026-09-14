@@ -1,7 +1,7 @@
 (() => {
   const modules = new Map(),controllers=new Map(),pending=new Map();
   const labels = () => window.desktopWorkspaceLabels || {};
-  const t = key => key?.split('.').reduce((value,part)=>value?.[part],labels()) || labels().states?.[key] || labels().titles?.[key] || ({q:labels().search,file:labels().upload,count:labels().events,occurred_on:labels().start})[key] || key;
+  const t = key => labels()[key] || key?.split('.').reduce((value,part)=>value?.[part],labels()) || labels().states?.[key] || labels().titles?.[key] || ({q:labels().search,file:labels().upload,count:labels().events,occurred_on:labels().start})[key] || key;
   const el = (tag, text, cls) => {const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
   const request = async (url,data,method='GET') => {
     const opts={method,credentials:'same-origin',headers:{Accept:'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content}};
@@ -19,7 +19,8 @@
     if(type==='select'){input=el('select');for(const v of options){const pair=Array.isArray(v)?v:[v,t(v)];input.add(new Option(pair[1],pair[0]));}}
     else if(type==='textarea'){input=el('textarea');input.rows=5;input.maxLength=100000;}
     else {input=el('input');input.type=type;}
-    input.name=name;if(type==='checkbox')input.checked=!!value;else input.value=type==='date'&&value?String(value).slice(0,10):value??'';
+    input.name=name;if(type==='checkbox')input.checked=!!value;else input.value=type==='date'&&value?String(value).slice(0,10):Array.isArray(value)?value.join(', '):value??'';
+    if(type==='datetime-local'&&value){const date=new Date(value);if(!Number.isNaN(date.getTime()))input.value=new Date(date.getTime()-date.getTimezoneOffset()*60000).toISOString().slice(0,16);}
     label.append(input);return label;
   };
   const lookup=async(label,kind,current=null,multiple=false)=>{
@@ -38,7 +39,7 @@
     select.addEventListener('change',()=>{chosen.clear();for(const option of select.selectedOptions)if(option.value)chosen.add(option.value);});
     search.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>load().catch(()=>{}),250);});await load();select.disabled=false;return select;
   };
-  const formData=form=>{const data={};for(const input of form.elements){if(!input.name||input.disabled)continue;data[input.name]=input.type==='checkbox'?input.checked:input.multiple?[...input.selectedOptions].map(o=>o.value):input.value||null;}return data;};
+  const formData=form=>{const data={};for(const input of form.elements){if(!input.name||input.disabled)continue;data[input.name]=input.type==='checkbox'?input.checked:input.multiple?[...input.selectedOptions].map(o=>o.value):input.type==='datetime-local'&&input.value?new Date(input.value).toISOString():input.value||null;}return data;};
   const open=(app,row)=>{if(row)pending.set(app,row);document.querySelector(`.os-start-menu [data-open-app="${CSS.escape(app)}"]`)?.click();const api=controllers.get(app);if(row&&api?.root.isConnected){pending.delete(app);run(api.root,()=>api.edit(row));}};
   const pager=(root,page,load)=>{const nav=root.querySelector('[data-workspace-pager]');nav.replaceChildren();const current=page.current_page||page.meta?.current_page||1,last=page.last_page||page.meta?.last_page||1;const prev=button('previous',()=>load(current-1)),next=button('next',()=>load(current+1));prev.disabled=current<=1;next.disabled=current>=last;nav.append(prev,el('span',`${current} / ${last} · ${page.total??page.meta?.total??''}`),next);};
   const rows=(root,items,select)=>{const list=root.querySelector('[data-workspace-list]');list.replaceChildren();if(!items.length)list.append(el('p',t('empty'),'workspace-empty'));for(const row of items){const b=el('button',undefined,'workspace-row');b.type='button';b.append(el('strong',row.title||row.name||row.subject||row.question||row.email||`#${row.id}`),el('small',[t(row.status||row.kind||''),row.refresh_status?t(row.refresh_status):'',row.due_date?.slice(0,10),row.project?.title,row.assignee?.name,row.source].filter(Boolean).join(' · ')));b.addEventListener('click',()=>run(root,()=>select(row)));list.append(b);}};
@@ -46,7 +47,7 @@
   const crud=(root,config)=>{
     const filters=root.querySelector('[data-workspace-filters]'),actions=root.querySelector('[data-workspace-actions]');let page=1,items=[],editGeneration=0;
     filters.append(field('q','search'));if(config.statuses)filters.append(field('status','select','',[['',t('all')],...config.statuses]));
-    for(const f of config.filters||[])filters.append(field(...f));filters.append(button('refresh',()=>load(1)));
+    for(const f of config.filters||[]){const label=field(...f);filters.append(label);if(config.filterLookups?.[f[0]])lookup(label,config.filterLookups[f[0]]).catch(error=>feedback(root,error.message,true));}filters.append(button('refresh',()=>load(1)));
     const edit=async(row={})=>{
       const generation=++editGeneration;if(config.detail&&row.id)row=await config.detail(row);if(generation!==editGeneration||!root.isConnected)return;
       const editor=root.querySelector('[data-workspace-editor]');if(editor.querySelector('form')?.dataset.dirty==='true'&&!window.confirm(window.desktopImportLabels.discard_edits))return;editor.replaceChildren(el('h2',row.title||row.name||row.subject||t('new')));const form=el('form');editor.append(form);form.addEventListener('input',()=>form.dataset.dirty='true');form.addEventListener('change',()=>form.dataset.dirty='true');

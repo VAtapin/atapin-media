@@ -16,9 +16,11 @@ class DesktopAiController extends Controller
     }
     public function store(Request $request, DesktopAi $service)
     {
-        $data = $request->validate(['question'=>'required|string|min:2|max:4000','purpose'=>'required|in:chat,title,summary,seo,social,reply',
-            'source_record_id'=>'nullable|integer|exists:source_records,id']);
-        if (in_array($data['purpose'],['title','summary','seo'],true)) abort_unless(!empty($data['source_record_id']),422);
+        $data = $request->validate(['question'=>'required|string|min:2|max:4000','purpose'=>'required|in:chat,title,summary,seo,social,reply,hashtags,youtube_description,bible_references,shorten,lengthen,tone,transform,ideas',
+            'source_record_id'=>'nullable|integer|exists:source_records,id','product_id'=>'nullable|integer|exists:products,id','context'=>'nullable|array:provider','context.provider'=>'nullable|in:youtube,facebook,instagram,telegram,x']);
+        abort_if(!empty($data['product_id'])&&!empty($data['source_record_id']),422);
+        if(!empty($data['product_id']))\Illuminate\Support\Facades\Gate::authorize('shop.manage');
+        if (in_array($data['purpose'],['title','summary','seo'],true)) abort_unless(!empty($data['source_record_id'])||!empty($data['product_id']),422);
         $entry = $service->submit($request->user(),$data);
         return response()->json(['id'=>$entry->id,'status'=>'queued'],202);
     }

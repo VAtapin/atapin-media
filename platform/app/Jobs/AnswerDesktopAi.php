@@ -19,6 +19,7 @@ class AnswerDesktopAi implements ShouldQueue
         $entry = DesktopAiRequest::findOrFail($this->requestId);
         try {
             if (!User::find($entry->user_id)?->hasPermission('content.edit')) throw new \RuntimeException('Permission revoked.');
+            if ($entry->product_id && !User::find($entry->user_id)?->hasPermission('shop.manage')) throw new \RuntimeException('Book permission revoked.');
             $result = $service->answer($entry);
             $entry->update(['status'=>'completed','answer'=>mb_substr($result['answer'],0,10000),'proposal'=>$result]);
         } catch (\Throwable) { $entry->update(['status'=>'failed']); }

@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Gate;
 
 class DesktopWorkspaceController extends Controller
 {
-    public const APPS = ['projects'=>'projects.manage','tasks'=>'projects.manage','calendar'=>'desktop.view',
+    public const APPS = ['overview'=>'desktop.view','polls'=>'content.edit','projects'=>'projects.manage','tasks'=>'projects.manage','calendar'=>'desktop.view',
         'books-pdf'=>'shop.manage','topics'=>'content.edit','series'=>'content.edit','newsletter'=>'subscribers.manage',
         'ai-assistant'=>'content.edit','analytics'=>'analytics.view','shop'=>'shop.manage','integrations'=>'integrations.manage','community'=>'community.moderate'];
 

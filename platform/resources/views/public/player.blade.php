@@ -20,11 +20,11 @@
 @elseif($record && ($video||$audio))
 
 @if($video)<div class="public-video-player-shell" style="--video-poster:url('{{ $videoPoster }}')"><video class="public-main-player" controls preload="none"
-data-view-url="{{ route('public.record-view',$record) }}" poster="{{ $videoPoster }}"
-src="{{ $video->publicUrl() ?? route('public.media',[$record,$video]) }}" @auth data-progress-url="{{ route('public.record-state',$record) }}" data-resume="{{ $states['progress']['position']??0 }}" @endauth>
+@unless($preview??false) data-view-url="{{ route('public.record-view',$record) }}" @endunless poster="{{ $videoPoster }}"
+src="{{ ($preview??false)?route('content.preview-media',[$record,$video]):($video->publicUrl() ?? route('public.media',[$record,$video])) }}" @if(auth()->check()&&!($preview??false)) data-progress-url="{{ route('public.record-state',$record) }}" data-resume="{{ $states['progress']['position']??0 }}" @endif>
 </video>
 </div>
-@else<audio class="public-main-audio" @if(($record->metadata['public_section']??'')==='podcast') data-audio-view-url="{{ route('public.audio-play',$record) }}" @endif controls preload="metadata" src="{{ $audio->publicUrl() ?? route('public.media',[$record,$audio]) }}" @auth data-progress-url="{{ route('public.record-state',$record) }}" data-resume="{{ $states['progress']['position']??0 }}" @endauth>
+@else<audio class="public-main-audio" @if(!($preview??false)&&($record->metadata['public_section']??'')==='podcast') data-audio-view-url="{{ route('public.audio-play',$record) }}" @endif controls preload="metadata" src="{{ ($preview??false)?route('content.preview-media',[$record,$audio]):($audio->publicUrl() ?? route('public.media',[$record,$audio])) }}" @if(auth()->check()&&!($preview??false)) data-progress-url="{{ route('public.record-state',$record) }}" data-resume="{{ $states['progress']['position']??0 }}" @endif>
 </audio>
 @endif
 

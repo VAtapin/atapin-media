@@ -248,6 +248,7 @@
       window.appendMediaInspector?.(details, item);
       window.appendMediaCover?.(details, item);
       window.appendMediaLifecycle?.(details,item);
+      if(root.dataset.canEdit==='true')window.appendDocumentImport?.(details,item);
       for (const panel of details.querySelectorAll('details')) if (opened.includes(panel.querySelector('summary')?.textContent)) panel.open=true;
     };
 

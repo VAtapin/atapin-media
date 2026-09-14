@@ -10,6 +10,9 @@ Route::middleware('auth')->group(function(){
     Route::get('/konto/books/{product}/pdf',[CheckoutController::class,'download'])->middleware('throttle:30,1')->name('public.purchased-pdf');
     Route::get('/desktop/workspaces/{app}',DesktopWorkspaceController::class)->middleware('can:desktop.view');
     Route::get('/desktop/lookups',DesktopLookupController::class)->middleware('can:desktop.view');
+    Route::get('/desktop/overview',\App\Http\Controllers\DesktopOverviewController::class)->middleware('can:desktop.view');
+    Route::get('/desktop/publishing/preview',\App\Http\Controllers\PublishingPreviewController::class)->middleware('can:content.publish');
+    Route::get('/desktop/live/{record}/monitor',\App\Http\Controllers\LiveMonitorController::class)->middleware('can:content.publish');
     Route::middleware('can:projects.manage')->group(function(){
         Route::get('/desktop/projects',[ProjectController::class,'index']);Route::get('/desktop/projects/{project}',[ProjectController::class,'show']);Route::get('/desktop/tasks',[TaskController::class,'index']);
         Route::get('/desktop/tasks/{task}',[TaskController::class,'show']);
@@ -18,6 +21,13 @@ Route::middleware('auth')->group(function(){
     Route::post('/desktop/planning',[CalendarController::class,'store'])->middleware('can:content.publish');
     Route::delete('/desktop/planning/{schedule}',[CalendarController::class,'cancel'])->middleware('can:content.publish');
     Route::middleware('can:content.edit')->group(function(){
+        Route::post('/desktop/media/{media}/article',[\App\Http\Controllers\DocumentArticleController::class,'store'])->middleware(['can:media.view','throttle:10,1']);
+        Route::get('/desktop/content/{record}/preview',[\App\Http\Controllers\ContentPreviewController::class,'show'])->name('content.preview');
+        Route::get('/desktop/content/{record}/preview/media/{media}',[\App\Http\Controllers\ContentPreviewController::class,'media'])->name('content.preview-media');
+        Route::get('/desktop/polls',[\App\Http\Controllers\PollWorkspaceController::class,'index']);
+        Route::post('/desktop/polls',[\App\Http\Controllers\PollWorkspaceController::class,'store']);
+        Route::get('/desktop/polls/{record}',[\App\Http\Controllers\PollWorkspaceController::class,'show']);
+        Route::patch('/desktop/polls/{record}',[\App\Http\Controllers\PollWorkspaceController::class,'update']);
         Route::post('/desktop/content',[ImportedContentController::class,'store']);
         Route::get('/desktop/taxonomy',[TaxonomyController::class,'index']);Route::post('/desktop/taxonomy',[TaxonomyController::class,'store']);Route::patch('/desktop/taxonomy/{term}',[TaxonomyController::class,'update']);
         Route::get('/desktop/series',[SeriesController::class,'index']);Route::post('/desktop/series',[SeriesController::class,'store']);Route::get('/desktop/series/{collection}',[SeriesController::class,'show']);Route::patch('/desktop/series/{collection}',[SeriesController::class,'update']);

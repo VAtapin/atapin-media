@@ -129,6 +129,7 @@ jobs:
           php artisan migrate --force
           php tests/desktop-workspaces-fixture.php
           timeout 150 node tests/desktop-workspaces-browser.mjs
+          timeout 150 node tests/admin-completion-browser.mjs
         env:
           APP_ENV: testing
           APP_LOCALE: de

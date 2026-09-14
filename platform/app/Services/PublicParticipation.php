@@ -19,15 +19,30 @@ class PublicParticipation
     }
     public function save(User $user,$subject,array $data): void
     {
+        if(($data['action']??null)==='vote'&&$subject instanceof SourceRecord){
+            \Illuminate\Support\Facades\DB::transaction(function()use($user,$subject,$data){
+                $poll=SourceRecord::lockForUpdate()->findOrFail($subject->id);
+                abort_unless(app(PublicContent::class)->visible($poll),404);
+                $this->persist($user,$poll,$data);
+            });
+            return;
+        }
+        $this->persist($user,$subject,$data);
+    }
+    private function persist(User $user,$subject,array $data): void
+    {
         abort_unless(!$user->isStaffAccount(),403);
         $action=$data['action'];
         abort_unless(in_array($action,$subject instanceof Product?['bookmark','progress']:['bookmark','like','reminder','progress','vote']),422);
         if($action==='reminder')abort_unless(app(PublicContent::class)->section($subject)==='live',422);
         if($action==='vote'){
-            abort_unless($subject->kind==='poll'&&array_key_exists($data['option']??-1,$this->options($subject)),422);
-            $ends=$subject->metadata['poll']['ends_at']??null;
-            abort_if($ends&&\Illuminate\Support\Carbon::parse($ends)->isPast(),422,__('public.poll_closed'));
-            $value=['option'=>(int)$data['option']];
+            abort_unless($subject->kind==='poll',422);
+            abort_unless(app(Polls::class)->open($subject),422,__('public.poll_closed'));
+            abort_unless(app(Polls::class)->allowed($subject,$user),403);
+            $selected=array_values(array_unique(array_map('intval',$data['options']??[$data['option']??-1])));
+            abort_unless(count($selected)>0 && (($subject->metadata['poll']['multiple']??false)||count($selected)===1),422);
+            foreach($selected as $option)abort_unless(array_key_exists($option,$this->options($subject)),422);
+            $value=['option'=>$selected[0],'options'=>$selected];
         }elseif($action==='progress'){
             abort_if($subject instanceof Product&&($data['position']??0)>100,422);
             $value=['position'=>(int)($data['position']??0)];

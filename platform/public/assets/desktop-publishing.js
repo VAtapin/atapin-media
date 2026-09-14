@@ -11,6 +11,7 @@
     const destinations = root.querySelector('[data-publishing-destinations]');
     const statusList = root.querySelector('[data-publishing-status-list]');
     const feedback = root.querySelector('[data-publishing-feedback]');
+    window.initializePublishingPreview?.(root);
     let state = { records: [], destinations: [], publications: [] };
 
     const show = (message, error = false) => {
@@ -62,6 +63,7 @@
       state = await request(root.dataset.apiUrl);
       renderRecords();
       renderStatus();
+      root.dispatchEvent(new Event('publishing-loaded'));
       const outputs = root.querySelector('[data-live-output-list]');
       if (outputs) outputs.innerHTML = state.destinations.filter(item => item.provider.startsWith('rtmp_')).map(item => `<p>${escapeHtml(item.label)} <button class="desktop-button" data-remove-output="${escapeHtml(item.provider)}">${escapeHtml(labels().remove_output)}</button></p>`).join('');
       const connection = root.querySelector('[data-publishing-connection-status]');

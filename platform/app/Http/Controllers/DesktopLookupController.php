@@ -10,11 +10,11 @@ class DesktopLookupController extends Controller
 {
     public function __invoke(Request $request)
     {
-        $data = $request->validate(['kind'=>'required|in:projects,users,terms,series,records,media', 'q'=>'nullable|string|max:120']);
+        $data = $request->validate(['kind'=>'required|in:projects,users,terms,series,records,books,media', 'q'=>'nullable|string|max:120']);
         $kind = $data['kind'];
-        Gate::authorize(match ($kind) { 'projects','users'=>'projects.manage', 'terms','series','records'=>'content.edit', 'media'=>'media.view' });
+        Gate::authorize(match ($kind) { 'books'=>'shop.manage','projects','users'=>'projects.manage', 'terms','series','records'=>'content.edit', 'media'=>'media.view' });
         $query = match ($kind) {
-            'projects'=>Project::query(), 'users'=>User::query(), 'terms'=>TaxonomyTerm::where('active',true),
+            'books'=>\App\Models\Product::query(),'projects'=>Project::query(), 'users'=>User::query(), 'terms'=>TaxonomyTerm::where('active',true),
             'series'=>Collection::where('metadata->workspace_series',true), 'records'=>SourceRecord::whereIn('kind',['video','short','post']),
             'media'=>Media::visibleLibrary(),
         };

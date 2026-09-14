@@ -4,8 +4,9 @@ use Illuminate\Database\Eloquent\Model;
 class Project extends Model
 {
     public const STATES=['idea','script','production','review','published'];
+    public const TYPES=['mixed','video','post','book','podcast','live'];
     protected $guarded=[];
-    protected function casts(): array { return ['due_date'=>'date:Y-m-d']; }
+    protected function casts(): array { return ['due_date'=>'date:Y-m-d','start_date'=>'date:Y-m-d','tags'=>'array','team_ids'=>'array']; }
     public function tasks() { return $this->hasMany(Task::class); }
     public function owner() { return $this->belongsTo(User::class,'user_id'); }
     public function records() { return $this->hasMany(SourceRecord::class); }

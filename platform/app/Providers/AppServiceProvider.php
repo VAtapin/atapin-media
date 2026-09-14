@@ -24,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(\App\Services\Importing\ImportWorkBudget::class);
         $this->app->bind(SearchProviderInterface::class, DatabaseSearch::class);
+        $this->app->bind(\App\Contracts\AiProviderInterface::class, \App\Services\Ai\OpenAiProvider::class);
         $this->app->bind(ImportCenter::class, function ($app) {
             return new ImportCenter([
                 $app->make(IntakeArchiveAdapter::class),

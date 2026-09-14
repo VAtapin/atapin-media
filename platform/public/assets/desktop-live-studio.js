@@ -127,6 +127,7 @@
     };
     const fillForm = data => {
       current = data;
+      window.initializeLiveConsole?.(root,data.id);
       empty.hidden = true;
       form.hidden = false;
       form.elements.id.value = data.id || '';

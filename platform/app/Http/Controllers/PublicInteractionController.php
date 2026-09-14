@@ -38,7 +38,7 @@ class PublicInteractionController extends Controller
     private function data(Request $request): array
     {
         $data=$request->validate(['action'=>'required|in:bookmark,like,reminder,progress,vote,comment,chat','enabled'=>'sometimes|boolean',
-            'option'=>'required_if:action,vote|integer|min:0|max:100','position'=>'required_if:action,progress|integer|min:0|max:10000000','body'=>'nullable|string|max:5000']);
+            'option'=>'nullable|integer|min:0|max:100','options'=>'nullable|array|min:1|max:20','options.*'=>'integer|min:0|max:100|distinct','position'=>'required_if:action,progress|integer|min:0|max:10000000','body'=>'nullable|string|max:5000']);
         if(array_key_exists('enabled',$data))$data['enabled']=$request->boolean('enabled');
         return $data;
     }

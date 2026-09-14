@@ -52,7 +52,7 @@ class PublicCatalog
             'chat'=>$record?$this->content->childrenForViewer($record,'live_chat',$request->user(),$sessionId)->latest()->limit(30)->get()->reverse():collect(),
             'communityBlocked'=>$this->communityModeration->blocked($request->user(),$sessionId),
             'states'=>$record?$this->participation->mine($record,$request->user()):[],
-            'poll'=>$this->content->forSection('community')->where('kind','poll')->latest()->first(),
+            'poll'=>app(Polls::class)->current($section),
             'upcoming'=>$this->content->forSection('live')->where('metadata->live_status','scheduled')->get()->filter(fn($event)=>$this->content->hasFutureStart($event))->sortBy(fn($event)=>strtotime((string) ($event->metadata['starts_at']??'')))->take(5)->map($this->content->card(...)),
             'book'=>$this->books->query()->latest()->first()?->id? $this->books->card($this->books->query()->latest()->first()):null,
             'relatedVideo'=>$this->content->forSection('videos')->latest()->first()?->id?$this->content->card($this->content->forSection('videos')->latest()->first()):null];

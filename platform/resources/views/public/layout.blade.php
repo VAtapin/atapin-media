@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<title>{{ (($layoutMode??'')==='detail'?(($record??null)?->metadata['seo_title']??null):null) ?: $title }} · {{ $siteName }}</title>
-<meta name="description" content="{{ (($layoutMode??'')==='detail'?(($record??null)?->metadata['seo_description']??null):null) ?: $description }}">
+<title>{{ (($layoutMode??'')==='detail'?(($record??$bookRecord??null)?->metadata['seo_title']??null):null) ?: $title }} · {{ $siteName }}</title>
+<meta name="description" content="{{ (($layoutMode??'')==='detail'?(($record??$bookRecord??null)?->metadata['seo_description']??null):null) ?: $description }}">
 <link rel="icon" href="/favicon.png">
 <link rel="stylesheet" href="/assets/telegram-mini-app.css?v=1">
 <script src="/assets/telegram-mini-app.js?v=1" defer></script>

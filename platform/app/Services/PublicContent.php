@@ -131,8 +131,9 @@ class PublicContent
             ??$assets->first(fn($media)=>$media->kind==='image'&&$media->asset_role==='thumbnail')
             ??$assets->first(fn($media)=>$media->kind==='image');
         $section=$this->section($record);$author=$record->metadata['author']??null;
-        $url=match($section){'videos'=>route('public.video',['slug'=>Str::slug($record->title).'-'.$record->id]),
-            'beitraege'=>route('public.article',['slug'=>Str::slug($record->title).'-'.$record->id]),
+        $slug=($record->metadata['slug']??null)?:Str::slug($record->title);
+        $url=match($section){'videos'=>route('public.video',['slug'=>$slug.'-'.$record->id]),
+            'beitraege'=>route('public.article',['slug'=>$slug.'-'.$record->id]),
             'podcast'=>route('public.podcast',['episode'=>$record->id]),'live'=>route('public.live',['event'=>$record->id]),
             default=>route('public.community',['discussion'=>$record->id])};
         if(in_array($record->kind,['comment','live_chat'])){

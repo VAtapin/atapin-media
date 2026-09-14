@@ -3,6 +3,10 @@
   window.extendDesktopContentEditor=(form,item,details)=>{
     if(item.archive_data||!['video','short','post'].includes(item.kind))return;
     const section=el('details');section.append(el('summary',t('content_report')));
+    if(item.preview_url){const a=el('a',t('preview'),'desktop-button');a.href=item.preview_url;a.target='_blank';a.rel='noopener';form.querySelector('.media-library-toolbar-row').append(a);}
+    section.append(field('workflow_stage','select',item.workflow_stage||'idea',['idea','script','production','review','approved']),field('slug','text',item.slug),field('locale','select',item.locale||'de',['de','en']));
+    if(document.querySelector('.os-start-menu [data-open-app=ai-assistant]')){const ai=button('generate_ai',()=>{if(details.dataset.dirty==='true'){form.querySelector('[role=status]').textContent=t('save_before_action');return;}W.open('ai-assistant',{source_record_id:item.id,purpose:'seo',question:t('seo')});});form.querySelector('.media-library-toolbar-row').append(ai);}
+    if(item.public_section==='podcast')section.append(field('episode_number','number',item.episode_number),field('season','number',item.season));
     const fields=[['project_id','projects'],['taxonomy_term_ids','terms'],['cover_media_id','media'],['additional_media_ids','media']];
     for(const [name,kind] of fields){const label=field(name,'select');section.append(label);const multiple=['taxonomy_term_ids','additional_media_ids'].includes(name);lookup(label,kind,item[name],multiple).catch(error=>{form.querySelector('[role=status]').textContent=error.message;});}
     for(const name of ['author','seo_title','seo_description','guest','external_podcast_url'])section.append(field(name,name==='seo_description'?'textarea':name==='external_podcast_url'?'url':'text',item[name]));

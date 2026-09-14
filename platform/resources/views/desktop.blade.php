@@ -1,5 +1,7 @@
 @php
 $programs = [
+    ['id'=>'overview','name'=>__('workspaces.overview'),'icon'=>'Projekte'],
+    ['id'=>'polls','name'=>__('workspaces.polls'),'icon'=>'Community'],
     ['id'=>'videos','name'=>'Videos','icon'=>'Videos'],
     ['id'=>'posts','name'=>'Beiträge','icon'=>'Beitraege'],
     ['id'=>'books-pdf','name'=>'Bücher & PDF','icon'=>'Buecher'],
@@ -40,15 +42,22 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <title>Desktop · {{ config('platform.brand') }}</title>
     <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=4"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3"><link rel="stylesheet" href="/assets/desktop-settings.css?v=3">
     <link rel="stylesheet" href="/assets/desktop-app.css?v=2"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=8"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=3"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=3"><link rel="stylesheet" href="/assets/desktop-community.css?v=3"><link rel="stylesheet" href="/assets/desktop-publishing.css?v=3">
-    <link rel="stylesheet" href="/assets/desktop-workspaces.css?v=1">
+    <link rel="stylesheet" href="/assets/desktop-workspaces.css?v=2">
+    <link rel="stylesheet" href="/assets/desktop-overview.css?v=1">
     <script>window.desktopWorkspaceLabels=@json(__('workspaces'));</script>
-    <script src="/assets/desktop-workspaces.js?v=1" defer></script>
-    <script src="/assets/desktop-workspace-content.js?v=1" defer></script>
-    <script src="/assets/desktop-workspace-operations.js?v=1" defer></script>
-    <script src="/assets/desktop-editor-workflow.js?v=1" defer></script>
+    <script src="/assets/desktop-workspaces.js?v=2" defer></script>
+    <script src="/assets/desktop-workspace-content.js?v=2" defer></script>
+    <script src="/assets/desktop-project-timeline.js?v=1" defer></script>
+    <script src="/assets/desktop-overview.js?v=1" defer></script>
+    <script src="/assets/desktop-polls.js?v=1" defer></script>
+    <script src="/assets/desktop-document-import.js?v=1" defer></script>
+    <script src="/assets/desktop-live-console.js?v=1" defer></script>
+    <script src="/assets/desktop-publishing-preview.js?v=1" defer></script>
+    <script src="/assets/desktop-workspace-operations.js?v=2" defer></script>
+    <script src="/assets/desktop-editor-workflow.js?v=2" defer></script>
     <script src="/assets/desktop-shortcuts.js?v=3" defer></script>
     <link rel="stylesheet" href="/assets/desktop-import-workflow.css?v=3">
-    <script src="/assets/desktop-os.js?v=16" defer></script><script src="/assets/settings-tabs.js?v=7" defer></script><script src="/assets/desktop-media-library.js?v=13" defer></script><script src="/assets/desktop-import-center.js?v=10" defer></script><script src="/assets/desktop-live-studio.js?v=4" defer></script><script src="/assets/desktop-publishing.js?v=3" defer></script>
+    <script src="/assets/desktop-os.js?v=17" defer></script><script src="/assets/settings-tabs.js?v=7" defer></script><script src="/assets/desktop-media-library.js?v=14" defer></script><script src="/assets/desktop-import-center.js?v=10" defer></script><script src="/assets/desktop-live-studio.js?v=5" defer></script><script src="/assets/desktop-publishing.js?v=4" defer></script>
 </head>
 <body class="os-body">
 <main class="os-desktop" data-desktop data-storage-key="atapin.desktop.{{ auth()->id() }}.v1"
@@ -155,8 +164,8 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <script src="/assets/desktop-content-enhancements.js?v=3" defer></script>
     <script src="/assets/desktop-local-links.js?v=1" defer></script>
     <script src="/assets/desktop-media-technical.js?v=1" defer></script>
-    <script src="/assets/desktop-content-assignment.js?v=8" defer></script>
-    <script src="/assets/desktop-media-organization.js?v=3" defer></script>
+    <script src="/assets/desktop-content-assignment.js?v=9" defer></script>
+    <script src="/assets/desktop-media-organization.js?v=4" defer></script>
     <script src="/assets/desktop-media-cover.js?v=2" defer></script>
     <script src="/assets/desktop-import-versions.js?v=1" defer></script>
     <script src="/assets/desktop-record-classifications.js?v=1" defer></script>

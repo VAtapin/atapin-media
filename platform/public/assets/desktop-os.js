@@ -451,7 +451,7 @@
         const host=document.createElement('div');host.className='workspace-inline';inbox.append(host);windowElement.querySelector('.os-window-content').prepend(inbox);
         inbox.addEventListener('toggle',()=>{if(inbox.open&&!host.dataset.loaded){host.dataset.loaded='true';window.initializeDesktopWorkspace?.(host,'community');}});
       }
-      if (['projects','tasks','calendar','books-pdf','topics','newsletter','ai-assistant','analytics','shop','integrations'].includes(appId)) {
+      if (['overview','polls','projects','tasks','calendar','books-pdf','topics','newsletter','ai-assistant','analytics','shop','integrations'].includes(appId)) {
         window.initializeDesktopWorkspace?.(windowElement.querySelector('.os-window-content'),appId);
       }
 
