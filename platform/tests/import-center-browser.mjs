@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 
 const server = spawn(process.env.PHP_BINARY || 'php', ['-S','127.0.0.1:8792','-t','.','../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php'], {stdio:'pipe',cwd:'public'});
 let output = ''; server.stdout.on('data', data => output += data); server.stderr.on('data', data => output += data);
-let browser;
+let browser, page;
 try {
   let ready = false;
   for (let i = 0; i < 60; i++) {
@@ -15,7 +15,9 @@ try {
   assert(ready, output);
   console.log('Local server ready.');
   browser = await chromium.launch({headless:true, ...(process.env.BROWSER_CHANNEL ? {channel:process.env.BROWSER_CHANNEL} : {})});
-  const page = await browser.newPage({viewport:{width:1672,height:941}});
+  page = await browser.newPage({viewport:{width:1672,height:941}});
+  page.setDefaultTimeout(15000);
+  page.setDefaultNavigationTimeout(15000);
   console.log('Browser ready.');
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   page.on('response', response => {if (response.status() >= 400) console.log('HTTP error:', response.status(), new URL(response.url()).pathname);});
@@ -29,7 +31,8 @@ try {
   await media.locator('[data-library-content-toggle]').click(); // Explicit raw-file view; library now starts with complete content.
   const stamp = Date.now(); const fileName = `browser-original-${stamp}.txt`; const reviewedFile = `Browser reviewed original ${stamp}`; const reviewedPost = `Browser reviewed post ${stamp}`;
   const coverName = `browser-cover-${stamp}.png`;
-  await media.locator('[data-media-upload-input]').setInputFiles({name:coverName,mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==','base64')});
+  const coverBytes=Buffer.from(await page.evaluate(()=>{const canvas=document.createElement('canvas');canvas.width=32;canvas.height=32;const context=canvas.getContext('2d');context.fillStyle='#c39338';context.fillRect(0,0,32,32);return canvas.toDataURL('image/png').split(',')[1];}),'base64');
+  await media.locator('[data-media-upload-input]').setInputFiles({name:coverName,mimeType:'image/png',buffer:coverBytes});
   await media.locator('[data-media-upload-queue]').waitFor({state:'hidden'});
   await media.locator('[data-library-details][data-current-id]').waitFor();
   const coverPanel = media.locator('[data-library-details] details').filter({has:page.locator('[data-cover-results]')});
@@ -72,6 +75,7 @@ try {
   await recordHistory.locator('summary').click();
   await recordHistory.locator('[data-record-undo]').click();
   await recordHistory.getByText('Rückgängig gemacht',{exact:false}).waitFor();
+  console.log('Cover upload, local links and classification undo passed.');
   await content.locator('[name=q]').fill('');
   await media.locator('[data-library-content-toggle]').click();
   await media.locator('[data-media-upload-input]').setInputFiles({name:fileName,mimeType:'text/plain',buffer:Buffer.from('Original from browser')});
@@ -136,7 +140,7 @@ try {
   const lifecycle=media.locator('[data-content-lifecycle]');
   await lifecycle.locator('[data-choose-role=cover]').click();
   const replacement=page.waitForResponse(r=>r.url().endsWith('/assets')&&r.request().method()==='POST');
-  await lifecycle.locator('[data-replacement-upload]').setInputFiles({name:'replacement-cover.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==','base64')});
+  await lifecycle.locator('[data-replacement-upload]').setInputFiles({name:'replacement-cover.png',mimeType:'image/png',buffer:coverBytes});
   assert((await replacement).ok());
   await media.locator('[data-content-details] img.media-library-preview').waitFor();
   page.once('dialog',d=>d.accept());await lifecycle.locator('[data-trash]').click();
@@ -162,9 +166,21 @@ try {
   await media.locator('[data-content-details] p.content-original-text').getByText('Original description').waitFor();
   await fs.mkdir('tests/artifacts',{recursive:true});
   await page.screenshot({path:'tests/artifacts/import-library-desktop.png'});
+  console.log('Library assignments, replacements, trash and playlists passed.');
   await media.locator('[data-window-action="close"]').click();
   await page.locator('[data-open-app="imports"]').first().click();
   const imports = page.locator('.os-window[data-app-id="imports"]');
+  await imports.locator('[data-import-rules] summary').click();
+  const rulesForm=imports.locator('[data-import-rules-form]');
+  await rulesForm.locator('[name=enabled]').check();
+  await rulesForm.locator('[name=min_seconds]').fill('14');
+  await rulesForm.locator('[name=max_seconds]').fill('16');
+  await rulesForm.locator('[name=target_profile]').selectOption('posts');
+  const rulesSaved=page.waitForResponse(response=>response.url().endsWith('/desktop/settings')&&response.request().method()==='PUT');
+  await rulesForm.locator('[type=submit]').click();
+  assert((await rulesSaved).ok());
+  await rulesForm.locator('[data-import-rules-message]').getByText('Import-Regel gespeichert.',{exact:true}).waitFor();
+  await imports.locator('[data-import-rules] summary').click();
   await imports.locator('[name=method][value=existing]').check();
   await imports.locator('[data-import-existing]').selectOption('youtube');
   await imports.locator('[data-import-start]').click();
@@ -185,6 +201,9 @@ try {
   await page.waitForTimeout(200); // Desktop saves its reopened window before a real page reload.
   await page.reload();
   await imports.locator('[data-import-center][data-initialized=true]').waitFor();
+  assert.equal(await imports.locator('[data-import-rules-form] [name=min_seconds]').inputValue(),'14');
+  assert.equal(await imports.locator('[data-import-rules-form] [name=max_seconds]').inputValue(),'16');
+  assert.equal(await imports.locator('[data-import-rules-form] [name=target_profile]').inputValue(),'posts');
   await imports.locator('[data-import-status]').getByText('aktiv auf dem Server',{exact:false}).waitFor();
   await imports.locator('[data-open-import-history]').click();
   await queuedRun.getByText('Angehalten',{exact:true}).waitFor();
@@ -242,13 +261,17 @@ try {
   await imports.locator('[name=method][value=existing]').check();
   await page.screenshot({path:'tests/artifacts/import-center-desktop.png'});
   await imports.locator('[data-window-action="close"]').click();
-  for (const section of ['videos','posts','community']) {
+  for (const section of ['videos','posts']) {
     await page.locator(`[data-open-app="${section}"]`).first().click();
     const win = page.locator(`.os-window[data-app-id="${section}"]`);
     await win.locator('[data-content-summary]').getByText('Inhalte').waitFor();
     assert.equal(await win.locator('.os-window-content h1, .os-window-content h2').count(),0);
     await win.locator('[data-window-action="close"]').click();
   }
+  await page.locator('[data-open-app="community"]').first().click();
+  const community=page.locator('.os-window[data-app-id="community"]');
+  await community.locator('[data-community-moderation]').waitFor();
+  await community.locator('[data-window-action="close"]').click();
   await page.setViewportSize({width:390,height:844});
   await page.locator('[data-open-app="media"]').first().click();
   await page.locator('.os-window[data-app-id="media"] [data-library-content-toggle]').click();
@@ -257,6 +280,11 @@ try {
   await page.screenshot({path:'tests/artifacts/import-library-mobile.png'});
   assert.deepEqual(errors,[]);
   console.log('Import Center browser workflow passed.');
+} catch (error) {
+  console.error('Import workflow failed:', await page?.locator('[data-media-upload-queue]').first().innerText().catch(()=>''), await page?.locator('[data-media-upload-message]').first().innerText().catch(()=>''));
+  await fs.mkdir('tests/artifacts',{recursive:true});
+  await page?.screenshot({path:'tests/artifacts/import-workflow-failure.png'}).catch(()=>{});
+  throw error;
 } finally {
   await browser?.close(); server.kill();
 }

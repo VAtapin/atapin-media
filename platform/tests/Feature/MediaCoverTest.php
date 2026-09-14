@@ -43,7 +43,8 @@ class MediaCoverTest extends TestCase
         $this->getJson('/desktop/media/library?kind=video')->assertOk()->assertJsonPath('data.0.thumbnail_url',route('media.preview',$image));
         $this->getJson('/desktop/media/'.$image->id.'/details')->assertOk()->assertJsonPath('usages.0.title','Original title');
         $this->assertSame('Original description',$record->fresh()->body); $this->assertDatabaseCount('media',2);
-        $this->assertDatabaseCount('media_usages',1); $this->assertTrue(Storage::disk('local')->exists($image->path));
+        $this->assertDatabaseCount('media_usages',1); $image->refresh();
+        $this->assertTrue(Storage::disk($image->disk)->exists($image->path));
     }
     public function test_cover_assignment_validates_types_permissions_and_existing_parent(): void
     {

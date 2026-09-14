@@ -50,6 +50,29 @@ class TakeoutImportTest extends TestCase
     {
         $run=ImportRun::create(['source'=>'youtube-takeout','source_options'=>['batch'=>$this->batch,'expected_parts'=>2],'target_profile'=>'mixed']);app(ImportCenter::class)->run($run);return $run->fresh();
     }
+    public function test_configured_duration_rule_imports_a_complete_clip_as_a_post_without_ai(): void
+    {
+        app(\App\Services\Settings::class)->update(['import_duration_rule'=>['enabled'=>true,'min_seconds'=>14,'max_seconds'=>16,'target_profile'=>'posts']]);
+        $this->zip(1,[
+            'Video-Metadaten/Videos.csv'=>$this->csv(['Video-ID','Videotitel (Original)','Ungefähre Dauer (ms)'],[['first000001','First',15000]]),
+            'Kommentare/Kommentare.csv'=>$this->csv(['Kommentar-ID','Video-ID','Kommentartext'],[['C1','first000001','First comment']]),
+            'Playlists/Playlists.csv'=>$this->csv(['Playlist-ID','Playlist-Titel (Original)'],[['PL1','Ordered']]),
+            'Playlists/Ordered-Videos.csv'=>$this->csv(['Video-ID'],[['first000001']]),
+        ]);
+        $this->zip(2,['Videos/First.mp4'=>pack('N',24).'ftypisom'.str_repeat("\0",12),'Videos/First.de.srt'=>"1\n00:00:00,000 --> 00:00:01,000\nFirst\n"]);
+        // No Google HTML manifest in this fixture: imported content is complete, archive verification is partial.
+        $this->assertSame('partial',$this->runImport()->status);
+        $record=SourceRecord::where('source_id','first000001')->firstOrFail();
+        $this->assertSame('post',$record->kind);$this->assertSame('unsorted',$record->status);
+        $this->assertCount(2,$record->metadata['media_ids']);
+        foreach($record->metadata['media_ids'] as $id){$media=Media::findOrFail($id);$this->assertSame('media-canonical',$media->disk);$this->assertTrue(Storage::disk($media->disk)->exists($media->path));}
+        $this->assertDatabaseHas('source_records',['source_id'=>'comment:first000001:C1']);
+        $this->assertDatabaseHas('collection_items',['source_id'=>'first000001','source_record_id'=>$record->id]);
+        $record->update(['kind'=>'video','metadata'=>[...$record->metadata,'classification_origin'=>'manual']]);
+        $this->assertSame('partial',$this->runImport()->status);
+        $this->assertSame('video',$record->fresh()->kind);
+    }
+
     public function test_each_video_commits_with_its_children_before_the_next_binary_and_retry_is_complete(): void
     {
         $this->zip(1,[

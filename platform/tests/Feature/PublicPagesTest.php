@@ -80,14 +80,18 @@ class PublicPagesTest extends TestCase
     public function test_live_player_starts_mediamtx_cookie_check_inside_proxy_prefix(): void
     {
         $live=$this->record('video',['public_section'=>'live','live_stream_enabled'=>true,'live_status'=>'live']);
-        $this->get('/live?event='.$live->id)->assertOk()->assertSee('/_live/live/?cookieCheck=1',false)->assertSee('Real database body')->assertDontSee('Der Livestream wird vorbereitet',false)->assertDontSee('name="body"',false);
+        $response=$this->get('/live?event='.$live->id)->assertOk()->assertSee('/_live/live/?cookieCheck=1',false)->assertSee('Real database body')->assertSee('name="body"',false);
+        $dom=new \DOMDocument();@$dom->loadHTML($response->getContent());$this->assertStringNotContainsString('Der Livestream wird vorbereitet',$dom->getElementsByTagName('main')->item(0)->textContent);
+        $response->assertDontSee('data-community-action',false);
     }
     public function test_scheduled_live_player_shows_event_details_and_cover_instead_of_technical_fallback(): void
     {
         Storage::fake('local');Storage::disk('local')->put('posters/next.jpg','poster');
         $poster=Media::create(['source'=>'upload','source_id'=>'next-poster','title'=>'Next poster','original_name'=>'next.jpg','disk'=>'local','path'=>'posters/next.jpg','kind'=>'image','mime'=>'image/jpeg','bytes'=>6,'status'=>'ready']);
         $live=$this->record('video',['public_section'=>'live','live_stream_enabled'=>true,'live_status'=>'scheduled','starts_at'=>'2026-09-20T18:30:00','cover_media_id'=>$poster->id,'media_ids'=>[$poster->id]]);
-        $this->get('/live?event='.$live->id)->assertOk()->assertSee('Database video')->assertSee('20.09.2026 18:30')->assertSee(route('public.media',[$live,$poster]),false)->assertSee('public-live-reminder-button',false)->assertSee('public-live-push-button',false)->assertDontSee(__('public.reminder_unavailable'))->assertDontSee(__('public.push_hint'))->assertDontSee('Bitte später erneut versuchen',false);
+        $response=$this->get('/live?event='.$live->id)->assertOk()->assertSee('Database video')->assertSee('20.09.2026 18:30')->assertSee(route('public.media',[$live,$poster]),false)->assertSee('public-live-reminder-button',false)->assertSee('public-live-push-button',false);
+        $dom=new \DOMDocument();@$dom->loadHTML($response->getContent());$visible=$dom->getElementsByTagName('main')->item(0)->textContent;
+        foreach([__('public.reminder_unavailable'),__('public.push_hint'),'Bitte später erneut versuchen'] as $label)$this->assertStringNotContainsString($label,$visible);
     }
     public function test_ended_live_uses_the_branded_fallback_instead_of_an_empty_video_player(): void
     {
@@ -112,13 +116,29 @@ class PublicPagesTest extends TestCase
             $this->assertSame('scheduled',$future->fresh()->metadata['live_status']);
         } finally { Carbon::setTestNow(); }
     }
+    public function test_guest_views_deduplicate_a_persistent_session_and_count_other_sessions(): void
+    {
+        $record=$this->record();$counter=app(\App\Services\PublicViewCounter::class);
+        $request=\Illuminate\Http\Request::create('/','POST');
+        $session=new \Illuminate\Session\Store('test',new \Illuminate\Session\ArraySessionHandler(120));
+        $session->start();$request->setLaravelSession($session);
+        $this->assertSame(1,$counter->record($record,$request));
+        $this->assertSame(1,$counter->record($record,$request));
+        $session->migrate();$this->assertSame(2,$counter->record($record,$request));
+    }
+
     public function test_video_views_are_counted_once_and_popularity_uses_real_views(): void
     {
         $oldMetadata=$this->record('video',['views'=>999]);
+        Storage::fake('local');Storage::disk('local')->put('originals/views.mp4',pack('N',24).'ftypisom'.str_repeat("\0",12));
+        $media=Media::create(['source'=>'upload','source_id'=>'views-file','title'=>'Video','original_name'=>'views.mp4','kind'=>'video','mime'=>'video/mp4','bytes'=>24,'disk'=>'local','path'=>'originals/views.mp4','status'=>'ready']);
+        $oldMetadata->update(['metadata'=>[...$oldMetadata->metadata,'media_ids'=>[$media->id]]]);
         $popular=$this->record('video',['views'=>1]);
         foreach(['visitor-a','visitor-b','visitor-c'] as $hash)PublicContentView::create(['record_id'=>$popular->id,'visitor_hash'=>hash('sha256',$hash),'viewed_on'=>now()->toDateString()]);
         $this->get('/videos?sort=popular')->assertOk()->assertViewHas('popular',fn($items)=>$items->first()['id']===$popular->id&&$items->first()['views']===3);
         $url=route('public.record-view',$oldMetadata);
+        // Laravel's array session driver does not persist browser cookies between test requests.
+        $this->actingAs(User::factory()->create());
         $this->postJson($url)->assertOk()->assertJsonPath('views',1);
         $this->postJson($url)->assertOk()->assertJsonPath('views',1);
         $this->assertDatabaseCount('public_content_views',4);
@@ -160,6 +180,7 @@ class PublicPagesTest extends TestCase
     }
     public function test_comments_and_chat_are_saved_for_review_and_private_children_stay_hidden(): void
     {
+        \Illuminate\Support\Facades\Queue::fake();
         $record=$this->record('video',['public_section'=>'live']);$user=User::factory()->create();
         $this->actingAs($user)->postJson(route('public.record-state',$record),['action'=>'chat','body'=>'New chat message'])->assertOk();
         $chat=SourceRecord::where('kind','live_chat')->firstOrFail();$this->assertSame('needs_attention',$chat->status);

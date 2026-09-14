@@ -26,6 +26,7 @@ class ContentMetadataImporter
         $created=$record->wasRecentlyCreated;
         app(LocalMediaLinks::class)->repair($record);
         $record->refresh(); $record->wasRecentlyCreated=$created;
+        app(ImportSortingRules::class)->apply($record);
         if($run) $journal->record($run,$key,$title,$kind,$created?'added':(($before && $before->metadata===$record->metadata && $before->body===$record->body)?'duplicate':'merged'),(string)$record->id);
         return $record;
     }

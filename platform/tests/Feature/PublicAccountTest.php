@@ -10,7 +10,11 @@ class PublicAccountTest extends TestCase {
     use RefreshDatabase;
     public function test_staff_account_is_not_asked_to_verify_email_or_manage_media_in_public_account(): void {
         app(Access::class)->seed();$owner=User::factory()->create(['email_verified_at'=>null]);$owner->roles()->attach(Role::where('name','Owner')->firstOrFail());
-        Queue::fake();$this->actingAs($owner)->get('/konto')->assertOk()->assertSee('Media Desktop öffnen')->assertDontSee('Meine Merkliste')->assertDontSee('Browser-Erinnerungen')->assertDontSee('Profil und Passwort')->assertDontSee('Bestätigung ausstehend')->assertDontSee('Bestätigung erneut senden');
+        Queue::fake();$response=$this->actingAs($owner)->get('/konto')->assertOk()->assertSee('Media Desktop öffnen')->assertViewHas('isStaffAccount',true);
+        $dom=new \DOMDocument();@$dom->loadHTML($response->getContent());$visible=$dom->getElementsByTagName('main')->item(0)->textContent;
+        // Global JS translations are not visible account sections.
+        foreach(['Meine Merkliste','Browser-Erinnerungen','Profil und Passwort','Bestätigung ausstehend','Bestätigung erneut senden'] as $label)$this->assertStringNotContainsString($label,$visible);
+        $response->assertDontSee('action="'.route('public.account-profile').'"',false);
         $this->post('/konto/verify')->assertRedirect();$this->patch('/konto/profile',['name'=>'Changed','current_password'=>'password','password'=>'new-password-123','password_confirmation'=>'new-password-123'])->assertNotFound();Queue::assertNotPushed(VerifyPublicAccount::class);
     }
     public function test_staff_cannot_create_public_content_states(): void {

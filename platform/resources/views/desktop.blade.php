@@ -37,10 +37,10 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Desktop · {{ config('platform.brand') }}</title>
     <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=4"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3"><link rel="stylesheet" href="/assets/desktop-settings.css?v=3">
-    <link rel="stylesheet" href="/assets/desktop-app.css?v=1"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=6"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=2"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=2"><link rel="stylesheet" href="/assets/desktop-community.css?v=3"><link rel="stylesheet" href="/assets/desktop-publishing.css?v=1">
+    <link rel="stylesheet" href="/assets/desktop-app.css?v=1"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=7"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=3"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=2"><link rel="stylesheet" href="/assets/desktop-community.css?v=3"><link rel="stylesheet" href="/assets/desktop-publishing.css?v=1">
     <script src="/assets/desktop-shortcuts.js?v=3" defer></script>
     <link rel="stylesheet" href="/assets/desktop-import-workflow.css?v=3">
-    <script src="/assets/desktop-os.js?v=13" defer></script><script src="/assets/settings-tabs.js?v=6" defer></script><script src="/assets/desktop-media-library.js?v=13" defer></script><script src="/assets/desktop-import-center.js?v=9" defer></script><script src="/assets/desktop-live-studio.js?v=3" defer></script><script src="/assets/desktop-publishing.js?v=1" defer></script>
+    <script src="/assets/desktop-os.js?v=13" defer></script><script src="/assets/settings-tabs.js?v=6" defer></script><script src="/assets/desktop-media-library.js?v=13" defer></script><script src="/assets/desktop-import-center.js?v=10" defer></script><script src="/assets/desktop-live-studio.js?v=3" defer></script><script src="/assets/desktop-publishing.js?v=1" defer></script>
 </head>
 <body class="os-body">
 <main class="os-desktop" data-desktop data-storage-key="atapin.desktop.{{ auth()->id() }}.v1"

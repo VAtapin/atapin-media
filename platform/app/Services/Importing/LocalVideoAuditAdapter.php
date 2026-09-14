@@ -17,7 +17,7 @@ class LocalVideoAuditAdapter implements ImportAdapter
         foreach(Media::where('kind','video')->with('originals')->orderBy('id')->cursor() as $media) {
             app(ImportProgress::class)->checkpoint($run,'video_check');
             $key='video-check:'.$media->id; if($journal->done($run,$key))continue;
-            $outcome='available'; $data=['browser_status'=>'not_checked','preview_url'=>route('media.preview',$media,false),'download_url'=>route('media.download',$media,false)];
+            $outcome='available'; $data=['browser_status'=>'not_checked','preview_url'=>$media->publicUrl()??route('media.preview',$media,false),'download_url'=>$media->publicUrl()??route('media.download',$media,false)];
             try {
                 $location=app(MediaOriginalLocator::class)->find($media);
                 if(!$location){$outcome='missing';$data['reason']=__('imports.audit_missing');}

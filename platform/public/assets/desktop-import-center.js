@@ -22,6 +22,16 @@
     if (!root || root.dataset.initialized) return;
     root.dataset.initialized = 'true';
     const t = window.desktopImportLabels;
+    const rulesForm=root.querySelector('[data-import-rules-form]');
+    rulesForm?.addEventListener('submit',async event=>{
+      event.preventDefault();const button=rulesForm.querySelector('[type=submit]'),status=rulesForm.querySelector('[data-import-rules-message]');button.disabled=true;
+      try {
+        const values=new FormData(rulesForm);
+        await request(rulesForm.getAttribute('action'),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({section:'imports',import_duration_rule:{
+          enabled:rulesForm.querySelector('[name=enabled]').checked,min_seconds:Number(values.get('min_seconds')),max_seconds:Number(values.get('max_seconds')),target_profile:values.get('target_profile')}})});
+        status.textContent=t.duration_rule_saved;status.classList.remove('is-error');
+      }catch(error){status.textContent=error.message;status.classList.add('is-error');}finally{button.disabled=false;}
+    });
     const form = root.querySelector('[data-import-form]');
     const message = root.querySelector('[data-import-message]');
     const start = root.querySelector('[data-import-start]');

@@ -1,5 +1,8 @@
 <?php
 return [
+    'duration_rule_title'=>'Import-Einstellungen: Einordnung nach Dauer', 'duration_rule_enabled'=>'Regel automatisch auf neue Video-Inhalte anwenden',
+    'duration_rule_min'=>'Mindestdauer (Sekunden)', 'duration_rule_max'=>'Höchstdauer (Sekunden)', 'duration_rule_save'=>'Regel speichern', 'duration_rule_saved'=>'Import-Regel gespeichert.',
+    'duration_rule_hint'=>'Video-Inhalte innerhalb dieses Bereichs werden beim Import dem gewählten Zielbereich zugeordnet, ohne KI-Kosten. Angenommene oder manuell bearbeitete Inhalte bleiben unverändert. Bereits laufende Importe zuerst beenden.',
     'public_published'=>'Auf der Website veröffentlichen',
     'public_section'=>'Bereich auf der Website','public_section_videos'=>'Videos','public_section_beitraege'=>'Beiträge',
     'public_section_podcast'=>'Podcast','public_section_live'=>'Live','public_section_community'=>'Community',
@@ -137,7 +140,7 @@ return [
     'target_mixed' => 'Nach Inhalt erkennen',
     'target_hint' => 'Im Normalfall unverändert lassen. Die Originale bleiben in der Bibliothek; Inhalte werden zusätzlich dem passenden Bereich zugeordnet.',
     'notes_label' => 'Eigene Notiz',
-    'safety_note' => 'Neue Materialien starten unsortiert und privat. Importieren bedeutet nicht veröffentlichen.',
+    'safety_note' => 'Neue Materialien starten unsortiert und werden nicht automatisch auf der Website veröffentlicht. Kostenlose Video-, Audio-, Bild- und Untertiteldateien sind direkt öffentlich abrufbar; Dokumente und Archive bleiben privat.',
     'start' => 'Import starten',
     'register_existing' => 'In der Bibliothek sichtbar machen',
     'starting' => 'Import wird vorbereitet …',

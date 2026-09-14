@@ -63,7 +63,8 @@ class UserController extends Controller
         $user->fill(['name'=>$data['name'],'email'=>$data['email']]);
         if (!empty($data['password'])) $user->password = $data['password'];
         $user->save();
-        $profile = $user->profile ?: new UserProfile;
+        // The authenticated model can retain a cached null relation across requests.
+        $profile = $user->profile()->firstOrNew();
         $profile->user_id = $user->id;
         $existingLinks = $profile->social_links ?? [];
         $profileValues = [
@@ -82,6 +83,7 @@ class UserController extends Controller
         ];
         if ($request->hasFile('avatar')) $profileValues['avatar_path'] = $request->file('avatar')->store('profiles/avatars', 'local');
         $profile->fill($profileValues); $profile->save();
+        $user->setRelation('profile', $profile);
         $audit->record('user.profile_updated',(string) $user->id,['password_changed'=>!empty($data['password']),'avatar_changed'=>$request->hasFile('avatar')]);
         if ($request->expectsJson()) return response()->json(['status'=>'saved','user_id'=>$user->id,'name'=>$user->name,'email'=>$user->email,'avatar_url'=>$profile->avatar_path ? route('profile.avatar').'?v='.$profile->updated_at->timestamp : null]);
         return back()->with('status', __('ui.saved'));

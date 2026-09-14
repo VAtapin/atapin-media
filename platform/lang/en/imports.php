@@ -1,5 +1,8 @@
 <?php
 return [
+    'duration_rule_title'=>'Import settings: classify by duration', 'duration_rule_enabled'=>'Apply this rule automatically to new video content',
+    'duration_rule_min'=>'Minimum duration (seconds)', 'duration_rule_max'=>'Maximum duration (seconds)', 'duration_rule_save'=>'Save rule', 'duration_rule_saved'=>'Import rule saved.',
+    'duration_rule_hint'=>'Video content in this range is assigned to the selected section during import without AI costs. Accepted or manually edited content stays unchanged. Finish running imports before changing the rule.',
     'public_published'=>'Publish on the website',
     'public_section'=>'Website section','public_section_videos'=>'Videos','public_section_beitraege'=>'Articles',
     'public_section_podcast'=>'Podcast','public_section_live'=>'Live','public_section_community'=>'Community',
@@ -134,7 +137,7 @@ return [
     'target_mixed' => 'Detect from content',
     'target_hint' => 'Normally leave unchanged. Originals stay in the library; content also appears in the appropriate section.',
     'notes_label' => 'Your note',
-    'safety_note' => 'New materials start unsorted and private. Importing does not publish them.',
+    'safety_note' => 'New materials start unsorted and are not automatically published on the website. Free video, audio, image and subtitle files are directly public; documents and archives stay private.',
     'start' => 'Start import',
     'register_existing' => 'Make visible in the library',
     'starting' => 'Preparing import …',

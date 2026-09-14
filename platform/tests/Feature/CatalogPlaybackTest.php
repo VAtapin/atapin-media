@@ -71,6 +71,20 @@ class CatalogPlaybackTest extends TestCase
         $this->assertSame('failed',ImportItem::findOrFail($id)->metadata['browser_status']);
         $other=ImportRun::create(['source'=>'local-video-check']);$this->postJson('/desktop/imports/'.$other->id.'/items/'.$id.'/browser',['status'=>'playable'])->assertNotFound();
     }
+    public function test_audit_uses_direct_urls_for_canonical_public_video(): void
+    {
+        Storage::fake('media-canonical');$path=hash('sha256','video').'.mp4';
+        Storage::disk('media-canonical')->put($path,'video');
+        $media=Media::create(['source'=>'upload','source_id'=>'canonical-audit','title'=>'Video','original_name'=>$path,'kind'=>'video','mime'=>'video/mp4','bytes'=>5,'disk'=>'media-canonical','path'=>$path,'status'=>'ready']);
+        $this->mock(\App\Services\MediaTechnicalProbe::class)->shouldReceive('inspect')->once()->andReturn(['width'=>640,'height'=>360,'duration'=>4]);
+        $run=ImportRun::create(['source'=>'local-video-check','status'=>'running']);
+        app(\App\Services\Importing\LocalVideoAuditAdapter::class)->import($run);
+        $item=ImportItem::where('import_run_id',$run->id)->where('subject_id',$media->id)->firstOrFail();
+        $this->assertSame('available',$item->outcome);
+        $this->assertSame($media->publicUrl(),$item->metadata['preview_url']);
+        $this->assertSame($media->publicUrl(),$item->metadata['download_url']);
+    }
+
     public function test_post_children_are_grouped_under_the_original_post(): void
     {
         $post=SourceRecord::create(['source'=>'youtube','source_id'=>'UgOriginal','kind'=>'post','title'=>'Original','status'=>'unsorted','metadata'=>[]]);

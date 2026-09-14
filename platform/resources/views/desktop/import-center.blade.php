@@ -3,6 +3,20 @@
     @can('content.edit')<button type="button" class="desktop-button" data-catalog-reset>{{ __('imports.reset_start') }}</button>@endcan</div>
     <div class="import-center-status" data-import-status role="status">{{ __('imports.history_loading') }}</div>
     <p class="import-worker-status" data-import-worker-status role="status" hidden></p>
+    @can('settings.manage')
+    @php($durationRule=app(\App\Services\Importing\ImportSortingRules::class)->durationRule())
+    <details class="import-advanced" data-import-rules>
+        <summary>{{ __('imports.duration_rule_title') }}</summary>
+        <form action="{{ route('settings') }}" method="post" data-import-rules-form>@csrf @method('PUT')
+            <label><input type="checkbox" name="enabled" @checked($durationRule['enabled'])>{{ __('imports.duration_rule_enabled') }}</label>
+            <label><span>{{ __('imports.duration_rule_min') }}</span><input type="number" name="min_seconds" min="0.001" max="86400" step="0.001" value="{{ $durationRule['min_seconds'] }}" required></label>
+            <label><span>{{ __('imports.duration_rule_max') }}</span><input type="number" name="max_seconds" min="0.001" max="86400" step="0.001" value="{{ $durationRule['max_seconds'] }}" required></label>
+            <label><span>{{ __('imports.target_profile') }}</span><select name="target_profile">@foreach(['posts','videos','shorts'] as $target)<option value="{{ $target }}" @selected($durationRule['target_profile']===$target)>{{ __('imports.target_'.$target) }}</option>@endforeach</select></label>
+            <p>{{ __('imports.duration_rule_hint') }}</p>
+            <button type="submit" class="desktop-button">{{ __('imports.duration_rule_save') }}</button><p role="status" data-import-rules-message></p>
+        </form>
+    </details>
+    @endcan
     <form class="import-center-form" data-import-form>
         <fieldset class="import-methods">
             <legend>{{ __('imports.choose_method') }}</legend>
