@@ -101,6 +101,9 @@
 .public-breadcrumb{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;padding:0 0 14px;line-height:1.4;overflow-wrap:anywhere}
 .public-breadcrumb span:last-child{max-width:100%}
 .public-main-player{width:100%;aspect-ratio:8/3;background:#112137;border-radius:10px;object-fit:contain;display:block}
+.public-video-player-shell{position:relative;width:100%;aspect-ratio:8/3;min-width:0;overflow:hidden;border-radius:10px;background:#10253a}
+.public-video-player-shell:before{content:'';position:absolute;z-index:0;inset:-24px;background-image:linear-gradient(90deg,#07192de8,#173750b8 50%,#07192de8),var(--video-poster,none);background-position:center;background-size:cover;filter:blur(22px) saturate(.8);opacity:.9;transform:scale(1.08)}
+.public-video-player-shell .public-main-player{position:relative;z-index:1;width:100%;height:100%;aspect-ratio:auto;background:transparent;border-radius:0;box-shadow:none}
 .public-main-audio{width:100%;margin:15px 0}
 .public-title-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:start;margin-top:10px}
 .public-title-actions h1{font-size:32px;margin:0 0 8px}
@@ -371,7 +374,7 @@
 .public-layout-detail .public-header-inner{background:transparent;border-radius:0}
 .public-layout-detail .public-detail-layout{margin-top:14px}
 .public-layout-detail .public-breadcrumb{color:#506889;padding-bottom:11px}
-.public-layout-detail .public-video-detail .public-main-player{aspect-ratio:2.3/1;box-shadow:0 8px 24px #132b4d18}
+.public-layout-detail .public-video-detail .public-video-player-shell{aspect-ratio:2.3/1;box-shadow:0 8px 24px #132b4d18}
 .public-layout-detail .public-video-detail .public-title-actions{margin-top:13px}
 .public-layout-detail .public-video-detail .public-title-actions h1{font-size:36px}
 .public-layout-detail .public-article-detail{max-width:1480px}
@@ -391,7 +394,7 @@
  .public-layout-overview .public-category-hero,.public-layout-overview .public-category-hero-beitraege,.public-layout-overview .public-category-hero-buecher,.public-layout-overview .public-category-hero-podcast,.public-layout-overview .public-category-hero-community{height:auto;padding-top:91px}
  .public-layout-detail{background-image:linear-gradient(180deg,#fff 0,#fff 720px),none}
  .public-layout-detail .public-article-cover{height:220px}
- .public-layout-detail .public-video-detail .public-main-player{aspect-ratio:16/9}
+ .public-layout-detail .public-video-detail .public-video-player-shell{aspect-ratio:16/9}
  .public-layout-detail .public-book-intro{min-height:0;grid-template-columns:1fr}
 }
 

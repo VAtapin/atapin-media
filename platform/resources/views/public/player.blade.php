@@ -6,6 +6,7 @@
 @php($liveStart=$isLiveEvent?($record->metadata['starts_at']??null):null)
 @php($liveDate=$liveStart?\Illuminate\Support\Carbon::parse($liveStart)->timezone(config('app.timezone'))->format('d.m.Y H:i'):null)
 @php($liveFallbackImage=$card['image']??($heroImage??config('public_ui.hero_image')))
+@php($videoPoster=$card['image']??($heroImage??config('public_ui.hero_image')))
 
 @if($record && ($record->metadata['live_stream_enabled']??false)&&($record->metadata['live_status']??'')==='live')
 <div class="public-live-player-shell" data-live-player data-hls-url="/_live/live/index.m3u8?cookieCheck=1">
@@ -13,15 +14,16 @@
 <div class="public-live-player-fallback" data-live-player-fallback><img src="{{ $liveFallbackImage }}" alt="{{ $record->title }}">@include('public.live-poster')</div>
 </div>
 @elseif($isEndedLive && $video)
-<video class="public-main-player" controls preload="none" poster="{{ $card['image']??$heroImage??config('public_ui.hero_image') }}" src="{{ $video->publicUrl() ?? route('public.media',[$record,$video]) }}"></video>
+<div class="public-video-player-shell" style="--video-poster:url('{{ $videoPoster }}')"><video class="public-main-player" controls preload="none" poster="{{ $videoPoster }}" src="{{ $video->publicUrl() ?? route('public.media',[$record,$video]) }}"></video></div>
 @elseif($isLiveEvent)
 <div class="public-live-player-fallback public-live-player-fallback-static"><img src="{{ $liveFallbackImage }}" alt="{{ $record->title }}">@include('public.live-poster')</div>
 @elseif($record && ($video||$audio))
 
-@if($video)<video class="public-main-player" controls preload="none"
-data-view-url="{{ route('public.record-view',$record) }}" poster="{{ $card['image']??$heroImage??config('public_ui.hero_image') }}"
+@if($video)<div class="public-video-player-shell" style="--video-poster:url('{{ $videoPoster }}')"><video class="public-main-player" controls preload="none"
+data-view-url="{{ route('public.record-view',$record) }}" poster="{{ $videoPoster }}"
 src="{{ $video->publicUrl() ?? route('public.media',[$record,$video]) }}" @auth data-progress-url="{{ route('public.record-state',$record) }}" data-resume="{{ $states['progress']['position']??0 }}" @endauth>
 </video>
+</div>
 @else<audio class="public-main-audio" @if(($record->metadata['public_section']??'')==='podcast') data-audio-view-url="{{ route('public.audio-play',$record) }}" @endif controls preload="metadata" src="{{ $audio->publicUrl() ?? route('public.media',[$record,$audio]) }}" @auth data-progress-url="{{ route('public.record-state',$record) }}" data-resume="{{ $states['progress']['position']??0 }}" @endauth>
 </audio>
 @endif

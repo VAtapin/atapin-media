@@ -45,6 +45,14 @@ class PublicWebsiteTest extends TestCase
         $response->assertSee('data-image-lightbox-dialog',false)->assertSee('data-image-lightbox',false)->assertSee('public-article-media-gallery',false)->assertSee('data-image-lightbox-next',false);
         $response->assertSee(route('public.media',[$record,$detail]),false);
     }
+    public function test_public_video_uses_a_poster_backdrop_behind_contained_playback(): void
+    {
+        Storage::fake('local');Storage::disk('local')->put('originals/portrait.mp4','video');
+        $video=Media::create(['title'=>'Portrait video','original_name'=>'portrait.mp4','kind'=>'video','mime'=>'video/mp4','bytes'=>5,'disk'=>'local','path'=>'originals/portrait.mp4','source'=>'upload','source_id'=>'portrait-video']);
+        $record=$this->record(['metadata'=>['public_published'=>true,'media_ids'=>[$video->id]]]);
+        $response=$this->get(app(PublicContent::class)->card($record)['url'])->assertOk();
+        $response->assertSee('public-video-player-shell',false)->assertSee('--video-poster:url(',false)->assertSee('poster=',false)->assertSee(route('public.media',[$record,$video]),false);
+    }
     public function test_public_media_requires_a_published_parent_and_exact_connection(): void
     {
         Storage::fake('local');Storage::disk('local')->put('originals/local.mp4','0123456789');
