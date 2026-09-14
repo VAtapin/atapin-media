@@ -54,5 +54,5 @@
 ## Последний связанный commit
 
 - Предшествующий commit: 4f9f855 — Move OAuth app credentials to admin settings; article lightbox ранее в bdb3516.
-- Последний функциональный commit: mobile Beiträge card layout; hash будет указан после commit/push. Предшествующий `7a851a2` — Add blurred article image backdrops; branch/upstream main → origin/main.
+- Последний функциональный commit: `7b4397c` — Improve mobile article card layout. Предшествующий `7a851a2` — Add blurred article image backdrops; branch/upstream main → origin/main.
 
