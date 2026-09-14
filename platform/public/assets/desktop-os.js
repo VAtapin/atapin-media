@@ -633,7 +633,13 @@
       });
       restoring = false;
     }
-    const requestedApp = new URLSearchParams(window.location.search).get('open');
+    const entryUrl = new URL(window.location.href);
+    const requestedApp = entryUrl.searchParams.get('open');
+    if (entryUrl.searchParams.has('open')) {
+      // Deep links open an app once; subsequent visits restore saved windows.
+      entryUrl.searchParams.delete('open');
+      window.history.replaceState(window.history.state, '', entryUrl.href);
+    }
     if (requestedApp) {
       const trigger = programTrigger(requestedApp);
       if (trigger) openProgram(trigger);

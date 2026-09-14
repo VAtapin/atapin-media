@@ -4,6 +4,7 @@
 
 ## Реализовано
 
+- Media Desktop deeplink `?open=...` выполняется один раз и удаляется из текущего адреса без перезагрузки; остальные параметры и fragment сохраняются. Закрытая Community больше не открывается повторно при reload/повторном входе; сохранённые открытые окна и новые явные deeplinks продолжают работать. Версия desktop-os.js обновлена для browser cache.
 - Основа: Laravel 13 / PHP 8.4, авторизация, пользователи и RBAC, настройки с зашифрованными секретами, аудит; backend проектов, задач и календаря.
 - Media Desktop: 19 программ, окна и Snap Layouts, сохранение персонального расположения, четыре approved-набора значков, общие настройки оформления и отдельные профили пользователей. Einstellungen — native-интерфейс с локализованными редакционными текстами и управлением пользователями. Live Studio подключён к desktop-окну через JSON API: список, создание, редактирование, публикация, OBS-вход, ротация ключа и получение RTMPS-данных больше не требуют отдельной HTML-ссылки.
 - Media Library: цельные материалы и отдельная файловая галерея; поиск, фильтры, protected preview/download с HTTP Range, resumable upload папок/файлов с pause/resume/stop, теги, коллекции, редактирование плейлистов и массовые действия. Удаление материалов обратимое; замена cover/video/attachments не перезаписывает originals и чужие связи. Проверка квоты resumable upload совместима с MariaDB: зарезервированные байты считаются без сырого выражения с колонкой `offset`.
@@ -78,6 +79,7 @@
 
 Локальные проверки, кроме отдельно указанного read-only nginx-теста.
 
+- Desktop window browser на Edge passed: Community deeplink → закрытие → reload → logout/login, восстановление открытого окна, Close all, новый deeplink Videos, неизвестный app ID, сохранение других query/hash и отсутствие JS page errors. Проверка добавлена в CI. `node --check` desktop-os.js/desktop-window-browser.mjs и `git diff --check` passed. Production и полный Laravel suite в этом узком JS-блоке не запускались.
 - Read-only review готовности импорта: повторно просмотрены UI→queue→checkpoints→целый объект→canonical media и автоматическое правило длительности. 6 лёгких tests / 56 assertions passed за 0.85 sec (ImportClassificationRulesTest и полный fixture Takeout→Beiträge). Блокирующих ошибок в этом пути не обнаружено; production permissions/free space/queue и полный 56 GB не проверялись. Запуск уже есть в Import Center: Google Takeout vom Server → Bereits entpackter Export: Takeout → Import starten; длительность предварительно сохранить 14–16 → Beiträge, основной target оставить mixed. Переносить Takeout вручную не нужно.
 
 - Этот блок: полный Laravel SQLite через PHP 8.4.25 — 220 tests / 1636 assertions passed на совместном дереве; после добавления регрессий — 62 целевых / 605 assertions и 12 CatalogPlayback/TakeoutOriginalAccess / 66 assertions. Проверены настройки/валидация/RBAC, границы длительности, полный объект Takeout→Beiträge, сохранение ручных правок, гостевые session views и прямой URL audit-отчёта. MySQL локально не запускался; остаётся CI-проверкой.
@@ -98,5 +100,5 @@
 
 - Предыдущие связанные commits: `e40cb5a` — Serve physical public media and import complete Takeout objects; `7ca7003` — Add Manna fifteen-second post classification guidance; `1b0cae2` — Fix publication retries and live relay.
 - Текущая ветка и upstream: main → origin/main.
-- Последние implementation commits: `2ed3195` — Configure automatic import sorting and pass pre-import checks; `704329a` — Unify public overview hero layout. Текущий блок: Document import readiness review; изменяется только подтверждённый статус, без application-кода/конфигурации/БД. Deployment для review не требуется.
+- Последние связанные commits: `2ed3195` — Configure automatic import sorting and pass pre-import checks; `704329a` — Unify public overview hero layout; `79de793` — Document import readiness review. Текущий блок: Consume desktop deep links after opening apps; deployment требует получения кода и view:clear из-за новой версии JS в Blade, без migration/изменения .env/очередей.
 
