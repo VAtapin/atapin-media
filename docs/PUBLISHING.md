@@ -60,6 +60,18 @@ Imported YouTube mappings are protected from ordinary Website metadata/visibilit
 
 ## Configuration and operations
 
+### Planned connection-form audit — not implemented
+
+The owner requested planning only; do not change forms, credentials, integrations or webhook registration until implementation is explicitly requested.
+
+- Audit every Social Media form: YouTube, Facebook, Instagram, Telegram, X, TikTok and LinkedIn. Compare the current connector/authentication flow with official provider documentation. Classify each field as required, optional, obtained automatically, server-level application configuration, or unused. Distinguish public profile links from publication destination IDs and authentication credentials.
+- Reuse the existing connection editor and provider-specific configuration. Check field visibility on initial open, provider switch, existing-connection editing and reload, including CSS overriding `hidden`. Hidden/irrelevant fields must not be submitted or accepted; server-side validation must match the selected provider rather than the current shared field whitelist. Do not carry unsaved credentials between providers. Preserve saved secrets when left blank and unrelated credentials during partial updates.
+- Telegram outbound requires Bot Token and Chat-ID; the public URL is optional metadata. OAuth fields and Webhook Secret are not used by this connector. Add concise localized guidance explaining bot versus channel, where to obtain each value and required destination permissions. Where a supported API can resolve destination details safely, avoid duplicate manual entry.
+- For YouTube/X, align the editor with existing OAuth connection buttons and server-side app configuration; do not ask an editor to manually supply tokens that the implemented OAuth flow obtains. Check Facebook/Instagram fields against the actual supported Page/account/token workflow. TikTok/LinkedIn must clearly distinguish saved profile/configuration from an unavailable publishing connector.
+- Show webhook configuration only for an implemented incoming-event workflow. Distinguish a locally chosen verification token from a provider-issued signing secret or application secret. Generate locally controlled webhook secrets automatically with secure randomness, encrypted storage and explicit rotation; keep them stable on normal saves. Do not fabricate provider-issued secrets or replace them with a generated value. For Telegram, `setWebhook.secret_token` can be chosen locally, but the current outbound connector needs no webhook or secret; do not add an inbound subsystem merely to justify a field. See the [Telegram webhook contract](https://core.telegram.org/bots/api#setwebhook).
+- Provide German/English labels and short instructions per provider, clear required/optional indicators and a distinction between saved configuration and confirmed connection/publishing readiness. Any future connection check must be read-only, not a test publication or paid operation; do not register webhooks or change external settings without the corresponding requested workflow.
+- Before implementing, produce a provider/field matrix and a minimal change list covering Blade, existing JavaScript, validation and secret handling. Future acceptance checks should cover all providers, switching/reloading, secret preservation and no irrelevant fields on desktop/mobile. No tests, builds, account API requests or production changes are part of this planning task.
+
 Configure secrets on the server, never in Git/chat:
 
 - `YOUTUBE_OAUTH_CLIENT_ID`, `YOUTUBE_OAUTH_CLIENT_SECRET`, `YOUTUBE_OAUTH_REDIRECT_URI`: Google OAuth web app; callback normally `https://mannavomhimmel.de/desktop/publishing/youtube/callback`.
