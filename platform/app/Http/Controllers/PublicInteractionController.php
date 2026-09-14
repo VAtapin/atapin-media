@@ -16,9 +16,9 @@ class PublicInteractionController extends Controller
             abort_unless(in_array($record->kind,['video','short','post']),422);
             if($data['action']==='chat')abort_unless($content->section($record)==='live',422);
             $request->validate(['body'=>'required|string|min:2|max:5000']);app(PublicCommunitySubmission::class)->message($request->user(),$record,$data['body'],$data['action']==='chat'?'live_chat':'comment',$request->session()->getId());
-            return $this->result($request,__('public.comment_pending'));
+            return $this->result($request,__('public.comment_pending'),['kind'=>'message']);
         }
-        $participation->save($request->user(),$record,$data);return $this->result($request,__('public.saved'));
+        $participation->save($request->user(),$record,$data);return $this->result($request,__('public.saved'),['kind'=>'state','action'=>$data['action'],'enabled'=>$data['enabled']??null,'option'=>$data['option']??null]);
     }
     public function message(Request $request,SourceRecord $record,PublicContent $content,PublicCommunityModeration $moderation,PublicCommunitySubmission $submission)
     {
@@ -28,21 +28,23 @@ class PublicInteractionController extends Controller
         abort_unless(in_array($record->kind,['video','short','post']),422);
         $kind=$content->section($record)==='live'?'live_chat':'comment';
         $submission->message($request->user(),$record,$data['body'],$kind,$request->session()->getId());
-        return $this->result($request,__('public.message_sent'));
+        return $this->result($request,__('public.message_sent'),['kind'=>'message']);
     }
     public function book(Request $request,Product $product,PublicBooks $books,PublicParticipation $participation)
     {
         abort_unless($books->query()->whereKey($product->id)->exists(),404);
-        $participation->save($request->user(),$product,$this->data($request));return $this->result($request,__('public.saved'));
+        $data=$this->data($request);$participation->save($request->user(),$product,$data);return $this->result($request,__('public.saved'),['kind'=>'state','action'=>$data['action'],'enabled'=>$data['enabled']??null,'option'=>$data['option']??null]);
     }
     private function data(Request $request): array
     {
-        return $request->validate(['action'=>'required|in:bookmark,like,reminder,progress,vote,comment,chat','enabled'=>'sometimes|boolean',
+        $data=$request->validate(['action'=>'required|in:bookmark,like,reminder,progress,vote,comment,chat','enabled'=>'sometimes|boolean',
             'option'=>'required_if:action,vote|integer|min:0|max:100','position'=>'required_if:action,progress|integer|min:0|max:10000000','body'=>'nullable|string|max:5000']);
+        if(array_key_exists('enabled',$data))$data['enabled']=$request->boolean('enabled');
+        return $data;
     }
-    private function result(Request $request,string $message)
+    private function result(Request $request,string $message,array $extra=[])
     {
-        return $request->expectsJson()?response()->json(['message'=>$message]):back()->with('public_status',$message);
+        return $request->expectsJson()?response()->json(['message'=>$message,...$extra]):back()->with('public_status',$message);
     }
     private function blockedResult(Request $request)
     {

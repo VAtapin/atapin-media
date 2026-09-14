@@ -36,7 +36,7 @@
 <div id="panel-reviews" role="tabpanel" aria-labelledby="tab-reviews" hidden>
 @forelse($reviews as $review)<article><strong>{{ $review->user?->name }} · {{ $review->rating }}/5</strong><p>{{ $review->body }}</p></article>@empty @include('public.empty') @endforelse
 @if($reviews instanceof \Illuminate\Contracts\Pagination\LengthAwarePaginator){{ $reviews->links() }}@endif
-@if($bookRecord)@auth<form method="post" action="{{ route('public.book-review',$bookRecord) }}">@csrf<label>{{ __('public.review_rating') }}<select name="rating">@foreach(range(5,1) as $rating)<option>{{ $rating }}</option>@endforeach</select></label><label>{{ __('public.reviews') }}<textarea name="body" required maxlength="3000"></textarea></label><button class="public-button">{{ __('public.review_submit') }}</button></form>@else<a href="/login">{{ __('ui.login') }}</a>@endauth @endif</div>
+@if($bookRecord)@auth<form method="post" action="{{ route('public.book-review',$bookRecord) }}" data-public-ajax="review">@csrf<label>{{ __('public.review_rating') }}<select name="rating">@foreach(range(5,1) as $rating)<option>{{ $rating }}</option>@endforeach</select></label><label>{{ __('public.reviews') }}<textarea name="body" required maxlength="3000"></textarea></label><button class="public-button">{{ __('public.review_submit') }}</button></form>@else<a href="/login">{{ __('ui.login') }}</a>@endauth @endif</div>
 <div id="panel-related_materials" role="tabpanel" aria-labelledby="tab-related_materials" hidden>
 @foreach($assets as $asset)<p>
 <a href="{{ route('public.book-media',[$bookRecord,$asset]) }}">{{ $asset->title }} →</a>

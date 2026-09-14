@@ -38,10 +38,10 @@
 @include('public.empty')
 @endforelse</div>
  @if($record)
- @if($communityBlocked)<div class="public-chat-block-notice" role="alert">{{ __('public.chat_blocked_three') }}</div>@else<form method="post" action="{{ route('public.message-submit',$record) }}">@csrf
+ @if($communityBlocked)<div class="public-chat-block-notice" role="alert">{{ __('public.chat_blocked_three') }}</div>@else<form method="post" action="{{ route('public.message-submit',$record) }}" data-public-ajax="message">@csrf
  <label class="public-sr-only" for="chat-body">{{ __('public.write_message') }}</label>
  <input id="chat-body" name="body" required minlength="2" maxlength="5000" placeholder="{{ __('public.write_message') }}">
- <button type="submit" class="public-button public-chat-send">{{ __('public.send') }}</button>
+ <button type="submit" class="public-button public-chat-send">{{ __('public.send') }}</button><p data-public-form-message class="public-chat-feedback" role="status" hidden></p>
  </form><small>{{ __('public.chat_guest_hint') }}</small>@if(session('public_status'))<p class="public-chat-feedback public-feedback" data-auto-dismiss role="status"><span>{{ session('public_status') }}</span><button type="button" class="public-feedback-close" data-dismiss-feedback aria-label="{{ __('public.close') }}" title="{{ __('public.close') }}">×</button></p>@endif @endif
  @auth
  @if(app(\App\Services\PublicAiChat::class)->available())

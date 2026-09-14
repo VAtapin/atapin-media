@@ -59,6 +59,16 @@ class PublicCommunityTest extends TestCase
         Queue::assertPushed(ModeratePublicContent::class,2);
     }
 
+    public function test_ajax_live_chat_submission_returns_json_without_navigation(): void
+    {
+        Queue::fake();
+        $event=$this->event();
+
+        $this->postJson(route('public.message-submit',$event),['body'=>'Ajax chat message'])
+            ->assertOk()->assertJson(['kind'=>'message','message'=>__('public.message_sent')]);
+        $this->assertDatabaseHas('source_records',['kind'=>'live_chat','body'=>'Ajax chat message']);
+    }
+
     public function test_ai_allows_respectful_messages_and_publishes_them(): void
     {
         Queue::fake();$this->enableAi();Http::fake(['api.openai.com/*'=>Http::response($this->aiResponse('allow',0.02))]);

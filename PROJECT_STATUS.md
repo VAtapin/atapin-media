@@ -4,6 +4,7 @@
 
 ## Реализовано
 
+- Public-Website forms for live chat/comments, newsletter, contact, community, reviews and account state actions submit through AJAX without document reloads. Live chat clears only its input, shows the sender status and triggers an immediate heartbeat; JSON responses retain the normal redirect fallback for no-JavaScript clients. Public JS cache version is `v=9`.
 - Все девять overview-страниц используют общую рукописную надпись вне featured-медиа: справа на desktop, ниже медиа на ширине ≤1600 px. Главная сохраняет свою фразу; Videos, Beiträge, Bücher, Live, Podcast, Community, Über uns и Mission получили разные короткие христианские тексты de/en. Белое облачко усилено под основным hero-текстом и боковыми надписями, сохраняя мягкое затухание и яркий фон вне текста. CSS cache version обновлена.
 - Убраны маленькие декоративные стрелки у шести карточек разделов главной, в общих ссылках заголовков контентных панелей, Bücherregal и заглушках; ссылки сохранены. Стрелки кнопок действий и пагинации не менялись.
 - Назначение по длительности в Import Center использует существующие переводы imports.posts/videos/shorts вместо отсутствующих imports.target_*; список показывает Beiträge, Videos, Shorts, а не translation keys.
@@ -120,6 +121,7 @@
 - Blade `view:cache`, JS syntax и upload pause/resume/stop harness пройдены.
 - `static-media-browser.mjs` на Edge создал настоящий MP4: прямой `/media/<sha256>.mp4`, без redirect, decoded frame/playback и отсутствие overflow при 1672×941 / 390px. Просмотрены screenshots обоих размеров. PHP development server не доказывает nginx Range.
 - Параллельная Publishing-задача также прогнала полный composer test: 224 tests / 1650 assertions passed на совместном дереве; это её отдельный подтверждённый результат, не повторный прогон данного блока. Общий public browser suite не повторялся.
+- Public AJAX: 33 целевых Laravel tests / 252 assertions passed (PublicCommunity, PublicPages, PublicNewsletter, PublicContact), включая JSON live-chat submission and no-reload marker; PHP syntax checks for changed controllers and `node --check public.js` passed. Browser/production playback checks were not rerun for this focused request.
 - Ранее read-only проверены реальные Takeout CSV и состав 1 815 файлов / 244 видео без массовой распаковки; это не результат нового полного импорта 56 GB.
 - Publishing: в предыдущем implementation-блоке `9ad5649` полный composer test на PHP 8.4.25 / SQLite — 269 tests / 1991 assertions passed; Edge publishing-browser, PHP/JS syntax, Blade view:cache, route:cache и git diff --check прошли. HTTP/Process mocked; настоящие ffmpeg encoding/MediaMTX/platform publishing/OAuth/production и MySQL локально не запускались. Текущие четыре исправления проверены чтением кода и diff: YouTube DELETE передаёт ID в query без тела; GUI восстанавливает сохранённые назначения, включая пустой выбор; Website показывает unpublished после снятия/удаления; Telegram сохраняет тип отправленного сообщения вместе с ID. Регрессионные проверки обновлены, но тесты, сборки, syntax checks и внешние API по прямому запрету владельца не запускались. git diff --check прошёл; прежние результаты тестов не относятся к текущим правкам.
 
@@ -132,4 +134,5 @@
 - Текущая ветка и upstream: main → origin/main.
 - Последние связанные commits: `2ed3195` — Configure automatic import sorting and pass pre-import checks; `704329a` — Unify public overview hero layout; `79de793` — Document import readiness review; `223faf0` — Consume desktop deep links after opening apps; `f2309a3` — Move Takeout instructions into desktop help. Текущий блок: Fix translated import duration destinations; deployment требует получения кода и view:clear, без migration/изменения .env/очередей.
 - Последний связанный public commit: `3bec710` — Move homepage hero quote outside featured media. Текущий atomic-блок: Brighten hero text clouds and add section encouragements; deployment требует только получения кода и Blade `view:clear`.
+- Текущий public atomic-блок: Fix public AJAX forms and live-chat reload; commit/push выполнены в этой задаче. Deployment: получить platform code и выполнить Blade `view:clear`.
 

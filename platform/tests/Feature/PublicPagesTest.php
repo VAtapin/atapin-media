@@ -80,7 +80,7 @@ class PublicPagesTest extends TestCase
     public function test_live_player_starts_mediamtx_cookie_check_inside_proxy_prefix(): void
     {
         $live=$this->record('video',['public_section'=>'live','live_stream_enabled'=>true,'live_status'=>'live']);
-        $response=$this->get('/live?event='.$live->id)->assertOk()->assertSee('/_live/live/?cookieCheck=1',false)->assertSee('Real database body')->assertSee('name="body"',false);
+        $response=$this->get('/live?event='.$live->id)->assertOk()->assertSee('/_live/live/?cookieCheck=1',false)->assertSee('Real database body')->assertSee('name="body"',false)->assertSee('data-public-ajax="message"',false);
         $dom=new \DOMDocument();@$dom->loadHTML($response->getContent());$this->assertStringNotContainsString('Der Livestream wird vorbereitet',$dom->getElementsByTagName('main')->item(0)->textContent);
         $response->assertDontSee('data-community-action',false);
     }
@@ -167,7 +167,7 @@ class PublicPagesTest extends TestCase
     {
         $record=$this->record();$url=route('public.record-state',$record);
         $this->postJson($url,['action'=>'bookmark'])->assertUnauthorized();
-        $user=User::factory()->create();$this->actingAs($user)->postJson($url,['action'=>'bookmark','enabled'=>true])->assertOk();
+        $user=User::factory()->create();$this->actingAs($user)->postJson($url,['action'=>'bookmark','enabled'=>true])->assertOk()->assertJson(['kind'=>'state','enabled'=>true]);
         $this->assertDatabaseHas('public_content_states',['user_id'=>$user->id,'subject_id'=>$record->id,'action'=>'bookmark']);
         $this->postJson($url,['action'=>'reminder'])->assertStatus(422);
         $poll=$this->record('poll',['poll'=>['options'=>[['text'=>'One'],['text'=>'Two']]]]);

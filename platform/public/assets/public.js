@@ -53,14 +53,37 @@ document.querySelectorAll('[data-seek]').forEach(button=>button.addEventListener
   const player=document.querySelector('.public-main-player');if(player&&player.readyState>0)player.currentTime=Math.max(0,Math.min(Number(button.dataset.seek),player.duration));
   else publicFeedback(window.publicLabels.no_local_playback);
 }));
-for(const form of document.querySelectorAll('[data-public-form]'))form.addEventListener('submit',async event=>{
-  event.preventDefault();const button=form.querySelector('button');button.disabled=true;
-  const data=Object.fromEntries(new FormData(form));if('enabled' in data)data.enabled=data.enabled==='1';
+const publicCsrf=()=>document.querySelector('meta[name=csrf-token]')?.content||'';
+const publicFormMessage=(form,message)=>{
+  const node=form.querySelector('[data-public-form-message]');
+  if(!node)return;
+  node.textContent=message;node.hidden=false;
+};
+const publicFormError=(result,response)=>{
+  if(result?.message)return result.message;
+  if(result?.errors)return Object.values(result.errors).flat()[0];
+  return `Request failed (${response.status})`;
+};
+for(const form of document.querySelectorAll('[data-public-form],[data-public-ajax]'))form.addEventListener('submit',async event=>{
+  event.preventDefault();
+  const button=form.querySelector('button[type="submit"],button:not([type])');
+  if(button?.disabled)return;
+  if(button)button.disabled=true;
   try{
-    const response=await fetch(form.getAttribute('action'),{method:'POST',headers:{Accept:'application/json','Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content},body:JSON.stringify(data)});
+    const response=await fetch(form.getAttribute('action'),{method:(form.getAttribute('method')||'POST').toUpperCase(),credentials:'same-origin',headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':publicCsrf()},body:new FormData(form)});
     if(response.status===401){location.href='/login';return;}
-    const result=await response.json();if(!response.ok)throw new Error(result.message);location.reload();
-  }catch(error){publicFeedback(error.message);}finally{button.disabled=false;}
+    let result={};try{result=await response.json();}catch{}
+    if(!response.ok)throw new Error(publicFormError(result,response));
+    if(form.dataset.publicAjax==='message'){
+      form.reset();document.dispatchEvent(new Event('public-live-refresh'));publicFormMessage(form,result.message||window.publicLabels.message_sent);
+    }else if(form.dataset.publicForm!==undefined&&result.kind==='state'&&typeof result.enabled==='boolean'){
+      button?.classList.toggle('current',result.enabled);
+    }
+    if(form.dataset.publicAjax!=='message')form.reset();
+    if(form.dataset.publicAjax!=='message')publicFeedback(result.message||window.publicLabels.saved);
+  }catch(error){
+    if(form.dataset.publicAjax==='message')publicFormMessage(form,error.message);else publicFeedback(error.message);
+  }finally{if(button)button.disabled=false;}
 });
 for(const player of document.querySelectorAll('[data-progress-url]')){
   player.addEventListener('loadedmetadata',()=>{const position=Number(player.dataset.resume);if(position>0&&position<player.duration)player.currentTime=position;},{once:true});
@@ -118,6 +141,7 @@ for(const root of document.querySelectorAll('[data-live-heartbeat]')){
     if(active)timer=setTimeout(pulse,15000);
   };
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)pulse();});
+  document.addEventListener('public-live-refresh',pulse);
   window.addEventListener('pagehide',()=>{active=false;clearTimeout(timer);controller?.abort();});
   window.addEventListener('pageshow',event=>{if(event.persisted){active=true;pulse();}});
   pulse();

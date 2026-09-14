@@ -14,7 +14,8 @@ class PublicNewsletterController extends Controller {
             $entry->fill(['locale'=>app()->getLocale(),'status'=>'pending','delivery_status'=>'pending','consented_at'=>now(),'confirmed_at'=>null,'token_hash'=>hash('sha256',$token)])->save();
             ConfirmNewsletterSubscription::dispatch($entry->id,$token)->afterCommit();
         }
-        return back()->with('public_status',__('public.newsletter_requested'));
+        $message=__('public.newsletter_requested');
+        return $request->expectsJson()?response()->json(['message'=>$message]):back()->with('public_status',$message);
     }
     private function valid(NewsletterSubscription $subscription,Request $request): void {abort_unless(is_string($request->query('token'))&&hash_equals($subscription->token_hash,hash('sha256',$request->query('token'))),404);}
     public function confirm(NewsletterSubscription $subscription,Request $request){$this->valid($subscription,$request);abort_unless($subscription->status==='pending'||$subscription->status==='active',410);$subscription->update(['status'=>'active','confirmed_at'=>$subscription->confirmed_at??now()]);return redirect('/')->with('public_status',__('public.newsletter_confirmed'));}

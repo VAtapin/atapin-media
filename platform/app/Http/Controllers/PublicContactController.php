@@ -10,7 +10,8 @@ class PublicContactController extends Controller
             'subject'=>'required|string|max:200','body'=>'required|string|min:10|max:10000','privacy'=>'required|accepted','website'=>'nullable|string|max:0']);
         $message=ContactMessage::create([...array_intersect_key($data,array_flip(['name','email','subject','body'])),'consented_at'=>now()]);
         \App\Jobs\ForwardContactMessage::dispatch($message->id)->afterCommit();
-        return redirect()->route('public.kontakt')->with('public_status',__('public.contact_received'));
+        $status=__('public.contact_received');
+        return $request->expectsJson()?response()->json(['message'=>$status]):redirect()->route('public.kontakt')->with('public_status',$status);
     }
     public function inbox(Request $request)
     {

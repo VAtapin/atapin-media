@@ -11,7 +11,7 @@
 <nav class="public-pagination" aria-label="{{ __('public.pagination') }}">@if($items->previousPageUrl())<a href="{{ $items->previousPageUrl() }}">← {{ __('public.previous') }}</a>@endif @if($items->nextPageUrl())<a href="{{ $items->nextPageUrl() }}">{{ __('public.next') }} →</a>@endif</nav>
 @elseif($section==='kontakt')
 @if($orderBook??null)<h2>{{ __('public.order_context') }}: {{ $orderBook->title }}</h2>@endif
-<form class="public-contact-form public-panel" method="post" action="{{ route('public.contact-submit') }}">@csrf
+<form class="public-contact-form public-panel" method="post" action="{{ route('public.contact-submit') }}" data-public-ajax="contact">@csrf
 <label>{{ __('public.contact_name') }}<input name="name" required maxlength="120" autocomplete="name" value="{{ old('name',auth()->user()?->name) }}"></label>
 <label>{{ __('public.email_placeholder') }}<input name="email" type="email" required maxlength="255" autocomplete="email" value="{{ old('email',auth()->user()?->email) }}"></label>
 <label>{{ __('public.contact_subject') }}<input name="subject" required maxlength="200" value="{{ old('subject',($orderBook??null)?__('public.order_context').': '.$orderBook->title:'') }}"></label>

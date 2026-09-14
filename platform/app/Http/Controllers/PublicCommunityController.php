@@ -8,7 +8,8 @@ class PublicCommunityController extends Controller {
         if($moderation->blocked($request->user(),$request->session()->getId()))return $request->expectsJson()?response()->json(['message'=>__('public.chat_blocked_three')],403):back()->withErrors(['body'=>__('public.chat_blocked_three')]);
         $data=$request->validate(['title'=>'required|string|min:3|max:255','body'=>'required|string|min:5|max:5000','type'=>'required|in:question,discussion']);
         $submission->post($request->user(), $data, $request->session()->getId());
-        return back()->with('public_status',__('public.message_sent'));
+        $message=__('public.message_sent');
+        return $request->expectsJson()?response()->json(['message'=>$message,'kind'=>'community']):back()->with('public_status',$message);
     }
     public function index(){return redirect('/desktop?open=community',303);}
     public function moderate(Request $request,SourceRecord $record,PublicCommunityModeration $moderation,Audit $audit){

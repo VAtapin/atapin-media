@@ -3,7 +3,7 @@
 <h2>{{ __('public.newsletter_title') }}</h2>
 <p>{{ __('public.newsletter_consent') }}</p>
 </div>
-<form method="post" action="{{ route('public.newsletter') }}">@csrf
+<form method="post" action="{{ route('public.newsletter') }}" data-public-ajax="newsletter">@csrf
 <label class="public-sr-only" for="newsletter-{{ $section??'start' }}">{{ __('ui.email') }}</label>
 <input id="newsletter-{{ $section??'start' }}" name="email" type="email" required placeholder="{{ __('public.email_placeholder') }}">
 <label><input type="checkbox" name="consent" value="1" required>{{ __('public.newsletter_consent') }}</label>
