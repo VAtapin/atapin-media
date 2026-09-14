@@ -63,6 +63,7 @@
 - Takeout проверен на немецкой схеме владельца и основных английских aliases, не на всех возможных языках/форматах. Отдельного достоверного Short-признака экспорт не гарантирует: прежние Shorts сохраняются, новые неопределённые видео требуют review.
 - Checkpoints сохраняются между единицами работы с мягким бюджетом 30 секунд; большой ZIP entry/hash/предварительная индексация могут выполняться дольше. Это не побайтовое возобновление ZIP. Старые дубли originals физически не удаляются.
 - ffprobe нужен для серверной проверки формата; наличие файла/metadata не доказывает браузерное воспроизведение.
+- Перед полным Takeout import интерфейс не выполняет исчерпывающий readiness-check: platform:check проверяет SQL/private storage/Owner и счётчики jobs, но не public/media write access, весь запас места или фактическое обслуживание очереди. Для распакованного Takeout источник сохраняется: требуется дополнительное место под новые media (~56 GB плюс configured reserve 5 GB по умолчанию); ZIP также требует extraction space. Это проверяется перед первым запуском, не постоянным ручным надзором.
 - Шесть старых падений Foundation/PublicAccount/PublicPages устранены: повторное сохранение профиля больше не создаёт duplicate user_profiles; тесты проверяют видимый DOM вместо JSON-переводов, текущий гостевой чат, стабильную идентичность посетителя и pre-worker состояние модерации. Import Center upload/history/undo/settings desktop/mobile прошёл. Остался ранее найденный mobile overflow книги `/buecher/vorschau`, не исправлявшийся этим блоком; общий public browser suite не повторялся. Массовый импорт 56 GB и реальные внешние API/Live не запускались.
 - Для внешнего YouTube public требуется разрешённый API project/Google audit; private-ответ отмечается как failure с сохранённым ID. YouTube Community posts и Live-направления Facebook/Instagram/Telegram не поддержаны текущими adapters; остальные платформы не объявляются готовыми. Исторические дубли из старой реализации автоматически не удаляются.
 
@@ -76,6 +77,8 @@
 ## Проверки
 
 Локальные проверки, кроме отдельно указанного read-only nginx-теста.
+
+- Read-only review готовности импорта: повторно просмотрены UI→queue→checkpoints→целый объект→canonical media и автоматическое правило длительности. 6 лёгких tests / 56 assertions passed за 0.85 sec (ImportClassificationRulesTest и полный fixture Takeout→Beiträge). Блокирующих ошибок в этом пути не обнаружено; production permissions/free space/queue и полный 56 GB не проверялись. Запуск уже есть в Import Center: Google Takeout vom Server → Bereits entpackter Export: Takeout → Import starten; длительность предварительно сохранить 14–16 → Beiträge, основной target оставить mixed. Переносить Takeout вручную не нужно.
 
 - Этот блок: полный Laravel SQLite через PHP 8.4.25 — 220 tests / 1636 assertions passed на совместном дереве; после добавления регрессий — 62 целевых / 605 assertions и 12 CatalogPlayback/TakeoutOriginalAccess / 66 assertions. Проверены настройки/валидация/RBAC, границы длительности, полный объект Takeout→Beiträge, сохранение ручных правок, гостевые session views и прямой URL audit-отчёта. MySQL локально не запускался; остаётся CI-проверкой.
 - Import Center browser на Edge прошёл: настоящее PNG canvas вместо повреждённой fixture, устранено перекрытие панелей пагинацией, загрузка/назначение/undo/replacement/trash/playlist, настройки после reload, desktop/mobile. Import workflow browser прошёл на реальном сгенерированном WebM с byte-accurate Range fixture-транспортом (PHP development server не поддерживает Range для static), включая decoded frame/seek/play и сохранённый результат. Это не имитация production-проверки — nginx проверен отдельно.
@@ -95,5 +98,5 @@
 
 - Предыдущие связанные commits: `e40cb5a` — Serve physical public media and import complete Takeout objects; `7ca7003` — Add Manna fifteen-second post classification guidance; `1b0cae2` — Fix publication retries and live relay.
 - Текущая ветка и upstream: main → origin/main.
-- Текущий блок: унифицирован overview hero на публичных страницах и добавил безопасные брендированные fallback-состояния. Изменены только Blade/CSS и regression test, dependencies и migrations не затрагивались. Последний commit: текущий atomic commit — Unify public overview hero layout; deployment выполняет владелец.
+- Последние implementation commits: `2ed3195` — Configure automatic import sorting and pass pre-import checks; `704329a` — Unify public overview hero layout. Текущий блок: Document import readiness review; изменяется только подтверждённый статус, без application-кода/конфигурации/БД. Deployment для review не требуется.
 
