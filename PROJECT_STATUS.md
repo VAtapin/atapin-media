@@ -4,6 +4,7 @@
 
 ## Реализовано
 
+- Назначение по длительности в Import Center использует существующие переводы imports.posts/videos/shorts вместо отсутствующих imports.target_*; список показывает Beiträge, Videos, Shorts, а не translation keys.
 - Карточка Google Takeout в Import Center содержит только краткую подпись. Подробная инструкция перенесена в существующую справку «?» окна; дублирующий текст убран из выбранного Takeout-панеля. Справка de/en актуализирована для private/Takeout, SHA-256-копирования, прямой выдачи public/media и настроенного правила длительности.
 - Media Desktop deeplink `?open=...` выполняется один раз и удаляется из текущего адреса без перезагрузки; остальные параметры и fragment сохраняются. Закрытая Community больше не открывается повторно при reload/повторном входе; сохранённые открытые окна и новые явные deeplinks продолжают работать. Версия desktop-os.js обновлена для browser cache.
 - Основа: Laravel 13 / PHP 8.4, авторизация, пользователи и RBAC, настройки с зашифрованными секретами, аудит; backend проектов, задач и календаря.
@@ -80,6 +81,7 @@
 
 Локальные проверки, кроме отдельно указанного read-only nginx-теста.
 
+- Переводы назначения по длительности: Import Center browser workflow на Edge passed с отдельной проверкой всех трёх подписей options. `node --check` browser test и `git diff --check` passed. Production и полный suite для этой одноточечной Blade-правки не запускались.
 - Компактный Takeout UI: существующий Import Center browser workflow на Edge passed, включая короткую карточку, отсутствие подробного текста в рабочей форме и открытие инструкции через «?». PHP syntax четырёх translation files, JS syntax browser test и git diff --check passed. Production/массовый Takeout import не запускались.
 - Desktop window browser на Edge passed: Community deeplink → закрытие → reload → logout/login, восстановление открытого окна, Close all, новый deeplink Videos, неизвестный app ID, сохранение других query/hash и отсутствие JS page errors. Проверка добавлена в CI. `node --check` desktop-os.js/desktop-window-browser.mjs и `git diff --check` passed. Production и полный Laravel suite в этом узком JS-блоке не запускались.
 - Read-only review готовности импорта: повторно просмотрены UI→queue→checkpoints→целый объект→canonical media и автоматическое правило длительности. 6 лёгких tests / 56 assertions passed за 0.85 sec (ImportClassificationRulesTest и полный fixture Takeout→Beiträge). Блокирующих ошибок в этом пути не обнаружено; production permissions/free space/queue и полный 56 GB не проверялись. Запуск уже есть в Import Center: Google Takeout vom Server → Bereits entpackter Export: Takeout → Import starten; длительность предварительно сохранить 14–16 → Beiträge, основной target оставить mixed. Переносить Takeout вручную не нужно.
@@ -103,6 +105,6 @@
 
 - Предыдущие связанные commits: `e40cb5a` — Serve physical public media and import complete Takeout objects; `7ca7003` — Add Manna fifteen-second post classification guidance; `1b0cae2` — Fix publication retries and live relay.
 - Текущая ветка и upstream: main → origin/main.
-- Последние связанные commits: `2ed3195` — Configure automatic import sorting and pass pre-import checks; `704329a` — Unify public overview hero layout; `79de793` — Document import readiness review; `223faf0` — Consume desktop deep links after opening apps. Текущий блок: Move Takeout instructions into desktop help; deployment требует получения кода и view:clear, без migration/изменения .env/очередей.
+- Последние связанные commits: `2ed3195` — Configure automatic import sorting and pass pre-import checks; `704329a` — Unify public overview hero layout; `79de793` — Document import readiness review; `223faf0` — Consume desktop deep links after opening apps; `f2309a3` — Move Takeout instructions into desktop help. Текущий блок: Fix translated import duration destinations; deployment требует получения кода и view:clear, без migration/изменения .env/очередей.
 - Исправление после `704329a`: Fix overview header and vivid hero background — текущий atomic-блок; deployment требует только получения кода и Blade `view:clear`.
 

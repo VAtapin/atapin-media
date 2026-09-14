@@ -175,6 +175,7 @@ try {
   assert.equal(await imports.getByText('CSV liefert Inhalts-IDs', {exact:false}).count(), 0);
   await imports.locator('[data-import-rules] summary').click();
   const rulesForm=imports.locator('[data-import-rules-form]');
+  assert.deepEqual(await rulesForm.locator('[name=target_profile] option').allTextContents(), ['Beiträge','Videos','Shorts']);
   await rulesForm.locator('[name=enabled]').check();
   await rulesForm.locator('[name=min_seconds]').fill('14');
   await rulesForm.locator('[name=max_seconds]').fill('16');

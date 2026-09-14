@@ -11,7 +11,7 @@
             <label><input type="checkbox" name="enabled" @checked($durationRule['enabled'])>{{ __('imports.duration_rule_enabled') }}</label>
             <label><span>{{ __('imports.duration_rule_min') }}</span><input type="number" name="min_seconds" min="0.001" max="86400" step="0.001" value="{{ $durationRule['min_seconds'] }}" required></label>
             <label><span>{{ __('imports.duration_rule_max') }}</span><input type="number" name="max_seconds" min="0.001" max="86400" step="0.001" value="{{ $durationRule['max_seconds'] }}" required></label>
-            <label><span>{{ __('imports.target_profile') }}</span><select name="target_profile">@foreach(['posts','videos','shorts'] as $target)<option value="{{ $target }}" @selected($durationRule['target_profile']===$target)>{{ __('imports.target_'.$target) }}</option>@endforeach</select></label>
+            <label><span>{{ __('imports.target_profile') }}</span><select name="target_profile">@foreach(['posts','videos','shorts'] as $target)<option value="{{ $target }}" @selected($durationRule['target_profile']===$target)>{{ __('imports.'.$target) }}</option>@endforeach</select></label>
             <p>{{ __('imports.duration_rule_hint') }}</p>
             <button type="submit" class="desktop-button">{{ __('imports.duration_rule_save') }}</button><p role="status" data-import-rules-message></p>
         </form>
