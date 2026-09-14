@@ -18,7 +18,7 @@ Status: 14 September 2026. This is an implementation checklist against MASTER-TZ
 - Live: current signal status, timer, active Website presence, approved local chat, recording state and output states. Published Website playback is embedded. OBS remains responsible for starting/stopping the encoder.
 - Imports: HTTPS URL, RSS and Atom document import now extracts bounded, sanitized, unpublished article drafts while retaining a private provenance original. Subscriber CSV import is opt-in-confirmed, resumable and never activates or emails unverified contacts.
 - AI recommendations: bounded permission-scoped editorial facts can be submitted to the existing contextual AI workspace for explicit human review; recommendations never mutate content automatically.
-- Installability/operations: public and Desktop layouts expose the installable PWA manifest and static offline shell, and settings staff have a private operational health endpoint without secrets.
+- Installability/operations: public and Desktop layouts expose the installable PWA manifest and static offline shell, and settings staff have a private operational health endpoint without secrets. The endpoint and `platform:check` now report runtime, database, media storage capacity, cache, search provider, owner, queue counts and scheduler/worker heartbeats; the documented Plesk cron entry point records successful heartbeats without adding a daemon.
 
 ## Verified follow-up: review and planning controls
 

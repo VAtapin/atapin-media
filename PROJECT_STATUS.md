@@ -24,7 +24,7 @@
 - Public article image containers keep full `contain` rendering and use a very light, translucent, softly blurred color backdrop derived from the same image; the neutral background remains dominant.
 - Live Studio: existing events/OBS credentials/poster и монитор сохранены; добавлен отдельный Browser-Studio mode с camera/mic, screen/window, contained PNG/JPEG/WebP scenes, PiP/title, gains/meter и actual outbound bitrate/frame stats. Explicit WHIP start/stop через protected Laravel bridge, owned encrypted sessions/lease и foreground FFmpeg normalization H264/Opus → H264/AAC используют existing HLS/recording/output pipeline. Подготовка не транслирует; active session/recording блокируют event/window close. Local mono WAV podcast recording/download/resumable upload и idempotent unpublished Podcast draft используют existing Media/SourceRecord, без параллельного каталога. Settings-only server configuration validates candidate/backups/loopback API auth and invokes existing subscription-user start script; live.manage confirmed OBS disconnect disables reconnect. Обычный старт/стоп encoder остаётся в OBS. Public preview отключается при browser capture против эха. Telegram announcements/Mini App unchanged.
 - Admin completion: video inventory exposes duration/size/processing facts and bounded filters/sorting/exclusions; provider covers/hashtags, destination preview and schedule states are visible. HTTPS URL/RSS/Atom imports retain a private provenance original and create sanitized unpublished drafts; subscriber CSV imports are resumable and never activate, re-consent or email unverified contacts. AI prioritization uses bounded permission-scoped facts and never mutates content automatically.
-- PWA/operations: public and Desktop layouts expose an installable manifest, offline static shell and Apple touch icon. Settings staff have a private operational health endpoint containing only database/storage/owner/queue facts.
+- PWA/operations: public and Desktop layouts expose an installable manifest, offline static shell and Apple touch icon. Settings staff have a private operational health endpoint containing runtime, database, storage capacity, cache, search, owner, queue and scheduler/worker heartbeat facts without secrets. `platform:check` uses the same report; the documented Plesk cron entry point records successful scheduler/queue heartbeats.
 
 ## Важные решения
 
@@ -34,7 +34,7 @@
 
 ## Известные ограничения
 
-- Admin roadmap теперь закрывает локально реализуемые video inventory, URL/RSS/subscriber import, inbound YouTube comments и AI recommendations. Остались другие inbound channel adapters и external analytics/integrations без подтверждённых provider APIs/credentials; граница — docs/ADMIN-COMPLETION.md.
+- Admin roadmap теперь закрывает локально реализуемые video inventory, URL/RSS/subscriber import, inbound YouTube comments, AI recommendations и operational health diagnostics. Остались другие inbound channel adapters и external analytics/integrations без подтверждённых provider APIs/credentials; граница — docs/ADMIN-COMPLETION.md.
 - Владелец подтвердил общедоступность обычных media originals: existing public MP4/audio/image URLs сохранены, private migration не нужна и не выполнялась. Полные платные book PDF по-прежнему entitlement-protected.
 - Browser Studio требует одноразовой hosting setup: установленный MediaMTX/FFmpeg libx264+AAC, process/config permissions subscription user, существующие RTMPS certificate/HLS proxy/start task, public TCP/UDP 8189 и минимум два PHP-FPM workers для HTTP auth callbacks. TURN для закрытых сетей, guests, media-file scenes/full OBS mixer и recovery локальных recordings не добавлены. Local PCM ограничен 256 MB (~46 минут при 48 kHz); screen/shared-audio и background canvas зависят от browser/OS. Linux/Plesk config apply/FFmpeg pipeline и production playback ещё не проверены.
 
@@ -55,12 +55,12 @@
 
 ## Что рекомендуется следующим
 
-- Off-air после Plesk backup получить release, применить forward migrations create_live_browser_sessions, create_channel_message_sync и allow_unverified_subscriber_imports с PHP 8.4 и очистить config/routes/views. Browser Studio и admin completion не добавляют Composer/Node dependencies; добавлен только существующий scheduler command для YouTube comments. В админке включить protected server/browser configuration; hosting owner однократно проверяет certificate/FFmpeg/firewall 8189/FPM workers. Затем проверить OBS, browser HLS/recording/output, inbound comments and `platform:check` на сервере. Production агентом не обновлялся.
+- Off-air после Plesk backup получить release, применить forward migrations create_live_browser_sessions, create_channel_message_sync и allow_unverified_subscriber_imports с PHP 8.4 и очистить config/routes/views. Browser Studio и admin completion не добавляют Composer/Node dependencies; добавлены только существующий scheduler command для YouTube comments и operational heartbeats в cron entry point. В админке включить protected server/browser configuration; hosting owner однократно проверяет certificate/FFmpeg/firewall 8189/FPM workers. Затем проверить OBS, browser HLS/recording/output, inbound comments and `platform:check` на сервере. Production агентом не обновлялся.
 - Через админку подключить платформы/OpenAI/Stripe, зарегистрировать Stripe webhook/events по docs/DESKTOP-WORKSPACES.md; проверить тестовую покупку/refund/protected download, newsletter delivery/opt-out и scheduled publication. Secrets в чат не присылать.
 - Проверить реальные большие MP4/audio/Live/Telegram Mini App на desktop/mobile; media:prepare-missing при необходимости для уже импортированных материалов, без нового Takeout import.
 
 ## Последний связанный commit
 
-- Предшествующий функциональный commit: `430ed04` — Add protected browser live studio.
-- Текущий admin/PWA release готовится в одном atomic commit. Branch/upstream: main → origin/main; hash сообщается после commit.
+- Предшествующий функциональный commit: `90d6b26` — Complete admin workflows and PWA foundation.
+- Текущий admin operations release готовится в одном atomic commit. Branch/upstream: main → origin/main; hash сообщается после commit.
 

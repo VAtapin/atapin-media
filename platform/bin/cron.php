@@ -46,6 +46,10 @@ try {
     $input->setInteractive(false);
     $status = $kernel->handle($input, new \Symfony\Component\Console\Output\ConsoleOutput);
     $kernel->terminate($input, $status);
+    if ($status === 0) {
+        try { \Illuminate\Support\Facades\Cache::put('platform.health.cron.'.$mode, now()->toIso8601String(), now()->addMinutes(10)); }
+        catch (\Throwable $error) { report($error); }
+    }
 } finally {
     flock($lock, LOCK_UN);
     fclose($lock);

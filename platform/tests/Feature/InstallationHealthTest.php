@@ -20,8 +20,12 @@ class InstallationHealthTest extends TestCase
         $this->actingAs($owner)->getJson('/desktop/health')
             ->assertOk()
             ->assertJsonPath('status', 'ok')
+            ->assertJsonPath('checks.runtime.status', 'ok')
             ->assertJsonPath('checks.database.status', 'ok')
             ->assertJsonPath('checks.storage.status', 'ok')
+            ->assertJsonPath('checks.cache.status', 'ok')
+            ->assertJsonPath('checks.search.status', 'ok')
+            ->assertJsonPath('checks.scheduler.status', 'unknown')
             ->assertJsonMissingPath('checks.database.password')
             ->assertHeader('Cache-Control', 'no-store, private');
     }
