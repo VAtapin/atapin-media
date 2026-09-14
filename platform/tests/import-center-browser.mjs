@@ -170,6 +170,9 @@ try {
   await media.locator('[data-window-action="close"]').click();
   await page.locator('[data-open-app="imports"]').first().click();
   const imports = page.locator('.os-window[data-app-id="imports"]');
+  const takeoutCard = imports.locator('.import-methods label').filter({has:page.locator('[value=takeout]')});
+  assert.equal(await takeoutCard.locator('small').innerText(), 'ZIP-Archive oder entpackter Google Takeout vom Server.');
+  assert.equal(await imports.getByText('CSV liefert Inhalts-IDs', {exact:false}).count(), 0);
   await imports.locator('[data-import-rules] summary').click();
   const rulesForm=imports.locator('[data-import-rules-form]');
   await rulesForm.locator('[name=enabled]').check();
@@ -246,6 +249,8 @@ try {
   await imports.locator('[data-window-action="help"]').click();
   const help = page.locator('.os-window[data-app-id="help-imports"]');
   await help.locator('.desktop-help').getByText('Wählen Sie zuerst einen von fünf Wegen:', {exact:false}).waitFor();
+  await help.locator('.desktop-help').getByText('CSV liefert Inhalts-IDs', {exact:false}).waitFor();
+  await help.locator('.desktop-help').getByText('private/Takeout', {exact:false}).waitFor();
   assert(await imports.isVisible());
   await help.locator('[data-window-action="close"]').click();
   await imports.locator('[name=method][value=server]').check();

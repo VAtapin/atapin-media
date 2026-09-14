@@ -43,7 +43,7 @@ return [
     'receipt_all'=>'Show all files',
     'takeout_row_id'=>'Required content ID is missing; original row retained.',
     'method_takeout'=>'Google Takeout from server', 'source_youtube-takeout'=>'Google Takeout', 'source_local-video-check'=>'Local video verification',
-    'takeout_hint'=>'Place all ZIP parts or the complete extracted Takeout folder in the private Takeout directory. CSV provides content IDs, original text and links; the optional HTML report checks the file inventory. Videos, posts, images, polls, quizzes, comments, live chat and playlists are processed together. Channels, subscriptions, history and shopping data are under Private account data (Takeout). Everything stays private and unsorted. No automatic AI processing.',
+    'method_takeout_hint'=>'ZIP archives or extracted Google Takeout from the server.',
     'takeout_folder'=>'Already extracted export', 'takeout_manifest'=>'Takeout file catalog',
     'takeout_expected_files'=>'Expected by catalog', 'takeout_available_files'=>'Available files', 'takeout_missing_files'=>'Missing files', 'takeout_extra_files'=>'Additional files',
     'takeout_manifest_preferred'=>'With HTML file catalog (preferred)',
