@@ -28,6 +28,7 @@ Route::post('/public/books/{product}/state',[\App\Http\Controllers\PublicInterac
 Route::get('/upload/{path?}', fn () => redirect('/desktop', 303))->where('path', '.*');
 Route::post('/kontakt',[\App\Http\Controllers\PublicContactController::class,'store'])->middleware('throttle:3,1')->name('public.contact-submit');
 Route::post('/live/{record}/heartbeat',[\App\Http\Controllers\PublicLiveController::class,'heartbeat'])->middleware('throttle:120,1')->name('public.live-heartbeat');
+Route::get('/public/{record}/comments',[\App\Http\Controllers\PublicCommentsController::class,'index'])->name('public.comments');
 Route::post('/live/server-auth',[\App\Http\Controllers\PublicBroadcastController::class,'authenticate'])->middleware('throttle:broadcast-auth')->name('public.broadcast-auth');
 Route::post('/live/{record}/push',[\App\Http\Controllers\PublicPushController::class,'toggle'])->middleware(['auth','throttle:20,1'])->name('public.live-push');
 Route::post('/live/{record}/assistant',[\App\Http\Controllers\PublicAiChatController::class,'store'])->middleware(['auth','can:public.participate','throttle:3,1'])->name('public.ai-chat');
@@ -134,6 +135,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/desktop/content/{record}', [\App\Http\Controllers\ImportedContentController::class,'update'])->middleware('can:content.edit')->name('content.update');
     Route::post('/desktop/content/{record}/classifications/{classification}/undo', [\App\Http\Controllers\ContentClassificationController::class,'undoRecord'])->middleware(['can:media.edit','can:content.edit'])->name('content.classification.undo');
     Route::post('/desktop/content/classify', [\App\Http\Controllers\ContentClassificationController::class,'store'])->middleware(['can:media.edit', 'can:content.edit', 'throttle:30,1'])->name('content.classify');
+    Route::post('/desktop/content/short-descriptions', [\App\Http\Controllers\ShortDescriptionController::class,'store'])->middleware(['can:content.edit','throttle:10,1'])->name('content.short-descriptions');
+    Route::post('/desktop/content/{record}/prepare-media', [\App\Http\Controllers\ContentMediaPreparationController::class,'store'])->middleware(['can:content.edit','can:media.edit','throttle:10,1'])->name('content.prepare-media');
     Route::post('/desktop/media/uploads', [MediaController::class,'uploadStart'])->middleware('can:media.upload')->name('media.uploads.start');
     Route::post('/desktop/media/uploads/{upload}/chunk', [MediaController::class,'uploadChunk'])->middleware('can:media.upload')->name('media.uploads.chunk');
     Route::post('/desktop/media/uploads/{upload}/finish', [MediaController::class,'uploadFinish'])->middleware('can:media.upload')->name('media.uploads.finish');

@@ -15,9 +15,7 @@
 <div class="public-action-row">
 <button class="public-button public-button-secondary" data-share>{{ __('public.share') }}</button>
 @include('public.state-button',['subject'=>$record,'action'=>'bookmark','label'=>__('public.watch_later')])
-@if($video=$assets->firstWhere('kind','video'))<a class="public-button public-button-secondary" href="{{ $video->publicUrl() ?? route('public.media',[$record,$video]) }}" download="{{ $video->original_name }}">{{ __('public.download') }} ↓</a>
-@else<button class="public-button public-button-secondary" disabled>{{ __('public.download') }}</button>
-@endif</div>
+</div>
 </div>
 <p class="public-record-meta">{{ $card['author']??'—' }} · {{ $card['meta']??'—' }}</p>
 <p class="public-record-intro">{{ $card['excerpt']??__('public.no_data') }}</p>

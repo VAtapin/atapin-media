@@ -277,4 +277,13 @@ return [
     'worker_stopped' => 'The background worker ended or reached its time limit. Saved files are kept; please retry.',
     'publication_filter'=>'Publication','all_publication_states'=>'All publication states','publication_published'=>'Published on the website','publication_unpublished'=>'Not published on the website',
     'all_content'=>'Show all content','section_only'=>'Show this section only',
+    'short_description'=>'Short description (8–10 words)', 'short_description_generate'=>'Generate AI short text',
+    'short_descriptions_missing'=>'Generate missing short texts','short_descriptions_selected'=>'Short texts for selection',
+    'enhancement_queued'=>'Queued','enhancement_running'=>'Processing','enhancement_completed'=>'Completed',
+    'enhancement_failed'=>'Failed – retry','enhancement_insufficient'=>'Insufficient topic information','enhancement_superseded'=>'Superseded by newer edits',
+    'media_appearance'=>'Media & Website','project_author'=>'Project author name','author_photo'=>'Author photo',
+    'cover_style'=>'Shared AI cover style','image_model'=>'OpenAI image model','hero_sayings'=>'Overview page sayings',
+    'frame_cover'=>'Cover from video','ai_cover'=>'Generate AI cover','ai_cover_hint'=>'Paid API request. The shared style is configured under Settings → Media & Website.',
+    'podcast'=>'Podcast','target_podcast'=>'Podcast','prepare_podcast'=>'Prepare podcast audio','media_preparation'=>'Cover & Audio',
+    'external_image_failed'=>'External image could not be saved. Please retry.',
 ];

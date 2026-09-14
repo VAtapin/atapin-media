@@ -3,6 +3,7 @@ $section=$section??'start';
 $isHome=$section==='start';
 $heroTitle=$isHome?__('public.hero_title_line1')."\n".__('public.hero_title_line2'):__('public.heading_'.$section);
 $sideQuote=$isHome?__('public.hero_side_quote'):__('public.hero_side_quote_'.$section);
+$sideQuote=app(\App\Services\Settings::class)->get('hero_sayings',[])[app()->getLocale()][$section]??$sideQuote;
 $emptyUrl=match($section){
     'start'=>'/videos/vorschau',
     'videos'=>'/videos/vorschau',
@@ -46,7 +47,10 @@ $emptyHint=match($section){
 <span class="public-feature-label">{{ __('public.featured_video') }}</span>
 <h2>{{ $featured['title'] }}</h2>
 <p>{{ $featured['excerpt']??'' }}</p>
-<div class="public-feature-author">{{ $featured['author']??'' }}<small>{{ $featured['meta']??'' }}</small></div>
+</div>
+<div class="public-feature-author">
+@if($featured['author_image']??null)<img src="{{ $featured['author_image'] }}" alt="" width="38" height="38">@else<span class="public-feature-avatar" aria-hidden="true">{{ mb_substr($featured['author']??'',0,1)?:'◇' }}</span>@endif
+<span>{{ $featured['author']??'' }}<small>{{ ($featured['duration']??null)?gmdate('i:s',(int)$featured['duration']).' · ':'' }}{{ $featured['views']??0 }} {{ __('public.views') }}</small></span>
 </div>
 <span class="public-play" aria-label="{{ __('public.play') }}">▶</span>
 </a>

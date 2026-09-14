@@ -60,7 +60,13 @@ class ContentAssignment
         if ($origin === 'manual') unset($metadata['classification']);
         if ($origin === 'manual' && isset($data['target_profile'])) $metadata['library_only'] = $data['target_profile']==='media_library';
         elseif ($origin === 'manual' && !isset($metadata['library_only'])) $metadata['library_only']=false;
-        $kind=match($data['target_profile']??'') {'videos'=>'video','shorts'=>'short','posts'=>'post','polls'=>'poll','comments'=>'comment',default=>$data['kind']??$record->kind};
+        $kind=match($data['target_profile']??'') {'videos','podcast'=>'video','shorts'=>'short','posts'=>'post','polls'=>'poll','comments'=>'comment',default=>$data['kind']??$record->kind};
+        if(($data['target_profile']??null)==='podcast') {
+            $metadata['public_section']='podcast';
+            unset($metadata['public_homepage']);
+        } elseif(in_array($data['target_profile']??null,['videos','shorts','posts'],true)) {
+            $metadata['public_section']=($data['target_profile']==='posts')?'beitraege':'videos';
+        }
         if($origin==='ai' && ($metadata['takeout']??false))$kind=$record->kind;
         if($origin==='manual'&&array_key_exists('public_published',$data)) {
             abort_if($data['public_published']&&(!in_array($kind,['video','short','post','poll','comment','live_chat'],true)||($data['status']??$record->status)!=='ready'||($metadata['archive_data']??false)||($metadata['library_only']??false)),422,__('imports.public_ready_required'));
@@ -72,8 +78,17 @@ class ContentAssignment
             $metadata['public_homepage']=(bool)$data['public_homepage'];
         }
         if(!in_array($kind,['video','short'],true))unset($metadata['public_homepage']);
-        if($origin==='manual'&&isset($data['public_section']))$metadata['public_section']=$data['public_section'];
+        if($origin==='manual'&&isset($data['public_section'])&&($data['target_profile']??null)!=='podcast')$metadata['public_section']=$data['public_section'];
+        if(($metadata['public_section']??null)==='podcast')unset($metadata['public_homepage']);
         if (isset($data['summary'])) $metadata['summary'] = $data['summary'];
+        if ($origin === 'manual' && array_key_exists('short_description',$data)) {
+            $short=trim($data['short_description']??'');
+            if($short!==($metadata['short_description']??'')) {
+                $metadata['short_description']=$short;
+                if($short==='')unset($metadata['short_description_origin']);else $metadata['short_description_origin']='manual';
+                unset($metadata['short_description_job']);
+            }
+        }
         if (isset($data['tags'])) $metadata['tags'] = $data['tags'];
         $record->update(['title' => $data['title'] ?? $record->title, 'body' => array_key_exists('body', $data) ? ($data['body'] ?? '') : $record->body,
             'kind' => $kind, 'status' => $data['status'] ?? $record->status, 'metadata' => $metadata]);

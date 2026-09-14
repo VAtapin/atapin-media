@@ -49,6 +49,7 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\RateLimiter::for('broadcast-auth',fn($request)=>\Illuminate\Cache\RateLimiting\Limit::perMinute($request->input('action')==='read'?12000:30)->by(hash('sha256',json_encode([$request->input('path'),$request->input('action')]))));
         foreach (Access::PERMISSIONS as $permission) Gate::define($permission, fn ($user) => $user->hasPermission($permission));
         Paginator::defaultView('components.pagination');
+        \App\Models\SourceRecord::saved(fn($record)=>app(\App\Services\ContentMediaPreparation::class)->queueMissing($record));
         foreach ([\App\Models\Media::class => 'media', \App\Models\SourceRecord::class => 'record'] as $model => $type) {
             $model::created(function ($item) use ($type) {
                 if ($item->source!=='youtube-takeout' && !($item->metadata['takeout']??false) && !($item->metadata['archive_data']??false) && $item->status === 'unsorted' && app(\App\Services\Settings::class)->get('ai_auto_classify', true)

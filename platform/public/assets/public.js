@@ -79,12 +79,15 @@ for(const form of document.querySelectorAll('[data-public-form],[data-public-aja
       form.reset();document.dispatchEvent(new Event('public-live-refresh'));publicFormMessage(form,result.message||window.publicLabels.message_sent);
     }else if(form.dataset.publicForm!==undefined&&result.kind==='state'&&typeof result.enabled==='boolean'){
       button?.classList.toggle('current',result.enabled);
+      button?.setAttribute('aria-pressed',String(result.enabled));
+      const input=form.querySelector('[name=enabled]');if(input)input.value=result.enabled?'0':'1';
+      let status=form.querySelector('[data-public-form-message]');if(!status){status=document.createElement('small');status.dataset.publicFormMessage='';status.setAttribute('role','status');form.append(status);}publicFormMessage(form,result.message||window.publicLabels.saved);
     }
     if(form.dataset.publicAjax==='account-remove')form.closest('.public-account-item')?.remove();
     if(publicResetKinds.has(form.dataset.publicAjax))form.reset();
-    if(form.dataset.publicAjax!=='message')publicFeedback(result.message||window.publicLabels.saved);
+    if(form.dataset.publicAjax!=='message'&&form.dataset.publicForm===undefined)publicFeedback(result.message||window.publicLabels.saved);
   }catch(error){
-    if(form.dataset.publicAjax==='message')publicFormMessage(form,error.message);else publicFeedback(error.message);
+    if(form.dataset.publicAjax==='message'||form.dataset.publicForm!==undefined){let status=form.querySelector('[data-public-form-message]');if(!status){status=document.createElement('small');status.dataset.publicFormMessage='';status.setAttribute('role','status');form.append(status);}publicFormMessage(form,error.message);}else publicFeedback(error.message);
   }finally{if(button)button.disabled=false;}
 });
 for(const player of document.querySelectorAll('[data-progress-url]')){

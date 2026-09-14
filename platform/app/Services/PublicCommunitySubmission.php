@@ -21,6 +21,7 @@ class PublicCommunitySubmission
     {
         return $this->create($user, $kind, Str::limit($body, 120, ''), $body, [
             'parent_source_id' => $parent->source_id,
+            'parent_record_id' => $parent->id,
             'website_comment' => true,
         ], $sessionId);
     }

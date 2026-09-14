@@ -1,5 +1,6 @@
 <?php
 return [
+    'show_more'=>'Mehr anzeigen','show_less'=>'Weniger anzeigen',
     'password_forgot'=>'Passwort vergessen?','password_reset_send'=>'Link anfordern','password_reset_requested'=>'Falls ein Konto existiert, erhalten Sie einen Link zum Zurücksetzen.','password_reset_invalid'=>'Der Link ist ungültig oder abgelaufen. Bitte einen neuen anfordern.','password_reset_done'=>'Passwort geändert. Bitte anmelden.','password_reset_mail'=>"Sie können Ihr Passwort über diesen zeitlich begrenzten Link zurücksetzen:\n:link\n\nFalls Sie dies nicht angefordert haben, ignorieren Sie diese Nachricht.",
     'community_new'=>'Frage stellen oder Diskussion starten','community_type'=>'Art des Beitrags','community_submit'=>'Senden','community_review_notice'=>'Bitte respektvoll bleiben und keine privaten Daten anderer veröffentlichen.','community_guest_hint'=>'Du kannst mit oder ohne Anmeldung schreiben. Bitte teile keine privaten Daten.', 'guest'=>'Gast',
     'book_manage'=>'Bücher bearbeiten und Rezensionen prüfen','book_field_title'=>'Titel','book_field_author'=>'Autor','book_field_isbn'=>'ISBN','book_field_language'=>'Sprache','book_field_page_count'=>'Seitenzahl','book_field_price_cents'=>'Preis in Cent','book_field_currency'=>'Währung','review_rating'=>'Bewertung (1–5)','review_submit'=>'Rezension zur Prüfung senden','review_reject'=>'Ablehnen',

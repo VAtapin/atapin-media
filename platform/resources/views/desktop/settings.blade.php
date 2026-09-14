@@ -4,6 +4,7 @@
         @can('settings.manage')
         <button type="button" data-settings-tab="desktop_design"><span aria-hidden="true">◈</span>Desktop &amp; Design</button>
         <button type="button" data-settings-tab="ai"><span aria-hidden="true">✦</span>KI</button>
+        <button type="button" data-settings-tab="media_appearance"><span aria-hidden="true">◉</span>{{ __('imports.media_appearance') }}</button>
         @endcan
         @can('integrations.manage')
         <button type="button" data-settings-tab="social"><span aria-hidden="true">◌</span>Social Media</button>
@@ -21,6 +22,7 @@
     </aside>
 
     <div class="desktop-settings-workspace">
+        @can('settings.manage')@include('desktop.media-appearance')@endcan
         <div class="desktop-settings-notice" data-settings-notice hidden role="status"></div>
 
         <section class="desktop-settings-panel" data-settings-panel="profile" hidden>

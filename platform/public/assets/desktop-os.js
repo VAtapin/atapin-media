@@ -434,7 +434,7 @@
           window.initializePublishing?.(publishing);
         }
       }
-      if (['videos', 'posts'].includes(appId)) {
+      if (['videos', 'posts', 'podcast'].includes(appId)) {
         const content = document.querySelector('#content-library-app-template')?.content.firstElementChild.cloneNode(true);
         if (content) {
           content.dataset.section = appId;

@@ -118,6 +118,7 @@ class TakeoutImportTest extends TestCase
     }
     public function test_structured_posts_extensionless_images_quiz_and_all_account_folders(): void
     {
+        \Illuminate\Support\Facades\Queue::fake([\App\Jobs\DownloadImportedImage::class]);
         $runs='{"text":"Original "},{"text":"post","videoLink":{"externalVideoId":"abcdefghijk"}}';
         $history='<html><meta charset="UTF-8"><body><div class="outer-cell"><a href="https://www.youtube.com/watch?v=abcdefghijk">Watched video</a> 2026-01-01</div><div class="outer-cell"><a href="https://www.youtube.com/watch?v=abcdefghijk">Watched video</a> 2026-01-01</div></body></html>';
         $this->zip(1,[

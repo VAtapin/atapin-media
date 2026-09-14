@@ -21,13 +21,29 @@
     }
     form.innerHTML = `<label>${escape(text.title)}<input name="title" required maxlength="255" value="${escape(item.title)}"></label>${type === 'record' ? `<label>${escape(text.body)}<textarea name="body" rows="5">${escape(item.body)}</textarea></label>${select('kind',['video','short','post','poll','comment'],item.kind)}` : select('target_profile',['media_library','videos','shorts','posts'],item.target_profile)}${select('status',['unsorted','ready','needs_attention'],item.status)}<label>${escape(text.tags)}<input name="tags" value="${escape((item.tags || []).join(', '))}" placeholder="${escape(text.tags_hint)}"></label><div class="media-library-toolbar-row"><button class="media-library-primary" type="submit">${escape(text.save)}</button><button class="media-library-primary" type="button" data-ai>${escape(text.ai_classify)}</button></div><p role="status" aria-live="polite"></p>`;
     const kindField=form.querySelector('[name="kind"]');
+    if(type==='record' && !item.archive_data && ['video','short','post'].includes(item.kind)) {
+      const label=document.createElement('label');label.textContent=text.short_description;
+      const input=document.createElement('textarea');input.name='short_description';input.maxLength=300;input.rows=2;input.value=item.short_description||'';label.append(input);
+      form.querySelector('[name=body]').closest('label').after(label);
+      const generate=document.createElement('button');generate.type='button';generate.className='desktop-button';generate.textContent=text.short_description_generate;
+      form.querySelector('.media-library-toolbar-row').append(generate);
+      if(item.short_description_job)messageState();
+      function messageState(){form.querySelector('[role=status]').textContent=text['enhancement_'+item.short_description_job]||item.short_description_job;}
+      generate.addEventListener('click',async()=>{
+        const message=form.querySelector('[role=status]');
+        if(details.dataset.dirty==='true'){message.textContent=text.save_before_ai;return;}
+        generate.disabled=true;
+        try{await request('/desktop/content/short-descriptions',{ids:[item.id]});message.textContent=text.ai_queued;details.dispatchEvent(new Event('content-enhancements-queued',{bubbles:true}));}
+        catch(error){message.textContent=error.message;}finally{generate.disabled=false;}
+      });
+    }
     if(kindField&&!Array.from(kindField.options).some(option=>option.value===item.kind))kindField.add(new Option(text['kind_'+item.kind]||item.kind,item.kind,true,true));
     if(item.archive_data)form.querySelector('[data-ai]').hidden=true;
     const message = form.querySelector('[role=status]');
     if(type==='record'){
       const label=document.createElement('label');label.textContent=text.target_profile;
       const destination=document.createElement('select');destination.name='target_profile';
-      for(const value of ['','media_library','videos','shorts','posts','polls','comments'])destination.append(new Option(value ? (text[value]||value) : text.keep_section,value));
+      for(const value of ['','media_library','videos','shorts','posts','polls','comments','podcast'])destination.append(new Option(value ? (text[value]||value) : text.keep_section,value));
       label.append(destination);form.insertBefore(label,form.querySelector('.media-library-toolbar-row'));
     }
     let publication, homepage, homepageLabel;

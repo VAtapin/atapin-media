@@ -13,6 +13,7 @@
         <button type="submit" class="media-library-primary">{{ __('imports.refresh') }}</button>
         <select name="trash" aria-label="{{ __('imports.trash_title') }}"><option value="active">{{ __('imports.trash_active') }}</option><option value="deleted">{{ __('imports.trash_title') }}</option></select>
         @can('media.edit')<button type="button" class="media-library-primary" data-classify-batch="record">{{ __('imports.ai_batch') }}</button>@endcan
+        @can('content.edit')<button type="button" class="desktop-button" data-short-descriptions-missing>{{ __('imports.short_descriptions_missing') }}</button>@endcan
         @can('imports.manage')
         @can('media.edit')<button type="button" class="desktop-button" data-local-video-check>{{ __('imports.audit_start') }}</button>@endcan
         @endcan

@@ -1,4 +1,4 @@
-@php($video=$assets->where('kind','video')->sortByDesc('created_at')->first())@php($audio=$assets->firstWhere('kind','audio'))
+@php($video=($record?->metadata['public_section']??null)==='podcast'?null:$assets->where('kind','video')->sortByDesc('created_at')->first())@php($audio=$assets->firstWhere('kind','audio'))
 @php($isLiveEvent=$record && ($record->metadata['public_section']??null)==='live')
 @php($isEndedLive=$isLiveEvent && ($record->metadata['live_status']??null)==='ended')
 @php($liveStatus=$isLiveEvent?($record->metadata['live_status']??null):null)

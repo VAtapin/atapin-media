@@ -84,21 +84,21 @@ class PublicContent
     }
     public function children(SourceRecord $record,string $kind='comment'): \Illuminate\Database\Eloquent\Builder
     {
-        return $this->query()->where('source',$record->source)->where('metadata->parent_source_id',$record->source_id)->where('kind',$kind);
+        return $this->query()->where(fn($q)=>$q->where(fn($legacy)=>$legacy->where('source',$record->source)->where('metadata->parent_source_id',$record->source_id))->orWhere('metadata->parent_record_id',$record->id))->where('kind',$kind);
     }
     public function childrenForViewer(SourceRecord $record,string $kind,?User $user,?string $sessionId): \Illuminate\Database\Eloquent\Builder
     {
         $query=SourceRecord::where('source','!=','catalog-reset')
             ->where(fn($q)=>$q->whereNull('metadata->archive_data')->orWhere('metadata->archive_data',false))
             ->where(fn($q)=>$q->whereNull('metadata->library_only')->orWhere('metadata->library_only',false))
-            ->where('source',$record->source)->where('metadata->parent_source_id',$record->source_id)->where('kind',$kind)
+            ->where(fn($q)=>$q->where(fn($legacy)=>$legacy->where('source',$record->source)->where('metadata->parent_source_id',$record->source_id))->orWhere('metadata->parent_record_id',$record->id))->where('kind',$kind)
             ->where(fn($q)=>$q->where(fn($public)=>$public->where('status','ready')->where('metadata->public_published',true)));
 
         if($user||$sessionId){
             $query->orWhere(fn($owned)=>$owned->where('source','!=','catalog-reset')
                 ->where(fn($q)=>$q->whereNull('metadata->archive_data')->orWhere('metadata->archive_data',false))
                 ->where(fn($q)=>$q->whereNull('metadata->library_only')->orWhere('metadata->library_only',false))
-                ->where('source',$record->source)->where('metadata->parent_source_id',$record->source_id)->where('kind',$kind)
+                ->where(fn($q)=>$q->where(fn($legacy)=>$legacy->where('source',$record->source)->where('metadata->parent_source_id',$record->source_id))->orWhere('metadata->parent_record_id',$record->id))->where('kind',$kind)
                 ->where('status','needs_attention')->where(function($q)use($user,$sessionId){
                     if($user)$q->where('metadata->author_user_id',$user->id);
                     else $q->where('metadata->author_session_hash',hash('sha256',$sessionId));
@@ -115,13 +115,13 @@ class PublicContent
     public function visible(SourceRecord $record): bool
     {
         if(!$this->query()->whereKey($record->id)->exists())return false;
-        if(in_array($record->kind,['comment','live_chat']))return $this->query()->where('source',$record->source)->where('source_id',$record->metadata['parent_source_id']??'')->whereIn('kind',['video','short','post'])->exists();
+        if(in_array($record->kind,['comment','live_chat']))return $this->query()->where(fn($q)=>$q->where(fn($legacy)=>$legacy->where('source',$record->source)->where('source_id',$record->metadata['parent_source_id']??''))->orWhere('id',$record->metadata['parent_record_id']??0))->whereIn('kind',['video','short','post'])->exists();
         return true;
     }
     public function assets(SourceRecord $record): \Illuminate\Support\Collection
     {
         return Media::whereNull('archived_at')->whereIn('id',app(\App\Services\Importing\LocalMediaLinks::class)->ids($record))
-            ->whereIn('mime',['image/jpeg','image/png','image/webp','image/gif','video/mp4','video/webm','audio/mpeg','audio/ogg','application/pdf'])
+            ->whereIn('mime',['image/jpeg','image/png','image/webp','image/gif','video/mp4','video/webm','audio/mpeg','audio/ogg','audio/mp4','audio/wav','audio/x-wav','audio/flac','application/pdf'])
             ->get()->filter(fn($media)=>app(MediaOriginalLocator::class)->find($media));
     }
     public function card(SourceRecord $record): array
@@ -136,15 +136,18 @@ class PublicContent
             'podcast'=>route('public.podcast',['episode'=>$record->id]),'live'=>route('public.live',['event'=>$record->id]),
             default=>route('public.community',['discussion'=>$record->id])};
         if(in_array($record->kind,['comment','live_chat'])){
-            $parent=$this->query()->where('source',$record->source)->where('source_id',$record->metadata['parent_source_id']??'')->whereIn('kind',['video','short','post'])->first();
+            $parent=$this->query()->where(fn($q)=>$q->where(fn($legacy)=>$legacy->where('source',$record->source)->where('source_id',$record->metadata['parent_source_id']??''))->orWhere('id',$record->metadata['parent_record_id']??0))->whereIn('kind',['video','short','post'])->first();
             if($parent)$url=$this->card($parent)['url'].($record->kind==='live_chat'?'#chat':'#comments');
         }
         $meta=$section==='live'&&($record->metadata['starts_at']??null)
             ?\Illuminate\Support\Carbon::parse($record->metadata['starts_at'])->format('d.m.Y H:i')
             :(isset($record->metadata['public_published_at'])?\Illuminate\Support\Carbon::parse($record->metadata['public_published_at'])->format('d.m.Y'):'');
         $date=$section==='live'&&($record->metadata['starts_at']??null)?$meta:($record->metadata['starts_at']??'');
-        return ['id'=>$record->id,'kind'=>$record->kind,'section'=>$section,'title'=>$record->title,'excerpt'=>Str::limit($record->body??'',140),
-            'url'=>$url,'author'=>is_string($author)?$author:($author['name']??''),
+        $project=app(Settings::class);
+        $editorial=in_array($record->kind,['video','short'],true)||in_array($section,['beitraege','podcast'],true);
+        return ['id'=>$record->id,'kind'=>$record->kind,'section'=>$section,'title'=>$record->title,'excerpt'=>$editorial?($record->metadata['short_description']??''):Str::limit($record->body??'',140),
+            'url'=>$url,'author'=>($editorial?$project->get('public_author_name',''):'') ?: (is_string($author)?$author:($author['name']??'')),
+            'author_image'=>$project->get('public_author_image'),
             'tags'=>array_values(array_filter($record->metadata['tags']??[],'is_string')),
             'duration'=>$record->metadata['duration']??null,'views'=>$this->viewCount($record),
             'date'=>$date,'viewers'=>is_numeric($record->metadata['viewer_count']??null)?(int)$record->metadata['viewer_count']:'',

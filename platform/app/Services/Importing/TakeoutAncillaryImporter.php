@@ -63,11 +63,11 @@ class TakeoutAncillaryImporter
             $data=[];
             foreach($channelRows as $entry)if(($entry['row']['kanalid']??$entry['row']['channelid']??(count($channels)===1?$id:null))===$id)$data[$entry['file']][]=$entry['row'];
             $this->once($run,'channel:'.$id,$data,function()use($id,$channel,$data,$record,$run) {
-                $record('channel:'.$id,'channel',$channel['kanaltiteloriginal']??$id,$channel['kanalbeschreibungoriginal']??'',
+                $channelRecord=$record('channel:'.$id,'channel',$channel['kanaltiteloriginal']??$id,$channel['kanalbeschreibungoriginal']??'',
                     $this->archive(['takeout_data'=>['channel'=>$data]]));
                 foreach($data as $rows)foreach($rows as $row)foreach($row as $key=>$value) {
-                    if(in_array($key,['kanalbannerurl','vollstandigeinhaltsurldeskanalbilds'],true)&&$value!=='')
-                        app(ImportJournal::class)->record($run,'remote-asset:'.hash('sha256',$value),$key,'connection','missing',null,['reason'=>__('imports.takeout_remote_asset')]);
+                    if(in_array($key,['kanalbannerurl','vollstandigeinhaltsurldeskanalbilds','channelbannerurl','fullcontenturlofchannelimage'],true)&&is_string($value)&&$value!=='')
+                        app(RemoteImageImport::class)->queue($run,$channelRecord,$value,str_contains($key,'banner')?'banner':'avatar');
                 }
             });
         }

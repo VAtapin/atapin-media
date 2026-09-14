@@ -12,8 +12,14 @@
       const selected=new Set(),list=root.querySelector('[data-content-list]'),filter=root.querySelector('[data-content-filter]');let selecting=false,items=[];
       const toggle=document.createElement('button');toggle.type='button';toggle.className='desktop-button';toggle.textContent=t.select_records;toggle.dataset.recordSelect='';filter.append(toggle);
       const bulk=document.createElement('form');bulk.hidden=true;bulk.className='media-bulk-form';bulk.dataset.recordBulk='';
-      bulk.innerHTML=`<p data-record-count></p><button type="button" data-record-page class="desktop-button">${escape(t.select_page)}</button><button type="button" data-record-clear class="desktop-button">${escape(t.clear_selection)}</button><label>${escape(t.status)}<select name="status"><option value="">—</option>${options(['unsorted','ready','needs_attention'],t)}</select></label><label>${escape(t.target_profile)}<select name="target_profile"><option value="">—</option>${options(['media_library','videos','shorts','posts','polls','comments'],t)}</select></label><label>${escape(t.tags)}<input name="add_tags" maxlength="3000"></label><button type="submit" class="desktop-button">${escape(t.save)}</button><p role="status"></p>`;
+      bulk.innerHTML=`<p data-record-count></p><button type="button" data-record-page class="desktop-button">${escape(t.select_page)}</button><button type="button" data-record-clear class="desktop-button">${escape(t.clear_selection)}</button><label>${escape(t.status)}<select name="status"><option value="">—</option>${options(['unsorted','ready','needs_attention'],t)}</select></label><label>${escape(t.target_profile)}<select name="target_profile"><option value="">—</option>${options(['media_library','videos','shorts','posts','polls','comments','podcast'],t)}</select></label><label>${escape(t.tags)}<input name="add_tags" maxlength="3000"></label><button type="submit" class="desktop-button">${escape(t.save)}</button><p role="status"></p>`;
       filter.after(bulk);
+      const shortButton=document.createElement('button');shortButton.type='button';shortButton.className='desktop-button';shortButton.textContent=t.short_descriptions_selected;bulk.querySelector('[type=submit]').after(shortButton);
+      shortButton.addEventListener('click',async()=>{
+        const message=bulk.querySelector('[role=status]');if(!selected.size){message.textContent=t.no_selection;return;}shortButton.disabled=true;
+        try{const result=await request('/desktop/content/short-descriptions',{ids:[...selected]},'POST');message.textContent=t.ai_queued+': '+result.count+' / '+result.requests;}
+        catch(error){message.textContent=error.message;}finally{shortButton.disabled=false;}
+      });
       const fields=document.createElement('div');fields.className='media-bulk-fields';for(const label of bulk.querySelectorAll('label'))fields.append(label);bulk.querySelector('[type=submit]').before(fields);
       const decorate=()=>{
         list.querySelectorAll('[data-record-check]').forEach(input=>input.remove());list.classList.toggle('is-selecting',selecting);bulk.hidden=!selecting;

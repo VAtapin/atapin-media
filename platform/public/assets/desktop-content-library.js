@@ -9,7 +9,7 @@
     const details = root.querySelector('[data-content-details]');
     const summary = root.querySelector('[data-content-summary]');
     const pagination = root.querySelector('[data-content-pagination]');
-    const sectionKinds={videos:['video','short','playlist'],posts:['post'],community:['poll','comment','live_chat']};
+    const sectionKinds={videos:['video','short','playlist'],podcast:['video','short'],posts:['post'],community:['poll','comment','live_chat']};
     const section=root.dataset.section||'';
     let allContent=!section;
     const scopeToggle=document.createElement('button');

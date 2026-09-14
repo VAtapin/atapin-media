@@ -9,12 +9,14 @@ class ImportedContentController extends Controller
     public function index(Request $request)
     {
         $data = $request->validate(['q' => 'nullable|string|max:120', 'kind' => 'nullable|in:'.implode(',',SourceRecord::KINDS).',archive_data',
-            'section' => 'nullable|in:videos,posts,community', 'status' => 'nullable|in:unsorted,review,ready,needs_attention',
+            'section' => 'nullable|in:videos,posts,podcast,community', 'status' => 'nullable|in:unsorted,review,ready,needs_attention',
             'publication' => 'nullable|in:published,unpublished',
             'source' => 'nullable|string|max:32', 'page' => 'nullable|integer|min:1','trash'=>'nullable|in:active,deleted']);
         $query = SourceRecord::query()->where('source','!=','catalog-reset')->latest();
         if(($data['trash']??'active')==='deleted')$query->onlyTrashed();
-        $kinds = match ($data['section'] ?? '') { 'videos' => ['video', 'short'], 'posts' => ['post'], 'community' => ['poll', 'comment','live_chat'], default => [] };
+        $kinds = match ($data['section'] ?? '') { 'videos', 'podcast' => ['video', 'short'], 'posts' => ['post'], 'community' => ['poll', 'comment','live_chat'], default => [] };
+        if (($data['section'] ?? '') === 'podcast') $query->where('metadata->public_section', 'podcast');
+        elseif (($data['section'] ?? '') === 'videos') $query->where(fn($q) => $q->whereNull('metadata->public_section')->orWhere('metadata->public_section', '!=', 'podcast'));
         if ($kinds) $query->whereIn('kind', $kinds)->where(fn ($q) => $q->whereNull('metadata->library_only')->orWhere('metadata->library_only', false));
         if(($data['kind']??'')==='archive_data') {$query->where('metadata->archive_data',true);unset($data['kind']);}
         elseif(empty($data['kind']))$query->where(fn($q)=>$q->whereNull('metadata->archive_data')->orWhere('metadata->archive_data',false));
@@ -36,9 +38,10 @@ class ImportedContentController extends Controller
         if($request->hasAny(['public_published','public_section','public_homepage'])||($record->metadata['public_published']??false)||($record->metadata['public_homepage']??false))\Illuminate\Support\Facades\Gate::authorize('content.publish');
         $assignment->record($record, $request->validate(['title' => 'required|string|max:255', 'body' => 'nullable|string|max:1000000',
             'kind' => 'required|in:'.implode(',',SourceRecord::KINDS), 'status' => 'required|in:unsorted,ready,needs_attention',
-            'target_profile'=>'nullable|in:media_library,videos,shorts,posts,polls,comments',
+            'target_profile'=>'nullable|in:media_library,videos,shorts,posts,polls,comments,podcast',
             'public_published'=>'sometimes|boolean','public_homepage'=>'sometimes|boolean',
             'public_section'=>'sometimes|in:videos,beitraege,podcast,live,community',
+            'short_description'=>'nullable|string|max:300',
             'tags' => 'nullable|array|max:30', 'tags.*' => 'string|max:100']));
         return response()->json(['status' => 'saved']);
     }
@@ -85,6 +88,8 @@ class ImportedContentController extends Controller
         $publicUrl=$publicContent->visible($record)?$publicContent->card($record)['url']:null;
         $version=app(\App\Services\Importing\ContentState::class)->version($record);
         return response()->json(['id' => $record->id, 'title' => $record->title, 'body' => $record->body,
+            'short_description'=>$metadata['short_description']??'', 'short_description_job'=>$metadata['short_description_job']['state']??null,
+            'media_jobs'=>$metadata['media_jobs']??[],
             'trashed'=>$record->trashed(),
             'kind' => $record->kind, 'source' => $record->source, 'source_id' => $record->source_id, 'status' => $record->status,
             'parent_source_id' => $metadata['parent_source_id'] ?? null, 'poll' => $metadata['poll'] ?? null,

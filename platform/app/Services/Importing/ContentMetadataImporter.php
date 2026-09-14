@@ -27,6 +27,20 @@ class ContentMetadataImporter
         app(LocalMediaLinks::class)->repair($record);
         $record->refresh(); $record->wasRecentlyCreated=$created;
         app(ImportSortingRules::class)->apply($record);
+        if($run && !$record->trashed()) {
+            foreach(['thumbnail','thumbnail_url','image_url','cover_url','avatar_url','banner_url'] as $field) {
+                $url=$metadata[$field]??$metadata['raw'][$field]??null;
+                if(is_string($url)&&preg_match('#^https?://#i',$url))app(RemoteImageImport::class)->queue($run,$record,$url,in_array($field,['thumbnail','thumbnail_url','cover_url'],true)?'cover':str_replace('_url','',$field));
+            }
+            $thumbnails=$metadata['thumbnails']??$metadata['raw']['thumbnails']??[];
+            if(is_array($thumbnails))foreach(array_reverse($thumbnails) as $thumbnail) {
+                $url=is_array($thumbnail)?($thumbnail['url']??null):$thumbnail;
+                if(is_string($url)&&preg_match('#^https?://#i',$url)){app(RemoteImageImport::class)->queue($run,$record,$url,'cover');break;}
+            }
+        }
+        if(($run?->target_profile)==='podcast' && in_array($record->kind,['video','short'],true) && !in_array($record->metadata['classification_origin']??null,['manual','ai'],true)) {
+            $record->update(['metadata'=>[...$record->metadata,'public_section'=>'podcast']]);
+        }
         if($run) $journal->record($run,$key,$title,$kind,$created?'added':(($before && $before->metadata===$record->metadata && $before->body===$record->body)?'duplicate':'merged'),(string)$record->id);
         return $record;
     }

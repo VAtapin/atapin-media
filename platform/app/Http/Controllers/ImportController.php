@@ -26,12 +26,13 @@ class ImportController extends Controller
         ['id' => 'media_library', 'label' => 'Media Library'],
         ['id' => 'videos', 'label' => 'Videos'],
         ['id' => 'posts', 'label' => 'Beiträge'],
+        ['id' => 'podcast', 'label' => 'Podcast'],
         ['id' => 'shorts', 'label' => 'Shorts'],
         ['id' => 'comments', 'label' => 'Kommentare'],
         ['id' => 'polls', 'label' => 'Polls'],
     ];
 
-    private const TARGET_IDS = ['media_library', 'videos', 'posts', 'shorts', 'comments', 'polls', 'mixed'];
+    private const TARGET_IDS = ['media_library', 'videos', 'posts', 'shorts', 'comments', 'polls', 'mixed','podcast'];
 
     public function index(Request $request)
     {
@@ -39,7 +40,7 @@ class ImportController extends Controller
             'source' => 'nullable|string|max:64',
             'source_kind' => 'nullable|string|max:64',
             'status' => 'nullable|in:queued,running,stop_requested,cancelled,complete,partial,failed',
-            'target_profile' => 'nullable|in:media_library,videos,posts,shorts,comments,polls,mixed',
+            'target_profile' => 'nullable|in:media_library,videos,posts,shorts,comments,polls,mixed,podcast',
             'page' => 'nullable|integer|min:1',
         ]);
 
@@ -211,7 +212,7 @@ class ImportController extends Controller
         $items=$page->getCollection()->map(function($item)use($run) {
             $data=$item->toArray();
             $data['browser_url']=$item->type==='video-check'?url('/desktop/imports/'.$run->id.'/items/'.$item->id.'/browser'):null;
-            if($item->subject_id && in_array($item->type,['file','connection','video-check'],true))$data['open_url']=route('media.details',$item->subject_id);
+            if($item->subject_id && in_array($item->type,['file','connection','video-check','remote-image'],true))$data['open_url']=route('media.details',$item->subject_id);
             elseif($item->subject_id && in_array($item->type,['video','short','post','poll','comment','content-check'],true))$data['open_url']=route('content.show',$item->subject_id);
             elseif($item->subject_id && $item->type==='playlist')$data['open_url']=route('content.playlist',$item->subject_id);
             return $data;
@@ -226,6 +227,10 @@ class ImportController extends Controller
     public function retryItem(ImportRun $run,\App\Models\ImportItem $item,Audit $audit)
     {
         abort_unless($item->import_run_id===$run->id && $item->outcome==='failed',404);
+        if($item->type==='remote-image') {
+            $item->update(['outcome'=>'pending']);dispatch(new \App\Jobs\DownloadImportedImage($item->id));
+            return response()->json(['status'=>'queued']);
+        }
         return $this->retry($run,$audit);
     }
 }

@@ -29,6 +29,9 @@ class SettingsController extends Controller
         if (in_array($section, ['social', 'integrations'], true)) Gate::authorize('integrations.manage');
         if ($section === 'publishing') Gate::authorize('content.publish');
         $rules = match ($section) {
+            'media_appearance'=>['public_author_name'=>'nullable|string|max:120','public_author_photo'=>'nullable|image|mimes:jpg,jpeg,png,webp|max:3072',
+                'cover_style_prompt'=>'required|string|max:4000','ai_image_model'=>'required|string|max:120','hero_sayings'=>'sometimes|array:de,en',
+                'hero_sayings.*'=>'array:start,videos,beitraege,buecher,podcast,live,community,ueber-uns,unsere-mission','hero_sayings.*.*'=>'nullable|string|max:500'],
             'imports' => ['import_duration_rule'=>'required|array:enabled,min_seconds,max_seconds,target_profile', 'import_duration_rule.enabled'=>'required|boolean',
                 'import_duration_rule.min_seconds'=>'required|numeric|min:0.001|max:86400', 'import_duration_rule.max_seconds'=>'required|numeric|gte:import_duration_rule.min_seconds|max:86400',
                 'import_duration_rule.target_profile'=>['required',Rule::in(['posts','videos','shorts'])]],
@@ -42,6 +45,13 @@ class SettingsController extends Controller
             default => abort(404),
         };
         $values = $request->validate($rules);
+        if($section==='media_appearance') {
+            unset($values['public_author_photo']);
+            if($request->hasFile('public_author_photo')) {
+                $stored=app(\App\Services\CanonicalMediaStorage::class)->storeUploaded($request->file('public_author_photo'));
+                $values['public_author_image']=Storage::disk($stored['disk'])->url($stored['path']);
+            }
+        }
         if($section==='system')$values=[...$values,...$request->validate(['about_text'=>'nullable|string|max:50000','mission_text'=>'nullable|string|max:50000','community_guidelines'=>'nullable|string|max:10000'])];
         if ($request->boolean('reset_wallpaper')) $values['desktop_wallpaper'] = 'mountains';
         if (in_array($section, ['desktop_design', 'legacy'], true) && $values['desktop_wallpaper'] === 'custom' && !$request->hasFile('desktop_custom_wallpaper') && !$settings->get('desktop_custom_wallpaper')) {

@@ -286,4 +286,13 @@ return [
     'worker_stopped' => 'Der Hintergrundprozess wurde beendet oder hat sein Zeitlimit erreicht. Gespeicherte Dateien bleiben erhalten; bitte erneut versuchen.',
     'publication_filter'=>'Veröffentlichung','all_publication_states'=>'Alle Veröffentlichungszustände','publication_published'=>'Auf der Website veröffentlicht','publication_unpublished'=>'Nicht auf der Website veröffentlicht',
     'all_content'=>'Alle Inhalte anzeigen','section_only'=>'Nur diesen Bereich anzeigen',
+    'short_description'=>'Kurzbeschreibung (8–10 Wörter)', 'short_description_generate'=>'Kurztext mit KI erstellen',
+    'short_descriptions_missing'=>'Fehlende Kurztexte erstellen','short_descriptions_selected'=>'Kurztexte für Auswahl',
+    'enhancement_queued'=>'Wartet auf Verarbeitung','enhancement_running'=>'Wird verarbeitet','enhancement_completed'=>'Fertig',
+    'enhancement_failed'=>'Fehlgeschlagen – erneut versuchen','enhancement_insufficient'=>'Keine ausreichende Themeninformation','enhancement_superseded'=>'Durch neuere Bearbeitung ersetzt',
+    'media_appearance'=>'Medien & Website','project_author'=>'Name des Projekt-Autors','author_photo'=>'Autorenfoto',
+    'cover_style'=>'Gemeinsamer Stil für KI-Cover','image_model'=>'OpenAI-Bildmodell','hero_sayings'=>'Sprüche der Übersichtsseiten',
+    'frame_cover'=>'Cover aus Video','ai_cover'=>'Cover mit KI erstellen','ai_cover_hint'=>'Kostenpflichtiger API-Aufruf. Der gemeinsame Stil kommt aus Einstellungen → Medien & Website.',
+    'podcast'=>'Podcast','target_podcast'=>'Podcast','prepare_podcast'=>'Podcast-Audio vorbereiten','media_preparation'=>'Cover & Audio',
+    'external_image_failed'=>'Externes Bild konnte nicht gespeichert werden. Bitte erneut versuchen.',
 ];
