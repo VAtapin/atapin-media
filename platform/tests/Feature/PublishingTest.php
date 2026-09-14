@@ -49,6 +49,15 @@ class PublishingTest extends TestCase
         $this->getJson(route('desktop.publishing.index'))->assertOk()->assertJsonStructure(['records', 'destinations', 'publications', 'youtube']);
     }
 
+    public function test_publishing_screen_explains_scope_and_loads_scrolling_styles(): void
+    {
+        $this->get('/desktop')->assertOk()
+            ->assertSee(__('publishing.explanation_title'))
+            ->assertSee(__('publishing.explanation_website'))
+            ->assertSee(__('publishing.explanation_channels'))
+            ->assertSee('desktop-publishing.css?v=3', false);
+    }
+
     private function connectYouTube(): void
     {
         app(Settings::class)->update(['social_connections' => ['youtube' => ['external_id' => 'channel-id']]]);

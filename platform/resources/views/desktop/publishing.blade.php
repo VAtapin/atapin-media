@@ -4,6 +4,12 @@
         <div class="desktop-publishing-actions"><button type="button" class="desktop-button" data-publishing-sync>{{ __('publishing.sync') }}</button>@can('integrations.manage')<a class="desktop-button is-primary" data-youtube-connect target="_self" href="{{ route('desktop.publishing.youtube.connect') }}">{{ __('publishing.connect_youtube') }}</a><a class="desktop-button" href="{{ route('desktop.publishing.x.connect') }}">{{ __('publishing.connect_x') }}</a>@endcan</div>
     </header>
     <div class="desktop-publishing-feedback" data-publishing-feedback hidden role="status"></div>
+    <aside class="desktop-publishing-explainer">
+        <h2>{{ __('publishing.explanation_title') }}</h2>
+        <p>{{ __('publishing.explanation_website') }}</p>
+        <p>{{ __('publishing.explanation_channels') }}</p>
+        <p>{{ __('publishing.explanation_status') }}</p>
+    </aside>
     <div class="desktop-publishing-grid">
         <section class="desktop-publishing-card"><div class="desktop-publishing-card-head"><h2>{{ __('publishing.choose_content') }}</h2><span data-publishing-connection-status></span></div><label class="desktop-publishing-select"><span>{{ __('publishing.content') }}</span><select data-publishing-record></select></label><p class="desktop-publishing-muted" data-publishing-empty hidden>{{ __('publishing.no_content') }}</p></section>
         <section class="desktop-publishing-card"><div class="desktop-publishing-card-head"><h2>{{ __('publishing.destinations') }}</h2><span>{{ __('publishing.destinations_hint') }}</span></div><div class="desktop-publishing-destinations" data-publishing-destinations></div><label class="desktop-publishing-destination"><input type="checkbox" data-remove-on-unpublish><span>{{ __('publishing.remove_on_unpublish') }}</span></label><button type="button" class="desktop-button is-primary" data-publishing-submit>{{ __('publishing.publish_now') }}</button></section>

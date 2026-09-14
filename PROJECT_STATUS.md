@@ -4,6 +4,8 @@
 
 ## Реализовано
 
+- Publishing: окно явно объясняет, что публикуется только выбранный готовый материал и чем отличаются Website, внешние каналы и Live-цели; Publishing получил собственную вертикальную прокрутку для длинного содержимого. Проверки: PublishingTest 13/86, существующий Publishing browser-check на Edge, Blade view:cache и git diff --check прошли.
+
 - Content Library: в каждой строке видео/Short видны значки публикации и статуса Startseite с явными активными/неактивными подписями; отсутствующие Kurzbeschreibungen автоматически ставятся в существующую AI-очередь при открытии списка, без повторной постановки завершённых или недостаточных записей. Проверки: ContentLibraryPublicationFilterTest и ContentEnhancementsTest прошли; browser-check не запущен из-за отсутствующего Playwright Chromium. Последний связанный commit будет указан после фиксации задачи.
 
 - Homepage Featured video: заголовок уменьшен до 20–24 px (mobile 20 px), Kurzbeschreibung до 11 px; основной hero-заголовок и другие разделы не менялись. Homepage CSS cache version — v=15. Длинный заголовок проверен на desktop/mobile без наложения на автора/Play.
@@ -139,6 +141,6 @@
 
 ## Последний связанный commit
 
-- Текущий atomic-блок: Content Library status badges and automatic short descriptions; hash сообщается после commit/push. Предыдущий commit `adf6ebf` — Reduce homepage featured video typography.
+- Текущий atomic-блок: Publishing explanation and scrollable window; hash сообщается после commit/push. Предыдущий commit `fffad90` — Show content publication states and auto-generate short descriptions.
 - Ветка/upstream: main → origin/main. Изменение применяется git pull + PHP 8.4 view:clear; dependencies/migrations/Node build/cron/config/routes не менялись.
 
