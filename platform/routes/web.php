@@ -1,4 +1,5 @@
 <?php
+require __DIR__.'/live-studio.php';
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;

@@ -33,7 +33,7 @@ For external iframe polls, the owner may set the non-secret comma-separated `POL
 - Generic RSS/URL import adapters and verified legacy subscriber ingestion. The assistant intentionally does not invent legacy mappings or bypass confirmed consent.
 - Real inbound YouTube comment synchronization and other supported inbound channel adapters. Existing queued YouTube replies and daily video review import are not incoming comment synchronization.
 - Generated AI prioritization/recommendations beyond the contextual actions and own suggestion history in Import Review/Desktop.
-- Live remote Start/Stop/emergency controls, bitrate/drop telemetry and browser camera/microphone publishing. MediaMTX API is disabled in the current server configuration; no fake remote OBS controls were introduced. Scene/mixer features are explicitly later extensions in MASTER-TZ.
+- Live: Browser Studio now supports camera/microphone, screen, contained local images/PiP/title, actual browser-output telemetry, WHIP start/stop and local WAV recording with unpublished Podcast drafts. Protected server configuration and confirmed OBS disconnect are implemented; everyday OBS control remains in OBS. See docs/PUBLIC-LIVE.md. Linux/Plesk configuration/normalization and production media still require hosting verification. TURN, guests, full OBS-like scenes/mixer and server replay merge remain unfinished.
 - External analytics adapters, TikTok/LinkedIn publishing and generic saved-credential integrations. A saved credential or connected flag does not implement a provider adapter.
 
 ## Owner decision required: restricted original media

@@ -1,0 +1,11 @@
+.desktop-browser-studio{margin:0 0 18px;padding:18px;border:1px solid #cbd9e6;border-radius:12px;background:#fffdf8;color:#234b78}
+.desktop-browser-tabs{display:flex;gap:8px;margin-bottom:16px}.desktop-browser-tabs [aria-pressed=true]{background:#234b78;color:white}
+.desktop-browser-studio canvas{display:block;width:100%;height:auto;aspect-ratio:16/9;background:#102238;border-radius:8px;margin:12px 0}
+.desktop-browser-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.desktop-browser-studio label{display:flex;flex-direction:column;gap:5px;min-width:0;font-size:12px}
+.desktop-browser-studio input,.desktop-browser-studio select{max-width:100%;min-width:0;padding:7px;border:1px solid #cbd9e6;border-radius:6px;background:white;color:#234b78}
+.desktop-browser-studio input[type=checkbox]{align-self:flex-start}.desktop-browser-studio input[type=range],.desktop-browser-studio meter{width:100%}
+.desktop-browser-studio button{white-space:normal}.desktop-browser-studio [role=status]{min-height:20px;font-size:13px;overflow-wrap:anywhere}
+.desktop-browser-studio details{border-top:1px solid #cbd9e6;padding-top:12px;font-size:12px}.desktop-browser-studio summary{cursor:pointer;font-weight:600}
+.desktop-browser-studio form{display:grid;gap:10px;margin:10px 0}
+@media(max-width:540px){.desktop-browser-controls{grid-template-columns:1fr}.desktop-browser-studio{padding:12px}}

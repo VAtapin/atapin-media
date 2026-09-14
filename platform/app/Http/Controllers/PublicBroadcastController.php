@@ -7,7 +7,7 @@ class PublicBroadcastController extends Controller
 {
     public function authenticate(Request $request,PublicBroadcast $broadcast)
     {
-        $data=$request->validate(['path'=>'required|string|max:80','action'=>'required|in:publish,read','protocol'=>'required|in:rtmp,hls','user'=>'nullable|string|max:100','password'=>'nullable|string|max:200']);
+        $data=$request->validate(['path'=>'nullable|string|max:80','action'=>'required|in:publish,read,api,metrics','protocol'=>'nullable|in:rtmp,hls,webrtc,rtsp','ip'=>'nullable|ip','user'=>'nullable|string|max:100','password'=>'nullable|string|max:200']);
         return response('', $broadcast->authorize($data)?204:401);
     }
     public function apiIndex(Request $request,PublicContent $content)

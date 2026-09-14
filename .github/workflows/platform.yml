@@ -139,6 +139,26 @@ jobs:
           CACHE_STORE: file
           QUEUE_CONNECTION: database
           SESSION_SECURE_COOKIE: 'false'
+      - name: Pinned MediaMTX browser transport
+        run: |
+          mkdir -p ../.local/mediamtx
+          curl --fail --location --proto '=https' --tlsv1.2 https://github.com/bluenviron/mediamtx/releases/download/v1.21.0/mediamtx_v1.21.0_linux_amd64.tar.gz -o ../.local/mediamtx/release.tar.gz
+          echo 'e02e34c3337a35f20ac9e5aa31524566108964e6e37dbc46cf8292169f6c792b  ../.local/mediamtx/release.tar.gz' | sha256sum --check --status
+          tar -xzf ../.local/mediamtx/release.tar.gz -C ../.local/mediamtx mediamtx
+          php artisan optimize:clear
+          touch /tmp/desktop-workspaces-live-ci.sqlite
+          php artisan migrate --force
+          php tests/browser-live-fixture.php
+          timeout 150 node tests/browser-live-browser.mjs
+        env:
+          APP_ENV: testing
+          APP_LOCALE: de
+          DB_CONNECTION: sqlite
+          DB_DATABASE: /tmp/desktop-workspaces-live-ci.sqlite
+          CACHE_STORE: file
+          QUEUE_CONNECTION: database
+          SESSION_SECURE_COOKIE: 'false'
+          MEDIAMTX_VALIDATE_BIN: ../.local/mediamtx/mediamtx
       - uses: actions/upload-artifact@v4
         if: always()
         with:

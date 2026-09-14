@@ -2,6 +2,7 @@
 
 return [
     'title' => 'Live Studio',
+    'close_warning'=>'A broadcast or recording is active. End it before changing events.',
     'eyebrow' => 'Manna Vom Himmel · Live Studio',
     'intro' => 'Create livestreams, connect OBS and publish the broadcast.',
     'events' => 'My livestreams',

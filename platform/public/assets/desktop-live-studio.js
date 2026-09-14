@@ -14,6 +14,8 @@
   const initialize = root => {
     if (!root || root.dataset.initialized === 'true') return;
     root.dataset.initialized = 'true';
+    let browserStudio=null;
+    const studioModule=import('/assets/desktop-browser-studio.js?v=1').then(module=>{browserStudio=module;return module;});
     const form = root.querySelector('[data-live-form]');
     const empty = root.querySelector('[data-live-editor-empty]');
     const events = root.querySelector('[data-live-events]');
@@ -127,6 +129,7 @@
     };
     const fillForm = data => {
       current = data;
+      studioModule.then(module=>module.initialize(root,data)).catch(error=>setFeedback(error.message,true));
       window.initializeLiveConsole?.(root,data.id);
       empty.hidden = true;
       form.hidden = false;
@@ -147,6 +150,7 @@
       renderList(window.liveStudioEvents || []);
     };
     const loadEvent = async id => {
+      if(browserStudio?.busy(root)){setFeedback(window.desktopLiveLabels.close_warning||'End the active broadcast or recording first.',true);return;}
       setFeedback('');
       try { fillForm(await requestData(`${root.dataset.apiBase}/${id}`)); }
       catch (error) { setFeedback(error.message || labels().load_error, true); }
@@ -181,7 +185,7 @@
         newEvent();
       }
     };
-    const newEvent = () => { setFeedback(''); showIngest({}); fillForm({}); };
+    const newEvent = () => { if(browserStudio?.busy(root)){setFeedback(window.desktopLiveLabels.close_warning||'End the active broadcast or recording first.',true);return;}setFeedback(''); showIngest({}); fillForm({}); };
     root.querySelector('[data-live-new]').addEventListener('click', newEvent);
     root.querySelector('[data-live-copy]').addEventListener('click', async event => {
       const url = root.querySelector('[data-live-url]').textContent;
@@ -224,6 +228,7 @@
     currentEvents.addEventListener('click', event => { const button = event.target.closest('[data-live-event]'); if (button) loadEvent(button.dataset.liveEvent); });
     form.addEventListener('submit', async event => {
       event.preventDefault();
+      if(browserStudio?.busy(root)){setFeedback(window.desktopLiveLabels.close_warning||'End the active broadcast or recording first.',true);return;}
       setFeedback('');
       const payload = Object.fromEntries(new FormData(form).entries());
       payload.published = form.elements.published.checked;

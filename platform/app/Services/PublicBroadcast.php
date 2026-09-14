@@ -38,15 +38,26 @@ class PublicBroadcast
     }
     public function authorize(array $data): bool
     {
+        $browser=app(BrowserBroadcast::class)->authorize($data);
+        if($browser!==null)return $browser;
         $path=$data['path']??'';
         if(($data['action']??'')==='read'){
             $record=$this->record($path);return $record&&($data['protocol']??'')==='hls'&&app(PublicContent::class)->visible($record);
         }
-        if(($data['action']??'')!=='publish'||($data['user']??'')!=='publisher')return false;
+        if(($data['action']??'')!=='publish'||($data['protocol']??'')!=='rtmp'||($data['user']??'')!=='publisher')return false;
+        return \Illuminate\Support\Facades\Cache::lock('live-input-owner',15)->block(3,fn()=>$this->authorizeObs($data));
+    }
+    private function authorizeObs(array $data): bool
+    {
+        $path=$data['path']??'';
+        if(app(BrowserBroadcast::class)->active()->exists())return false;
         $record=$path===self::SHARED_PATH?null:$this->record($path);
         $key=$path===self::SHARED_PATH?app(Settings::class)->secret('live_publish_shared'):app(Settings::class)->secret('live_publish_'.($record?->id ?? ''));
         if(!is_string($key)||!is_string($data['password']??null)||!hash_equals($key,$data['password']))return false;
-        return (bool)($path===self::SHARED_PATH?$this->activateSharedRecord():$record);
+        $selected=$path===self::SHARED_PATH?$this->activateSharedRecord():$record;
+        if(!$selected)return false;
+        $selected->update(['metadata'=>[...$selected->metadata,'live_ingest_reserved_until'=>now()->addSeconds(30)->toIso8601String()]]);
+        return true;
     }
     public function signal(string $path,bool $ready): void
     {
@@ -55,6 +66,7 @@ class PublicBroadcast
             $record=SourceRecord::lockForUpdate()->findOrFail($record->id);
             if ($ready && ($record->metadata['live_status'] ?? null) === 'ended') return;
             $metadata=[...$record->metadata,'live_status'=>$ready?'live':'ended','live_signal_at'=>now()->toIso8601String()];
+            unset($metadata['live_ingest_reserved_until']);
             if ($ready) unset($metadata['live_recording_pending']);
             else {
                 unset($metadata['live_ingest_active']);
@@ -101,13 +113,25 @@ class PublicBroadcast
             $config['rtmpServerCert']=(string) config('platform.live_rtmp_cert');
             $config['rtmpServerKey']=(string) config('platform.live_rtmp_key');
         }
+        $settings=app(Settings::class);
+        if($settings->hasSecret('live_control')){
+            $config['api']=true;$config['apiAddress']='127.0.0.1:9997';$config['apiAllowOrigins']=[];
+        }
+        if($settings->get('live_browser_enabled',false)){
+            $config['webrtc']=true;$config['webrtcAddress']='127.0.0.1:8889';$config['webrtcAllowOrigins']=[];
+            $config['webrtcLocalUDPAddress']=':8189';$config['webrtcLocalTCPAddress']=':8189';
+            $config['webrtcIPsFromInterfaces']=false;$config['webrtcAdditionalHosts']=[$settings->get('live_browser_host',config('platform.live_rtmp_host'))];
+            $config['rtsp']=true;$config['rtspAddress']='127.0.0.1:8554';$config['rtspTransports']=['tcp'];
+            $config['paths']['~^browser-[a-f0-9-]{36}$']=['source'=>'publisher','record'=>false,
+                'runOnAvailable'=>$prefix.' browser','runOnAvailableRestart'=>true,'runOnUnavailable'=>'','runOnRecordSegmentComplete'=>''];
+        }
         // JSON is a YAML subset supported by MediaMTX; no second parser/dependency.
         return json_encode($config,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)."\n";
     }
 
     private function activeRecord(): ?SourceRecord
     {
-        return SourceRecord::where('metadata->public_section','live')->where('metadata->live_stream_enabled',true)
+        return SourceRecord::where('metadata->public_section','live')
             ->where('metadata->live_ingest_active',true)->where(function($query){$query->whereNull('metadata->live_status')->orWhere('metadata->live_status','!=','ended');})->first();
     }
 
@@ -132,7 +156,7 @@ class PublicBroadcast
 
     private function activateSharedRecord(): ?SourceRecord
     {
-        if ($active=$this->activeRecord()) return $active;
+        if ($active=$this->activeRecord()) return !empty($active->metadata['live_stream_enabled'])?$active:null;
         $record=$this->candidateRecord();
         if (!$record) return null;
         $record->update(['metadata'=>[...$record->metadata,'live_ingest_active'=>true]]);

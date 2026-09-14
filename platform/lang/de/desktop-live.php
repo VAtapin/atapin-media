@@ -2,6 +2,7 @@
 
 return [
     'title' => 'Live Studio',
+    'close_warning'=>'Übertragung oder Aufnahme aktiv. Vor einem Eventwechsel beenden.',
     'eyebrow' => 'Manna Vom Himmel · Live Studio',
     'intro' => 'Livestreams erstellen, OBS verbinden und die Übertragung veröffentlichen.',
     'events' => 'Meine Livestreams',
