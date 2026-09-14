@@ -6,7 +6,7 @@ use App\Models\{Role, User};
 use App\Services\{Access, Settings};
 use App\Services\Publishing\{ConnectionStore, SocialConnections};
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\{Http, Queue};
+use Illuminate\Support\Facades\{DB, Http, Queue};
 use Tests\TestCase;
 
 class SocialConnectionFormsTest extends TestCase
@@ -34,7 +34,15 @@ class SocialConnectionFormsTest extends TestCase
             }
             $this->putJson('/desktop/settings', $values)->assertOk()->assertJsonPath('provider', $provider);
             $this->putJson('/desktop/settings', [...$values, 'webhook_secret' => 'unused-secret'])->assertUnprocessable()->assertJsonValidationErrors('webhook_secret');
-            $this->putJson('/desktop/settings', [...$values, 'oauth_client_id' => 'unused-id'])->assertUnprocessable()->assertJsonValidationErrors('oauth_client_id');
+            if (in_array($provider, ['youtube', 'x'], true)) {
+                $this->putJson('/desktop/settings', [...$values, 'oauth_client_id' => 'unused-id', 'oauth_client_secret' => 'unused-secret'])->assertOk();
+                $stored = DB::table('settings')->where('key', 'secret.oauth_'.$provider.'_client_secret')->value('value');
+                $this->assertIsString($stored);
+                $this->assertStringNotContainsString('unused-secret', $stored);
+                $this->get('/desktop')->assertDontSee('unused-secret');
+            } else {
+                $this->putJson('/desktop/settings', [...$values, 'oauth_client_id' => 'unused-id'])->assertUnprocessable()->assertJsonValidationErrors('oauth_client_id');
+            }
         }
         foreach (['youtube', 'x', 'tiktok', 'linkedin'] as $provider) {
             $this->putJson('/desktop/settings', ['section' => 'social', 'provider' => $provider, 'api_key' => 'unused-token'])->assertUnprocessable()->assertJsonValidationErrors('api_key');
@@ -91,10 +99,12 @@ class SocialConnectionFormsTest extends TestCase
     {
         $editor = app(SocialConnections::class)->editor();
         foreach (['youtube', 'x'] as $provider) $this->assertNotEmpty($editor[$provider]['oauth_url']);
-        foreach ($editor as $definition) {
+        foreach (['facebook', 'instagram', 'telegram', 'tiktok', 'linkedin'] as $provider) {
+            $definition = $editor[$provider];
             $this->assertNotContains('webhook_secret', $definition['fields']);
             $this->assertNotContains('oauth_client_id', $definition['fields']);
         }
+        foreach (['youtube', 'x'] as $provider) $this->assertContains('oauth_client_id', $editor[$provider]['fields']);
         $this->get('/desktop')->assertOk()->assertSee('data-social-definitions', false)->assertSee('name="bot_username"', false)->assertSee('data-connection-oauth', false);
     }
 }

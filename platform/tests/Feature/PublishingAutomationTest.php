@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\{Media, Publication, Role, SourceRecord, User};
 use App\Services\{Access, Settings};
-use App\Services\Publishing\{ConnectionStore, MediaResolver, PublishingService, VideoRenderer, YouTubeClient};
+use App\Services\Publishing\{ConnectionStore, MediaResolver, OAuthAppCredentials, PublishingService, VideoRenderer, YouTubeClient};
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\{Crypt, Http, Queue, Storage};
 use Tests\TestCase;
@@ -253,7 +253,7 @@ class PublishingAutomationTest extends TestCase
 
     public function test_x_oauth_uses_pkce_and_single_use_state(): void
     {
-        config(['publishing.x.client_id' => 'client']);
+        app(OAuthAppCredentials::class)->save('x', ['client_id' => 'client']);
         $response = $this->get(route('desktop.publishing.x.connect'))->assertRedirect();
         $this->assertStringContainsString('code_challenge_method=S256', $response->headers->get('Location'));
         $this->get(route('desktop.publishing.x.callback', ['state' => 'wrong', 'code' => 'code']))->assertStatus(419);
@@ -290,7 +290,7 @@ class PublishingAutomationTest extends TestCase
 
     public function test_x_oauth_callback_stores_credentials_encrypted_and_disconnect_clears_them(): void
     {
-        config(['publishing.x.client_id' => 'client']);
+        app(OAuthAppCredentials::class)->save('x', ['client_id' => 'client']);
         Http::fake([
             'https://api.x.com/2/oauth2/token' => Http::response(['access_token' => 'x-access-secret', 'refresh_token' => 'x-refresh-secret']),
             'https://api.x.com/2/users/me*' => Http::response(['data' => ['id' => '123', 'username' => 'owner', 'protected' => false]]),
@@ -357,7 +357,7 @@ class PublishingAutomationTest extends TestCase
     public function test_x_oauth_refresh_keeps_publication_working(): void
     {
         $publication = $this->publication('x', 'post');
-        config(['publishing.x.client_id' => 'client', 'publishing.x.client_secret' => 'x-client-secret']);
+        app(OAuthAppCredentials::class)->save('x', ['client_id' => 'client', 'client_secret' => 'x-client-secret']);
         app(ConnectionStore::class)->saveCredentials('x', ['expires_at' => now()->subMinute()->timestamp, 'refresh_token' => 'old-refresh']);
         Http::fake([
             'https://api.x.com/2/oauth2/token' => Http::response(['access_token' => 'new-access', 'refresh_token' => 'new-refresh', 'expires_in' => 7200]),

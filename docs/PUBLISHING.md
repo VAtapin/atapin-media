@@ -79,7 +79,7 @@ The existing editor and server validation share one provider field definition. I
 
 | Network | Editor inputs | Obtained elsewhere / not entered here |
 | --- | --- | --- |
-| YouTube | Optional public URL; existing OAuth connection action | Channel ID/access/refresh tokens from OAuth; Google application credentials configured on server |
+| YouTube | Optional public URL; existing OAuth connection action | Channel ID/access/refresh tokens from OAuth; Google application credentials configured by an administrator in Social Media settings |
 | X | Optional public URL; existing OAuth connection action | User ID/tokens from OAuth; app configuration, API access/credits separately |
 | Facebook | Page ID and authorized Page Access Token; optional public URL | Publishing permissions must already be granted; no generic API key/app ID/webhook field |
 | Instagram | Business/Creator account ID and authorized Meta token; optional public URL | Token must match the configured connector API and publishing permissions; no generic API key/app ID/webhook field |
@@ -93,8 +93,7 @@ No Social Media connector in this block implements incoming webhooks, so none as
 
 Configure secrets on the server, never in Git/chat:
 
-- `YOUTUBE_OAUTH_CLIENT_ID`, `YOUTUBE_OAUTH_CLIENT_SECRET`, `YOUTUBE_OAUTH_REDIRECT_URI`: Google OAuth web app; callback normally `https://mannavomhimmel.de/desktop/publishing/youtube/callback`.
-- `X_OAUTH_CLIENT_ID`, optionally `X_OAUTH_CLIENT_SECRET`, `X_OAUTH_REDIRECT_URI`: OAuth 2.0 user authentication with PKCE; callback normally `https://mannavomhimmel.de/desktop/publishing/x/callback`. Scopes: `tweet.read tweet.write users.read media.write offline.access`. Developer app needs write/media access and [X API credits](https://docs.x.com/x-api/getting-started/pricing). [Official OAuth setup](https://docs.x.com/fundamentals/authentication/oauth-2-0/authorization-code).
+- YouTube OAuth Client ID/Secret and X OAuth Client ID/Secret are entered by an administrator in **Einstellungen → Social Media** and stored encrypted in the settings database. OAuth callbacks are fixed application routes: `https://mannavomhimmel.de/desktop/publishing/youtube/callback` and `https://mannavomhimmel.de/desktop/publishing/x/callback`. X uses OAuth 2.0 with PKCE and scopes `tweet.read tweet.write users.read media.write offline.access`; the developer app needs write/media access and [X API credits](https://docs.x.com/x-api/getting-started/pricing). [Official OAuth setup](https://docs.x.com/fundamentals/authentication/oauth-2-0/authorization-code).
 - `YOUTUBE_SYNC_DOWNLOADER`: installed yt-dlp for review imports.
 - `LIVE_RELAY_FFMPEG`: installed ffmpeg for relay/adaptation, with H.264/AAC and drawtext/usable font for text cards.
 - Facebook/Instagram Page/account IDs and authorized tokens; Telegram public channel/group ID and bot token: existing encrypted integration settings, with publishing permissions.

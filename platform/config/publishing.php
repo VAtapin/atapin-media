@@ -1,14 +1,8 @@
 <?php
 
 return [
-    'x' => [
-        'client_id' => env('X_OAUTH_CLIENT_ID'), 'client_secret' => env('X_OAUTH_CLIENT_SECRET'),
-        'redirect_uri' => env('X_OAUTH_REDIRECT_URI', rtrim(env('APP_URL', 'http://localhost'), '/').'/desktop/publishing/x/callback'),
-    ],
+    'x' => [],
     'youtube' => [
-        'client_id' => env('YOUTUBE_OAUTH_CLIENT_ID'),
-        'client_secret' => env('YOUTUBE_OAUTH_CLIENT_SECRET'),
-        'redirect_uri' => env('YOUTUBE_OAUTH_REDIRECT_URI', rtrim(env('APP_URL', 'http://localhost'), '/').'/desktop/publishing/youtube/callback'),
         'api_base' => 'https://www.googleapis.com/youtube/v3',
         'oauth_authorize' => 'https://accounts.google.com/o/oauth2/v2/auth',
         'oauth_token' => 'https://oauth2.googleapis.com/token',

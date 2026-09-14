@@ -9,6 +9,16 @@ class XClient
 {
     public function __construct(private readonly ConnectionStore $connections) {}
 
+    public function oauthConfigured(): bool
+    {
+        return app(OAuthAppCredentials::class)->configured('x', false);
+    }
+
+    public function oauthClientId(): string
+    {
+        return app(OAuthAppCredentials::class)->get('x')['client_id'];
+    }
+
     public function request(): PendingRequest
     {
         if (! $this->connections->connected('x')) throw new \RuntimeException('X is disconnected.');
@@ -23,9 +33,10 @@ class XClient
 
     public function token(array $data): array
     {
+        $oauth = app(OAuthAppCredentials::class)->get('x');
         $request = Http::asForm()->timeout(30);
-        if (config('publishing.x.client_secret')) $request = $request->withBasicAuth((string) config('publishing.x.client_id'), (string) config('publishing.x.client_secret'));
-        $payload = $request->post('https://api.x.com/2/oauth2/token', [...$data, 'client_id' => config('publishing.x.client_id')])->throw()->json();
+        if ($oauth['client_secret'] !== '') $request = $request->withBasicAuth($oauth['client_id'], $oauth['client_secret']);
+        $payload = $request->post('https://api.x.com/2/oauth2/token', [...$data, 'client_id' => $oauth['client_id']])->throw()->json();
         if (empty($payload['access_token'])) throw new \RuntimeException('X returned no access token.');
         return [...$payload, 'expires_at' => now()->addSeconds((int) ($payload['expires_in'] ?? 7200))->timestamp];
     }

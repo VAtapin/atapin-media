@@ -12,11 +12,11 @@ class SocialConnections
     public static function definitions(): array
     {
         return [
-            'youtube' => ['label' => 'YouTube', 'fields' => ['public_url'], 'oauth' => 'desktop.publishing.youtube.connect'],
+            'youtube' => ['label' => 'YouTube', 'fields' => ['public_url', 'oauth_client_id', 'oauth_client_secret'], 'oauth' => 'desktop.publishing.youtube.connect'],
             'facebook' => ['label' => 'Facebook', 'fields' => ['public_url', 'external_id', 'access_token']],
             'instagram' => ['label' => 'Instagram', 'fields' => ['public_url', 'external_id', 'access_token']],
             'telegram' => ['label' => 'Telegram', 'fields' => ['public_url', 'external_id', 'api_key', 'bot_username', 'mini_app_enabled']],
-            'x' => ['label' => 'X', 'fields' => ['public_url'], 'oauth' => 'desktop.publishing.x.connect'],
+            'x' => ['label' => 'X', 'fields' => ['public_url', 'oauth_client_id', 'oauth_client_secret'], 'oauth' => 'desktop.publishing.x.connect'],
             'tiktok' => ['label' => 'TikTok', 'fields' => ['public_url']],
             'linkedin' => ['label' => 'LinkedIn', 'fields' => ['public_url']],
         ];
@@ -48,10 +48,11 @@ class SocialConnections
         if (! is_string($provider)) $provider = '';
         $fields = self::definitions()[$provider]['fields'] ?? [];
         $rules = ['provider' => ['required', 'string', Rule::in(array_keys(self::definitions()))]];
-        foreach (['public_url', 'external_id', 'api_key', 'oauth_client_id', 'access_token', 'webhook_secret', 'bot_username', 'mini_app_enabled'] as $field) {
+        foreach (['public_url', 'external_id', 'api_key', 'oauth_client_id', 'oauth_client_secret', 'access_token', 'webhook_secret', 'bot_username', 'mini_app_enabled'] as $field) {
             $rules[$field] = in_array($field, $fields, true) ? match ($field) {
                 'public_url' => 'nullable|url|max:1000',
                 'external_id' => 'nullable|string|max:255',
+                'oauth_client_id', 'oauth_client_secret' => 'nullable|string|max:4000',
                 'bot_username' => ['nullable', 'string', 'max:32', 'regex:/^[a-zA-Z][a-zA-Z0-9_]{4,31}$/'],
                 'mini_app_enabled' => 'sometimes|boolean',
                 default => 'nullable|string|max:4000',
@@ -84,6 +85,12 @@ class SocialConnections
             if ($credentials) {
                 unset($connections[$provider]['revoked_at']);
                 app(ConnectionStore::class)->saveCredentials($provider, $credentials);
+            }
+            if (in_array($provider, ['youtube', 'x'], true)) {
+                app(OAuthAppCredentials::class)->save($provider, [
+                    'client_id' => $values['oauth_client_id'] ?? null,
+                    'client_secret' => $values['oauth_client_secret'] ?? null,
+                ]);
             }
             $settings->update(['social_connections' => $connections]);
         });

@@ -84,7 +84,8 @@ class ConnectionStore
     public function safeError(\Throwable $error): string
     {
         $message = $error->getMessage();
-        $secrets = [(string) config('publishing.youtube.client_secret'), (string) config('publishing.x.client_secret')];
+        $oauth = app(OAuthAppCredentials::class);
+        $secrets = [$oauth->get('youtube')['client_secret'], $oauth->get('x')['client_secret']];
         foreach ($this->publicConnections() as $connection) {
             $credentials = $this->credentials($connection['provider']);
             array_walk_recursive($credentials, static function ($value) use (&$secrets) {

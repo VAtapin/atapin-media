@@ -114,7 +114,7 @@ class PublishingController extends Controller
 
     public function youtubeConnect(Request $request, YouTubeClient $client)
     {
-        abort_unless(config('publishing.youtube.client_id') && config('publishing.youtube.client_secret'), 503, 'YouTube OAuth is not configured.');
+        abort_unless($client->oauthConfigured(), 503, 'YouTube OAuth is not configured in Settings → Social Media.');
         $state = bin2hex(random_bytes(24));
         $request->session()->put('publishing.youtube.oauth_state', $state);
         return redirect()->away($client->authorizeUrl($state));

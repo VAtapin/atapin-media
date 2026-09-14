@@ -15,16 +15,21 @@ class YouTubeClient
 
     public function configured(): bool
     {
-        return (bool) config('publishing.youtube.client_id')
-            && (bool) config('publishing.youtube.client_secret')
+        return app(OAuthAppCredentials::class)->configured('youtube')
             && $this->connections->connected('youtube');
+    }
+
+    public function oauthConfigured(): bool
+    {
+        return app(OAuthAppCredentials::class)->configured('youtube');
     }
 
     public function authorizeUrl(string $state): string
     {
+        $oauth = app(OAuthAppCredentials::class)->get('youtube');
         return (string) config('publishing.youtube.oauth_authorize').'?'.http_build_query([
-            'client_id' => config('publishing.youtube.client_id'),
-            'redirect_uri' => config('publishing.youtube.redirect_uri'),
+            'client_id' => $oauth['client_id'],
+            'redirect_uri' => route('desktop.publishing.youtube.callback'),
             'response_type' => 'code',
             'scope' => config('publishing.youtube.scope'),
             'access_type' => 'offline',
@@ -35,11 +40,12 @@ class YouTubeClient
 
     public function exchangeCode(string $code): array
     {
+        $oauth = app(OAuthAppCredentials::class)->get('youtube');
         $response = Http::asForm()->timeout(30)->post((string) config('publishing.youtube.oauth_token'), [
             'code' => $code,
-            'client_id' => config('publishing.youtube.client_id'),
-            'client_secret' => config('publishing.youtube.client_secret'),
-            'redirect_uri' => config('publishing.youtube.redirect_uri'),
+            'client_id' => $oauth['client_id'],
+            'client_secret' => $oauth['client_secret'],
+            'redirect_uri' => route('desktop.publishing.youtube.callback'),
             'grant_type' => 'authorization_code',
         ]);
         if (! $response->successful() || ! is_string($response->json('access_token'))) {
@@ -254,9 +260,10 @@ class YouTubeClient
         $credentials ??= $this->connections->credentials('youtube');
         $expiresAt = (int) ($credentials['expires_at'] ?? 0);
         if ((! is_string($credentials['access_token'] ?? null) || $expiresAt && $expiresAt <= now()->addMinute()->timestamp) && ! empty($credentials['refresh_token'])) {
+            $oauth = app(OAuthAppCredentials::class)->get('youtube');
             $response = Http::asForm()->timeout(30)->post((string) config('publishing.youtube.oauth_token'), [
-                'client_id' => config('publishing.youtube.client_id'),
-                'client_secret' => config('publishing.youtube.client_secret'),
+                'client_id' => $oauth['client_id'],
+                'client_secret' => $oauth['client_secret'],
                 'refresh_token' => $credentials['refresh_token'],
                 'grant_type' => 'refresh_token',
             ]);

@@ -89,6 +89,8 @@
                 <div class="desktop-settings-grid two">
                     <label data-provider-field="api_key"><span data-provider-label></span><input name="api_key" type="password" autocomplete="new-password" maxlength="4000" placeholder="{{ __('social.keep_secret') }}"></label>
                     <label data-provider-field="access_token"><span data-provider-label></span><input name="access_token" type="password" autocomplete="new-password" maxlength="4000" placeholder="{{ __('social.keep_secret') }}"></label>
+                    <label data-provider-field="oauth_client_id"><span data-provider-label></span><input name="oauth_client_id" autocomplete="off" maxlength="4000" placeholder="{{ __('social.keep_secret') }}"></label>
+                    <label data-provider-field="oauth_client_secret"><span data-provider-label></span><input name="oauth_client_secret" type="password" autocomplete="new-password" maxlength="4000" placeholder="{{ __('social.keep_secret') }}"></label>
                     <label data-provider-field="bot_username"><span data-provider-label></span><input name="bot_username" maxlength="32" pattern="[a-zA-Z][a-zA-Z0-9_]{4,31}"></label>
                     <div data-provider-field="mini_app_enabled"><label><input type="hidden" name="mini_app_enabled" value="0"><input type="checkbox" name="mini_app_enabled" value="1"><span data-provider-label></span></label><p>{{ __('social.mini_app_entry') }}: <a href="{{ route('home') }}" target="_blank" rel="noopener">{{ route('home') }}</a></p></div>
                 </div>

@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Jobs\PublishToPlatform;
 use App\Models\{Publication, Role, SourceRecord, User};
 use App\Services\{Access, Settings};
-use App\Services\Publishing\{ConnectionStore, MediaResolver, PublishingService, YouTubeClient};
+use App\Services\Publishing\{ConnectionStore, MediaResolver, OAuthAppCredentials, PublishingService, YouTubeClient};
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Http;
@@ -49,6 +49,17 @@ class PublishingTest extends TestCase
         $this->getJson(route('desktop.publishing.index'))->assertOk()->assertJsonStructure(['records', 'destinations', 'publications', 'youtube']);
     }
 
+    public function test_youtube_oauth_requires_admin_config_and_uses_the_configured_callback(): void
+    {
+        $url = route('desktop.publishing.youtube.connect');
+        $this->get($url)->assertStatus(503);
+        app(OAuthAppCredentials::class)->save('youtube', ['client_id' => 'client-id', 'client_secret' => 'client-secret']);
+        $response = $this->get($url)->assertRedirect();
+        parse_str((string) parse_url($response->headers->get('Location'), PHP_URL_QUERY), $query);
+        $this->assertSame('client-id', $query['client_id']);
+        $this->assertSame(route('desktop.publishing.youtube.callback'), $query['redirect_uri']);
+    }
+
     public function test_publishing_screen_explains_scope_and_loads_scrolling_styles(): void
     {
         $this->get('/desktop')->assertOk()
@@ -62,7 +73,7 @@ class PublishingTest extends TestCase
     {
         app(Settings::class)->update(['social_connections' => ['youtube' => ['external_id' => 'channel-id']]]);
         app(ConnectionStore::class)->saveCredentials('youtube', ['access_token' => 'test-token', 'refresh_token' => 'refresh-secret']);
-        config(['publishing.youtube.client_id' => 'client-id', 'publishing.youtube.client_secret' => 'client-secret']);
+        app(OAuthAppCredentials::class)->save('youtube', ['client_id' => 'client-id', 'client_secret' => 'client-secret']);
     }
 
     private function publication(array $metadata = []): Publication

@@ -9,14 +9,15 @@ use Illuminate\Support\Facades\{DB, Http};
 
 class XOAuthController extends Controller
 {
-    public function connect(Request $request)
+    public function connect(Request $request, XClient $client)
     {
-        abort_unless(config('publishing.x.client_id'), 503);
+        abort_unless($client->oauthConfigured(), 503);
+        $clientId = $client->oauthClientId();
         $state = bin2hex(random_bytes(24));
         $verifier = bin2hex(random_bytes(32));
         $request->session()->put('publishing.x.oauth', ['state' => $state, 'verifier' => $verifier]);
         return redirect()->away('https://x.com/i/oauth2/authorize?'.http_build_query([
-            'response_type' => 'code', 'client_id' => config('publishing.x.client_id'), 'redirect_uri' => config('publishing.x.redirect_uri'),
+            'response_type' => 'code', 'client_id' => $clientId, 'redirect_uri' => route('desktop.publishing.x.callback'),
             'scope' => 'tweet.read tweet.write users.read media.write offline.access', 'state' => $state,
             'code_challenge' => rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '='), 'code_challenge_method' => 'S256',
         ]));
@@ -29,7 +30,7 @@ class XOAuthController extends Controller
         abort_unless(is_array($expected) && is_string($state) && $state !== '' && hash_equals($expected['state'], $state), 419);
         if ($request->query('error')) return redirect('/desktop')->with('status', __('publishing.oauth_cancelled'));
         $data = $request->validate(['code' => 'required|string']);
-        $credentials = $client->token(['grant_type' => 'authorization_code', 'code' => $data['code'], 'code_verifier' => $expected['verifier'], 'redirect_uri' => config('publishing.x.redirect_uri')]);
+        $credentials = $client->token(['grant_type' => 'authorization_code', 'code' => $data['code'], 'code_verifier' => $expected['verifier'], 'redirect_uri' => route('desktop.publishing.x.callback')]);
         $user = Http::withToken($credentials['access_token'])->timeout(30)->get($client->url('users/me'), ['user.fields' => 'protected'])->throw()->json('data', []);
         abort_unless(! empty($user['id']) && ($user['protected'] ?? true) === false, 422, 'X account must be public.');
         DB::transaction(function () use ($settings, $connections, $credentials, $user) {

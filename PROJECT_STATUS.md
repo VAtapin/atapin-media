@@ -4,6 +4,8 @@
 
 ## Реализовано
 
+- Publishing OAuth: YouTube и X Client ID/Secret больше не читаются из `.env`; администратор вводит их в Einstellungen → Social Media, где они сохраняются зашифрованно. Обычные пользователи по-прежнему не получают доступа к настройкам или OAuth-маршрутам. Callback URL строится из защищённых application routes. Добавлены регрессии для 503 без конфигурации, OAuth redirect и отсутствия секретов в HTML. `node --check`, отсутствие старых env/config references и `git diff --check` прошли; PHP tests не запущены из-за отсутствующего PHP 8.4 binary. Последний связанный commit будет указан после фиксации задачи.
+
 - Public Beiträge: обложка и дополнительные изображения статьи показываются без принудительного обрезания, открываются в доступном lightbox с полноразмерным просмотром, Esc/крестиком, стрелками и мобильной адаптацией. Добавлена регрессия SSR-галереи/lightbox; JS syntax и git diff --check прошли. PHP/Blade tests и browser-check в этом окружении не запускались: PHP 8.4 binary отсутствует. Последний связанный commit будет указан после фиксации задачи.
 
 - Publishing: окно явно объясняет, что публикуется только выбранный готовый материал и чем отличаются Website, внешние каналы и Live-цели; Publishing получил собственную вертикальную прокрутку для длинного содержимого. Проверки: PublishingTest 13/86, существующий Publishing browser-check на Edge, Blade view:cache и git diff --check прошли.
@@ -143,6 +145,6 @@
 
 ## Последний связанный commit
 
-- Текущий atomic-блок: Public Beiträge image lightbox and gallery; hash сообщается после commit/push. Предыдущий commit — Publishing explanation and scrollable window.
-- Ветка/upstream: main → origin/main. Изменение применяется git pull + PHP 8.4 view:clear; dependencies/migrations/Node build/cron/config/routes не менялись.
+- Текущий atomic-блок: Admin-managed OAuth application credentials for YouTube and X; hash сообщается после commit/push. Предыдущий commit `bdb3516` — Add article image lightbox.
+- Ветка/upstream: main → origin/main. Изменение применяется git pull + PHP 8.4 config:clear и view:clear; dependencies/migrations/Node build/cron не менялись.
 
