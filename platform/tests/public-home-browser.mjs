@@ -26,9 +26,21 @@ try {
   assert.equal(await page.locator('.public-section-cards>a').count(),6);
   assert.equal((await page.locator('.public-header').boundingBox()).height,66);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  const featured=page.locator('.public-overview-hero-start .public-feature-content');
+  const hasFeatured=await featured.count();
+  if(hasFeatured){
+    await featured.locator('h2').evaluate(title=>{title.textContent='Biblische Bilder Verstehen! 2 Bäume in Eden! [MannaVomHimmel]';});
+    assert.equal(await featured.locator('h2').evaluate(title=>parseFloat(getComputedStyle(title).fontSize)),24);
+    assert.equal(await featured.locator('p').evaluate(text=>parseFloat(getComputedStyle(text).fontSize)),11);
+  }
   await fs.mkdir('tests/artifacts',{recursive:true});
   await page.screenshot({path:'tests/artifacts/public-home-desktop.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});
+  if(hasFeatured){
+    assert.equal(await featured.locator('h2').evaluate(title=>parseFloat(getComputedStyle(title).fontSize)),20);
+    const layout=await page.evaluate(()=>({copyBottom:document.querySelector('.public-feature-content').getBoundingClientRect().bottom,authorTop:document.querySelector('.public-feature-author').getBoundingClientRect().top}));
+    assert(layout.copyBottom<=layout.authorTop,JSON.stringify(layout));
+  }
   await page.locator('.public-menu-button').click();
   assert.equal(await page.locator('.public-menu-button').getAttribute('aria-expanded'),'true');
   await page.locator('.public-menu-button').click();

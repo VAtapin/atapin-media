@@ -4,6 +4,8 @@
 
 ## Реализовано
 
+- Homepage Featured video: заголовок уменьшен до 20–24 px (mobile 20 px), Kurzbeschreibung до 11 px; основной hero-заголовок и другие разделы не менялись. Homepage CSS cache version — v=15. Длинный заголовок проверен на desktop/mobile без наложения на автора/Play.
+
 - Public Live: активный эфир отмечен «Jetzt live» в меню и homepage-карточке; меню проверяет только публичный live-status каждые 30 секунд без записи presence. `/live` overview использует существующий HLS-плеер непосредственно в hero, с прежними manifest checks/афишей; existing heartbeat обновляет статус и останавливает iframe после ended. Desktop/mobile UI проверен, видеообработка и storage contract не менялись.
 
 - Social Media forms используют общий provider schema для UI/validation: OAuth YouTube/X, ID+token Facebook/Instagram, Bot Token+Chat-ID Telegram; public URL необязательна. Лишние поля скрываются/отключаются и отклоняются сервером; смена provider очищает unsaved credentials, blank/partial save сохраняет secrets/OAuth metadata. TikTok/LinkedIn profile-only и Telegram Mini App-only не считаются Publishing connection.
@@ -98,6 +100,8 @@
 
 ## Проверки
 
+- Homepage typography: public-home-browser.mjs на Edge 1672×941 / 390×844 прошёл с отдельной SQLite и опубликованным fixture-видео; проверены computed fonts 24/20/11 px, длинный заголовок, mobile copy/author spacing, отсутствие overflow, navigation/search. Screenshots просмотрены. Blade view:cache, JS syntax и git diff --check прошли; сервер/БД/Takeout/ИИ не затрагивались.
+
 - Public Live overview: 39 целевых Feature tests / 301 assertions passed; Edge 1672×941 и 390×844 — встроенный hero-плеер, отсутствие overflow, обновление LIVE без reload и отключение iframe/смена статуса после ended. HLS/heartbeat browser transport mocked; настоящий live/replay не проверен. PHP/JS syntax, Blade/routes cache и diff checks прошли.
 
 - Media/public-блок: полный совместный SQLite suite через PHP 8.4.25 — 301 tests / 2255 assertions passed; 52 целевых / 365 assertions passed, затем после защиты community author/body — 49 целевых / 306 assertions passed. HTTP ИИ/image и ffmpeg процессы mocked; реальных платных API вызовов и ffmpeg/decoder этого блока локально не запускали (ffmpeg отсутствует). Проверены IDs/batching/manual-stale edits, covers/dedupe, AAC copy/audio-only conversion, Podcast, image SSRF/redirect/type/retry и ownership/AI moderation comments.
@@ -133,6 +137,6 @@
 
 ## Последний связанный commit
 
-- Текущий atomic-блок: Public Live overview player/status indicator; hash сообщается после commit/push. Предыдущий commit `9cc1986` — Add compact live stream list filters.
-- Ветка/upstream: main → origin/main. Этот Public Live блок применяется git pull + PHP 8.4 route:clear/view:clear; dependencies/migrations/Node build/новый cron и изменение MediaMTX configuration не нужны. Диагностика конкретного replay остаётся открытой.
+- Текущий atomic-блок: Reduce homepage featured video typography; hash сообщается после commit/push. Предыдущий commit `43a68b0` — Show current live stream in overview and navigation.
+- Ветка/upstream: main → origin/main. Typography update применяется git pull + PHP 8.4 view:clear; dependencies/migrations/Node build/cron/config/routes не менялись. Диагностика конкретного replay остаётся открытой.
 
