@@ -53,5 +53,5 @@
 ## Последний связанный commit
 
 - Предшествующий commit: 4f9f855 — Move OAuth app credentials to admin settings; article lightbox ранее в bdb3516.
-- Текущий atomic-блок: article image backdrop and stylesheet cache bump; hash будет указан после commit/push. Предшествующий commit `dd3fcc5` — Complete native Desktop workspaces; branch/upstream main → origin/main.
+- Последний функциональный commit: `7a851a2` — Add blurred article image backdrops. Предшествующий commit `dd3fcc5` — Complete native Desktop workspaces; branch/upstream main → origin/main.
 
