@@ -33,6 +33,10 @@
     let controller;
     let playlistUrl = null;
     let detailGeneration = 0;
+    const publicBadge = (active, activeText, inactiveText, icon) => {
+      const label = active ? activeText : inactiveText;
+      return `<span class="content-list-badge ${active ? 'is-active' : 'is-inactive'}" title="${escape(label)}" aria-label="${escape(label)}"><span class="content-list-badge-icon" aria-hidden="true">${icon}</span><span>${escape(label)}</span></span>`;
+    };
     const get = async url => {
       const response = await fetch(url, { credentials:'same-origin', headers:{Accept:'application/json'} });
       if (!response.ok) throw new Error(text.load_error);
@@ -56,7 +60,11 @@
         if (active.signal.aborted || !root.isConnected) return;
         page = data.meta.current_page;
         summary.textContent = `${data.meta.total} ${text.records}`;
-        list.innerHTML = data.data.length ? data.data.map(item => `<li><button type="button" class="media-library-item" data-content-detail="${escape(item.detail_url)}"><span class="media-library-item-main"><strong>${escape(item.title)}</strong><small>${escape(text[`kind_${item.kind}`] || item.kind)} · ${escape(item.source)} · ${escape(item.body)}${item.public_published ? ` · ${escape(text.public_visible)}` : ''}</small></span><span class="media-library-status">${escape(text[item.status] || item.status)}</span></button></li>`).join('') : `<li class="media-library-empty">${escape(text.empty)}</li>`;
+        list.innerHTML = data.data.length ? data.data.map(item => {
+          const homepage = ['video','short'].includes(item.kind) ? publicBadge(Boolean(item.public_homepage), text.public_homepage_active, text.public_homepage_inactive, '⌂') : '';
+          const publication = publicBadge(Boolean(item.public_published), text.public_visible, text.publication_unpublished, '✓');
+          return `<li><button type="button" class="media-library-item" data-content-detail="${escape(item.detail_url)}"><span class="media-library-item-main"><strong>${escape(item.title)}</strong><small>${escape(text[`kind_${item.kind}`] || item.kind)} · ${escape(item.source)} · ${escape(item.body)}</small><span class="content-list-badges">${publication}${homepage}</span></span><span class="media-library-status">${escape(text[item.status] || item.status)}</span></button></li>`;
+        }).join('') : `<li class="media-library-empty">${escape(text.empty)}</li>`;
         root.dispatchEvent(new CustomEvent('content-list-loaded',{bubbles:true,detail:{items:data.data,playlist}}));
         pagination.innerHTML = `<button type="button" data-content-page="${page - 1}" ${page <= 1 ? 'disabled' : ''}>‹</button><span>${page} / ${data.meta.last_page}</span><button type="button" data-content-page="${page + 1}" ${page >= data.meta.last_page ? 'disabled' : ''}>›</button>`;
       } catch (error) { summary.textContent = error.message; }

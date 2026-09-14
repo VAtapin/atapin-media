@@ -4,6 +4,8 @@
 
 ## Реализовано
 
+- Content Library: в каждой строке видео/Short видны значки публикации и статуса Startseite с явными активными/неактивными подписями; отсутствующие Kurzbeschreibungen автоматически ставятся в существующую AI-очередь при открытии списка, без повторной постановки завершённых или недостаточных записей. Проверки: ContentLibraryPublicationFilterTest и ContentEnhancementsTest прошли; browser-check не запущен из-за отсутствующего Playwright Chromium. Последний связанный commit будет указан после фиксации задачи.
+
 - Homepage Featured video: заголовок уменьшен до 20–24 px (mobile 20 px), Kurzbeschreibung до 11 px; основной hero-заголовок и другие разделы не менялись. Homepage CSS cache version — v=15. Длинный заголовок проверен на desktop/mobile без наложения на автора/Play.
 
 - Public Live: активный эфир отмечен «Jetzt live» в меню и homepage-карточке; меню проверяет только публичный live-status каждые 30 секунд без записи presence. `/live` overview использует существующий HLS-плеер непосредственно в hero, с прежними manifest checks/афишей; existing heartbeat обновляет статус и останавливает iframe после ended. Desktop/mobile UI проверен, видеообработка и storage contract не менялись.
@@ -137,6 +139,6 @@
 
 ## Последний связанный commit
 
-- Текущий atomic-блок: Reduce homepage featured video typography; hash сообщается после commit/push. Предыдущий commit `43a68b0` — Show current live stream in overview and navigation.
-- Ветка/upstream: main → origin/main. Typography update применяется git pull + PHP 8.4 view:clear; dependencies/migrations/Node build/cron/config/routes не менялись. Диагностика конкретного replay остаётся открытой.
+- Текущий atomic-блок: Content Library status badges and automatic short descriptions; hash сообщается после commit/push. Предыдущий commit `adf6ebf` — Reduce homepage featured video typography.
+- Ветка/upstream: main → origin/main. Изменение применяется git pull + PHP 8.4 view:clear; dependencies/migrations/Node build/cron/config/routes не менялись.
 

@@ -23,7 +23,7 @@ class ContentLibraryPublicationFilterTest extends TestCase
         SourceRecord::create([
             'source' => 'upload', 'source_id' => 'published-video', 'kind' => 'video',
             'title' => 'Published video', 'body' => 'Video', 'status' => 'ready',
-            'metadata' => ['public_published' => true],
+            'metadata' => ['public_published' => true, 'public_homepage' => true],
         ]);
         SourceRecord::create([
             'source' => 'upload', 'source_id' => 'published-post', 'kind' => 'post',
@@ -38,9 +38,12 @@ class ContentLibraryPublicationFilterTest extends TestCase
 
         $response = $this->getJson('/desktop/content?publication=published');
 
-        $response->assertOk()->assertJsonCount(2, 'data')
-            ->assertJsonPath('data.0.public_published', true)
-            ->assertJsonPath('data.1.public_published', true);
+        $response->assertOk()->assertJsonCount(2, 'data');
+        $byTitle = collect($response->json('data'))->keyBy('title');
+        $this->assertTrue($byTitle['Published post']['public_published']);
+        $this->assertFalse($byTitle['Published post']['public_homepage']);
+        $this->assertTrue($byTitle['Published video']['public_published']);
+        $this->assertTrue($byTitle['Published video']['public_homepage']);
         $this->getJson('/desktop/content?publication=unpublished')
             ->assertOk()->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.title', 'Private video');

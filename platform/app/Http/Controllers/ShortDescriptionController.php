@@ -23,6 +23,7 @@ class ShortDescriptionController extends Controller
             foreach($records->lockForUpdate()->get() as $record){
                 $meta=$record->metadata??[];
                 if(($meta['short_description_origin']??null)==='manual' || (!empty($data['missing'])&&!empty($meta['short_description'])))continue;
+                if(!empty($data['missing'])&&in_array($meta['short_description_job']['state']??null,['completed','insufficient'],true))continue;
                 if(($meta['short_description_job']['state']??null)==='queued' && strtotime($meta['short_description_job']['queued_at']??'')>time()-600)continue;
                 $record->update(['metadata'=>[...$meta,'short_description_job'=>['state'=>'queued','token'=>$token,'queued_at'=>now()->toIso8601String()]]]);
                 $queued[]=$record;

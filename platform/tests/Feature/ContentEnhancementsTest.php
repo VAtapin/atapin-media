@@ -58,6 +58,18 @@ class ContentEnhancementsTest extends TestCase
         Http::fake(['*'=>Http::response($this->response([['id'=>(string)$a->id,'short_description'=>'','insufficient_information'=>true]]))]);
         Queue::pushed(GenerateShortDescriptions::class)->first()->handle(app(ContentShortDescriptions::class));$this->assertSame('insufficient',$a->fresh()->metadata['short_description_job']['state']);
     }
+    public function test_automatic_missing_request_does_not_repeat_finished_jobs(): void
+    {
+        Queue::fake();$this->ai();
+        $completed=$this->record(['short_description'=>'Gottes Wort schenkt Hoffnung und Vertrauen im Alltag','short_description_job'=>['state'=>'completed']]);
+        $insufficient=$this->record(['short_description_job'=>['state'=>'insufficient']]);
+        $missing=$this->record();
+        $this->actingAs($this->owner())->postJson('/desktop/content/short-descriptions',['missing'=>true])->assertOk()->assertJsonPath('count',1);
+        Queue::assertPushed(GenerateShortDescriptions::class);
+        $this->assertSame('completed',$completed->fresh()->metadata['short_description_job']['state']);
+        $this->assertSame('insufficient',$insufficient->fresh()->metadata['short_description_job']['state']);
+        $this->assertSame('queued',$missing->fresh()->metadata['short_description_job']['state']);
+    }
     public function test_project_author_sayings_and_cover_prompt_are_editable(): void
     {
         Storage::fake('media-canonical');config(['platform.media_upload_reserve_free_bytes'=>0]);

@@ -29,6 +29,7 @@ class ImportedContentController extends Controller
             'id' => $record->id, 'title' => $record->title, 'body' => mb_substr($record->body ?? '', 0, 250),
             'kind' => $record->kind, 'source' => $record->source, 'status' => $record->status,
             'public_published' => (bool) ($record->metadata['public_published'] ?? false),
+            'public_homepage' => (bool) ($record->metadata['public_homepage'] ?? false),
             'detail_url' => route('content.show', $record),
         ]), 'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total()]]);
     }

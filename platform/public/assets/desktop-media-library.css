@@ -61,6 +61,11 @@
 .media-library-list.is-grid .media-library-item{display:flex;height:100%;flex-direction:column;align-items:stretch}
 .desktop-content-library .media-library-item{grid-template-columns:minmax(0,1fr) auto}
 .desktop-content-library .media-library-item-main{grid-area:auto}
+.content-list-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:3px}
+.content-list-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border:1px solid;border-radius:999px;font-size:10px;font-weight:700;line-height:1.25;white-space:nowrap}
+.content-list-badge-icon{font-size:12px;line-height:1}
+.content-list-badge.is-active{border-color:#b9ddc4;background:#e8f6ed;color:#24683a}
+.content-list-badge.is-inactive{border-color:#d7dfe7;background:#f4f6f8;color:#667384}
 .desktop-content-library .media-library-toolbar{display:flex;flex-wrap:wrap;align-items:center;flex-shrink:0}
 .desktop-content-library .media-library-toolbar input,.desktop-content-library .media-library-toolbar select{width:auto;max-width:100%}
 .desktop-content-library .media-library-search{flex:1;min-width:140px}

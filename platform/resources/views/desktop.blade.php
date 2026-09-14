@@ -37,7 +37,7 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Desktop · {{ config('platform.brand') }}</title>
     <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=4"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3"><link rel="stylesheet" href="/assets/desktop-settings.css?v=3">
-    <link rel="stylesheet" href="/assets/desktop-app.css?v=2"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=7"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=3"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=3"><link rel="stylesheet" href="/assets/desktop-community.css?v=3"><link rel="stylesheet" href="/assets/desktop-publishing.css?v=2">
+    <link rel="stylesheet" href="/assets/desktop-app.css?v=2"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=8"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=3"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=3"><link rel="stylesheet" href="/assets/desktop-community.css?v=3"><link rel="stylesheet" href="/assets/desktop-publishing.css?v=2">
     <script src="/assets/desktop-shortcuts.js?v=3" defer></script>
     <link rel="stylesheet" href="/assets/desktop-import-workflow.css?v=3">
     <script src="/assets/desktop-os.js?v=15" defer></script><script src="/assets/settings-tabs.js?v=7" defer></script><script src="/assets/desktop-media-library.js?v=13" defer></script><script src="/assets/desktop-import-center.js?v=10" defer></script><script src="/assets/desktop-live-studio.js?v=4" defer></script><script src="/assets/desktop-publishing.js?v=3" defer></script>
@@ -142,9 +142,9 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <script src="/assets/desktop-import-workflow.js?v=2" defer></script>
     <script src="/assets/desktop-content-lifecycle.js?v=2" defer></script>
     <script src="/assets/desktop-content-composite.js?v=2" defer></script>
-    <script src="/assets/desktop-content-library.js?v=10" defer></script>
+    <script src="/assets/desktop-content-library.js?v=11" defer></script>
     <script src="/assets/desktop-content-organization.js?v=3" defer></script>
-    <script src="/assets/desktop-content-enhancements.js?v=1" defer></script>
+    <script src="/assets/desktop-content-enhancements.js?v=2" defer></script>
     <script src="/assets/desktop-local-links.js?v=1" defer></script>
     <script src="/assets/desktop-media-technical.js?v=1" defer></script>
     <script src="/assets/desktop-content-assignment.js?v=7" defer></script>

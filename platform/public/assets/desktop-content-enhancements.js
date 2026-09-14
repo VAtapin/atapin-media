@@ -1,6 +1,13 @@
 (() => {
   const labels=()=>window.desktopImportLabels||{};
   const refreshers=new WeakMap();
+  const automaticDescriptionQueue=new WeakSet();
+  document.addEventListener('content-list-loaded',event=>{
+    const root=event.target.closest?.('[data-content-library]');
+    if(!root||automaticDescriptionQueue.has(root)||event.detail?.playlist||root.dataset.canEdit!=='true'||root.querySelector('[name=trash]')?.value==='deleted')return;
+    automaticDescriptionQueue.add(root);
+    fetch('/desktop/content/short-descriptions',{method:'POST',credentials:'same-origin',headers:{Accept:'application/json','Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content},body:JSON.stringify({missing:true})}).then(()=>refreshers.get(root.querySelector('[data-content-details]'))?.()).catch(()=>{});
+  });
   document.addEventListener('content-enhancements-queued',event=>refreshers.get(event.target)?.());
   document.addEventListener('content-selected',event=>{
     const item=event.detail,details=event.target,root=details.closest('[data-content-library]');
