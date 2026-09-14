@@ -70,7 +70,7 @@
             <div class="public-account-section-heading"><div><p class="public-account-eyebrow">{{ __('public.account_purchases') }}</p><h2>{{ __('public.account_purchases') }}</h2></div><span class="public-account-count">{{ $purchases->total() }}</span></div>
             <div class="public-account-history-list">
                 @forelse($purchases as $purchase)
-                <article class="public-account-history-item"><strong><a href="{{ $purchase['url'] }}">{{ $purchase['title'] }}</a></strong><small>{{ __('public.account_order_status', ['status' => $purchase['statusLabel']]) }} · {{ number_format($purchase['sale']->amount_cents / 100, 2, ',', '.') }} {{ $purchase['sale']->currency }} · {{ $purchase['sale']->created_at?->format('d.m.Y') }}</small></article>
+                <article class="public-account-history-item"><strong><a href="{{ $purchase['url'] }}">{{ $purchase['title'] }}</a></strong><small>{{ __('public.account_order_status', ['status' => $purchase['statusLabel']]) }} · {{ number_format($purchase['sale']->amount_cents / 100, 2, ',', '.') }} {{ $purchase['sale']->currency }} · {{ $purchase['sale']->created_at?->format('d.m.Y') }}</small>@if($purchase['download_url']??null)<a href="{{ $purchase['download_url'] }}">{{ __('workspaces.owned') }}</a>@endif</article>
                 @empty
                     @include('public.empty', ['hint' => __('public.account_purchases_empty')])
                 @endforelse

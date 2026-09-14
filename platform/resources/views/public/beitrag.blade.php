@@ -12,7 +12,7 @@
 <article>
 <nav class="public-breadcrumb">
 <a href="/">{{ __('public.nav_start') }}</a> › <a href="/beitraege">{{ __('public.nav_beitraege') }}</a> › {{ $record?->title??__('public.no_data') }}</nav>
-@if($card['image']??null)<button type="button" class="public-lightbox-trigger public-article-cover-trigger" data-image-lightbox data-image-lightbox-src="{{ $card['image'] }}" data-image-lightbox-alt="{{ $record?->title ?? '' }}" data-image-lightbox-group="{{ $lightboxGroup }}" aria-label="{{ __('public.image_open') }}"><img class="public-article-cover" src="{{ $card['image'] }}" alt="{{ $record?->title ?? '' }}"></button>
+@if($card['image']??null)<button type="button" class="public-lightbox-trigger public-article-cover-trigger" style="--article-image:url('{{ $card['image'] }}')" data-image-lightbox data-image-lightbox-src="{{ $card['image'] }}" data-image-lightbox-alt="{{ $record?->title ?? '' }}" data-image-lightbox-group="{{ $lightboxGroup }}" aria-label="{{ __('public.image_open') }}"><img class="public-article-cover" src="{{ $card['image'] }}" alt="{{ $record?->title ?? '' }}"></button>
 @else
 @include('public.empty',['emptyClass'=>'public-article-cover'])
 @endif<p class="public-eyebrow">{{ $card['tags'][0]??'—' }}</p>
@@ -33,11 +33,11 @@
 <section class="public-article-media-gallery" aria-label="{{ __('public.article_images') }}">
 @foreach($galleryAssets as $asset)
 @php($imageUrl = $asset->publicUrl() ?? route('public.media',[$record,$asset]))
-<figure class="public-article-media-item"><button type="button" class="public-lightbox-trigger" data-image-lightbox data-image-lightbox-src="{{ $imageUrl }}" data-image-lightbox-alt="{{ $asset->title ?: ($record?->title ?? '') }}" data-image-lightbox-group="{{ $lightboxGroup }}" aria-label="{{ __('public.image_open') }}"><img src="{{ $imageUrl }}" alt="{{ $asset->title ?: ($record?->title ?? '') }}" loading="lazy"></button>@if($asset->title)<figcaption>{{ $asset->title }}</figcaption>@endif</figure>
+<figure class="public-article-media-item"><button type="button" class="public-lightbox-trigger" style="--article-image:url('{{ $imageUrl }}')" data-image-lightbox data-image-lightbox-src="{{ $imageUrl }}" data-image-lightbox-alt="{{ $asset->title ?: ($record?->title ?? '') }}" data-image-lightbox-group="{{ $lightboxGroup }}" aria-label="{{ __('public.image_open') }}"><img src="{{ $imageUrl }}" alt="{{ $asset->title ?: ($record?->title ?? '') }}" loading="lazy"></button>@if($asset->title)<figcaption>{{ $asset->title }}</figcaption>@endif</figure>
 @endforeach
 </section>
 @endif
-<div class="public-document public-article-body" data-read-text>{{ $record?->body??__('public.no_data') }}</div>
+<div class="public-document public-article-body" data-read-text>@include('public.content-body')</div>
 @include('public.comments')</article>
 <aside class="public-right-sidebar">
 @include('public.quote')

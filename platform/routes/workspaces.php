@@ -1,0 +1,37 @@
+<?php
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\{DesktopWorkspaceController,DesktopLookupController,ProjectController,TaskController,CalendarController,TaxonomyController,BookWorkspaceController,PdfEditionController,SeriesController,NewsletterWorkspaceController,DesktopAiController,AnalyticsController,IntegrationWorkspaceController,CommunityInboxController,CheckoutController,ImportedContentController};
+
+Route::post('/payments/stripe/webhook',[CheckoutController::class,'webhook'])->middleware('throttle:120,1')->name('payments.stripe-webhook');
+Route::match(['get','post'],'/newsletter/{subscription}/optout',[NewsletterWorkspaceController::class,'optout'])->middleware(['signed','throttle:20,1'])->name('public.newsletter-optout');
+Route::post('/public/records/{record}/audio',[AnalyticsController::class,'audio'])->middleware('throttle:120,1')->name('public.audio-play');
+Route::middleware('auth')->group(function(){
+    Route::post('/buecher/{product}/checkout',[CheckoutController::class,'store'])->middleware(['can:public.participate','throttle:5,1'])->name('public.checkout');
+    Route::get('/konto/books/{product}/pdf',[CheckoutController::class,'download'])->middleware('throttle:30,1')->name('public.purchased-pdf');
+    Route::get('/desktop/workspaces/{app}',DesktopWorkspaceController::class)->middleware('can:desktop.view');
+    Route::get('/desktop/lookups',DesktopLookupController::class)->middleware('can:desktop.view');
+    Route::middleware('can:projects.manage')->group(function(){
+        Route::get('/desktop/projects',[ProjectController::class,'index']);Route::get('/desktop/projects/{project}',[ProjectController::class,'show']);Route::get('/desktop/tasks',[TaskController::class,'index']);
+        Route::get('/desktop/tasks/{task}',[TaskController::class,'show']);
+    });
+    Route::get('/desktop/planning',[CalendarController::class,'index'])->middleware('can:desktop.view');
+    Route::post('/desktop/planning',[CalendarController::class,'store'])->middleware('can:content.publish');
+    Route::delete('/desktop/planning/{schedule}',[CalendarController::class,'cancel'])->middleware('can:content.publish');
+    Route::middleware('can:content.edit')->group(function(){
+        Route::post('/desktop/content',[ImportedContentController::class,'store']);
+        Route::get('/desktop/taxonomy',[TaxonomyController::class,'index']);Route::post('/desktop/taxonomy',[TaxonomyController::class,'store']);Route::patch('/desktop/taxonomy/{term}',[TaxonomyController::class,'update']);
+        Route::get('/desktop/series',[SeriesController::class,'index']);Route::post('/desktop/series',[SeriesController::class,'store']);Route::get('/desktop/series/{collection}',[SeriesController::class,'show']);Route::patch('/desktop/series/{collection}',[SeriesController::class,'update']);
+        Route::get('/desktop/assistant',[DesktopAiController::class,'index']);Route::post('/desktop/assistant',[DesktopAiController::class,'store'])->middleware('throttle:10,1');Route::post('/desktop/assistant/{entry}/apply',[DesktopAiController::class,'apply']);
+        Route::post('/desktop/content/{record}/pdf',[PdfEditionController::class,'record'])->middleware('throttle:10,1');
+    });
+    Route::middleware('can:shop.manage')->group(function(){
+        Route::get('/desktop/books',[BookWorkspaceController::class,'index']);Route::post('/desktop/books',[BookWorkspaceController::class,'store']);Route::get('/desktop/books/{product}',[BookWorkspaceController::class,'show']);Route::patch('/desktop/books/{product}',[BookWorkspaceController::class,'update']);Route::post('/desktop/books/{product}/assets',[BookWorkspaceController::class,'asset']);Route::post('/desktop/books/{product}/pdf',[PdfEditionController::class,'book'])->middleware('throttle:10,1');Route::get('/desktop/sales',[BookWorkspaceController::class,'sales']);
+    });
+    Route::middleware('can:subscribers.manage')->group(function(){
+        Route::get('/desktop/subscribers',[NewsletterWorkspaceController::class,'subscribers']);Route::get('/desktop/subscribers/export',[NewsletterWorkspaceController::class,'export']);Route::patch('/desktop/subscribers/{subscription}',[NewsletterWorkspaceController::class,'subscriber']);
+        Route::get('/desktop/campaigns',[NewsletterWorkspaceController::class,'campaigns']);Route::post('/desktop/campaigns',[NewsletterWorkspaceController::class,'store']);Route::patch('/desktop/campaigns/{campaign}',[NewsletterWorkspaceController::class,'update']);Route::get('/desktop/campaigns/{campaign}/preview',[NewsletterWorkspaceController::class,'preview']);Route::post('/desktop/campaigns/{campaign}/send',[NewsletterWorkspaceController::class,'send']);Route::post('/desktop/campaigns/{campaign}/cancel',[NewsletterWorkspaceController::class,'cancel']);
+    });
+    Route::middleware('can:analytics.view')->group(function(){Route::get('/desktop/analytics/data',[AnalyticsController::class,'index']);Route::get('/desktop/analytics/export',[AnalyticsController::class,'export']);});
+    Route::get('/desktop/integrations/data',[IntegrationWorkspaceController::class,'index'])->middleware('can:integrations.manage');
+    Route::middleware('can:community.moderate')->group(function(){Route::get('/desktop/community/inbox',[CommunityInboxController::class,'index']);Route::patch('/desktop/community/inbox/{record}/read',[CommunityInboxController::class,'read']);Route::post('/desktop/community/inbox/{record}/reply',[CommunityInboxController::class,'reply']);});
+});

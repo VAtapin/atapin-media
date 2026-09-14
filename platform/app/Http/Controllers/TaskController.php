@@ -6,6 +6,19 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 class TaskController extends Controller
 {
+    public function show(Task $task){return response()->json($task->load('project:id,title','assignee:id,name'));}
+    public function index(Request $request)
+    {
+        $data = $request->validate(['q'=>'nullable|string|max:120', 'status'=>['nullable', Rule::in(Task::STATES)],
+            'project_id'=>'nullable|integer|exists:projects,id', 'mine'=>'nullable|boolean', 'page'=>'nullable|integer|min:1']);
+        $query = Task::with(['project:id,title', 'assignee:id,name'])->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END')->orderBy('due_date')->latest('id');
+        if ($data['q'] ?? '') $query->where('title', 'like', '%'.$data['q'].'%');
+        if ($data['status'] ?? '') $query->where('status', $data['status']);
+        if ($data['project_id'] ?? null) $query->where('project_id', $data['project_id']);
+        if ($data['mine'] ?? false) $query->where('assigned_to', $request->user()->id);
+        return response()->json($query->paginate(50));
+    }
+
     public function store(Request $request, Workflow $workflow)
     {
         $task = $workflow->saveTask($this->data($request));

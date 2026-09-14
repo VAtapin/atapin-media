@@ -122,6 +122,21 @@ jobs:
           CACHE_STORE: file
           QUEUE_CONNECTION: database
           SESSION_SECURE_COOKIE: 'false'
+      - name: Desktop workspaces browser
+        run: |
+          php artisan optimize:clear
+          touch /tmp/desktop-workspaces-ci.sqlite
+          php artisan migrate --force
+          php tests/desktop-workspaces-fixture.php
+          timeout 150 node tests/desktop-workspaces-browser.mjs
+        env:
+          APP_ENV: testing
+          APP_LOCALE: de
+          DB_CONNECTION: sqlite
+          DB_DATABASE: /tmp/desktop-workspaces-ci.sqlite
+          CACHE_STORE: file
+          QUEUE_CONNECTION: database
+          SESSION_SECURE_COOKIE: 'false'
       - uses: actions/upload-artifact@v4
         if: always()
         with:

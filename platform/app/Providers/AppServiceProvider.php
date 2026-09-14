@@ -52,7 +52,7 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\SourceRecord::saved(fn($record)=>app(\App\Services\ContentMediaPreparation::class)->queueMissing($record));
         foreach ([\App\Models\Media::class => 'media', \App\Models\SourceRecord::class => 'record'] as $model => $type) {
             $model::created(function ($item) use ($type) {
-                if ($item->source!=='youtube-takeout' && !($item->metadata['takeout']??false) && !($item->metadata['archive_data']??false) && $item->status === 'unsorted' && app(\App\Services\Settings::class)->get('ai_auto_classify', true)
+                if (!in_array($item->source,['manual','youtube-takeout'],true) && !($item->metadata['takeout']??false) && !($item->metadata['archive_data']??false) && $item->status === 'unsorted' && app(\App\Services\Settings::class)->get('ai_auto_classify', true)
                     && app(\App\Services\Importing\AiContentClassifier::class)->available()) {
                     dispatch((new \App\Jobs\ClassifyImportedContent($type, (string) $item->id))->afterCommit());
                 }

@@ -55,7 +55,18 @@ class ContentAssignment
 
     public function record(SourceRecord $record, array $data, string $origin = 'manual'): void
     {
-        $metadata = $record->metadata;
+        DB::transaction(function()use($record,$data,$origin){
+            SourceRecord::whereKey($record->id)->lockForUpdate()->firstOrFail();
+            $record->refresh();
+            $this->assignRecord($record,$data,$origin);
+        });
+    }
+
+    private function assignRecord(SourceRecord $record, array $data, string $origin): void
+    {
+        if($origin==='manual'&&array_key_exists('body',$data)&&($data['body_format']??$record->metadata['body_format']??'plain')==='html')$data['body']=app(\App\Services\RichContent::class)->sanitize($data['body']??'');
+        $metadata = $record->metadata ?? [];
+        if ($origin === 'manual') $metadata = \App\Services\ContentEditorData::metadata($metadata,$data);
         $metadata['classification_origin'] = $origin;
         if ($origin === 'manual') unset($metadata['classification']);
         if ($origin === 'manual' && isset($data['target_profile'])) $metadata['library_only'] = $data['target_profile']==='media_library';
@@ -90,8 +101,10 @@ class ContentAssignment
             }
         }
         if (isset($data['tags'])) $metadata['tags'] = $data['tags'];
-        $record->update(['title' => $data['title'] ?? $record->title, 'body' => array_key_exists('body', $data) ? ($data['body'] ?? '') : $record->body,
+        $record->update([...(array_key_exists('project_id',$data)?['project_id'=>$data['project_id']]:[]), 'title' => $data['title'] ?? $record->title, 'body' => array_key_exists('body', $data) ? ($data['body'] ?? '') : $record->body,
             'kind' => $kind, 'status' => $data['status'] ?? $record->status, 'metadata' => $metadata]);
+        if ($origin === 'manual' && array_key_exists('taxonomy_term_ids',$data)) app(\App\Services\Taxonomy::class)->sync($record,$data['taxonomy_term_ids']);
+        foreach ($data['additional_media_ids'] ?? [] as $id) Media::findOrFail($id)->usages()->firstOrCreate(['used_as'=>'attachment','subject_type'=>SourceRecord::class,'subject_id'=>(string)$record->id]);
         app(Audit::class)->record('content.assigned', (string) $record->id, ['origin' => $origin]);
     }
 }

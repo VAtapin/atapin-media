@@ -446,6 +446,13 @@
         const communityTemplate = document.querySelector('#community-app-template');
         const community = communityTemplate?.content.firstElementChild.cloneNode(true);
         if (community) windowElement.querySelector('.os-window-content').append(community);
+        const inbox = document.createElement('details');
+        const summary = document.createElement('summary');summary.textContent=window.desktopWorkspaceLabels?.titles?.community||'Inbox';inbox.append(summary);
+        const host=document.createElement('div');host.className='workspace-inline';inbox.append(host);windowElement.querySelector('.os-window-content').prepend(inbox);
+        inbox.addEventListener('toggle',()=>{if(inbox.open&&!host.dataset.loaded){host.dataset.loaded='true';window.initializeDesktopWorkspace?.(host,'community');}});
+      }
+      if (['projects','tasks','calendar','books-pdf','topics','newsletter','ai-assistant','analytics','shop','integrations'].includes(appId)) {
+        window.initializeDesktopWorkspace?.(windowElement.querySelector('.os-window-content'),appId);
       }
 
       if (saved) {

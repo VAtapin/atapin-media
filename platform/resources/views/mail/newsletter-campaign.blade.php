@@ -1,0 +1,1 @@
+<!doctype html><html><body><h1>{{ $campaign->subject }}</h1><div style="white-space:pre-line">{{ $campaign->body }}</div><p><a href="{{ $cancel }}">{{ __('public.newsletter_cancel') }}</a></p></body></html>

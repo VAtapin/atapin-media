@@ -45,6 +45,11 @@ Artisan::command('publishing:retry-due', function () {
     $this->info('Publication retries queued: '.app(\App\Services\Publishing\PublishingService::class)->dispatchDue());
 });
 Schedule::command('publishing:retry-due')->everyMinute()->withoutOverlapping();
+Artisan::command('desktop:dispatch-due',function(){
+    $this->info('Scheduled publications: '.app(\App\Services\EditorialPlanning::class)->dispatchDue());
+    $this->info('Newsletter campaigns: '.app(\App\Services\NewsletterCampaigns::class)->dispatchDue());
+});
+Schedule::command('desktop:dispatch-due')->everyMinute()->withoutOverlapping();
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());

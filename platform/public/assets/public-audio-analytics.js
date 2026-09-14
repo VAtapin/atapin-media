@@ -1,0 +1,1 @@
+(() => {document.querySelectorAll('audio[data-audio-view-url]').forEach(audio=>{audio.addEventListener('play',()=>{fetch(audio.dataset.audioViewUrl,{method:'POST',credentials:'same-origin',headers:{Accept:'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]')?.content||''}}).catch(()=>{});},{once:true});});})();

@@ -2,6 +2,7 @@
 
 @section('content')
 @php($card=$card??['image'=>null,'author'=>'','price'=>null,'excerpt'=>__('public.no_data')])
+@php($canBuyPdf=$bookRecord&&$bookRecord->price_cents>0&&app(\App\Services\StripePayments::class)->ready()&&app(\App\Services\StripePayments::class)->edition($bookRecord))
 <div class="public-book-detail public-detail-layout">
 <div>
 <nav class="public-breadcrumb">
@@ -50,7 +51,14 @@
 <aside class="public-right-sidebar">
 <section class="public-panel public-purchase">
 <h2>{{ $card['price']??'—' }}</h2>
-<p class="public-muted">{{ __('public.purchase_hint') }}</p>
+<p class="public-muted">{{ $canBuyPdf?__('workspaces.payment_confirmation'):__('public.purchase_hint') }}</p>
+@if($bookRecord)
+@auth
+@if(app(\App\Services\StripePayments::class)->entitled($bookRecord,auth()->user()))<a class="public-button" href="{{ route('public.purchased-pdf',$bookRecord) }}">{{ __('workspaces.owned') }}</a>
+@elseif($canBuyPdf)<form method="post" action="{{ route('public.checkout',$bookRecord) }}">@csrf<button class="public-button">{{ __('workspaces.buy') }}</button></form>@endif
+@else @if($canBuyPdf)<a class="public-button" href="/login">{{ __('workspaces.buy') }}</a>@endif @endauth
+@if($bookRecord->metadata['external_shop_url']??null)<a class="public-button" href="{{ $bookRecord->metadata['external_shop_url'] }}" target="_blank" rel="noopener noreferrer">{{ __('workspaces.external_shop_url') }}</a>@endif
+@endif
 @if($bookRecord)<a class="public-button" href="{{ route('public.kontakt',['book'=>$bookRecord->id]) }}">{{ __('public.purchase_request') }} →</a>
 @else<button class="public-button" disabled>{{ __('public.purchase_request') }}</button>
 @endif

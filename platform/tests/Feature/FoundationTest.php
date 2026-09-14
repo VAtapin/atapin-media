@@ -110,7 +110,8 @@ class FoundationTest extends TestCase
         $this->get('/login')->assertOk()->assertSee('Anmelden')->assertDontSee('ui.login');
         $this->actingAs($this->user('Owner'));
         $this->get('/desktop')->assertOk()->assertDontSee('<iframe', false);
-        foreach (['/desktop/media','/desktop/settings','/desktop/users','/desktop/projects','/desktop/tasks','/desktop/shop'] as $url) $this->get($url)->assertStatus(405);
+        foreach (['/desktop/media','/desktop/settings','/desktop/users','/desktop/shop'] as $url) $this->get($url)->assertStatus(405);
+        foreach (['/desktop/projects','/desktop/tasks'] as $url) $this->getJson($url)->assertOk()->assertHeader('Content-Type','application/json');
         $this->actingAs($this->user('Moderator'));
         $this->get('/desktop/imports')->assertForbidden();
         $this->get('/desktop/imports/options')->assertForbidden();

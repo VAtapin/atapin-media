@@ -72,6 +72,7 @@
         kindField.addEventListener('change',()=>{updateSection();if(homepageLabel){const eligible=['video','short'].includes(kindField.value);homepageLabel.hidden=!eligible;homepage.disabled=!eligible;if(!eligible)homepage.checked=false;}});
       }
     }
+    if(type==='record')window.extendDesktopContentEditor?.(form,item,details);
     form.addEventListener('input', () => {details.dataset.dirty = 'true';});
     form.addEventListener('change', () => {details.dataset.dirty = 'true';});
     const perform = async operation => {
@@ -86,6 +87,7 @@
       if(data.target_profile==='')delete data.target_profile;
       if(publication)data.public_published=publication.checked;
       if(homepage)data.public_homepage=homepage.checked;
+      window.desktopEditorData?.(form,data);
       perform(async () => {await request(`/desktop/${type === 'media' ? 'media' : 'content'}/${item.id}`,data,'PATCH'); message.textContent = text.saved;});
     });
     form.querySelector('[data-ai]').addEventListener('click', () => {

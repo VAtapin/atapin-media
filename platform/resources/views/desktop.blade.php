@@ -25,6 +25,8 @@ if ($canManageSettings) {
     $programs[] = ['id'=>'settings','name'=>'Einstellungen','icon'=>'Einstellungen'];
 }
 $desktopAppearance = $desktopAppearance ?? ['icon_set' => 'manna', 'wallpaper' => 'mountains', 'accent' => 'gold'];
+ $programPermissions=[...\App\Http\Controllers\DesktopWorkspaceController::APPS,'imports'=>'imports.manage','publishing'=>'content.publish','live-studio'=>'content.publish','media'=>'media.view','videos'=>'media.view','posts'=>'media.view','podcast'=>'media.view'];
+ $programs=array_values(array_filter($programs,fn($program)=>($program['id']!=='calendar'||auth()->user()->hasPermission('projects.manage')||auth()->user()->hasPermission('content.publish'))&&(!isset($programPermissions[$program['id']])||auth()->user()->hasPermission($programPermissions[$program['id']]))));
 $iconSet = config('desktop.icon_sets.'.$desktopAppearance['icon_set'], config('desktop.icon_sets.manna'));
 $wallpaper = config('desktop.wallpapers.'.$desktopAppearance['wallpaper']);
 $wallpaperUrl = is_array($wallpaper) ? ($wallpaper['path'] ?? null) : null;
@@ -38,9 +40,15 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <title>Desktop · {{ config('platform.brand') }}</title>
     <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=4"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3"><link rel="stylesheet" href="/assets/desktop-settings.css?v=3">
     <link rel="stylesheet" href="/assets/desktop-app.css?v=2"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=8"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=3"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=3"><link rel="stylesheet" href="/assets/desktop-community.css?v=3"><link rel="stylesheet" href="/assets/desktop-publishing.css?v=3">
+    <link rel="stylesheet" href="/assets/desktop-workspaces.css?v=1">
+    <script>window.desktopWorkspaceLabels=@json(__('workspaces'));</script>
+    <script src="/assets/desktop-workspaces.js?v=1" defer></script>
+    <script src="/assets/desktop-workspace-content.js?v=1" defer></script>
+    <script src="/assets/desktop-workspace-operations.js?v=1" defer></script>
+    <script src="/assets/desktop-editor-workflow.js?v=1" defer></script>
     <script src="/assets/desktop-shortcuts.js?v=3" defer></script>
     <link rel="stylesheet" href="/assets/desktop-import-workflow.css?v=3">
-    <script src="/assets/desktop-os.js?v=15" defer></script><script src="/assets/settings-tabs.js?v=7" defer></script><script src="/assets/desktop-media-library.js?v=13" defer></script><script src="/assets/desktop-import-center.js?v=10" defer></script><script src="/assets/desktop-live-studio.js?v=4" defer></script><script src="/assets/desktop-publishing.js?v=3" defer></script>
+    <script src="/assets/desktop-os.js?v=16" defer></script><script src="/assets/settings-tabs.js?v=7" defer></script><script src="/assets/desktop-media-library.js?v=13" defer></script><script src="/assets/desktop-import-center.js?v=10" defer></script><script src="/assets/desktop-live-studio.js?v=4" defer></script><script src="/assets/desktop-publishing.js?v=3" defer></script>
 </head>
 <body class="os-body">
 <main class="os-desktop" data-desktop data-storage-key="atapin.desktop.{{ auth()->id() }}.v1"
@@ -144,10 +152,10 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <script src="/assets/desktop-content-composite.js?v=2" defer></script>
     <script src="/assets/desktop-content-library.js?v=11" defer></script>
     <script src="/assets/desktop-content-organization.js?v=3" defer></script>
-    <script src="/assets/desktop-content-enhancements.js?v=2" defer></script>
+    <script src="/assets/desktop-content-enhancements.js?v=3" defer></script>
     <script src="/assets/desktop-local-links.js?v=1" defer></script>
     <script src="/assets/desktop-media-technical.js?v=1" defer></script>
-    <script src="/assets/desktop-content-assignment.js?v=7" defer></script>
+    <script src="/assets/desktop-content-assignment.js?v=8" defer></script>
     <script src="/assets/desktop-media-organization.js?v=3" defer></script>
     <script src="/assets/desktop-media-cover.js?v=2" defer></script>
     <script src="/assets/desktop-import-versions.js?v=1" defer></script>
@@ -157,7 +165,7 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     @foreach($programs as $program)
     <template data-help-template="{{ $program['id'] }}">
         <section class="desktop-help">
-            @foreach(__('desktop-help.apps')[$program['id']] ?? [__('desktop-help.pending')] as $paragraph)
+            @foreach(__('desktop-help.apps')[$program['id']] ?? (isset(__('workspaces.intros')[$program['id']])?[__('workspaces.intros')[$program['id']]]:[__('desktop-help.pending')]) as $paragraph)
                 <p>{{ $paragraph }}</p>
             @endforeach
             <h3>{{ __('desktop-help.workflow_title') }}</h3><p class="desktop-help-note">{{ __('desktop-help.workflow') }}</p>

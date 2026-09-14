@@ -245,6 +245,11 @@ class YouTubeClient
         return $videos;
     }
 
+    public function replyComment(string $parent,string $body): array
+    {
+        return $this->request()->timeout(30)->post($this->url('comments').'?part=snippet',['snippet'=>['parentId'=>$parent,'textOriginal'=>$body]])->throw()->json();
+    }
+
     private function tokenPayload(array $payload): array
     {
         $data = ['access_token' => $payload['access_token'], 'token_type' => $payload['token_type'] ?? 'Bearer'];

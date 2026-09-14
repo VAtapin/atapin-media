@@ -14,12 +14,12 @@ class PublicCatalog
         $query=$section==='buecher'?$this->books->query():$this->content->withViewCounts($section==='search'?$this->content->query()->whereIn('kind',['video','short','post','poll']):$this->content->forSection($section));
         if($data['q']??'')$query->where(fn($q)=>$q->where('title','like','%'.$data['q'].'%')->orWhere($section==='buecher'?'description':'body','like','%'.$data['q'].'%'));
         if($data['tag']??''){
-            if($section==='buecher')$query->where(fn($q)=>$q->where('title','like','%'.$data['tag'].'%')->orWhere('description','like','%'.$data['tag'].'%'));
+            if($section==='buecher')$query->where(fn($q)=>$q->whereJsonContains('metadata->tags',$data['tag'])->orWhere('title','like','%'.$data['tag'].'%')->orWhere('description','like','%'.$data['tag'].'%'));
             else $query->whereJsonContains('metadata->tags',$data['tag']);
         }
         if(($data['series']??null)&&$section!=='buecher'){
             $collection=Collection::where('metadata->public_published',true)->findOrFail($data['series']);
-            $query->where('source',$collection->source)->whereIn('source_id',$collection->items()->whereNotNull('source_id')->select('source_id'));
+            $query->where(fn($q)=>$q->whereIn('id',$collection->items()->whereNotNull('source_record_id')->select('source_record_id'))->orWhere(fn($q)=>$q->where('source',$collection->source)->whereIn('source_id',$collection->items()->whereNull('source_record_id')->whereNotNull('source_id')->select('source_id'))));
         }
         $sort=$data['sort']??'latest';
         if($sort==='popular'&&$section!=='buecher')$query->orderByDesc('public_view_count');
@@ -46,7 +46,7 @@ class PublicCatalog
         $sessionId=$request->hasSession()?$request->session()->getId():null;
         return ['items'=>$items,'featured'=>$featured,'readingBooks'=>$readingBooks,'resume'=>$resumeRecord?[...$this->content->card($resumeRecord),'position'=>$resumeState->value['position']??0]:null,
             'popular'=>($section==='buecher'?$this->books->query()->latest():($section==='live'?$this->content->forSection('live')->where('metadata->live_status','ended')->latest():$this->content->withViewCounts($this->content->forSection($section))->orderByDesc('public_view_count')->latest()->orderByDesc('id')))->limit(5)->get()->map($mapper),
-            'topics'=>$section==='buecher'?[]:$this->topics($section),'series'=>$this->series($section),
+            'topics'=>$this->topics($section),'series'=>$this->series($section),
             'record'=>$record,'assets'=>$record?$this->content->assets($record):collect(),
             'comments'=>$record?$this->content->childrenForViewer($record,'comment',$request->user(),$sessionId)->latest()->paginate(20,['*'],'comments_page')->withQueryString()->fragment('comments'):collect(),
             'chat'=>$record?$this->content->childrenForViewer($record,'live_chat',$request->user(),$sessionId)->latest()->limit(30)->get()->reverse():collect(),
@@ -60,7 +60,7 @@ class PublicCatalog
     public function topics(string $section): array
     {
         $topics=[];
-        foreach($this->content->forSection($section)->limit(2000)->pluck('metadata') as $metadata)
+        foreach(($section==='buecher'?$this->books->query():$this->content->forSection($section))->limit(2000)->pluck('metadata') as $metadata)
             foreach(array_unique(array_filter($metadata['tags']??[],'is_string')) as $tag)$topics[$tag]=($topics[$tag]??0)+1;
         arsort($topics);return array_slice($topics,0,10,true);
     }
@@ -68,7 +68,7 @@ class PublicCatalog
     {
         if(!in_array($section,['videos','podcast']))return collect();
         return Collection::where('metadata->public_published',true)->where(fn($q)=>$q->where('metadata->public_section',$section)->when($section==='videos',fn($q)=>$q->orWhereNull('metadata->public_section')))->limit(5)->get()->map(function($collection)use($section){
-            return ['title'=>$collection->title,'excerpt'=>$collection->description,'count'=>$this->content->forSection($section)->where('source',$collection->source)->whereIn('source_id',$collection->items()->select('source_id'))->count(),
+            return ['title'=>$collection->title,'excerpt'=>$collection->description,'count'=>$this->content->forSection($section)->where(fn($q)=>$q->whereIn('id',$collection->items()->whereNotNull('source_record_id')->select('source_record_id'))->orWhere(fn($q)=>$q->where('source',$collection->source)->whereIn('source_id',$collection->items()->whereNull('source_record_id')->select('source_id'))))->count(),
                 'url'=>route('public.'.$section,['series'=>$collection->id]),'image'=>null,'author'=>'','meta'=>''];
         });
     }

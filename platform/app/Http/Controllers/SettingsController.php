@@ -73,7 +73,7 @@ class SettingsController extends Controller
             ]);
             $credentials = array_filter(array_intersect_key($values, array_flip(['api_key','oauth_client_id','access_token','webhook_secret'])));
             $settings->update([$collectionKey => $connections]);
-            if ($credentials) $settings->updateSecrets([$section.'_'.$provider => json_encode($credentials, JSON_THROW_ON_ERROR)]);
+            if ($credentials) $settings->updateSecrets([$section.'_'.$provider => json_encode([...(json_decode($settings->secret($section.'_'.$provider)??'{}',true)?:[]),...$credentials], JSON_THROW_ON_ERROR)]);
             if ($request->expectsJson()) return response()->json(['status' => 'saved', 'section' => $section, 'provider' => $provider]);
             return back()->with('status', __('ui.saved'));
         }

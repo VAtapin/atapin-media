@@ -13,4 +13,5 @@ class SourceRecord extends Model
     }
     public function classifications(){return $this->hasMany(RecordClassification::class);}
     public function publicViews(){return $this->hasMany(PublicContentView::class,'record_id');}
+    public function project(){return $this->belongsTo(Project::class);}
 }

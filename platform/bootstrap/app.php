@@ -12,11 +12,12 @@ $app = Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->validateCsrfTokens(except:['live/server-auth']);
+        $middleware->validateCsrfTokens(except:['live/server-auth','payments/stripe/webhook']);
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo('/desktop');
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
         $middleware->append(\App\Http\Middleware\ApplyPlatformSettings::class);
+        $middleware->web(append:[\App\Http\Middleware\TrackPublicAnalytics::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -14,8 +14,8 @@ class TelegramWebsite
     {
         if (! $this->content->visible($record)) throw new \RuntimeException('Telegram video links require a published Website material.');
         $url = $this->content->card($record)['url'];
-        $description = $record->metadata['short_description'] ?? '';
-        $text = trim(strip_tags($record->title)."\n\n".(is_string($description) ? strip_tags($description) : ''));
+        $description = ($record->metadata['platform_metadata']['telegram']['body']??null) ?: ($record->metadata['short_description'] ?? '');
+        $text = trim(PlatformText::value($record,'telegram','title')."\n\n".(is_string($description) ? strip_tags($description) : ''));
         $buttons = [['text' => __('publishing.watch_on_site'), 'url' => $url]];
         $connection = $this->connections->connection('telegram');
         $username = $connection['bot_username'] ?? '';

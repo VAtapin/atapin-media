@@ -31,7 +31,7 @@ class TelegramConnector implements PublishingConnector, ManagesPublications
         $data = ['chat_id' => $this->connections->connection('telegram')['external_id'], 'message_id' => $publication->external_id];
         if ($action === 'delete') $method = 'deleteMessage';
         elseif ($action === 'update') {
-            $caption = trim($publication->record->title."\n\n".(string) $publication->record->body);
+            $caption = \App\Services\Publishing\PlatformText::caption($publication->record,'telegram');
             if ($publication->payload['telegram_website_link'] ?? false) {
                 $announcement = app(TelegramWebsite::class)->announcement($publication->record);
                 $caption = $announcement['text'];
@@ -64,7 +64,7 @@ class TelegramConnector implements PublishingConnector, ManagesPublications
         $base = rtrim((string) config('publishing.telegram.api_base'), '/').'/bot'.$token;
         $publicChat = Http::timeout(30)->post($base.'/getChat', ['chat_id' => $chat])->throw()->json('result', []);
         if (empty($publicChat['username']) || ! in_array($publicChat['type'] ?? null, ['channel', 'supergroup'], true)) throw new \RuntimeException('Telegram requires a public channel or group for automatic public distribution.');
-        $caption = trim($record->title."\n\n".(string) ($record->body ?? ''));
+        $caption = \App\Services\Publishing\PlatformText::caption($record,'telegram');
         $websiteLink = in_array($record->publishingKind(), ['video', 'short'], true) || (bool) app(MediaResolver::class)->video($record);
         $media = false;
         if ($websiteLink) {

@@ -25,6 +25,6 @@ class PublicBooks
             'description'=>$book->description??'',
             'price'=>$book->price_cents===null?null:number_format($book->price_cents/100,2,',','.').' '.$book->currency,
             'url'=>route('public.book',['slug'=>Str::slug($book->title).'-'.$book->id]),
-            'image'=>$cover?route('public.book-media',[$book,$cover]):null,'tags'=>[]];
+            'image'=>$cover?route('public.book-media',[$book,$cover]):null,'tags'=>$book->metadata['tags']??[]];
     }
 }

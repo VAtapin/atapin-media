@@ -142,7 +142,7 @@ class PublishingService
     public function signature(SourceRecord $record): string
     {
         $meta = $record->metadata ?? [];
-        return hash('sha256', json_encode([$record->title, $record->body, $meta['tags'] ?? $meta['original_tags'] ?? [], $meta['cover_media_id'] ?? null,
+        return hash('sha256', json_encode([$record->title, $record->body, $meta['tags'] ?? $meta['original_tags'] ?? [], $meta['cover_media_id'] ?? null,$meta['platform_metadata']??[],
             $record->status === 'ready' && ! $record->trashed() && ($meta['public_published'] ?? false)], JSON_THROW_ON_ERROR));
     }
 

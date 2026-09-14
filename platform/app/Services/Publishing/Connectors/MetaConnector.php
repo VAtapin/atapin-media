@@ -43,7 +43,7 @@ class MetaConnector implements PublishingConnector, ManagesPublications
                 if (! is_string($postId) || $postId === '') throw new UnsupportedCapability('Facebook returned no editable Page story for this photo.');
                 $url = 'https://graph.facebook.com/'.config('publishing.meta.api_version').'/'.$postId;
             }
-            $data = $type === 'video' ? ['title' => $publication->record->title, 'description' => $caption] : ['message' => $caption];
+            $data = $type === 'video' ? ['title' => \App\Services\Publishing\PlatformText::value($publication->record,'facebook','title'), 'description' => $caption] : ['message' => $caption];
             if ($type !== 'photo') $data[$type === 'video' ? 'published' : 'is_published'] = $action !== 'hide';
             $request->post($url, $data)->throw();
             if ($type !== 'photo') {
@@ -81,7 +81,7 @@ class MetaConnector implements PublishingConnector, ManagesPublications
         if ($asset) {
             $type = 'video';
             $response = Http::timeout(300)->withToken($token)->attach('source', fopen($asset['path'], 'rb'), basename($asset['path']))
-                ->post($base.'/'.$page.'/videos', ['description' => $this->caption($record), 'title' => $record->title, 'published' => 'true']);
+                ->post($base.'/'.$page.'/videos', ['description' => $this->caption($record), 'title' => \App\Services\Publishing\PlatformText::value($record,'facebook','title'), 'published' => 'true']);
         } elseif ($image = app(MediaResolver::class)->image($record)) {
             $type = 'photo';
             $response = Http::timeout(120)->withToken($token)->attach('source', fopen($image['path'], 'rb'), basename($image['path']))
@@ -146,6 +146,6 @@ class MetaConnector implements PublishingConnector, ManagesPublications
 
     private function caption(\App\Models\SourceRecord $record): string
     {
-        return trim($record->title."\n\n".(string) ($record->body ?? ''));
+        return \App\Services\Publishing\PlatformText::caption($record,$this->provider);
     }
 }

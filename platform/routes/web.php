@@ -6,6 +6,7 @@ use App\Http\Controllers\DesktopController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ImportController;
+require __DIR__.'/workspaces.php';
 
 Route::get('/', [\App\Http\Controllers\PublicWebsiteController::class,'home'])->name('home');
 Route::get('/telegram/material/{token}', [\App\Http\Controllers\TelegramMiniAppController::class,'material'])->middleware('throttle:60,1')->name('public.telegram-material');

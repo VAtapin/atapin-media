@@ -34,7 +34,7 @@ class XConnector implements PublishingConnector, ManagesPublications
         $asset = $resolver->video($record);
         if (! $asset && $resolver->audio($record)) $asset = app(VideoRenderer::class)->video($record);
         $asset ??= $resolver->image($record);
-        $data = ['text' => mb_strimwidth(trim($record->title."\n\n".strip_tags((string) $record->body)), 0, 280, '…')];
+        $data = ['text' => mb_strimwidth(\App\Services\Publishing\PlatformText::caption($record,'x'), 0, 280, '…')];
         if ($asset) $data['media'] = ['media_ids' => [$this->upload($publication, $asset)]];
         $id = $this->client->request()->post($this->client->url('tweets'), $data)->throw()->json('data.id');
         if (! is_string($id)) throw new \RuntimeException('X returned no post ID.');

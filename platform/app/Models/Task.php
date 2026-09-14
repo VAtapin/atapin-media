@@ -5,7 +5,7 @@ class Task extends Model
 {
     public const STATES=['open','working','waiting','done'];
     protected $guarded=[];
-    protected function casts(): array { return ['due_date'=>'date']; }
+    protected function casts(): array { return ['due_date'=>'date:Y-m-d']; }
     public function project() { return $this->belongsTo(Project::class); }
     public function assignee() { return $this->belongsTo(User::class,'assigned_to'); }
 }

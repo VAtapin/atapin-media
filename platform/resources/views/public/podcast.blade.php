@@ -25,7 +25,7 @@
 @endforelse</div>
 @include('public.pagination')
 @if($record)<h3>{{ $record->title }}</h3>
-<p>{{ $record->metadata['short_description']??'' }}</p><details class="public-full-description"><summary>{{ __('public.show_more') }}</summary><div class="public-document">{{ $record->body }}</div></details>
+<p>{{ $record->metadata['short_description']??'' }}</p><details class="public-full-description"><summary>{{ __('public.show_more') }}</summary><div class="public-document">@include('public.content-body')</div></details>
 @include('public.player',['card'=>$featured])<div class="public-action-row">
 @include('public.state-button',['subject'=>$record,'action'=>'bookmark','label'=>__('public.bookmark')])</div>
 @include('public.comments')

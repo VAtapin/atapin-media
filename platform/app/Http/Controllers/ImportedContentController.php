@@ -34,16 +34,28 @@ class ImportedContentController extends Controller
         ]), 'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total()]]);
     }
 
+    public function store(Request $request, \App\Services\Importing\ContentAssignment $assignment)
+    {
+        $data = $request->validate(['title'=>'required|string|max:255','body'=>'nullable|string|max:1000000',
+            'kind'=>'required|in:video,short,post','public_section'=>'required|in:videos,beitraege,podcast','status'=>'required|in:unsorted,ready,needs_attention']);
+        $record = SourceRecord::create(['source'=>'manual','source_id'=>(string)\Illuminate\Support\Str::uuid(),
+            'title'=>$data['title'],'body'=>$data['body'] ?? '','kind'=>$data['kind'],'status'=>$data['status'],
+            'metadata'=>['public_section'=>$data['public_section'],'public_published'=>false,'classification_origin'=>'manual']]);
+        app(\App\Services\Audit::class)->record('content.created',(string)$record->id);
+        return response()->json(['status'=>'saved','id'=>$record->id,'detail_url'=>route('content.show',$record)],201);
+    }
+
     public function update(Request $request, SourceRecord $record, \App\Services\Importing\ContentAssignment $assignment)
     {
         if($request->hasAny(['public_published','public_section','public_homepage'])||($record->metadata['public_published']??false)||($record->metadata['public_homepage']??false))\Illuminate\Support\Facades\Gate::authorize('content.publish');
+        if($request->has('platform_metadata'))\Illuminate\Support\Facades\Gate::authorize('content.publish');
         $assignment->record($record, $request->validate(['title' => 'required|string|max:255', 'body' => 'nullable|string|max:1000000',
             'kind' => 'required|in:'.implode(',',SourceRecord::KINDS), 'status' => 'required|in:unsorted,ready,needs_attention',
             'target_profile'=>'nullable|in:media_library,videos,shorts,posts,polls,comments,podcast',
             'public_published'=>'sometimes|boolean','public_homepage'=>'sometimes|boolean',
             'public_section'=>'sometimes|in:videos,beitraege,podcast,live,community',
             'short_description'=>'nullable|string|max:300',
-            'tags' => 'nullable|array|max:30', 'tags.*' => 'string|max:100']));
+            'tags' => 'nullable|array|max:30', 'tags.*' => 'string|max:100', ...\App\Services\ContentEditorData::rules()]));
         return response()->json(['status' => 'saved']);
     }
 
@@ -88,9 +100,12 @@ class ImportedContentController extends Controller
         $publicContent=app(\App\Services\PublicContent::class);
         $publicUrl=$publicContent->visible($record)?$publicContent->card($record)['url']:null;
         $version=app(\App\Services\Importing\ContentState::class)->version($record);
-        return response()->json(['id' => $record->id, 'title' => $record->title, 'body' => $record->body,
+        return response()->json(['id' => $record->id, 'title' => $record->title, 'body' => ($metadata['body_format']??'plain')==='html'?app(\App\Services\RichContent::class)->sanitize($record->body??''):$record->body,
+            ...array_intersect_key($metadata,array_flip(['author','seo_title','seo_description','transcript','guest','external_podcast_url','cover_media_id','taxonomy_term_ids'])),
             'short_description'=>$metadata['short_description']??'', 'short_description_job'=>$metadata['short_description_job']['state']??null,
+            'project_id'=>$record->project_id,'editor'=>array_intersect_key($metadata,array_flip(['author','seo_title','seo_description','transcript','guest','external_podcast_url','cover_media_id','taxonomy_term_ids'])),
             'media_jobs'=>$metadata['media_jobs']??[],
+            'body_format'=>$metadata['body_format']??'plain','platform_metadata'=>$metadata['platform_metadata']??[],'pdf_job'=>$metadata['pdf_job']??null,
             'trashed'=>$record->trashed(),
             'kind' => $record->kind, 'source' => $record->source, 'source_id' => $record->source_id, 'status' => $record->status,
             'parent_source_id' => $metadata['parent_source_id'] ?? null, 'poll' => $metadata['poll'] ?? null,

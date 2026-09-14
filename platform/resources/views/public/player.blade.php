@@ -22,7 +22,7 @@
 data-view-url="{{ route('public.record-view',$record) }}" poster="{{ $card['image']??$heroImage??config('public_ui.hero_image') }}"
 src="{{ $video->publicUrl() ?? route('public.media',[$record,$video]) }}" @auth data-progress-url="{{ route('public.record-state',$record) }}" data-resume="{{ $states['progress']['position']??0 }}" @endauth>
 </video>
-@else<audio class="public-main-audio" controls preload="metadata" src="{{ $audio->publicUrl() ?? route('public.media',[$record,$audio]) }}" @auth data-progress-url="{{ route('public.record-state',$record) }}" data-resume="{{ $states['progress']['position']??0 }}" @endauth>
+@else<audio class="public-main-audio" @if(($record->metadata['public_section']??'')==='podcast') data-audio-view-url="{{ route('public.audio-play',$record) }}" @endif controls preload="metadata" src="{{ $audio->publicUrl() ?? route('public.media',[$record,$audio]) }}" @auth data-progress-url="{{ route('public.record-state',$record) }}" data-resume="{{ $states['progress']['position']??0 }}" @endauth>
 </audio>
 @endif
 

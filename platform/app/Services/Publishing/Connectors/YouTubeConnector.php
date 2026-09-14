@@ -37,8 +37,8 @@ class YouTubeConnector implements PublishingConnector, ManagesPublications
             if (! $asset && ($record->kind === 'post' || ($meta['public_section'] ?? null) === 'podcast' || app(MediaResolver::class)->audio($record))) $asset = app(VideoRenderer::class)->video($record);
             if (! $asset) throw new \RuntimeException('No local video file is available for YouTube.');
             $video = $this->client->uploadVideo($asset['path'], [
-                'title' => $record->title,
-                'description' => (string) ($record->body ?? ''),
+                'title' => \App\Services\Publishing\PlatformText::value($record,'youtube','title'),
+                'description' => \App\Services\Publishing\PlatformText::value($record,'youtube','body'),
                 'tags' => array_values(array_filter($meta['tags'] ?? $meta['original_tags'] ?? [], 'is_string')),
                 'categoryId' => (string) ($meta['youtube']['category_id'] ?? '22'),
             ], $status, $publication);
@@ -69,7 +69,7 @@ class YouTubeConnector implements PublishingConnector, ManagesPublications
         $record = $publication->record;
         $meta = $record->metadata ?? [];
         $this->client->updateVideo($id, [
-            'title' => $record->title, 'description' => (string) ($record->body ?? ''),
+            'title' => \App\Services\Publishing\PlatformText::value($record,'youtube','title'), 'description' => \App\Services\Publishing\PlatformText::value($record,'youtube','body'),
             'tags' => array_values(array_filter($meta['tags'] ?? $meta['original_tags'] ?? [], 'is_string')),
             'categoryId' => (string) ($meta['youtube']['category_id'] ?? '22'),
         ], $action === 'hide' ? 'private' : 'public');
@@ -94,8 +94,8 @@ class YouTubeConnector implements PublishingConnector, ManagesPublications
         $stream = $this->client->reusableStream();
         if (! $id) {
             $broadcast = $this->client->createBroadcast([
-                'title' => $record->title,
-                'description' => (string) ($record->body ?? ''),
+                'title' => \App\Services\Publishing\PlatformText::value($record,'youtube','title'),
+                'description' => \App\Services\Publishing\PlatformText::value($record,'youtube','body'),
                 'scheduledStartTime' => ! empty($meta['starts_at']) ? \Illuminate\Support\Carbon::parse($meta['starts_at'])->toIso8601String() : now()->toIso8601String(),
             ], ['privacyStatus' => 'public'], [
                 'enableAutoStart' => true,
