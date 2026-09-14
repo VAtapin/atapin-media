@@ -10,7 +10,7 @@ class PublicLiveStateTest extends TestCase
     use RefreshDatabase;
     private function event(): SourceRecord
     {
-        return SourceRecord::create(['source'=>'website','source_id'=>'live','kind'=>'video','title'=>'Live','status'=>'ready','metadata'=>['public_published'=>true,'public_section'=>'live']]);
+        return SourceRecord::create(['source'=>'website','source_id'=>'live','kind'=>'video','title'=>'Live','status'=>'ready','metadata'=>['public_published'=>true,'public_section'=>'live','live_status'=>'live']]);
     }
     public function test_presence_counts_distinct_recent_sessions_without_exposing_identifiers(): void
     {
@@ -18,7 +18,9 @@ class PublicLiveStateTest extends TestCase
         $this->assertSame(1,$service->heartbeat($event,'one')['online']);$this->assertSame(1,$service->heartbeat($event,'one')['online']);
         $this->assertSame(2,$service->heartbeat($event,'two')['online']);$this->assertDatabaseMissing('public_live_presence',['session_hash'=>'one']);
         $this->travel(121)->seconds();$this->assertSame(1,$service->heartbeat($event,'two')['online']);
-        $this->postJson(route('public.live-heartbeat',$event))->assertOk()->assertJsonStructure(['online','chat'])->assertDontSee('session_hash');
+        $this->postJson(route('public.live-heartbeat',$event))->assertOk()->assertJsonStructure(['status','online','chat'])->assertJsonPath('status','live')->assertDontSee('session_hash');
+        $event->update(['metadata'=>[...$event->metadata,'live_status'=>'ended']]);
+        $this->assertSame('ended',$service->heartbeat($event,'two')['status']);
         $event->update(['metadata'=>['public_published'=>false,'public_section'=>'live']]);$this->postJson(route('public.live-heartbeat',$event))->assertNotFound();
     }
     public function test_chat_snapshot_updates_when_reviewed_messages_are_published_or_revoked(): void

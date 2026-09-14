@@ -167,8 +167,8 @@
 .public-small-books .public-button{display:none}
 .public-small-books .public-content-card p{display:none}
 .public-muted{color:#708199;font-size:12px}
-.public-live-top{max-width:1390px;margin:12px auto;display:grid;grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);gap:12px}
-.public-live-top .public-main-player,.public-live-top .public-empty-player{aspect-ratio:2.13/1;min-height:0}
+.public-live-top{width:calc(100% - 48px);max-width:1390px;margin:12px auto;display:grid;grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);gap:12px}
+.public-live-top .public-main-player,.public-live-top .public-empty-player,.public-live-top .public-live-player-shell,.public-live-top .public-live-player-fallback-static{aspect-ratio:16/9;min-height:0}
 .public-live-top .public-title-actions h1{font-size:24px}
 .public-live-chat{display:flex;flex-direction:column;min-width:0}
 .public-chat-messages{height:500px;overflow:auto}
@@ -296,14 +296,14 @@
  .public-filters nav{gap:8px}.public-filters nav>a{padding:8px 10px}.public-filters .public-catalog-search{width:100%;margin:5px 0 0;flex-wrap:wrap}.public-catalog-search input{flex:1;min-width:130px}
  .public-video-overview,.public-post-overview,.public-detail-layout,.public-live-top,.public-books-top,.public-podcast-grid,.public-community-grid,.public-live-bottom{display:grid;grid-template-columns:1fr}
  .public-video-overview>.public-right-sidebar,.public-post-overview>.public-right-sidebar,.public-books-overview>.public-right-sidebar{grid-template-columns:1fr}.public-overview-series{grid-column:1}
- .public-detail-layout,.public-live-top{margin-left:16px;margin-right:16px;margin-top:20px}.public-detail-layout>*{min-width:0}.public-empty-player{min-height:220px;aspect-ratio:16/9}.public-main-player{aspect-ratio:16/9}
+ .public-detail-layout,.public-live-top{width:auto;margin-left:16px;margin-right:16px;margin-top:20px}.public-detail-layout>*{min-width:0}.public-empty-player{min-height:220px;aspect-ratio:16/9}.public-main-player{aspect-ratio:16/9}
  .public-title-actions{grid-template-columns:1fr}.public-live-actions{min-width:0}.public-title-actions h1,.public-article-detail h1{font-size:30px}.public-article-intro{font-size:18px}.public-article-cover{height:200px}.public-article-body{font-size:17px}
  .public-tabs{gap:0;overflow:auto}.public-tabs button{font-size:12px;padding:12px 7px;min-width:85px}.public-materials>a{flex-wrap:wrap}
  .public-related .public-content-card{grid-template-columns:120px 1fr}.public-books-top .public-cards,.public-book-ranked .public-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
  .public-books-top .public-content-card-book{display:block}.public-book-poll .public-poll{display:flex;flex-wrap:wrap;gap:12px}.public-book-poll .public-poll .public-empty-slot{width:100%;flex-basis:100%}
  .public-book-intro{grid-template-columns:1fr;min-height:0}.public-book-cover{width:220px;margin:auto}.public-book-intro h1{font-size:36px;margin-top:10px}
  .public-purchase .public-button{font-size:13px}.public-book-formats{gap:10px}.public-book-formats>span{font-size:11px}.public-small-books .public-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
- .public-live-footer,.public-podcast-bottom{grid-template-columns:1fr}.public-live-top .public-main-player,.public-live-top .public-empty-player,.public-live-top .public-live-player-shell,.public-live-top .public-live-player-fallback-static{aspect-ratio:16/9}
+ .public-live-footer,.public-podcast-bottom{grid-template-columns:1fr}
  .public-podcast-navigation,.public-community-navigation{grid-template-columns:repeat(2,minmax(0,1fr))}.public-podcast-navigation strong,.public-community-navigation strong{font-size:14px}
  .public-community-entry h3{font-size:16px}.public-topic-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.public-series{flex-wrap:wrap}.public-series>a{flex-basis:40%}
  .public-cards>.public-empty-slot{min-height:145px}.public-video-grid,.public-post-grid,.public-ranked,.public-podcast-grid>.public-panel,.public-community-grid>.public-panel{min-height:0}

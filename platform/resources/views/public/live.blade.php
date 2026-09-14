@@ -13,7 +13,7 @@
 <h1>{{ $record?->title??'—' }}</h1>
 @if($liveDate)<time class="public-record-meta" datetime="{{ $record->metadata['starts_at'] }}">{{ $liveDate }}</time>@endif
 @if($record?->body)<p class="public-live-description">{{ $record->body }}</p>@endif
-@if($liveStatusLabel)<p class="public-live-status"><span class="public-live-status-dot status-{{ $liveStatus }}" aria-hidden="true"></span><span>{{ $liveStatusLabel }}</span></p>@endif
+@if($liveStatusLabel)<p class="public-live-status" data-live-status-line><span class="public-live-status-dot status-{{ $liveStatus }}" data-live-status-dot aria-hidden="true"></span><span data-live-status-label>{{ $liveStatusLabel }}</span></p>@endif
 @if($record)<div class="public-live-actions public-live-detail-actions"><div class="public-action-row">
 @include('public.state-button',['subject'=>$record,'action'=>'reminder','label'=>__('public.reminder')])</div>
 @include('public.push-button')
