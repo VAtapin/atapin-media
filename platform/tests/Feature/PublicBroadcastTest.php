@@ -41,10 +41,30 @@ class PublicBroadcastTest extends TestCase
         try {
             $missed=SourceRecord::create(['source'=>'website','source_id'=>'missed-live','kind'=>'video','title'=>'Missed','status'=>'ready','metadata'=>['public_section'=>'live','public_published'=>true,'live_status'=>'scheduled','starts_at'=>'2026-09-13T21:30:00']]);
             $future=SourceRecord::create(['source'=>'website','source_id'=>'future-live','kind'=>'video','title'=>'Future','status'=>'ready','metadata'=>['public_section'=>'live','public_published'=>true,'live_status'=>'scheduled','starts_at'=>'2026-09-14T20:00:00']]);
-            $events=$this->actingAs($owner)->getJson('/api/desktop/live')->assertOk()->json('data');
+            $events=$this->actingAs($owner)->getJson('/api/desktop/live?date=2026-09-13')->assertOk()->json('data');
             $this->assertSame('ended',collect($events)->firstWhere('id',$missed->id)['status']);
-            $this->assertSame('scheduled',collect($events)->firstWhere('id',$future->id)['status']);
+            $futureEvents=$this->actingAs($owner)->getJson('/api/desktop/live?date=2026-09-14')->assertOk()->json('data');
+            $this->assertSame('scheduled',collect($futureEvents)->firstWhere('id',$future->id)['status']);
             $this->assertSame('missed_schedule',$missed->fresh()->metadata['ended_reason']);
+        } finally { Carbon::setTestNow(); }
+    }
+    public function test_live_studio_defaults_to_today_with_pagination_and_keeps_live_events_separate(): void
+    {
+        app(\App\Services\Access::class)->seed();
+        $owner=User::factory()->create();$owner->roles()->attach(\App\Models\Role::where('name','Owner')->firstOrFail());
+        Carbon::setTestNow(Carbon::parse('2026-09-14 10:00:00',config('app.timezone')));
+        try {
+            for($i=1;$i<=21;$i++) SourceRecord::create(['source'=>'website','source_id'=>"today-$i",'kind'=>'video','title'=>"Today $i",'status'=>'ready','metadata'=>['public_section'=>'live','public_published'=>true,'live_stream_enabled'=>true,'live_status'=>$i===1?'ended':'scheduled','starts_at'=>sprintf('2026-09-14T%02d:00',$i%10)]]);
+            $live=SourceRecord::create(['source'=>'website','source_id'=>'now','kind'=>'video','title'=>'Current live','status'=>'ready','metadata'=>['public_section'=>'live','public_published'=>true,'live_stream_enabled'=>true,'live_status'=>'live','starts_at'=>'2026-09-15T10:00']]);
+            SourceRecord::create(['source'=>'website','source_id'=>'tomorrow','kind'=>'video','title'=>'Tomorrow','status'=>'ready','metadata'=>['public_section'=>'live','public_published'=>true,'live_stream_enabled'=>true,'live_status'=>'scheduled','starts_at'=>'2026-09-15T12:00']]);
+
+            $response=$this->actingAs($owner)->getJson('/api/desktop/live')->assertOk();
+            $response->assertJsonPath('filter.mode','day')->assertJsonPath('filter.date','2026-09-14')->assertJsonPath('pagination.total',21)->assertJsonPath('pagination.last_page',2);
+            $this->assertCount(20,$response->json('data'));$this->assertSame($live->id,$response->json('live.0.id'));
+            $response=$this->actingAs($owner)->getJson('/api/desktop/live?page=2')->assertOk();
+            $this->assertCount(1,$response->json('data'));
+            $response=$this->actingAs($owner)->getJson('/api/desktop/live?filter=scheduled')->assertOk();
+            $this->assertCount(1,$response->json('data'));$this->assertSame('Tomorrow',$response->json('data.0.title'));
         } finally { Carbon::setTestNow(); }
     }
     public function test_live_studio_cover_is_linked_to_the_event_and_returned_for_the_editor(): void

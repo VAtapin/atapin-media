@@ -10,15 +10,40 @@ class PublicBroadcastController extends Controller
         $data=$request->validate(['path'=>'required|string|max:80','action'=>'required|in:publish,read','protocol'=>'required|in:rtmp,hls','user'=>'nullable|string|max:100','password'=>'nullable|string|max:200']);
         return response('', $broadcast->authorize($data)?204:401);
     }
-    public function apiIndex(PublicContent $content)
+    public function apiIndex(Request $request,PublicContent $content)
     {
         $content->expireScheduledLives();
-        $events=SourceRecord::where('metadata->public_section','live')->get()->sortBy(function(SourceRecord $record){
+        $today=now(config('app.timezone'))->toDateString();
+        $date=(string)$request->query('date',$today);
+        try { $date=\Illuminate\Support\Carbon::createFromFormat('!Y-m-d',$date,config('app.timezone'))->format('Y-m-d'); }
+        catch(\Throwable) { $date=$today; }
+        $filter=$request->query('filter','day')==='scheduled'?'scheduled':'day';
+        $perPage=20;
+        $page=max(1,(int)$request->query('page',1));
+        $all=SourceRecord::where('metadata->public_section','live')->get();
+        $live=$all->filter(fn(SourceRecord $record)=>(($record->metadata['live_status']??null)==='live'))->sortBy(fn(SourceRecord $record)=>[
+            ($record->metadata['starts_at']??null)?strtotime((string)$record->metadata['starts_at']):PHP_INT_MAX,(int)$record->id,
+        ])->values();
+        $events=$all->filter(function(SourceRecord $record)use($filter,$date,$content){
+            $status=$record->metadata['live_status']??'draft';
+            if($filter==='scheduled')return $status==='scheduled'&&$content->hasFutureStart($record);
+            $starts=$record->metadata['starts_at']??null;
+            if(!is_string($starts)||$starts==='')return false;
+            try{return \Illuminate\Support\Carbon::parse($starts,config('app.timezone'))->timezone(config('app.timezone'))->toDateString()===$date;}
+            catch(\Throwable){return false;}
+        })->sortBy(function(SourceRecord $record){
             $status=$record->metadata['live_status']??'draft';$starts=$record->metadata['starts_at']??null;$time=$starts?strtotime((string)$starts):PHP_INT_MAX;
             $rank=match($status){'live'=>0,'scheduled'=>1,'draft'=>2,'ended'=>3,default=>2};
             return [$rank,$rank===3?-((int)$record->id):$time,(int)$record->id];
         })->values();
-        return response()->json(['data'=>$events->map(fn($record)=>$this->eventData($record))->values()]);
+        $total=$events->count();$lastPage=max(1,(int)ceil($total/$perPage));$page=min($page,$lastPage);
+        $items=$events->forPage($page,$perPage)->values();
+        return response()->json([
+            'live'=>$live->map(fn($record)=>$this->eventData($record))->values(),
+            'data'=>$items->map(fn($record)=>$this->eventData($record))->values(),
+            'pagination'=>['current_page'=>$page,'per_page'=>$perPage,'total'=>$total,'last_page'=>$lastPage,'from'=>$total?(($page-1)*$perPage)+1:null,'to'=>$total?min($page*$perPage,$total):null],
+            'filter'=>['mode'=>$filter,'date'=>$date],
+        ]);
     }
     public function apiShow(SourceRecord $record,Settings $settings,PublicBroadcast $broadcast,PublicContent $content)
     {

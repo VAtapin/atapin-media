@@ -9,6 +9,7 @@
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   };
   const displayDate = value => value ? new Intl.DateTimeFormat('de-DE', { dateStyle:'medium', timeStyle:'short' }).format(new Date(value)) : '—';
+  const today = () => { const date = new Date(); const pad = number => String(number).padStart(2, '0'); return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`; };
 
   const initialize = root => {
     if (!root || root.dataset.initialized === 'true') return;
@@ -18,6 +19,15 @@
     const events = root.querySelector('[data-live-events]');
     const listStatus = root.querySelector('[data-live-list-status]');
     const count = root.querySelector('[data-live-count]');
+    const currentPanel = root.querySelector('[data-live-current]');
+    const currentEvents = root.querySelector('[data-live-now-events]');
+    const currentCount = root.querySelector('[data-live-now-count]');
+    const filter = root.querySelector('[data-live-filter]');
+    const dateFilter = root.querySelector('[data-live-date]');
+    const pagination = root.querySelector('[data-live-pagination]');
+    const pageInfo = root.querySelector('[data-live-page-info]');
+    const previousPage = root.querySelector('[data-live-page-prev]');
+    const nextPage = root.querySelector('[data-live-page-next]');
     const feedback = root.querySelector('[data-live-feedback]');
     const ingest = root.querySelector('[data-live-ingest]');
     const rotateWrap = root.querySelector('[data-live-rotate-wrap]');
@@ -32,6 +42,8 @@
     const saveButton = form.querySelector('button[type="submit"]');
     let current = null;
     let selectedPosterFile = null;
+    const view = {mode:'day', date:today(), page:1};
+    dateFilter.value = view.date;
 
     const setFeedback = (message, error = false) => {
       feedback.textContent = message || '';
@@ -49,15 +61,29 @@
         const first = Object.values(payload.errors || {})[0];
         throw new Error(Array.isArray(first) ? first[0] : (payload.message || labels().save_error));
       }
-      return payload.data;
+      return payload;
     };
+    const requestData = async (url, options = {}) => (await request(url, options)).data;
     const renderList = items => {
-      count.textContent = String(items.length);
+      count.textContent = String(window.liveStudioPagination?.total || 0);
       if (!items.length) {
         events.innerHTML = `<p class="desktop-live-list-empty">${escapeHtml(labels().empty)}</p>`;
         return;
       }
       events.innerHTML = items.map(item => `<button class="desktop-live-event${current && current.id === item.id ? ' is-active' : ''}" type="button" data-live-event="${item.id}"><span class="desktop-live-event-dot status-${escapeHtml(item.status)}"></span><span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(displayDate(item.starts_at))} · ${escapeHtml(labels()['status_'+item.status] || item.status)}</small></span><span class="desktop-live-event-arrow">→</span></button>`).join('');
+    };
+    const renderCurrent = items => {
+      currentPanel.hidden = false;
+      currentCount.textContent = String(items.length);
+      currentEvents.innerHTML = items.length ? items.map(item => `<button class="desktop-live-event is-current${current && current.id === item.id ? ' is-active' : ''}" type="button" data-live-event="${item.id}"><span class="desktop-live-event-dot status-live"></span><span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(labels().status_live)}</small></span><span class="desktop-live-event-arrow">→</span></button>`).join('') : `<p class="desktop-live-list-empty">${escapeHtml(labels().live_none)}</p>`;
+    };
+    const renderPagination = meta => {
+      window.liveStudioPagination = meta || {};
+      const lastPage = Number(meta?.last_page || 1);
+      pagination.hidden = lastPage <= 1;
+      pageInfo.textContent = meta?.total ? `${meta.current_page} / ${lastPage}` : '';
+      previousPage.disabled = !meta?.current_page || meta.current_page <= 1;
+      nextPage.disabled = !meta?.current_page || meta.current_page >= lastPage;
     };
     const showIngest = data => {
       const value = data.ingest;
@@ -121,18 +147,33 @@
     };
     const loadEvent = async id => {
       setFeedback('');
-      try { fillForm(await request(`${root.dataset.apiBase}/${id}`)); }
+      try { fillForm(await requestData(`${root.dataset.apiBase}/${id}`)); }
       catch (error) { setFeedback(error.message || labels().load_error, true); }
     };
-    const load = async () => {
+    const indexUrl = () => {
+      const url = new URL(root.dataset.apiIndex, window.location.origin);
+      url.searchParams.set('filter', view.mode);
+      url.searchParams.set('page', String(view.page));
+      if (view.mode === 'day') url.searchParams.set('date', view.date);
+      return url.toString();
+    };
+    const applyIndex = response => {
+      window.liveStudioEvents = response.data || [];
+      renderCurrent(response.live || []);
+      renderPagination(response.pagination || {});
+      renderList(window.liveStudioEvents);
+    };
+    const loadIndex = async selectFirst => {
       listStatus.hidden = false;
       try {
-        const data = await request(root.dataset.apiIndex);
-        window.liveStudioEvents = data;
+        const response = await request(indexUrl());
+        applyIndex(response);
         listStatus.hidden = true;
-        renderList(data);
-        if (data[0]) await loadEvent(data[0].id);
-        else newEvent();
+        if (selectFirst) {
+          if (response.data?.[0]) await loadEvent(response.data[0].id);
+          else newEvent();
+        }
+        return response;
       } catch (error) {
         listStatus.textContent = error.message || labels().load_error;
         setFeedback(error.message || labels().load_error, true);
@@ -179,6 +220,7 @@
     preview.addEventListener('click', () => window.open(preview.dataset.url, '_blank', 'noopener'));
     root.querySelector('[data-live-help]').addEventListener('click', () => document.querySelector('[data-open-app="help-live-studio"]')?.click());
     events.addEventListener('click', event => { const button = event.target.closest('[data-live-event]'); if (button) loadEvent(button.dataset.liveEvent); });
+    currentEvents.addEventListener('click', event => { const button = event.target.closest('[data-live-event]'); if (button) loadEvent(button.dataset.liveEvent); });
     form.addEventListener('submit', async event => {
       event.preventDefault();
       setFeedback('');
@@ -197,7 +239,7 @@
         delete payload.cover_media_id;
         delete payload.poster_file;
         if (file) setPosterStatus(labels().poster_preparing, 'loading');
-        let data = await request(id ? `${root.dataset.apiBase}/${id}` : root.dataset.apiBase, {method, body:JSON.stringify(payload)});
+        let data = await requestData(id ? `${root.dataset.apiBase}/${id}` : root.dataset.apiBase, {method, body:JSON.stringify(payload)});
         if (file) {
           if (typeof window.uploadDesktopMedia !== 'function') throw new Error(labels().poster_upload_error);
           posterUploadStarted = true;
@@ -210,14 +252,13 @@
           }, null, {profile:'poster'});
           setPosterStatus(labels().poster_linking, 'loading');
           setPosterProgress(100);
-          data = await request(`${root.dataset.apiBase}/${data.id}`, {method:'PATCH', body:JSON.stringify({
+          data = await requestData(`${root.dataset.apiBase}/${data.id}`, {method:'PATCH', body:JSON.stringify({
             title:data.title, body:data.body, starts_at:data.starts_at, published:data.published, enabled:data.enabled, cover_media_id:mediaId,
           })});
         }
-        const index = await request(root.dataset.apiIndex);
-        window.liveStudioEvents = index;
+        const index = await loadIndex(false);
         fillForm(data);
-        renderList(index);
+        if (index) applyIndex(index);
         if (file) setPosterStatus(labels().poster_saved, 'success');
         setFeedback(labels().saved);
       } catch (error) {
@@ -228,7 +269,11 @@
         saveButton.disabled = false;
       }
     });
-    load();
+    filter.addEventListener('change', () => { view.mode = filter.value; view.page = 1; dateFilter.disabled = view.mode !== 'day'; loadIndex(true); });
+    dateFilter.addEventListener('change', () => { if (!dateFilter.value) dateFilter.value = today(); view.date = dateFilter.value; view.page = 1; loadIndex(true); });
+    previousPage.addEventListener('click', () => { if (view.page > 1) { view.page -= 1; loadIndex(false); } });
+    nextPage.addEventListener('click', () => { const lastPage = Number(window.liveStudioPagination?.last_page || 1); if (view.page < lastPage) { view.page += 1; loadIndex(false); } });
+    loadIndex(true);
   };
 
   window.initializeLiveStudio = initialize;

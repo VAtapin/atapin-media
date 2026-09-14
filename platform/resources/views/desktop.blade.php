@@ -37,10 +37,10 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Desktop · {{ config('platform.brand') }}</title>
     <link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=4"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3"><link rel="stylesheet" href="/assets/desktop-settings.css?v=3">
-    <link rel="stylesheet" href="/assets/desktop-app.css?v=2"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=7"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=3"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=2"><link rel="stylesheet" href="/assets/desktop-community.css?v=3"><link rel="stylesheet" href="/assets/desktop-publishing.css?v=2">
+    <link rel="stylesheet" href="/assets/desktop-app.css?v=2"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=7"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=3"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=3"><link rel="stylesheet" href="/assets/desktop-community.css?v=3"><link rel="stylesheet" href="/assets/desktop-publishing.css?v=2">
     <script src="/assets/desktop-shortcuts.js?v=3" defer></script>
     <link rel="stylesheet" href="/assets/desktop-import-workflow.css?v=3">
-    <script src="/assets/desktop-os.js?v=15" defer></script><script src="/assets/settings-tabs.js?v=7" defer></script><script src="/assets/desktop-media-library.js?v=13" defer></script><script src="/assets/desktop-import-center.js?v=10" defer></script><script src="/assets/desktop-live-studio.js?v=3" defer></script><script src="/assets/desktop-publishing.js?v=3" defer></script>
+    <script src="/assets/desktop-os.js?v=15" defer></script><script src="/assets/settings-tabs.js?v=7" defer></script><script src="/assets/desktop-media-library.js?v=13" defer></script><script src="/assets/desktop-import-center.js?v=10" defer></script><script src="/assets/desktop-live-studio.js?v=4" defer></script><script src="/assets/desktop-publishing.js?v=3" defer></script>
 </head>
 <body class="os-body">
 <main class="os-desktop" data-desktop data-storage-key="atapin.desktop.{{ auth()->id() }}.v1"
@@ -92,9 +92,18 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
             </header>
             <div class="desktop-live-studio-grid">
                 <aside class="desktop-live-events">
+                    <section class="desktop-live-current" data-live-current aria-live="polite">
+                        <div class="desktop-live-current-heading"><h2>{{ __('desktop-live.live_now') }}</h2><span data-live-now-count>0</span></div>
+                        <div class="desktop-live-current-list" data-live-now-events></div>
+                    </section>
                     <div class="desktop-live-section-heading"><h2>{{ __('desktop-live.events') }}</h2><span data-live-count>0</span></div>
+                    <div class="desktop-live-filters">
+                        <label class="desktop-live-filter-control"><span class="sr-only">{{ __('desktop-live.filter_label') }}</span><select data-live-filter aria-label="{{ __('desktop-live.filter_label') }}"><option value="day">{{ __('desktop-live.filter_today') }}</option><option value="scheduled">{{ __('desktop-live.filter_scheduled') }}</option></select></label>
+                        <label class="desktop-live-filter-control"><span class="sr-only">{{ __('desktop-live.filter_date') }}</span><input data-live-date type="date" aria-label="{{ __('desktop-live.filter_date') }}"></label>
+                    </div>
                     <p class="desktop-live-status" data-live-list-status>{{ __('desktop-live.loading') }}</p>
                     <div class="desktop-live-event-list" data-live-events></div>
+                    <nav class="desktop-live-pagination" data-live-pagination aria-label="{{ __('desktop-live.pagination') }}" hidden><button class="desktop-button" type="button" data-live-page-prev aria-label="{{ __('desktop-live.previous') }}">←</button><span data-live-page-info></span><button class="desktop-button" type="button" data-live-page-next aria-label="{{ __('desktop-live.next') }}">→</button></nav>
                 </aside>
                 <section class="desktop-live-editor" aria-live="polite">
                     <div class="desktop-live-feedback" data-live-feedback role="status" hidden></div>
