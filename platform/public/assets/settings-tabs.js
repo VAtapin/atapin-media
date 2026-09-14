@@ -87,16 +87,10 @@
       reader.addEventListener('load', () => { app.querySelector('[data-profile-avatar]').src = reader.result; });
       reader.readAsDataURL(file);
     });
+    let socialDefinitions = {};
+    try { socialDefinitions = JSON.parse(app.querySelector('[data-social-definitions]')?.dataset.socialDefinitions || '{}'); } catch (_) {}
     const templates = {
-      social: {
-        youtube:{fields:['public_url','external_id','api_key','oauth_client_id','access_token'], labels:{public_url:'Kanal-URL',external_id:'YouTube Channel-ID',api_key:'YouTube API-Key',oauth_client_id:'OAuth Client-ID',access_token:'OAuth Refresh Token'}},
-        facebook:{fields:['public_url','external_id','oauth_client_id','access_token','webhook_secret'], labels:{public_url:'Seiten-URL',external_id:'Facebook Page-ID',oauth_client_id:'Meta App-ID',access_token:'Page Access Token',webhook_secret:'Webhook Verify Token'}},
-        instagram:{fields:['public_url','external_id','oauth_client_id','access_token','webhook_secret'], labels:{public_url:'Profil-URL',external_id:'Instagram Business Account-ID',oauth_client_id:'Meta App-ID',access_token:'Access Token',webhook_secret:'Webhook Verify Token'}},
-        tiktok:{fields:['public_url','external_id','oauth_client_id','access_token'], labels:{public_url:'Profil-URL',external_id:'TikTok Open-ID',oauth_client_id:'Client Key',access_token:'Access Token'}},
-        telegram:{fields:['public_url','external_id','api_key'], labels:{public_url:'Öffentliche Kanal-URL',external_id:'Chat-ID',api_key:'Bot Token'}},
-        linkedin:{fields:['public_url','external_id','oauth_client_id','access_token'], labels:{public_url:'Unternehmensseiten-URL',external_id:'Organisation-ID',oauth_client_id:'Client-ID',access_token:'Access Token'}},
-        x:{fields:['public_url','external_id','api_key','oauth_client_id','access_token'], labels:{public_url:'Profil-URL',external_id:'X User-ID',api_key:'API Key',oauth_client_id:'OAuth Client-ID',access_token:'Access Token'}},
-      },
+      social: socialDefinitions,
       integrations: {
         stripe:{fields:['account_id','api_key'], labels:{account_id:'Stripe Account-ID',api_key:'Stripe Secret Key'}},
         google_drive:{fields:['public_url','account_id','oauth_client_id','access_token'], labels:{public_url:'Ordner-URL',account_id:'Google Drive Ordner-ID',oauth_client_id:'OAuth Client-ID',access_token:'OAuth Refresh Token'}},
@@ -109,14 +103,36 @@
     };
     const configureConnection = (form, section, provider) => {
       const template = templates[section]?.[provider] || { fields:[], labels:{} };
+      if (form.dataset.provider && form.dataset.provider !== provider) {
+        form.querySelectorAll('[data-provider-field] input').forEach(input => {
+          if (input.type === 'checkbox') input.checked = false;
+          else if (input.type !== 'hidden') input.value = '';
+        });
+      }
+      form.dataset.provider = provider;
       form.querySelector('[name="provider"]').value = provider;
       form.querySelector('[data-provider-select]').value = provider;
       form.querySelectorAll('[data-provider-field]').forEach(field => {
         const name = field.dataset.providerField;
         field.hidden = !template.fields.includes(name);
+        field.querySelectorAll('input, select, textarea').forEach(input => {
+          input.disabled = field.hidden;
+          input.required = false;
+        });
         const label = field.querySelector('[data-provider-label]');
         if (label && template.labels[name]) label.textContent = template.labels[name];
       });
+      if (section === 'social') {
+        const hint = form.querySelector('[data-connection-hint]');
+        if (hint) hint.textContent = template.hint || '';
+        const oauth = form.querySelector('[data-connection-oauth]');
+        if (oauth) { oauth.hidden = !template.oauth_url; if (template.oauth_url) oauth.href = template.oauth_url; }
+        const miniApp = Boolean(form.querySelector('[name="mini_app_enabled"][type="checkbox"]')?.checked);
+        const identifier = form.querySelector('[name="external_id"]');
+        if (identifier) identifier.required = ['facebook', 'instagram'].includes(provider) || (provider === 'telegram' && !miniApp);
+        const username = form.querySelector('[name="bot_username"]');
+        if (username) username.required = provider === 'telegram' && miniApp;
+      }
     };
     app.querySelectorAll('[data-connection-add]').forEach(button => button.addEventListener('click', () => {
       const section = button.dataset.connectionAdd;
@@ -124,19 +140,32 @@
       form.hidden = false;
       configureConnection(form, section, form.querySelector('[name="provider"]').value);
     }));
-    app.querySelectorAll('[data-connection-open]').forEach(button => button.addEventListener('click', () => {
+    const openConnection = button => {
       const section = button.dataset.connectionOpen;
       const form = app.querySelector(`[data-connection-form="${section}"]`);
       form.hidden = false;
       configureConnection(form, section, button.dataset.provider);
+      form.querySelectorAll('input[type="password"]').forEach(input => input.value = '');
       form.querySelector('[name="public_url"]').value = button.dataset.publicUrl || '';
       const identifier = form.querySelector('[name="external_id"], [name="account_id"]');
       if (identifier) identifier.value = button.dataset.externalId || '';
-    }));
+      if (section === 'social') {
+        const username = form.querySelector('[name="bot_username"]');
+        const miniApp = form.querySelector('[name="mini_app_enabled"][type="checkbox"]');
+        if (username) username.value = button.dataset.botUsername || '';
+        if (miniApp) miniApp.checked = button.dataset.miniAppEnabled === '1';
+        configureConnection(form, section, button.dataset.provider);
+      }
+    };
+    app.querySelectorAll('[data-connection-open]').forEach(button => button.addEventListener('click', () => openConnection(button)));
     app.querySelectorAll('[data-provider-select]').forEach(select => select.addEventListener('change', () => {
       const form = select.closest('form');
       configureConnection(form, select.dataset.providerSelect, select.value);
     }));
+    app.querySelector('[name="mini_app_enabled"][type="checkbox"]')?.addEventListener('change', event => {
+      const form = event.target.closest('form');
+      configureConnection(form, 'social', form.querySelector('[name="provider"]').value);
+    });
     app.querySelector('[data-contact-next]')?.addEventListener('click',async event=>{
       const button=event.currentTarget;button.disabled=true;
       try{
@@ -225,6 +254,24 @@
         setDirty(false, form);
         if (['social', 'integrations'].includes(form.querySelector('[name="section"]')?.value)) {
           form.querySelectorAll('input[type="password"]').forEach(input => input.value = '');
+        }
+        if (payload.section === 'social') {
+          const provider = payload.provider;
+          const list = app.querySelector('[data-connection-list="social"]');
+          let button = [...list.querySelectorAll('[data-provider]')].find(item => item.dataset.provider === provider);
+          if (!button) {
+            button = document.createElement('button'); button.type = 'button'; button.className = 'desktop-settings-connection';
+            button.dataset.connectionOpen = 'social'; button.dataset.provider = provider;
+            const title = document.createElement('strong'); title.textContent = socialDefinitions[provider]?.label || provider;
+            button.append(title, document.createElement('span'));
+            list.querySelector('.desktop-settings-empty')?.remove(); list.append(button);
+            button.addEventListener('click', () => openConnection(button));
+          }
+          button.dataset.publicUrl = form.querySelector('[name="public_url"]').value;
+          button.dataset.externalId = form.querySelector('[name="external_id"]').value;
+          button.dataset.botUsername = form.querySelector('[name="bot_username"]').value;
+          button.dataset.miniAppEnabled = form.querySelector('[name="mini_app_enabled"][type="checkbox"]').checked ? '1' : '0';
+          button.querySelector('span').textContent = button.dataset.publicUrl || app.dataset.connectionSaved || '';
         }
         if (legalLocale && form.querySelector('[name="section"]')?.value === 'system') {
           legalDocuments[legalLocale.value] = Object.fromEntries([...form.querySelectorAll('[data-rich-editor]')]

@@ -55,6 +55,10 @@ class ConnectionStore
 
     public function connected(string $provider): bool
     {
+        if (! str_starts_with($provider, 'rtmp_')) {
+            $id = $this->connection($provider)['external_id'] ?? null;
+            if (! is_string($id) || $id === '' || ! array_intersect_key(array_filter($this->credentials($provider)), array_flip(SocialConnections::tokenKeys($provider)))) return false;
+        }
         return (bool) $this->connection($provider)
             && empty($this->connection($provider)['revoked_at'])
             && (bool) $this->credentials($provider);

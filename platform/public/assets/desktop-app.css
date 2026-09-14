@@ -1,4 +1,5 @@
 .os-window-content{--desktop-app-bg:#f3f7fb;--desktop-app-panel:#fff;--desktop-app-border:#d8e3ef;--desktop-app-text:#102f52;--desktop-app-muted:#627893;--desktop-app-accent:#0e477d}
+[data-settings-app] [data-provider-field][hidden], [data-settings-app] [data-connection-oauth][hidden]{display:none!important}
 .desktop-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--desktop-app-border);border-radius:6px;background:#fff;color:var(--desktop-app-text);padding:8px 12px;font:600 13px/1.35 Inter,Arial,sans-serif;cursor:pointer;text-decoration:none}
 .desktop-button:hover{background:#f2f7fc}
 .desktop-button.is-primary{background:var(--desktop-app-accent);border-color:var(--desktop-app-accent);color:#fff}

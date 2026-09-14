@@ -140,10 +140,10 @@ class FoundationTest extends TestCase
         $this->assertSame('openai', app(Settings::class)->get('ai_provider'));
         $this->assertSame('secret-value', app(Settings::class)->secret('ai_api_key'));
         $this->assertDatabaseMissing('settings', ['key'=>'secret.ai_api_key','value'=>json_encode('secret-value')]);
-        $this->putJson('/desktop/settings', ['section'=>'social','provider'=>'youtube','public_url'=>'https://youtube.com/@manna','external_id'=>'manna','api_key'=>'youtube-secret'])
-            ->assertOk()->assertJson(['status'=>'saved','section'=>'social','provider'=>'youtube']);
-        $this->assertSame('https://youtube.com/@manna', app(Settings::class)->get('social_connections')['youtube']['public_url']);
-        $this->assertStringContainsString('youtube-secret', app(Settings::class)->secret('social_youtube'));
+        $this->putJson('/desktop/settings', ['section'=>'social','provider'=>'telegram','public_url'=>'https://t.me/manna','external_id'=>'@manna','api_key'=>'telegram-secret'])
+            ->assertOk()->assertJson(['status'=>'saved','section'=>'social','provider'=>'telegram']);
+        $this->assertSame('https://t.me/manna', app(Settings::class)->get('social_connections')['telegram']['public_url']);
+        $this->assertStringContainsString('telegram-secret', app(Settings::class)->secret('social_telegram'));
         $this->putJson('/desktop/settings', ['section'=>'integrations','provider'=>'stripe','account_id'=>'acct_123','api_key'=>'stripe-secret'])
             ->assertOk()->assertJson(['status'=>'saved','section'=>'integrations','provider'=>'stripe']);
         $this->assertSame('acct_123', app(Settings::class)->get('integration_connections')['stripe']['external_id']);

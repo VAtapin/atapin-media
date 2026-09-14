@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'watch_on_site' => 'Auf der Website ansehen', 'open_in_telegram' => 'In Telegram ansehen',
     'connect_x' => 'X verbinden', 'live_outputs' => 'Weitere Live-Ziele',
     'adapted_post' => 'Als Video veröffentlicht, nicht als YouTube-Community-Beitrag',
     'remove_on_unpublish' => 'Beim Deaktivieren oder Verschieben dieses Materials in den Papierkorb auch externe Veröffentlichungen unwiderruflich löschen (soweit unterstützt). Standardmäßig aus; externes Löschen ist nicht rückgängig zu machen.',

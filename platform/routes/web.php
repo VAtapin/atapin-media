@@ -8,6 +8,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ImportController;
 
 Route::get('/', [\App\Http\Controllers\PublicWebsiteController::class,'home'])->name('home');
+Route::get('/telegram/material/{token}', [\App\Http\Controllers\TelegramMiniAppController::class,'material'])->middleware('throttle:60,1')->name('public.telegram-material');
 Route::post('/newsletter',[\App\Http\Controllers\PublicNewsletterController::class,'store'])->middleware('throttle:3,1')->name('public.newsletter');
 Route::post('/community',[\App\Http\Controllers\PublicCommunityController::class,'store'])->name('public.community-submit');
 Route::get('/newsletter/{subscription}/confirm',[\App\Http\Controllers\PublicNewsletterController::class,'confirm'])->middleware(['signed','throttle:10,1'])->name('public.newsletter-confirm');

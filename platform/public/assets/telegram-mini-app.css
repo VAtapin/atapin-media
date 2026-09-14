@@ -1,0 +1,12 @@
+.public-site.telegram-mini-app {
+  min-height: var(--telegram-height, 100dvh);
+  padding-top: var(--telegram-safe-top, 0px);
+  padding-right: var(--telegram-safe-right, 0px);
+  padding-bottom: var(--telegram-safe-bottom, 0px);
+  padding-left: var(--telegram-safe-left, 0px);
+}
+.public-layout-overview.telegram-mini-app .public-header {
+  top: var(--telegram-safe-top, 0px);
+  left: var(--telegram-safe-left, 0px);
+  right: var(--telegram-safe-right, 0px);
+}

@@ -180,6 +180,8 @@ Podcast Series и Episodes, standalone Audio или Audio, полученное 
 
 Единый workspace с галочками Website, YouTube, Facebook, Instagram, Telegram и X и отдельными Live-only RTMP-направлениями. Website сразу запускает выбранные внешние действия без дополнительного подтверждения; YouTube получает public-видео, в том числе автоматически адаптированные Beiträge/аудио. Live использует один reusable YouTube key. По направлениям видны ошибки, статусы и повторы; YouTube upload возобновляется по серверному checkpoint. Обратный YouTube import — раз в сутки за последние 24 часа, только в Review. Поддерживаемые изменения/снятие/удаление и API-ограничения: [docs/PUBLISHING.md](docs/PUBLISHING.md). Индивидуальные platform-specific редакторы и schedule пока не реализованы; подключение аккаунтов и production-проверка обязательны.
 
+Social Media формы показывают только используемые поля: YouTube/X подключаются через OAuth; Facebook/Instagram — через ID и разрешённый токен; Telegram — через Bot Token и Chat-ID, без обязательной публичной URL и Webhook Secret. TikTok/LinkedIn сохраняют только профильную ссылку, не подключают Publishing. Новые Telegram-видео отправляются как обложка/текст со ссылкой на сайт, без загрузки видеофайла. Main Mini App использует текущий сайт и плеер; её нужно отдельно зарегистрировать в BotFather, затем указать имя бота и включить её в настройках. Подробности подключения: [docs/PUBLISHING.md](docs/PUBLISHING.md#telegram-video-links-and-main-mini-app).
+
 ### Community
 
 Собственные Kommentare, Fragen, Diskussionen, Live Questions, Polls и Moderation плюс **Unified Community Inbox** для поддерживаемых внешних платформ. Всегда видно источник сообщения. Если connector умеет reply, ответ отправляется прямо из Media Desktop.

@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'watch_on_site' => 'Watch on the website', 'open_in_telegram' => 'Watch in Telegram',
     'connect_x' => 'Connect X', 'live_outputs' => 'Additional Live destinations',
     'adapted_post' => 'Published as a video, not a YouTube Community post',
     'remove_on_unpublish' => 'When this material is disabled or moved to trash on the Website, permanently delete its external publications too (where supported). Off by default; external deletion cannot be undone.',

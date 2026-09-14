@@ -7,6 +7,8 @@
 <title>{{ $title }} · {{ $siteName }}</title>
 <meta name="description" content="{{ $description }}">
 <link rel="icon" href="/favicon.png">
+<link rel="stylesheet" href="/assets/telegram-mini-app.css?v=1">
+<script src="/assets/telegram-mini-app.js?v=1" defer></script>
 <link rel="stylesheet" href="/assets/fonts/fonts.css">
 <link rel="stylesheet" href="/assets/brand/ui-kit.css">
 <link rel="stylesheet" href="/assets/public.css">

@@ -38,13 +38,18 @@ class SettingsController extends Controller
             'legacy' => ['site_name' => 'required|string|max:120', 'site_description' => 'nullable|string|max:500', 'contact_email' => 'nullable|email|max:255', 'desktop_icon_set' => ['required', Rule::in(array_keys(config('desktop.icon_sets')))], 'desktop_wallpaper' => ['required', Rule::in($wallpapers)], 'desktop_accent' => ['required', Rule::in(array_keys(config('desktop.accents')))], 'desktop_custom_wallpaper' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072', 'dimensions:min_width=320,min_height=180,max_width=2560,max_height=1440']],
             'desktop_design' => ['desktop_icon_set' => ['required', Rule::in(array_keys(config('desktop.icon_sets')))], 'desktop_wallpaper' => ['required', Rule::in($wallpapers)], 'desktop_accent' => ['required', Rule::in(array_keys(config('desktop.accents')))], 'desktop_density' => ['required', Rule::in(['comfortable','compact'])], 'desktop_shortcut_layout' => ['required', Rule::in(['free','grid'])], 'desktop_effects' => 'nullable|boolean', 'desktop_custom_wallpaper' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072', 'dimensions:min_width=320,min_height=180,max_width=2560,max_height=1440']],
             'ai' => ['ai_provider' => ['required', Rule::in(['none','openai','anthropic','azure'])], 'ai_model' => 'nullable|string|max:120', 'ai_api_key' => 'nullable|string|max:2000', 'ai_enabled' => 'nullable|boolean', 'ai_auto_classify' => 'nullable|boolean','ai_chat_enabled'=>'nullable|boolean','ai_chat_daily_limit'=>'nullable|integer|min:0|max:1000'],
-            'social' => ['provider' => ['required', Rule::in(['youtube','facebook','instagram','tiktok','telegram','linkedin','x'])], 'public_url' => 'nullable|url|max:1000', 'external_id' => 'nullable|string|max:255', 'api_key' => 'nullable|string|max:2000', 'oauth_client_id' => 'nullable|string|max:2000', 'access_token' => 'nullable|string|max:4000', 'webhook_secret' => 'nullable|string|max:2000'],
+            'social' => app(\App\Services\Publishing\SocialConnections::class)->rules($request),
             'publishing' => ['publishing_default_visibility' => ['required', Rule::in(['private','internal','public'])], 'publishing_default_timezone' => 'required|timezone', 'publishing_approval_required' => 'nullable|boolean', 'publishing_automation_enabled' => 'nullable|boolean'],
             'integrations' => ['provider' => ['required', Rule::in(['stripe','google_drive','google_calendar','google_analytics','mailchimp','zapier','webhook'])], 'public_url' => 'nullable|url|max:1000', 'account_id' => 'nullable|string|max:255', 'api_key' => 'nullable|string|max:2000', 'oauth_client_id' => 'nullable|string|max:2000', 'access_token' => 'nullable|string|max:4000', 'webhook_secret' => 'nullable|string|max:2000'],
             'system' => ['site_name' => 'required|string|max:120', 'site_description' => 'nullable|string|max:500', 'contact_email' => 'nullable|email|max:255', 'system_locale' => ['required', Rule::in(config('platform.locales'))], 'system_timezone' => 'required|timezone', 'system_branding_name' => 'nullable|string|max:120', 'legal_locale' => ['nullable', Rule::in(config('platform.locales'))], 'impressum' => 'nullable|string|max:50000', 'privacy_policy' => 'nullable|string|max:50000', 'editorial_policy' => 'nullable|string|max:50000'],
             default => abort(404),
         };
         $values = $request->validate($rules);
+        if ($section === 'social') {
+            app(\App\Services\Publishing\SocialConnections::class)->save($values, $settings);
+            if ($request->expectsJson()) return response()->json(['status' => 'saved', 'section' => $section, 'provider' => $values['provider']]);
+            return back()->with('status', __('ui.saved'))->with('saved_section', $section);
+        }
         if($section==='media_appearance') {
             unset($values['public_author_photo']);
             if($request->hasFile('public_author_photo')) {
@@ -57,8 +62,8 @@ class SettingsController extends Controller
         if (in_array($section, ['desktop_design', 'legacy'], true) && $values['desktop_wallpaper'] === 'custom' && !$request->hasFile('desktop_custom_wallpaper') && !$settings->get('desktop_custom_wallpaper')) {
             return back()->withErrors(['desktop_custom_wallpaper' => __('ui.desktop_custom_wallpaper_required')])->withInput();
         }
-        if (in_array($section, ['social', 'integrations'], true)) {
-            $collectionKey = $section === 'social' ? 'social_connections' : 'integration_connections';
+        if ($section === 'integrations') {
+            $collectionKey = 'integration_connections';
             $connections = $settings->get($collectionKey, []);
             $provider = $values['provider'];
             $connections[$provider] = array_filter([
