@@ -54,5 +54,5 @@
 ## Последний связанный commit
 
 - Предшествующий commit: 4f9f855 — Move OAuth app credentials to admin settings; article lightbox ранее в bdb3516.
-- Последний функциональный commit: video poster backdrop; hash будет указан после commit/push. Предшествующий `7b4397c` — Improve mobile article card layout; branch/upstream main → origin/main.
+- Последний функциональный commit: `d8a5bdc` — Add blurred poster backdrop to video player. Предшествующий `7b4397c` — Improve mobile article card layout; branch/upstream main → origin/main.
 
