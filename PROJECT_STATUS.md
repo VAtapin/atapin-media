@@ -62,5 +62,5 @@
 ## Последний связанный commit
 
 - Предшествующий функциональный commit: `90d6b26` — Complete admin workflows and PWA foundation.
-- Текущий admin operations release готовится в одном atomic commit. Branch/upstream: main → origin/main; hash сообщается после commit.
+- Последний связанный commit: `55a73fd` — Expand admin installation diagnostics. Branch/upstream: main → origin/main.
 
