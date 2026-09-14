@@ -10,12 +10,12 @@ class TelegramWebsite
 {
     public function __construct(private readonly PublicContent $content, private readonly ConnectionStore $connections) {}
 
-    public function announcement(SourceRecord $record): array
+    public function announcement(SourceRecord $record, bool $preview = false): array
     {
-        if (! $this->content->visible($record)) throw new \RuntimeException('Telegram video links require a published Website material.');
+        if (! $preview && ! $this->content->visible($record)) throw new \RuntimeException('Telegram video links require a published Website material.');
         $url = $this->content->card($record)['url'];
         $description = ($record->metadata['platform_metadata']['telegram']['body']??null) ?: ($record->metadata['short_description'] ?? '');
-        $text = trim(PlatformText::value($record,'telegram','title')."\n\n".(is_string($description) ? strip_tags($description) : ''));
+        $text = trim(PlatformText::value($record,'telegram','title')."\n\n".PlatformText::withHashtags($record,'telegram',is_string($description) ? strip_tags($description) : ''));
         $buttons = [['text' => __('publishing.watch_on_site'), 'url' => $url]];
         $connection = $this->connections->connection('telegram');
         $username = $connection['bot_username'] ?? '';

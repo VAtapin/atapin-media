@@ -37,6 +37,8 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(ServiceLinkAdapter::class, ['source' => 'tiktok']),
                 $app->make(ServiceLinkAdapter::class, ['source' => 'instagram']),
                 $app->make(ServiceLinkAdapter::class, ['source' => 'facebook-video']),
+                $app->make(\App\Services\Importing\WebDocumentAdapter::class),
+                $app->make(\App\Services\Importing\SubscriberCsvAdapter::class),
             ]);
         });
     }

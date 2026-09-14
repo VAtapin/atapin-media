@@ -34,7 +34,7 @@ class YouTubeConnector implements PublishingConnector, ManagesPublications
         $id = $publication->external_id;
         if (! $id) {
             $asset = app(MediaResolver::class)->video($record);
-            if (! $asset && ($record->kind === 'post' || ($meta['public_section'] ?? null) === 'podcast' || app(MediaResolver::class)->audio($record))) $asset = app(VideoRenderer::class)->video($record);
+            if (! $asset && ($record->kind === 'post' || ($meta['public_section'] ?? null) === 'podcast' || app(MediaResolver::class)->audio($record))) $asset = app(VideoRenderer::class)->video($record,'youtube');
             if (! $asset) throw new \RuntimeException('No local video file is available for YouTube.');
             $video = $this->client->uploadVideo($asset['path'], [
                 'title' => \App\Services\Publishing\PlatformText::value($record,'youtube','title'),
@@ -55,7 +55,7 @@ class YouTubeConnector implements PublishingConnector, ManagesPublications
         $processing = $video['processingDetails']['processingStatus'] ?? null;
         if (in_array($processing, ['failed', 'terminated'], true) || in_array($video['status']['uploadStatus'] ?? null, ['failed', 'rejected', 'deleted'], true)) throw new \RuntimeException('YouTube rejected or failed to process the uploaded video.');
         if ($processing === 'processing' || ($video['status']['uploadStatus'] ?? null) === 'uploaded') throw new PublicationPending();
-        if ($image = app(MediaResolver::class)->image($record)) $this->client->uploadThumbnail($id, $image['path']);
+        if ($image = app(MediaResolver::class)->image($record,'youtube')) $this->client->uploadThumbnail($id, $image['path']);
         return ['external_id' => $id, 'external_url' => 'https://www.youtube.com/watch?v='.rawurlencode($id), 'remote_status' => $status['privacyStatus'], 'payload' => ['video_id' => $id]];
     }
 
@@ -73,7 +73,7 @@ class YouTubeConnector implements PublishingConnector, ManagesPublications
             'tags' => array_values(array_filter($meta['tags'] ?? $meta['original_tags'] ?? [], 'is_string')),
             'categoryId' => (string) ($meta['youtube']['category_id'] ?? '22'),
         ], $action === 'hide' ? 'private' : 'public');
-        if ($action !== 'hide' && ($image = app(MediaResolver::class)->image($record))) $this->client->uploadThumbnail($id, $image['path']);
+        if ($action !== 'hide' && ($image = app(MediaResolver::class)->image($record,'youtube'))) $this->client->uploadThumbnail($id, $image['path']);
         $video = $this->client->video($id);
         $expected = $action === 'hide' ? 'private' : 'public';
         if (($video['status']['privacyStatus'] ?? null) !== $expected) throw new \RuntimeException('YouTube did not apply the requested visibility.');
@@ -111,7 +111,7 @@ class YouTubeConnector implements PublishingConnector, ManagesPublications
             $this->client->bindBroadcast($id, (string) $stream['id']);
             $publication->update(['payload' => [...($publication->payload ?? []), 'broadcast_bound' => true]]);
         }
-        if ($image = app(MediaResolver::class)->image($record)) $this->client->uploadThumbnail($id, $image['path']);
+        if ($image = app(MediaResolver::class)->image($record,'youtube')) $this->client->uploadThumbnail($id, $image['path']);
         if (($record->fresh()->metadata['live_status'] ?? null) === 'ended') {
             return ['external_id' => $id, 'remote_status' => $this->client->completeBroadcast($id)];
         }

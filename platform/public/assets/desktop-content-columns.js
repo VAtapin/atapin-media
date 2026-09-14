@@ -1,6 +1,6 @@
 (() => {
   const W=window.DesktopWorkspaces;
-  const columns=['title','kind','source','status','workflow_stage','project','published_at'];
+  const columns=['title','kind','source','status','workflow_stage','project','published_at','video_duration','video_bytes','video_processing'];
   document.addEventListener('content-list-loaded',event=>{
     const root=event.target.closest('[data-content-library]');if(!root)return;
     const form=root.querySelector('[data-content-filter]');
@@ -8,6 +8,7 @@
       form.dataset.columnsReady='true';
       form.append(W.field('sort','select','created',['created','updated','title','status','published']),W.field('direction','select','desc',['desc','asc']),W.field('workflow_stage','select','',[['',W.t('all')],'idea','script','production','review','approved']),W.field('review','checkbox'));
       form.elements.review.value='1';
+      if(root.dataset.section==='videos'){for(const name of ['duration_min','duration_max','bytes_min','bytes_max']){const label=W.field(name,'number');label.querySelector('input').min='0';form.append(label);}form.append(W.field('processing','select','',[['',W.t('all')],'ready','queued','processing','needs_attention','failed']));for(const name of ['duration','size','processing'])form.elements.sort.add(new Option(W.t(name),name));}
       for(const [name,kind,app] of [['project_id','projects','projects'],['taxonomy_term_id','terms','topics']]){if(!document.querySelector(`.os-start-menu [data-open-app="${app}"]`))continue;const label=W.field(name,'select');form.append(label);W.lookup(label,kind).catch(error=>{root.querySelector('[data-content-summary]').textContent=error.message;});}
       const choice=W.field('table_view','checkbox');form.append(choice);choice.querySelector('input').removeAttribute('name');
       root._contentTableChoice=choice;

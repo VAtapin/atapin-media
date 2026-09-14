@@ -1,5 +1,6 @@
 <?php
 return [
+ 'source_web-document'=>'URL / RSS / Atom','web_document_invalid'=>'Invalid, empty or unsupported document. Use UTF-8 public content without authentication.','web_feed_limit'=>'This feed contains over 200 entries. Use a smaller feed output; entries were not silently truncated.',
     'duration_rule_title'=>'Import settings: classify by duration', 'duration_rule_enabled'=>'Apply this rule automatically to new video content',
     'duration_rule_min'=>'Minimum duration (seconds)', 'duration_rule_max'=>'Maximum duration (seconds)', 'duration_rule_save'=>'Save rule', 'duration_rule_saved'=>'Import rule saved.',
     'duration_rule_hint'=>'Video content in this range is assigned to the selected section during import without AI costs. Accepted or manually edited content stays unchanged. Finish running imports before changing the rule.',
@@ -101,14 +102,14 @@ return [
     'method_computer' => 'Upload an archive',
     'method_computer_hint' => 'ZIP or TAR from your computer',
     'method_link' => 'Paste a link',
-    'method_link_hint' => 'Public video, channel or playlist from YouTube, TikTok, Instagram or Facebook',
+    'method_link_hint' => 'Public video, channel/playlist or HTTPS document, RSS/Atom feed. Web content is imported as articles for review.',
     'method_existing' => 'Existing archives',
     'method_existing_hint' => 'Register previously stored uploads and YouTube data',
     'method_server' => 'Server folder',
     'method_server_hint' => 'Select files from the permitted import folder',
     'link_label' => 'Content link',
     'detected_service' => 'Detected service',
-    'supported_links' => 'Paste a public HTTPS link from YouTube, TikTok, Instagram or Facebook.',
+    'supported_links' => 'Paste a public HTTPS link without authentication.',
     'existing_label' => 'Which stored archive?',
     'source_intake' => 'Previous uploads',
     'source_youtube' => 'Stored YouTube archive',

@@ -1,6 +1,6 @@
 # Atapin Media — основное приложение
 
-Laravel 13 / PHP 8.4 / MySQL или MariaDB. Интерфейс Blade, локальные CSS/JS/fonts, сборка Node для этого этапа не требуется. Node 22 из Plesk остаётся для YouTube.
+Laravel 13 / PHP 8.4 / MySQL или MariaDB. Интерфейс Blade, локальные CSS/JS/fonts, installable PWA manifest и offline static shell; сборка Node для этого этапа не требуется. Node 22 из Plesk остаётся для YouTube.
 
 ## Первая установка
 

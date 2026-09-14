@@ -15,6 +15,7 @@
       if (['tiktok.com','www.tiktok.com'].includes(host)) return 'tiktok';
       if (['instagram.com','www.instagram.com'].includes(host)) return 'instagram';
       if (['facebook.com','www.facebook.com','m.facebook.com'].includes(host)) return 'facebook-video';
+      return 'web-document';
     } catch (_) {}
     return null;
   };
@@ -166,6 +167,7 @@
           await uploadControl.checkpoint(); uploadControls.hidden = true;
         } else if (activeMethod === 'link') {
           payload.source_ref = link.value.trim(); payload.source = sourceFromLink(payload.source_ref);
+          if(payload.source==='web-document')payload.target_profile='posts';
           if (!payload.source) throw new Error(t.supported_links);
         } else if (activeMethod === 'takeout') {payload.source='youtube-takeout'; payload.batch=root.querySelector('[data-takeout-batch]').value; if(!payload.batch.startsWith('folder:'))payload.expected_parts=Number(root.querySelector('[data-takeout-parts]').value);}
         else if (activeMethod === 'existing') payload.source = root.querySelector('[data-import-existing]').value;

@@ -1,0 +1,13 @@
+(() => {
+  const W=window.DesktopWorkspaces;
+  window.initializeSubscriberImport=root=>{
+    if(!document.querySelector('.os-start-menu [data-open-app=media]'))return;
+    const panel=W.el('details');panel.dataset.subscriberImport='';panel.append(W.el('summary',W.t('subscriber_import')));root.querySelector('[data-workspace-filters]').after(panel);
+    const form=W.el('form'),media=W.field('media_id','select'),delimiter=W.field('delimiter','select','comma',['comma','semicolon','tab']),column=W.field('email_column','select'),locale=W.field('locale','select','de',['de','en']),confirm=W.field('confirm_csv','checkbox'),out=W.el('p');out.setAttribute('role','status');form.append(media,delimiter,column,locale,confirm);panel.append(form,out);W.lookup(media,'media').catch(error=>out.textContent=error.message);column.querySelector('select').disabled=true;confirm.querySelector('input').required=true;
+    let inspected=null;
+    const changed=()=>{inspected=null;column.querySelector('select').disabled=true;};media.querySelector('select').addEventListener('change',changed);delimiter.querySelector('select').addEventListener('change',changed);
+    form.append(W.button('inspect_csv',async()=>{try{const choice={media_id:form.elements.media_id.value,delimiter:form.elements.delimiter.value};const data=await W.request('/desktop/subscribers/csv/inspect',choice,'POST');if(choice.media_id!==form.elements.media_id.value||choice.delimiter!==form.elements.delimiter.value)return;const select=column.querySelector('select');select.replaceChildren();data.columns.forEach((header,index)=>select.add(new Option(header,String(index))));select.disabled=false;inspected=choice;out.textContent=W.t('count')+': '+data.rows;}catch(error){out.textContent=error.message;}}));
+    const save=W.el('button',W.t('subscriber_import'),'desktop-button');save.type='submit';form.append(save);
+    form.addEventListener('submit',async event=>{event.preventDefault();if(!inspected){out.textContent=W.t('inspect_csv');return;}save.disabled=true;try{const data=await W.request('/desktop/subscribers/csv',{...inspected,email_column:form.elements.email_column.value,locale:form.elements.locale.value,confirm:true},'POST');out.textContent=W.t('queued');const timer=setInterval(async()=>{if(!root.isConnected){clearInterval(timer);return;}try{const run=await W.request('/desktop/subscribers/csv/'+data.id);out.textContent=W.t(run.status)+' · '+JSON.stringify(run.summary);if(!['queued','running'].includes(run.status)){clearInterval(timer);save.disabled=false;}}catch(error){clearInterval(timer);save.disabled=false;out.textContent=error.message;}},2000);}catch(error){save.disabled=false;out.textContent=error.message;}});
+  };
+})();

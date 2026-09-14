@@ -10,11 +10,14 @@ class ImportedContentController extends Controller
     {
         $data = $request->validate(['q' => 'nullable|string|max:120', 'kind' => 'nullable|in:'.implode(',',SourceRecord::KINDS).',archive_data',
             'section' => 'nullable|in:videos,posts,podcast,community', 'status' => 'nullable|in:unsorted,review,ready,needs_attention',
-            'publication' => 'nullable|in:published,unpublished','sort'=>'nullable|in:updated,title,status,published,created','direction'=>'nullable|in:asc,desc',
+            'publication' => 'nullable|in:published,unpublished','sort'=>'nullable|in:updated,title,status,published,created,duration,size,processing','direction'=>'nullable|in:asc,desc',
             'project_id'=>'nullable|integer|exists:projects,id','taxonomy_term_id'=>'nullable|integer|exists:taxonomy_terms,id',
             'workflow_stage'=>'nullable|in:idea,script,production,review,approved','review'=>'nullable|boolean',
+            'duration_min'=>'nullable|numeric|min:0','duration_max'=>'nullable|numeric|min:0','bytes_min'=>'nullable|integer|min:0','bytes_max'=>'nullable|integer|min:0','processing'=>'nullable|in:ready,queued,processing,needs_attention,failed',
             'source' => 'nullable|string|max:32', 'page' => 'nullable|integer|min:1','trash'=>'nullable|in:active,deleted']);
-        $sort=match($data['sort']??'created'){'title'=>'title','status'=>'status','published'=>'metadata->public_published_at','updated'=>'updated_at',default=>'created_at'};
+        $isVideo=($data['section']??'')==='videos'||in_array($data['kind']??'',['video','short'],true);
+        abort_if(!$isVideo&&(array_intersect(array_keys($data),['duration_min','duration_max','bytes_min','bytes_max','processing'])||in_array($data['sort']??'',['duration','size','processing'],true)),422);
+        $sort=match($data['sort']??'created'){'duration'=>'video_duration','size'=>'video_bytes','processing'=>'video_processing','title'=>'title','status'=>'status','published'=>'metadata->public_published_at','updated'=>'updated_at',default=>'created_at'};
         $canSeeProjects=\Illuminate\Support\Facades\Gate::allows('projects.manage');
         $query = SourceRecord::query()->where('source','!=','catalog-reset')->orderBy($sort,$data['direction']??'desc')->latest('id');
         if($canSeeProjects)$query->with('project:id,title');
@@ -33,6 +36,7 @@ class ImportedContentController extends Controller
         if (($data['publication'] ?? '') === 'published') $query->where('metadata->public_published', true);
         if (($data['publication'] ?? '') === 'unpublished') $query->where(fn ($q) => $q->whereNull('metadata->public_published')->orWhere('metadata->public_published', false));
         if ($data['q'] ?? '') $query->where(fn ($q) => $q->where('title', 'like', '%'.$data['q'].'%')->orWhere('body', 'like', '%'.$data['q'].'%'));
+        if($isVideo)app(\App\Services\VideoInventory::class)->apply($query->select('source_records.*'),$data);
         $page = $query->paginate(30);
         return response()->json(['data' => $page->getCollection()->map(fn ($record) => [
             'id' => $record->id, 'title' => $record->title, 'body' => mb_substr($record->body ?? '', 0, 250),
@@ -41,6 +45,7 @@ class ImportedContentController extends Controller
             'public_homepage' => (bool) ($record->metadata['public_homepage'] ?? false),
             'created_at'=>$record->created_at,'updated_at'=>$record->updated_at,'published_at'=>$record->metadata['public_published_at']??null,
             'project'=>$canSeeProjects?$record->project?->title:null,'workflow_stage'=>$record->metadata['workflow_stage']??null,
+            'video_duration'=>isset($record->video_duration)?(float)$record->video_duration:null,'video_bytes'=>$record->video_bytes!==null?(int)$record->video_bytes:null,'video_processing'=>$record->video_processing,
             'detail_url' => route('content.show', $record),
         ]), 'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total()]]);
     }

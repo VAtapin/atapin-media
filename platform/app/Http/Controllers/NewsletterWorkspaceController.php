@@ -7,7 +7,7 @@ class NewsletterWorkspaceController extends Controller
 {
     public function subscribers(Request $request)
     {
-        $data=$request->validate(['q'=>'nullable|string|max:120','status'=>'nullable|in:pending,active,unsubscribed','page'=>'nullable|integer|min:1']);
+        $data=$request->validate(['q'=>'nullable|string|max:120','status'=>'nullable|in:pending,active,unsubscribed,imported','page'=>'nullable|integer|min:1']);
         return NewsletterSubscription::when($data['q']??'',fn($q,$s)=>$q->where('email','like','%'.$s.'%'))->when($data['status']??'',fn($q,$s)=>$q->where('status',$s))->latest()->paginate(30);
     }
     public function subscriber(Request $request,NewsletterSubscription $subscription)

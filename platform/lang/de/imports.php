@@ -1,5 +1,6 @@
 <?php
 return [
+ 'source_web-document'=>'URL / RSS / Atom','web_document_invalid'=>'Ungültiges, leeres oder nicht unterstütztes Dokument. UTF-8 und veröffentlichte Inhalte ohne Anmeldung verwenden.','web_feed_limit'=>'Dieser Feed enthält mehr als 200 Einträge. Kleinere Feed-Ausgabe verwenden; es wurden keine Einträge stillschweigend abgeschnitten.',
     'duration_rule_title'=>'Import-Einstellungen: Einordnung nach Dauer', 'duration_rule_enabled'=>'Regel automatisch auf neue Video-Inhalte anwenden',
     'duration_rule_min'=>'Mindestdauer (Sekunden)', 'duration_rule_max'=>'Höchstdauer (Sekunden)', 'duration_rule_save'=>'Regel speichern', 'duration_rule_saved'=>'Import-Regel gespeichert.',
     'duration_rule_hint'=>'Video-Inhalte innerhalb dieses Bereichs werden beim Import dem gewählten Zielbereich zugeordnet, ohne KI-Kosten. Angenommene oder manuell bearbeitete Inhalte bleiben unverändert. Bereits laufende Importe zuerst beenden.',
@@ -104,14 +105,14 @@ return [
     'method_computer' => 'Archiv hochladen',
     'method_computer_hint' => 'ZIP oder TAR von Ihrem Computer',
     'method_link' => 'Link einfügen',
-    'method_link_hint' => 'Öffentliches Video, Kanal oder Playlist von YouTube, TikTok, Instagram oder Facebook',
+    'method_link_hint' => 'Öffentliches Video, Kanal/Playlist oder HTTPS-Dokument, RSS-/Atom-Feed. Web-Inhalte werden als Beiträge zur Prüfung übernommen.',
     'method_existing' => 'Vorhandene Archive',
     'method_existing_hint' => 'Bereits gespeicherte Uploads und YouTube-Daten einlesen',
     'method_server' => 'Ordner auf dem Server',
     'method_server_hint' => 'Dateien im freigegebenen Import-Ordner auswählen',
     'link_label' => 'Link zum Inhalt',
     'detected_service' => 'Erkannter Dienst',
-    'supported_links' => 'Bitte einen öffentlichen HTTPS-Link von YouTube, TikTok, Instagram oder Facebook einfügen.',
+    'supported_links' => 'Bitte einen öffentlichen HTTPS-Link ohne Anmeldung einfügen.',
     'existing_label' => 'Welches gespeicherte Archiv?',
     'source_intake' => 'Bisherige Uploads',
     'source_youtube' => 'Gespeichertes YouTube-Archiv',

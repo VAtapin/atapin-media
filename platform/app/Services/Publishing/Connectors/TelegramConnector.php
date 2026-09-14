@@ -70,7 +70,7 @@ class TelegramConnector implements PublishingConnector, ManagesPublications
         if ($websiteLink) {
             $announcement = app(TelegramWebsite::class)->announcement($record);
             $data = ['chat_id' => $chat, 'reply_markup' => json_encode($announcement['reply_markup'], JSON_THROW_ON_ERROR)];
-            if ($image = app(MediaResolver::class)->image($record)) {
+            if ($image = app(MediaResolver::class)->image($record,'telegram')) {
                 $media = true;
                 $response = Http::timeout(120)->attach('photo', fopen($image['path'], 'rb'), basename($image['path']))->post($base.'/sendPhoto', [...$data, 'caption' => $announcement['text']]);
             } else {
@@ -79,7 +79,7 @@ class TelegramConnector implements PublishingConnector, ManagesPublications
         } elseif ($audio = app(MediaResolver::class)->audio($record)) {
             $media = true;
             $response = Http::timeout(300)->attach('audio', fopen($audio['path'], 'rb'), basename($audio['path']))->post($base.'/sendAudio', ['chat_id' => $chat, 'caption' => $caption]);
-        } elseif ($image = app(MediaResolver::class)->image($record)) {
+        } elseif ($image = app(MediaResolver::class)->image($record,'telegram')) {
             $media = true;
             $response = Http::timeout(120)->attach('photo', fopen($image['path'], 'rb'), basename($image['path']))->post($base.'/sendPhoto', ['chat_id' => $chat, 'caption' => $caption]);
         } else {

@@ -7,6 +7,9 @@
 <title>{{ (($layoutMode??'')==='detail'?(($record??$bookRecord??null)?->metadata['seo_title']??null):null) ?: $title }} · {{ $siteName }}</title>
 <meta name="description" content="{{ (($layoutMode??'')==='detail'?(($record??$bookRecord??null)?->metadata['seo_description']??null):null) ?: $description }}">
 <link rel="icon" href="/favicon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/assets/brand/owner/app-icon.png">
+<meta name="theme-color" content="#8b6a3d">
 <link rel="stylesheet" href="/assets/telegram-mini-app.css?v=1">
 <script src="/assets/telegram-mini-app.js?v=1" defer></script>
 <link rel="stylesheet" href="/assets/fonts/fonts.css">
@@ -15,6 +18,7 @@
 <link rel="stylesheet" href="/assets/public-pages.css?v=20">
 <script src="/assets/public.js?v=14" defer>
 </script>
+<script src="/assets/public-pwa.js?v=1" defer></script>
 <script src="/assets/public-push.js?v=1" defer></script>
 <script src="/assets/public-ai-chat.js?v=1" defer></script>
 <script src="/assets/public-comments.js?v=1" defer></script>

@@ -41,6 +41,24 @@ Artisan::command('publishing:youtube-sync', function () {
     $this->info('YouTube synchronization queued.');
 });
 Schedule::command('publishing:youtube-sync')->daily()->withoutOverlapping();
+Artisan::command('community:youtube-comments', function () {
+    $owner = \App\Models\User::whereHas('roles', fn ($query) => $query->where('name', 'Owner'))->first();
+    if (! $owner || ! app(\App\Services\Publishing\YouTubeClient::class)->configured()) {
+        $this->line('YouTube comments are not configured; nothing queued.');
+        return;
+    }
+    try {
+        $run = app(\App\Services\Publishing\YouTubeCommentSync::class)->start($owner);
+        $this->info('YouTube comment synchronization queued: '.$run->id);
+    } catch (\Throwable $error) {
+        if (method_exists($error, 'getStatusCode') && $error->getStatusCode() === 409) {
+            $this->line('A YouTube comment synchronization is already running.');
+            return;
+        }
+        throw $error;
+    }
+});
+Schedule::command('community:youtube-comments')->everyFifteenMinutes()->withoutOverlapping();
 Artisan::command('publishing:retry-due', function () {
     $this->info('Publication retries queued: '.app(\App\Services\Publishing\PublishingService::class)->dispatchDue());
 });

@@ -39,19 +39,23 @@ class PublicImageDownload
                 $response=Http::connectTimeout(min(10,$remaining))->timeout($remaining)->withOptions([
                     'allow_redirects'=>false,'verify'=>true,'proxy'=>'','sink'=>$path,
                     'curl'=>[CURLOPT_RESOLVE=>[$target['host'].':'.$target['port'].':'.$target['address']]],
-                    'on_headers'=>function($response){$length=$response->getHeaderLine('Content-Length');if(is_numeric($length)&&(int)$length>self::MAX_BYTES)throw new \RuntimeException('External image is too large.');},
-                    'progress'=>function($total,$downloaded){if($downloaded>self::MAX_BYTES)throw new \RuntimeException('External image is too large.');},
+                    'on_headers'=>function($response){$length=$response->getHeaderLine('Content-Length');if(is_numeric($length)&&(int)$length>static::MAX_BYTES)throw new \RuntimeException('External file is too large.');},
+                    'progress'=>function($total,$downloaded){if($downloaded>static::MAX_BYTES)throw new \RuntimeException('External file is too large.');},
                 ])->get($url);
                 if(in_array($response->status(),[301,302,303,307,308],true)){
                     $location=$response->header('Location');if(!$location)throw new \RuntimeException('Invalid image redirect.');
                     $url=(string)UriResolver::resolve(new Uri($url),new Uri($location));continue;
                 }
-                if(!$response->successful()||!is_file($path)||filesize($path)>self::MAX_BYTES)throw new \RuntimeException('External image download failed.');
-                $dimensions=@getimagesize($path);$mime=(new \finfo(FILEINFO_MIME_TYPE))->file($path);
-                if(!$dimensions||!in_array($mime,['image/jpeg','image/png','image/webp','image/gif'],true)||$mime!==$dimensions['mime']||$dimensions[0]*$dimensions[1]>40000000)throw new \RuntimeException('External file is not a supported image.');
-                return ['path'=>$path,'mime'=>$mime];
+                if(!$response->successful()||!is_file($path)||filesize($path)>static::MAX_BYTES)throw new \RuntimeException('External file download failed.');
+                return ['path'=>$path,'mime'=>$this->validateFile($path)];
             }
             throw new \RuntimeException('Too many image redirects.');
         } catch(\Throwable $error){if(is_file($path))unlink($path);throw $error;}
+    }
+    protected function validateFile(string $path):string
+    {
+        $dimensions=@getimagesize($path);$mime=(new \finfo(FILEINFO_MIME_TYPE))->file($path);
+        if(!$dimensions||!in_array($mime,['image/jpeg','image/png','image/webp','image/gif'],true)||$mime!==$dimensions['mime']||$dimensions[0]*$dimensions[1]>40000000)throw new \RuntimeException('External file is not a supported image.');
+        return $mime;
     }
 }

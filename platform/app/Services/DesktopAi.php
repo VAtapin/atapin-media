@@ -33,6 +33,7 @@ class DesktopAi
         $source=$record?['title'=>$record->title,'body'=>mb_substr(strip_tags($record->body??''),0,10000),'author'=>$record->metadata['author']??null,'summary'=>$record->metadata['short_description']??null,'platform_text'=>$record->metadata['platform_metadata'][$entry->context['provider']??'']??null]:null;
         if($product)$source=['title'=>$product->title,'description'=>$product->description,'author'=>$product->author,'contents'=>mb_substr($product->contents??'',0,10000)];
         if($record&&$entry->purpose==='reply'){$parent=SourceRecord::find($record->metadata['parent_record_id']??0)??SourceRecord::where('source',$record->source)->where('source_id',$record->metadata['parent_source_id']??'')->first();$source['discussion']=$parent?['title'=>$parent->title,'body'=>mb_substr(strip_tags($parent->body??''),0,5000)]:null;}
+        if($entry->purpose==='prioritize')$source=app(EditorialRecommendations::class)->context(User::findOrFail($entry->user_id));
         return app(\App\Contracts\AiProviderInterface::class)->suggest(['purpose'=>$entry->purpose,'question'=>$entry->question,'provider'=>$entry->context['provider']??null,'locale'=>$entry->context['locale']??app()->getLocale(),'source'=>$source]);
     }
 
@@ -57,7 +58,7 @@ class DesktopAi
             $data = match ($entry->purpose) {
                 'title'=>['title'=>mb_substr($proposal['title'],0,255)], 'summary'=>['short_description'=>mb_substr($proposal['short_description'],0,300)],
                 'seo'=>['seo_title'=>mb_substr($proposal['seo_title'],0,255),'seo_description'=>mb_substr($proposal['seo_description'],0,500)],
-                'social','youtube_description'=>!empty($entry->context['provider'])?['platform_metadata'=>[...($record->metadata['platform_metadata']??[]),$entry->context['provider']=>['title'=>$record->metadata['platform_metadata'][$entry->context['provider']]['title']??null,'body'=>mb_substr($proposal['social_text']??'',0,10000)]]]:[],
+                'social','youtube_description'=>!empty($entry->context['provider'])?['platform_metadata'=>[...($record->metadata['platform_metadata']??[]),$entry->context['provider']=>[...($record->metadata['platform_metadata'][$entry->context['provider']]??[]),'title'=>$record->metadata['platform_metadata'][$entry->context['provider']]['title']??null,'body'=>mb_substr($proposal['social_text']??'',0,10000)]]]:[],
                 default=>[],
             };
             abort_unless($data && !in_array('',array_values($data),true),422);

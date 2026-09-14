@@ -12,8 +12,13 @@ Status: 14 September 2026. This is an implementation checklist against MASTER-TZ
 - Polls: native edit/create, choices, start/end, active state, registered/confirmed-subscriber audience, single/multiple votes, result policy and placement. Voting and option edits lock the same record; choices cannot change after votes. Closed results can remain visible; future polls do not expose after-close results.
 - AI: provider interface with the real existing OpenAI Responses adapter; additional editorial purposes, book/comment/destination context, regeneration, copy and explicit stale-safe application. No tools or automatic publication. Configured model, structured output and store=false are preserved.
 - Publishing: destination-specific text preview and contextual AI, using current provider text rules. YouTube visibility remains public by the existing owner decision.
+- Video inventory: technical duration/size/processing facts are resolved from active local originals, with bounded filters, sorting, exclusions and trash handling. Provider-specific covers, hashtags, payload/media previews and schedule visibility are available in the editor and publishing preview.
 - Community: author/date/related item/original link, contextual reply suggestions and only supported reply targets. Unsupported replies have an explanation rather than an invisible local child record.
+- Community inbound sync: durable, paginated YouTube comment/thread and reply synchronization with checkpointed queue pages, duplicate-safe updates, preserved manual edits/read state/reply state, retry handling and a scheduled command when the YouTube connection is configured.
 - Live: current signal status, timer, active Website presence, approved local chat, recording state and output states. Published Website playback is embedded. OBS remains responsible for starting/stopping the encoder.
+- Imports: HTTPS URL, RSS and Atom document import now extracts bounded, sanitized, unpublished article drafts while retaining a private provenance original. Subscriber CSV import is opt-in-confirmed, resumable and never activates or emails unverified contacts.
+- AI recommendations: bounded permission-scoped editorial facts can be submitted to the existing contextual AI workspace for explicit human review; recommendations never mutate content automatically.
+- Installability/operations: public and Desktop layouts expose the installable PWA manifest and static offline shell, and settings staff have a private operational health endpoint without secrets.
 
 ## Verified follow-up: review and planning controls
 
@@ -29,12 +34,10 @@ For external iframe polls, the owner may set the non-secret comma-separated `POL
 
 ## Still unfinished — do not mark complete
 
-- Video-specific duration/size/processing columns and filters; detailed per-provider thumbnail/hashtag/scheduling overrides and final payload/media preview. The new generic content table is not the entire video management specification.
-- Generic RSS/URL import adapters and verified legacy subscriber ingestion. The assistant intentionally does not invent legacy mappings or bypass confirmed consent.
-- Real inbound YouTube comment synchronization and other supported inbound channel adapters. Existing queued YouTube replies and daily video review import are not incoming comment synchronization.
-- Generated AI prioritization/recommendations beyond the contextual actions and own suggestion history in Import Review/Desktop.
+- Other supported inbound channel adapters besides YouTube comments, and automatic imports whose legacy mapping or consent cannot be verified. The implemented subscriber CSV flow intentionally does not invent consent.
 - Live: Browser Studio now supports camera/microphone, screen, contained local images/PiP/title, actual browser-output telemetry, WHIP start/stop and local WAV recording with unpublished Podcast drafts. Protected server configuration and confirmed OBS disconnect are implemented; everyday OBS control remains in OBS. See docs/PUBLIC-LIVE.md. Linux/Plesk configuration/normalization and production media still require hosting verification. TURN, guests, full OBS-like scenes/mixer and server replay merge remain unfinished.
 - External analytics adapters, TikTok/LinkedIn publishing and generic saved-credential integrations. A saved credential or connected flag does not implement a provider adapter.
+- Central Control, commercial licensing, remote update manager and support-access service remain architecture-ready work for a later vendor phase; the local health endpoint is implemented, but no remote control server is present.
 
 ## Owner decision required: restricted original media
 

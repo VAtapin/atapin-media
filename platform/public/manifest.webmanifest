@@ -1,0 +1,18 @@
+{
+  "name": "Manna Vom Himmel",
+  "short_name": "Manna",
+  "lang": "de",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6f0e6",
+  "theme_color": "#8b6a3d",
+  "icons": [
+    {
+      "src": "/assets/brand/owner/app-icon.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

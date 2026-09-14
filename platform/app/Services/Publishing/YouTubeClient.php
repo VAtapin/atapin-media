@@ -56,7 +56,7 @@ class YouTubeClient
 
     public function channel(?array $credentials = null): array
     {
-        return $this->request($credentials)->get($this->url('channels'), ['part' => 'id,snippet,contentDetails', 'mine' => 'true'])
+        return $this->request($credentials)->timeout(30)->get($this->url('channels'), ['part' => 'id,snippet,contentDetails', 'mine' => 'true'])
             ->throw()->json('items.0', []);
     }
 
@@ -248,6 +248,15 @@ class YouTubeClient
     public function replyComment(string $parent,string $body): array
     {
         return $this->request()->timeout(30)->post($this->url('comments').'?part=snippet',['snippet'=>['parentId'=>$parent,'textOriginal'=>$body]])->throw()->json();
+    }
+
+    public function commentThreads(string $channel,?string $page=null):array
+    {
+        return $this->request()->timeout(30)->get($this->url('commentThreads'),array_filter(['part'=>'id,snippet','allThreadsRelatedToChannelId'=>$channel,'maxResults'=>100,'order'=>'time','textFormat'=>'plainText','pageToken'=>$page],fn($value)=>$value!==null))->throw()->json();
+    }
+    public function commentReplies(string $parent,?string $page=null):array
+    {
+        return $this->request()->timeout(30)->get($this->url('comments'),array_filter(['part'=>'id,snippet','parentId'=>$parent,'maxResults'=>100,'textFormat'=>'plainText','pageToken'=>$page],fn($value)=>$value!==null))->throw()->json();
     }
 
     private function tokenPayload(array $payload): array

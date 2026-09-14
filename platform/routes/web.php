@@ -61,6 +61,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/konto/push/{subscription}',[\App\Http\Controllers\PublicAccountController::class,'cancelPush'])->name('public.account-push-cancel');
     Route::post('/logout', [AuthController::class,'destroy'])->name('logout');
     Route::get('/desktop', DesktopController::class)->middleware('can:desktop.view')->name('desktop');
+    Route::get('/desktop/health', \App\Http\Controllers\InstallationHealthController::class)->middleware('can:settings.manage')->name('desktop.health');
     Route::get('/desktop/publishing', [\App\Http\Controllers\PublishingController::class, 'index'])->middleware('can:content.publish')->name('desktop.publishing.index');
     Route::post('/desktop/publishing/publish', [\App\Http\Controllers\PublishingController::class, 'publish'])->middleware(['can:content.publish', 'throttle:30,1'])->name('desktop.publishing.publish');
     Route::post('/desktop/publishing/sync', [\App\Http\Controllers\PublishingController::class, 'syncYouTube'])->middleware(['can:content.publish', 'throttle:10,1'])->name('desktop.publishing.sync');

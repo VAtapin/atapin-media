@@ -77,12 +77,12 @@ class MetaConnector implements PublishingConnector, ManagesPublications
             return ['external_id' => $publication->external_id, 'external_url' => 'https://www.facebook.com/'.$publication->external_id, 'remote_status' => 'published'];
         }
         $asset = app(MediaResolver::class)->video($record);
-        if (! $asset && app(MediaResolver::class)->audio($record)) $asset = app(VideoRenderer::class)->video($record);
+        if (! $asset && app(MediaResolver::class)->audio($record)) $asset = app(VideoRenderer::class)->video($record,$this->provider);
         if ($asset) {
             $type = 'video';
             $response = Http::timeout(300)->withToken($token)->attach('source', fopen($asset['path'], 'rb'), basename($asset['path']))
                 ->post($base.'/'.$page.'/videos', ['description' => $this->caption($record), 'title' => \App\Services\Publishing\PlatformText::value($record,'facebook','title'), 'published' => 'true']);
-        } elseif ($image = app(MediaResolver::class)->image($record)) {
+        } elseif ($image = app(MediaResolver::class)->image($record,$this->provider)) {
             $type = 'photo';
             $response = Http::timeout(120)->withToken($token)->attach('source', fopen($image['path'], 'rb'), basename($image['path']))
                 ->post($base.'/'.$page.'/photos', ['caption' => $this->caption($record), 'published' => 'true']);
@@ -111,10 +111,10 @@ class MetaConnector implements PublishingConnector, ManagesPublications
     private function instagram(Publication $publication, string $account, string $token): array
     {
         $record = $publication->record;
-        $image = app(MediaResolver::class)->image($record);
+        $image = app(MediaResolver::class)->image($record,$this->provider);
         $video = app(MediaResolver::class)->video($record);
-        if (! $video && app(MediaResolver::class)->audio($record)) $video = app(VideoRenderer::class)->video($record);
-        if (! $video && ! $image) $video = app(VideoRenderer::class)->video($record);
+        if (! $video && app(MediaResolver::class)->audio($record)) $video = app(VideoRenderer::class)->video($record,$this->provider);
+        if (! $video && ! $image) $video = app(VideoRenderer::class)->video($record,$this->provider);
         $media = $video['media'] ?? $image['media'] ?? null;
         $url = $media?->publicUrl();
         if (! $media || ! is_string($url)) throw new UnsupportedCapability('Instagram requires a public image or video asset.');

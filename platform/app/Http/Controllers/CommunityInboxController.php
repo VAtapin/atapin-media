@@ -21,7 +21,7 @@ class CommunityInboxController extends Controller
         });
     }
     private function eligible(SourceRecord $record): void{abort_unless(in_array($record->kind,['comment','live_chat','poll'],true)||($record->kind==='post'&&!empty($record->metadata['website_community'])),404);}
-    public function read(SourceRecord $record){$this->eligible($record);$record->updateQuietly(['metadata'=>[...($record->metadata??[]),'inbox_read_at'=>now()->toIso8601String()]]);return response()->json(['status'=>'saved']);}
+    public function read(SourceRecord $record){$this->eligible($record);\Illuminate\Support\Facades\DB::transaction(function()use($record){$record=SourceRecord::lockForUpdate()->findOrFail($record->id);$record->updateQuietly(['metadata'=>[...($record->metadata??[]),'inbox_read_at'=>now()->toIso8601String()]]);});return response()->json(['status'=>'saved']);}
     public function reply(Request $request,SourceRecord $record)
     {
         $this->eligible($record);

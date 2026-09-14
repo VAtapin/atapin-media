@@ -15,7 +15,7 @@ class MediaResolver
 
     public function assets(SourceRecord $record): \Illuminate\Support\Collection
     {
-        return Media::whereIn('id', app(LocalMediaLinks::class)->ids($record))->get()
+        return Media::whereIn('id', app(LocalMediaLinks::class)->ids($record))->whereNull('archived_at')->get()
             ->filter(fn (Media $media) => $this->locator->find($media));
     }
 
@@ -26,12 +26,14 @@ class MediaResolver
         return $media && $location ? ['media' => $media, 'path' => $this->locator->path($location)] : null;
     }
 
-    public function image(SourceRecord $record): ?array
+    public function image(SourceRecord $record, ?string $provider = null): ?array
     {
         $assets = $this->assets($record);
-        $cover = $record->metadata['cover_media_id'] ?? null;
-        $media = ($cover ? $assets->firstWhere('id', $cover) : null)
+        $specific=$provider ? ($record->metadata['platform_metadata'][$provider]['cover_media_id']??null) : null;
+        $cover = $specific ?? ($record->metadata['cover_media_id'] ?? null);
+        $media = ($cover ? $assets->first(fn($item)=>$item->id===$cover&&$item->kind==='image'&&!$item->archived_at) : null)
             ?? $assets->first(fn (Media $item) => $item->kind === 'image');
+        if($specific && (!$media || $media->id!==$specific))throw new \RuntimeException('The selected platform cover is unavailable.');
         $location = $media ? $this->locator->find($media) : null;
         return $media && $location ? ['media' => $media, 'path' => $this->locator->path($location)] : null;
     }

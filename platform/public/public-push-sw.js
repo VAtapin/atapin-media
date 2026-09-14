@@ -1,3 +1,15 @@
+const CACHE='manna-static-v1';
+const STATIC_URLS=['/','/favicon.png','/manifest.webmanifest','/assets/brand/owner/app-icon.png','/assets/fonts/fonts.css','/assets/brand/ui-kit.css','/assets/public.css','/assets/public-pages.css'];
+
+self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(STATIC_URLS)).then(()=>self.skipWaiting())));
+self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
+self.addEventListener('fetch',event=>{
+  const request=event.request;
+  if(request.method!=='GET'||new URL(request.url).origin!==self.location.origin)return;
+  const path=new URL(request.url).pathname;
+  if(!STATIC_URLS.includes(path)&&!path.startsWith('/assets/'))return;
+  event.respondWith(fetch(request).then(response=>{if(response.ok)caches.open(CACHE).then(cache=>cache.put(request,response.clone()));return response;}).catch(()=>caches.match(request)));
+});
 self.addEventListener('push',event=>{
   event.waitUntil((async()=>{
     let data;try{data=event.data.json();}catch{return;}

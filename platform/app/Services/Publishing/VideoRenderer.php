@@ -10,11 +10,11 @@ use Symfony\Component\Process\Process;
 
 class VideoRenderer
 {
-    public function video(SourceRecord $record): array
+    public function video(SourceRecord $record, ?string $provider = null): array
     {
         $resolver = app(MediaResolver::class);
         if ($video = $resolver->video($record)) return $video;
-        $image = $resolver->image($record);
+        $image = $resolver->image($record,$provider);
         $audio = $resolver->assets($record)->first(fn (Media $media) => $media->kind === 'audio');
         $signature = hash('sha256', json_encode([$record->title, $record->body, $image['media']->id ?? null, $image['media']->sha256 ?? null, $audio?->id, $audio?->sha256], JSON_THROW_ON_ERROR));
         return Cache::lock('publishing-render:'.$signature, 3600)->block(30, function () use ($record, $image, $audio, $signature) {

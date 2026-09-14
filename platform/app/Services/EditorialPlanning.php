@@ -18,7 +18,12 @@ class EditorialPlanning
         return DB::transaction(function () use ($record,$user,$providers,$time) {
             $record=$record->newQuery()->whereKey($record->id)->lockForUpdate()->firstOrFail();
             abort_unless(in_array($record->kind,['video','short','post'],true)&&$record->status==='ready'&&!($record->metadata['archive_data']??false)&&!($record->metadata['library_only']??false),422);
-            PublicationSchedule::where('source_record_id',$record->id)->where('status','scheduled')->update(['status'=>'cancelled']);
+            foreach(PublicationSchedule::where('source_record_id',$record->id)->whereIn('status',['scheduled','queued'])->lockForUpdate()->get() as $existing){
+                if(!array_intersect($existing->providers,$providers))continue;
+                abort_if($existing->status==='queued',409,__('workspaces.schedule_claimed'));
+                $remaining=array_values(array_diff($existing->providers,$providers));
+                $existing->update($remaining?['providers'=>$remaining]:['status'=>'cancelled']);
+            }
             $schedule = PublicationSchedule::create(['source_record_id'=>$record->id,'user_id'=>$user->id,'source_version'=>$this->version($record),'providers'=>array_values(array_unique($providers)),'publish_at'=>$time]);
             app(Audit::class)->record('publication.scheduled',(string)$schedule->id);
             return $schedule;

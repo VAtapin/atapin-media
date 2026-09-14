@@ -20,6 +20,7 @@ class ImportController extends Controller
         ['id' => 'tiktok', 'label' => 'TikTok'],
         ['id' => 'instagram', 'label' => 'Instagram'],
         ['id' => 'facebook-video', 'label' => 'Facebook Video'],
+        ['id' => 'web-document', 'label' => 'URL / RSS / Atom'],
     ];
 
     private const TARGETS = [
@@ -136,6 +137,7 @@ class ImportController extends Controller
         ]);
 
         $source = trim((string) $data['source']);
+        if($source==='web-document')\Illuminate\Support\Facades\Gate::authorize('content.edit');
         if (! $this->supportsSource($source)) {
             return response()->json(['message' => 'Unsupported import source.'], 422);
         }
