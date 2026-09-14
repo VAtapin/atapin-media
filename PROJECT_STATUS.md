@@ -54,5 +54,5 @@
 ## Последний связанный commit
 
 - Предшествующий commit: 4f9f855 — Move OAuth app credentials to admin settings; article lightbox ранее в bdb3516.
-- Последний функциональный commit: article image backdrop softening; hash будет указан после commit/push. Предшествующий `d8a5bdc` — Add blurred poster backdrop to video player; branch/upstream main → origin/main.
+- Последний функциональный commit: `151f83d` — Soften article image backdrops. Предшествующий `d8a5bdc` — Add blurred poster backdrop to video player; branch/upstream main → origin/main.
 
