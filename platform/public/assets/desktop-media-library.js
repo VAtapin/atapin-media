@@ -287,6 +287,13 @@
 
     form.addEventListener('input', () => {receiptId=null;load(1);});
     form.addEventListener('change', () => {receiptId=null;load(1);});
+    root.addEventListener('local-media-open',event=>{
+      const id=event.detail?.id;if(typeof id!=='string'||!/^[a-f0-9-]{36}$/i.test(id))return;
+      if(details.dataset.dirty==='true'&&!window.confirm(window.desktopImportLabels.discard_edits))return;
+      delete details.dataset.dirty;receiptId=id;selected={id};
+      if(!root.querySelector('[data-library-content-container]').hidden)root.querySelector('[data-library-content-toggle]').click();
+      load(1);
+    });
     list.addEventListener('click', event => {
       const id = event.target.closest('[data-media-id]')?.dataset.mediaId;
       if (!id) return;

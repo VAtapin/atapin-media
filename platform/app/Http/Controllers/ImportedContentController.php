@@ -10,9 +10,14 @@ class ImportedContentController extends Controller
     {
         $data = $request->validate(['q' => 'nullable|string|max:120', 'kind' => 'nullable|in:'.implode(',',SourceRecord::KINDS).',archive_data',
             'section' => 'nullable|in:videos,posts,podcast,community', 'status' => 'nullable|in:unsorted,review,ready,needs_attention',
-            'publication' => 'nullable|in:published,unpublished',
+            'publication' => 'nullable|in:published,unpublished','sort'=>'nullable|in:updated,title,status,published,created','direction'=>'nullable|in:asc,desc',
+            'project_id'=>'nullable|integer|exists:projects,id','taxonomy_term_id'=>'nullable|integer|exists:taxonomy_terms,id',
+            'workflow_stage'=>'nullable|in:idea,script,production,review,approved','review'=>'nullable|boolean',
             'source' => 'nullable|string|max:32', 'page' => 'nullable|integer|min:1','trash'=>'nullable|in:active,deleted']);
-        $query = SourceRecord::query()->where('source','!=','catalog-reset')->latest();
+        $sort=match($data['sort']??'created'){'title'=>'title','status'=>'status','published'=>'metadata->public_published_at','updated'=>'updated_at',default=>'created_at'};
+        $canSeeProjects=\Illuminate\Support\Facades\Gate::allows('projects.manage');
+        $query = SourceRecord::query()->where('source','!=','catalog-reset')->orderBy($sort,$data['direction']??'desc')->latest('id');
+        if($canSeeProjects)$query->with('project:id,title');
         if(($data['trash']??'active')==='deleted')$query->onlyTrashed();
         $kinds = match ($data['section'] ?? '') { 'videos', 'podcast' => ['video', 'short'], 'posts' => ['post'], 'community' => ['poll', 'comment','live_chat'], default => [] };
         if (($data['section'] ?? '') === 'podcast') $query->where('metadata->public_section', 'podcast');
@@ -21,6 +26,10 @@ class ImportedContentController extends Controller
         if(($data['kind']??'')==='archive_data') {$query->where('metadata->archive_data',true);unset($data['kind']);}
         elseif(empty($data['kind']))$query->where(fn($q)=>$q->whereNull('metadata->archive_data')->orWhere('metadata->archive_data',false));
         foreach (['kind', 'source', 'status'] as $field) if ($data[$field] ?? '') $query->where($field, $data[$field]);
+        if($data['project_id']??null)$query->where('project_id',$data['project_id']);
+        if($data['workflow_stage']??null)$query->where('metadata->workflow_stage',$data['workflow_stage']);
+        if($data['taxonomy_term_id']??null)$query->whereJsonContains('metadata->taxonomy_term_ids',(int)$data['taxonomy_term_id']);
+        if($data['review']??false)$query->whereIn('kind',['video','short','post'])->where(fn($q)=>$q->where('status','review')->orWhere('metadata->external_sync_pending_review',true));
         if (($data['publication'] ?? '') === 'published') $query->where('metadata->public_published', true);
         if (($data['publication'] ?? '') === 'unpublished') $query->where(fn ($q) => $q->whereNull('metadata->public_published')->orWhere('metadata->public_published', false));
         if ($data['q'] ?? '') $query->where(fn ($q) => $q->where('title', 'like', '%'.$data['q'].'%')->orWhere('body', 'like', '%'.$data['q'].'%'));
@@ -30,6 +39,8 @@ class ImportedContentController extends Controller
             'kind' => $record->kind, 'source' => $record->source, 'status' => $record->status,
             'public_published' => (bool) ($record->metadata['public_published'] ?? false),
             'public_homepage' => (bool) ($record->metadata['public_homepage'] ?? false),
+            'created_at'=>$record->created_at,'updated_at'=>$record->updated_at,'published_at'=>$record->metadata['public_published_at']??null,
+            'project'=>$canSeeProjects?$record->project?->title:null,'workflow_stage'=>$record->metadata['workflow_stage']??null,
             'detail_url' => route('content.show', $record),
         ]), 'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total()]]);
     }
@@ -45,10 +56,25 @@ class ImportedContentController extends Controller
         return response()->json(['status'=>'saved','id'=>$record->id,'detail_url'=>route('content.show',$record)],201);
     }
 
+    public function acceptReview(Request $request, SourceRecord $record)
+    {
+        $request->validate(['confirm'=>'required|accepted']);
+        \Illuminate\Support\Facades\DB::transaction(function()use($record,$request){
+            $record=SourceRecord::lockForUpdate()->findOrFail($record->id);
+            abort_unless(in_array($record->kind,['video','short','post'],true)&&($record->status==='review'||($record->metadata['external_sync_pending_review']??false)),409);
+            abort_if($record->metadata['public_published']??false,409);
+            $metadata=$record->metadata??[];$metadata['external_sync_pending_review']=false;
+            $metadata['reviewed_at']=now()->toIso8601String();$metadata['reviewed_by']=$request->user()->id;
+            $record->update(['status'=>'ready','metadata'=>$metadata]);
+            app(\App\Services\Audit::class)->record('content.review_accepted',(string)$record->id);
+        });
+        return response()->json(['status'=>'saved','detail_url'=>route('content.show',$record)]);
+    }
+
     public function update(Request $request, SourceRecord $record, \App\Services\Importing\ContentAssignment $assignment)
     {
         if($request->hasAny(['public_published','public_section','public_homepage'])||($record->metadata['public_published']??false)||($record->metadata['public_homepage']??false))\Illuminate\Support\Facades\Gate::authorize('content.publish');
-        if($request->has('platform_metadata'))\Illuminate\Support\Facades\Gate::authorize('content.publish');
+        if($request->hasAny(['platform_metadata','public_published_at']))\Illuminate\Support\Facades\Gate::authorize('content.publish');
         $assignment->record($record, $request->validate(['title' => 'required|string|max:255', 'body' => 'nullable|string|max:1000000',
             'kind' => 'required|in:'.implode(',',SourceRecord::KINDS), 'status' => 'required|in:unsorted,review,ready,needs_attention',
             'target_profile'=>'nullable|in:media_library,videos,shorts,posts,polls,comments,podcast',
@@ -101,7 +127,7 @@ class ImportedContentController extends Controller
         $publicUrl=$publicContent->visible($record)?$publicContent->card($record)['url']:null;
         $version=app(\App\Services\Importing\ContentState::class)->version($record);
         return response()->json(['id' => $record->id, 'title' => $record->title, 'body' => ($metadata['body_format']??'plain')==='html'?app(\App\Services\RichContent::class)->sanitize($record->body??''):$record->body,
-            ...array_intersect_key($metadata,array_flip(['workflow_stage','slug','locale','episode_number','season'])),
+            ...array_intersect_key($metadata,array_flip(['workflow_stage','slug','locale','episode_number','season','public_published_at'])),
             ...array_intersect_key($metadata,array_flip(['author','seo_title','seo_description','transcript','guest','external_podcast_url','cover_media_id','taxonomy_term_ids'])),
             'short_description'=>$metadata['short_description']??'', 'short_description_job'=>$metadata['short_description_job']['state']??null,
             'project_id'=>$record->project_id,'editor'=>array_intersect_key($metadata,array_flip(['author','seo_title','seo_description','transcript','guest','external_podcast_url','cover_media_id','taxonomy_term_ids'])),
@@ -124,6 +150,7 @@ class ImportedContentController extends Controller
                 'undo_url'=>$log->status==='applied'&&($log->applied_changes['after_version']??null)===$version ? route('content.classification.undo',[$record,$log]) : null,
             ]),
             'import_enriched' => (bool) ($metadata['import_enriched'] ?? false),
+            'pending_review'=>$record->status==='review'||($metadata['external_sync_pending_review']??false),
             'import_versions' => \App\Models\SourceRecordSnapshot::where('source_record_id',$record->id)->latest()->limit(20)->get(['id','title','created_at'])
                 ->map(fn ($snapshot) => ['title'=>$snapshot->title,'created_at'=>$snapshot->created_at,'url'=>route('content.import-version',[$record,$snapshot])]),
             'assets' => $assets, 'private' => $publicUrl===null]);

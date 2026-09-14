@@ -21,6 +21,7 @@
   window.initializeImportCenter = root => {
     if (!root || root.dataset.initialized) return;
     root.dataset.initialized = 'true';
+    window.initializeMigrationWizard?.(root);
     const t = window.desktopImportLabels;
     const rulesForm=root.querySelector('[data-import-rules-form]');
     rulesForm?.addEventListener('submit',async event=>{

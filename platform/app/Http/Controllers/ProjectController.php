@@ -25,8 +25,11 @@ class ProjectController extends Controller
             'products'=>$project->products()->latest()->paginate(30, ['id','title','status'], 'products_page'),
             'timeline'=>\App\Models\AuditEvent::where(function($query)use($project){
                 $query->where(fn($q)=>$q->where('action','project.saved')->where('subject',(string)$project->id))
-                    ->orWhere(fn($q)=>$q->where('action','task.saved')->whereIn('subject',$project->tasks()->select('id')));
-            })->latest('id')->paginate(20,['id','action','created_at'],'timeline_page')]);
+                    ->orWhere(fn($q)=>$q->where('action','task.saved')->where(fn($q)=>$q->whereIn('subject',$project->tasks()->select('id'))->orWhere('context->project_id',$project->id)->orWhere('context->previous_project_id',$project->id)));
+            })->latest('id')->paginate(20,['id','action','context','created_at'],'timeline_page')->through(fn($event)=>[
+                'id'=>$event->id,'action'=>$event->action,'created_at'=>$event->created_at,
+                'previous_status'=>$event->context['previous_status']??null,'status'=>$event->context['status']??null,
+            ])]);
     }
 
     public function store(Request $request, Workflow $workflow)

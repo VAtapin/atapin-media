@@ -3,6 +3,12 @@
     @can('content.edit')<button type="button" class="desktop-button" data-catalog-reset>{{ __('imports.reset_start') }}</button>@endcan</div>
     <div class="import-center-status" data-import-status role="status">{{ __('imports.history_loading') }}</div>
     <p class="import-worker-status" data-import-worker-status role="status" hidden></p>
+    <details class="import-advanced" data-migration-wizard>
+        <summary>{{ __('workspaces.migration_wizard') }}</summary>
+        <p>{{ __('workspaces.migration_hint') }}</p>
+        <div data-migration-steps></div>
+        <p data-migration-message role="status"></p>
+    </details>
     @can('settings.manage')
     @php($durationRule=app(\App\Services\Importing\ImportSortingRules::class)->durationRule())
     <details class="import-advanced" data-import-rules>

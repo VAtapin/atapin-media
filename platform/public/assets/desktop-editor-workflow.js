@@ -4,6 +4,7 @@
     if(item.archive_data||!['video','short','post'].includes(item.kind))return;
     const section=el('details');section.append(el('summary',t('content_report')));
     if(item.preview_url){const a=el('a',t('preview'),'desktop-button');a.href=item.preview_url;a.target='_blank';a.rel='noopener';form.querySelector('.media-library-toolbar-row').append(a);}
+    if(item.pending_review){const accept=button('accept_review',async()=>{const out=form.querySelector('[role=status]');if(details.dataset.dirty==='true'){out.textContent=t('save_before_action');return;}if(!window.confirm(t('confirm_review')))return;try{await request('/desktop/content/'+item.id+'/accept-review',{confirm:true},'POST');document.dispatchEvent(new Event('desktop-media-changed'));details.closest('[data-content-library]').dispatchEvent(new CustomEvent('local-content-open',{detail:{url:'/desktop/content/'+item.id}}));}catch(error){out.textContent=error.message;}});form.querySelector('.media-library-toolbar-row').append(accept);}
     section.append(field('workflow_stage','select',item.workflow_stage||'idea',['idea','script','production','review','approved']),field('slug','text',item.slug),field('locale','select',item.locale||'de',['de','en']));
     if(document.querySelector('.os-start-menu [data-open-app=ai-assistant]')){const ai=button('generate_ai',()=>{if(details.dataset.dirty==='true'){form.querySelector('[role=status]').textContent=t('save_before_action');return;}W.open('ai-assistant',{source_record_id:item.id,purpose:'seo',question:t('seo')});});form.querySelector('.media-library-toolbar-row').append(ai);}
     if(item.public_section==='podcast')section.append(field('episode_number','number',item.episode_number),field('season','number',item.season));
@@ -12,6 +13,7 @@
     for(const name of ['author','seo_title','seo_description','guest','external_podcast_url'])section.append(field(name,name==='seo_description'?'textarea':name==='external_podcast_url'?'url':'text',item[name]));
     section.append(field('transcript','textarea',item.transcript));form.querySelector('.media-library-toolbar-row').before(section);
     if(details.closest('[data-content-library]')?.querySelector('[data-can-publish]')){
+      section.append(field('public_published_at','date',item.public_published_at));
       const platforms=el('details');platforms.append(el('summary',t('platform_metadata')));for(const provider of ['youtube','facebook','instagram','telegram','x']){const group=el('fieldset');group.append(el('legend',t(provider)),field(provider+'_title','text',item.platform_metadata?.[provider]?.title),field(provider+'_body','textarea',item.platform_metadata?.[provider]?.body));platforms.append(group);}section.append(platforms);
     }
     const textarea=form.querySelector('[name=body]');if(textarea&&item.kind==='post'){

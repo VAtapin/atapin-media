@@ -15,22 +15,28 @@ class PollWorkspaceController extends Controller
     {
         abort_unless($record->kind==='poll',404);
         $participation=app(PublicParticipation::class);
-        return response()->json(['poll'=>$record,'votes'=>$participation->states($record)->where('action','vote')->count()]);
+        return response()->json(['poll'=>$record,...$participation->voteResults($record)]);
     }
     public function store(Request $request) { return $this->save($request); }
     public function update(Request $request,SourceRecord $record) { abort_unless($record->kind==='poll',404);return $this->save($request,$record); }
     private function save(Request $request,?SourceRecord $record=null)
     {
-        $data=$request->validate(['title'=>'required|string|max:255','body'=>'nullable|string|max:10000','options'=>'required|array|min:2|max:20','options.*'=>'required|string|max:255|distinct',
+        $external=$request->filled('external_url') || (!$request->has('external_url') && !empty($record?->metadata['poll']['external_url']));
+        $data=$request->validate(['title'=>'required|string|max:255','body'=>'nullable|string|max:10000','options'=>[\Illuminate\Validation\Rule::requiredIf(!$external),'nullable','array',$external?'min:0':'min:2','max:20'],'options.*'=>'required|string|max:255|distinct',
+            'external_url'=>['nullable','string','max:2000',function($attribute,$value,$fail){if(!app(\App\Services\ExternalPollUrl::class)->valid($value))$fail(__('workspaces.poll_url_invalid'));}],
+            'external_display'=>'sometimes|required|in:link,iframe',
             'starts_at'=>'nullable|date','ends_at'=>'nullable|date|after:starts_at','active'=>'required|boolean','multiple'=>'required|boolean','audience'=>'required|in:registered,subscriber','results'=>'required|in:always,after_vote,after_close,hidden',
             'placements'=>'required|array|max:3','placements.*'=>'required|in:community,live,buecher|distinct','public_published'=>'required|boolean']);
         if($data['public_published']||($record?->metadata['public_published']??false))Gate::authorize('content.publish');
         $record=DB::transaction(function()use($record,$data){
             $record=$record?SourceRecord::lockForUpdate()->findOrFail($record->id):new SourceRecord(['source'=>'manual','source_id'=>(string)\Illuminate\Support\Str::uuid(),'kind'=>'poll']);
-            $old=array_column($record->metadata['poll']['options']??[],'text');
-            abort_if($record->exists && $old!==$data['options'] && app(PublicParticipation::class)->states($record)->where('action','vote')->exists(),422,__('workspaces.poll_options_locked'));
-            $poll=collect($data)->except(['title','body','public_published'])->all();
-            $poll['options']=array_map(fn($text)=>['text'=>$text],$data['options']);
+            $oldPoll=$record->metadata['poll']??[];
+            $old=array_column($oldPoll['options']??[],'text');
+            $poll=[...$oldPoll,...collect($data)->except(['title','body','public_published'])->all()];
+            $options=$data['options']??[];
+            abort_if($record->exists && ($old!==$options||($oldPoll['external_url']??null)!==($poll['external_url']??null)) && app(PublicParticipation::class)->states($record)->where('action','vote')->exists(),422,__('workspaces.poll_options_locked'));
+            abort_if(!empty($poll['external_url']) && ($poll['external_display']??'link')==='iframe' && !app(\App\Services\ExternalPollUrl::class)->embeddable($poll['external_url']),422,__('workspaces.poll_embed_not_allowed'));
+            $poll['options']=array_map(fn($text)=>['text'=>$text],$options);
             $record->fill(['title'=>$data['title'],'body'=>$data['body']??'','status'=>'ready','metadata'=>[...($record->metadata??[]),'public_section'=>'community','public_published'=>$data['public_published'],'poll'=>$poll]])->save();
             app(Audit::class)->record('poll.saved',(string)$record->id);return $record;
         });

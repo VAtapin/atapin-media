@@ -127,4 +127,95 @@ class AdminCompletionTest extends TestCase
         $book=Product::findOrFail($id);$this->assertSame('Subtitle',$book->metadata['subtitle']);
         $this->get(app(\App\Services\PublicBooks::class)->card($book)['url'])->assertOk()->assertSee('Book search title')->assertSee('Book search description')->assertDontSee('Private edition');
     }
+    public function test_task_deadline_clock_survives_partial_updates_and_calendar(): void
+    {
+        app(Settings::class)->update(['system_timezone'=>'Europe/Berlin']);
+        $id=$this->postJson('/desktop/tasks',['title'=>'Timed task','status'=>'open','due_date'=>'2026-10-25','due_time'=>'02:30'])->assertOk()->json('task_id');
+        $this->patchJson('/desktop/tasks/'.$id,['status'=>'working'])->assertOk();
+        $this->getJson('/desktop/tasks/'.$id)->assertJsonPath('due_date','2026-10-25')->assertJsonPath('due_time','02:30');
+        $this->getJson('/desktop/planning?start=2026-10-25&end=2026-10-25&type=task')->assertJsonPath('timezone','Europe/Berlin')->assertJsonPath('data.0.time','02:30')->assertJsonPath('data.0.date','2026-10-25');
+        $this->patchJson('/desktop/tasks/'.$id,['due_time'=>'25:10'])->assertUnprocessable();
+        $this->patchJson('/desktop/tasks/'.$id,['due_date'=>null])->assertOk();$this->assertNull(Task::findOrFail($id)->due_time);
+        $this->patchJson('/desktop/tasks/'.$id,['due_time'=>'12:00'])->assertUnprocessable();
+    }
+    public function test_project_timeline_shows_transitions_and_keeps_moved_task_history_without_audit_secrets(): void
+    {
+        $id=$this->postJson('/desktop/projects',['title'=>'History','status'=>'idea'])->assertOk()->json('project_id');
+        $this->putJson('/desktop/projects/'.$id,['title'=>'History','status'=>'production'])->assertOk();
+        $task=$this->postJson('/desktop/tasks',['title'=>'Moved task','status'=>'open','project_id'=>$id])->assertOk()->json('task_id');
+        $other=Project::create(['title'=>'Other','status'=>'idea']);$this->patchJson('/desktop/tasks/'.$task,['project_id'=>$other->id,'status'=>'working'])->assertOk();
+        app(\App\Services\Audit::class)->record('project.saved',(string)$id,['private_token'=>'do-not-expose']);
+        $data=$this->getJson('/desktop/projects/'.$id)->assertOk()->assertDontSee('do-not-expose')->json('timeline.data');
+        $this->assertTrue(collect($data)->contains(fn($row)=>$row['action']==='project.saved'&&$row['previous_status']==='idea'&&$row['status']==='production'));
+        $this->assertTrue(collect($data)->contains(fn($row)=>$row['action']==='task.saved'&&$row['status']==='working'));
+    }
+    public function test_ai_proposal_edits_are_owner_scoped_versioned_and_do_not_apply_automatically(): void
+    {
+        $record=$this->record();$proposal=['answer'=>'Suggested title','title'=>'Suggested','short_description'=>'','seo_title'=>'','seo_description'=>'','social_text'=>''];
+        $entry=DesktopAiRequest::create(['user_id'=>$this->owner->id,'source_record_id'=>$record->id,'source_version'=>app(\App\Services\Importing\ContentState::class)->version($record),'purpose'=>'title','question'=>'Improve','status'=>'completed','proposal'=>$proposal,'answer'=>$proposal['answer']]);
+        $version=$this->getJson('/desktop/assistant')->assertOk()->json('requests.data.0.proposal_version');
+        $proposal['title']='Manually adjusted';$data=['proposal'=>$proposal,'proposal_version'=>$version];
+        $this->actingAs($this->staff('Editor'));$this->patchJson('/desktop/assistant/'.$entry->id,$data)->assertNotFound();$this->actingAs($this->owner);
+        $new=$this->patchJson('/desktop/assistant/'.$entry->id,$data)->assertOk()->json('proposal_version');$this->assertNotSame($version,$new);
+        $this->assertSame('Draft title',$record->fresh()->title);$this->assertSame('completed',$entry->fresh()->status);
+        $this->postJson('/desktop/assistant/'.$entry->id.'/apply',['proposal_version'=>$version])->assertConflict();
+        $this->patchJson('/desktop/assistant/'.$entry->id,$data)->assertConflict();
+        $bad=$proposal;$bad['tools']='not allowed';$this->patchJson('/desktop/assistant/'.$entry->id,['proposal'=>$bad,'proposal_version'=>$new])->assertUnprocessable();
+        $this->postJson('/desktop/assistant/'.$entry->id.'/apply')->assertOk();$this->assertSame('Manually adjusted',$record->fresh()->title);
+        $this->patchJson('/desktop/assistant/'.$entry->id,['proposal'=>$proposal,'proposal_version'=>$new])->assertConflict();
+    }
+    public function test_poll_admin_counts_multiple_and_legacy_votes_without_returning_voters(): void
+    {
+        $id=$this->postJson('/desktop/polls',$this->pollData(['multiple'=>true]))->assertOk()->json('id');
+        foreach([['option'=>0,'options'=>[0,1]],['option'=>1]] as $value)\App\Models\PublicContentState::create(['user_id'=>User::factory()->create()->id,'subject_type'=>'record','subject_id'=>$id,'action'=>'vote','value'=>$value]);
+        $response=$this->getJson('/desktop/polls/'.$id)->assertOk();$this->assertSame(2,$response->json('results.1.count'),json_encode($response->json()));
+        $response->assertJsonPath('votes',2)->assertJsonPath('results.0.count',1)->assertJsonPath('results.1.percent',100)->assertJsonMissingPath('user_id');
+    }
+    public function test_external_poll_embeds_require_exact_third_party_allowlist_and_never_accept_local_votes(): void
+    {
+        config(['polls.allowed_embed_hosts'=>['polls.example.test'],'app.url'=>'https://website.example.test']);
+        $data=$this->pollData(['options'=>[],'external_url'=>'https://polls.example.test/form/1','external_display'=>'iframe']);
+        $id=$this->postJson('/desktop/polls',$data)->assertOk()->json('id');
+        $this->get('/community')->assertOk()->assertSee('sandbox="allow-scripts allow-forms allow-same-origin"',false)->assertSee('https://polls.example.test/form/1');
+        $this->postJson('/desktop/polls',[...$data,'external_url'=>'https://polls.example.test.evil.test/form'])->assertUnprocessable();
+        $this->postJson('/desktop/polls',[...$data,'external_url'=>'javascript:alert(1)','external_display'=>'link'])->assertUnprocessable();
+        $this->postJson('/desktop/polls',[...$data,'external_url'=>'https://user:secret@polls.example.test/form','external_display'=>'link'])->assertUnprocessable();
+        config(['polls.allowed_embed_hosts'=>['website.example.test']]);$this->postJson('/desktop/polls',[...$data,'external_url'=>'https://website.example.test/form'])->assertUnprocessable();
+        $this->actingAs(User::factory()->create(['email_verified_at'=>now()]));$this->postJson('/public/records/'.$id.'/state',['action'=>'vote','option'=>0])->assertUnprocessable();
+        $this->assertDatabaseCount('public_content_states',0);
+    }
+    public function test_historical_date_and_content_filters_do_not_publish_or_allow_non_publishers_to_edit_date(): void
+    {
+        $record=$this->record();$project=Project::create(['title'=>'Filter','status'=>'idea']);
+        $this->patchJson('/desktop/content/'.$record->id,['title'=>'A title','kind'=>'post','status'=>'ready','project_id'=>$project->id,'workflow_stage'=>'review','public_published_at'=>'2020-01-10'])->assertOk();
+        $this->record(['title'=>'Z title']);
+        $this->getJson('/desktop/content?sort=title&direction=asc')->assertJsonPath('data.0.title','A title');
+        $this->getJson('/desktop/content?project_id='.$project->id.'&workflow_stage=review')->assertJsonPath('meta.total',1)->assertJsonPath('data.0.project','Filter')->assertJsonPath('data.0.published_at','2020-01-10');
+        $this->getJson('/desktop/content?sort=invalid')->assertUnprocessable();
+        $term=\App\Models\TaxonomyTerm::create(['name'=>'Filter topic','slug'=>'filter-topic','kind'=>'topic','active'=>true]);app(\App\Services\Taxonomy::class)->sync($record->fresh(),[$term->id]);
+        $this->getJson('/desktop/content?taxonomy_term_id='.$term->id)->assertJsonPath('meta.total',1);
+        $this->patchJson('/desktop/content/'.$record->id,['title'=>'A title','kind'=>'post','status'=>'ready','public_published_at'=>now()->addDay()->toDateString()])->assertUnprocessable();
+        $this->assertFalse($record->fresh()->metadata['public_published']);
+        $this->actingAs($this->staff('Mediengestalter'));$this->patchJson('/desktop/content/'.$record->id,['title'=>'A title','kind'=>'post','status'=>'ready','public_published_at'=>'2019-01-01'])->assertForbidden();
+    }
+    public function test_import_review_requires_confirmation_and_keeps_accepted_content_unpublished(): void
+    {
+        $record=$this->record(['status'=>'review','metadata'=>['public_section'=>'videos','external_sync_pending_review'=>true,'public_published'=>false,'youtube_api'=>['id'=>'original']]]);
+        $this->getJson('/desktop/content?review=1')->assertJsonPath('meta.total',1);
+        $this->postJson('/desktop/content/'.$record->id.'/accept-review',[])->assertUnprocessable();
+        $this->postJson('/desktop/content/'.$record->id.'/accept-review',['confirm'=>true])->assertOk();
+        $record->refresh();$this->assertSame('ready',$record->status);$this->assertFalse($record->metadata['external_sync_pending_review']);$this->assertFalse($record->metadata['public_published']);$this->assertSame('original',$record->metadata['youtube_api']['id']);
+        $this->getJson('/desktop/content?review=1')->assertJsonPath('meta.total',0);
+        $this->postJson('/desktop/content/'.$record->id.'/accept-review',['confirm'=>true])->assertConflict();
+        $this->assertDatabaseCount('publications',0);
+    }
+    public function test_migration_and_new_overview_widgets_are_permission_scoped(): void
+    {
+        $data=$this->getJson('/desktop/migration')->assertOk()->json('steps');$this->assertCount(8,$data);$this->assertSame('review',$data[7]['id']);
+        $record=$this->record(['status'=>'review']);
+        $this->getJson('/desktop/overview')->assertJsonPath('widgets.review.count',1)->assertJsonPath('widgets.review.items.0.id',$record->id)->assertJsonPath('widgets.review.items.0.app','posts')->assertJsonStructure(['widgets'=>['processing','assistant','social-status']]);
+        $editor=$this->staff('Mediengestalter');$this->actingAs($editor);$steps=$this->getJson('/desktop/migration')->assertOk()->json('steps');$this->assertSame(['documents','archive','taxonomy','review'],array_column($steps,'id'));
+        $this->getJson('/desktop/overview')->assertJsonMissingPath('widgets.social-status')->assertJsonMissingPath('widgets.newsletter');
+        $this->actingAs(User::factory()->create());$this->getJson('/desktop/migration')->assertForbidden();
+    }
 }

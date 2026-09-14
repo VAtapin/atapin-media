@@ -17,6 +17,22 @@ class PublicParticipation
     {
         return array_values(array_filter($poll->metadata['poll']['options']??[],fn($option)=>is_array($option)&&is_string($option['text']??null)));
     }
+    public function voteResults(SourceRecord $poll): array
+    {
+        $counts=array_fill(0,count($this->options($poll)),0);$total=0;
+        // Aggregate identical ballots, then decode JSON once per distinct selection.
+        // This also supports legacy single-choice values on both SQLite and MySQL.
+        foreach($this->states($poll)->where('action','vote')->select('value')->selectRaw('COUNT(*) AS votes')->groupBy('value')->cursor() as $ballot){
+            $total+=(int)$ballot->votes;
+            $selected=$ballot->value['options']??[$ballot->value['option']??null];
+            if(!is_array($selected))continue;
+            foreach(array_unique($selected,SORT_REGULAR) as $choice){
+                if((is_int($choice)||(is_string($choice)&&ctype_digit($choice)))&&array_key_exists((int)$choice,$counts))$counts[(int)$choice]+=(int)$ballot->votes;
+            }
+        }
+        $results=[];foreach($this->options($poll) as $index=>$option)$results[]=['text'=>$option['text'],'count'=>$counts[$index],'percent'=>$total?round($counts[$index]/$total*100,1):0];
+        return ['votes'=>$total,'results'=>$results];
+    }
     public function save(User $user,$subject,array $data): void
     {
         if(($data['action']??null)==='vote'&&$subject instanceof SourceRecord){
@@ -37,6 +53,7 @@ class PublicParticipation
         if($action==='reminder')abort_unless(app(PublicContent::class)->section($subject)==='live',422);
         if($action==='vote'){
             abort_unless($subject->kind==='poll',422);
+            abort_if(!empty($subject->metadata['poll']['external_url']),422);
             abort_unless(app(Polls::class)->open($subject),422,__('public.poll_closed'));
             abort_unless(app(Polls::class)->allowed($subject,$user),403);
             $selected=array_values(array_unique(array_map('intval',$data['options']??[$data['option']??-1])));

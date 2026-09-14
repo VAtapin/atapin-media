@@ -36,12 +36,13 @@ class DesktopAi
         return app(\App\Contracts\AiProviderInterface::class)->suggest(['purpose'=>$entry->purpose,'question'=>$entry->question,'provider'=>$entry->context['provider']??null,'locale'=>$entry->context['locale']??app()->getLocale(),'source'=>$source]);
     }
 
-    public function apply(DesktopAiRequest $entry): void
+    public function apply(DesktopAiRequest $entry,?string $proposalVersion=null): void
     {
         abort_unless($entry->status === 'completed' && ($entry->source_record_id||$entry->product_id),422);
-        DB::transaction(function () use ($entry) {
+        DB::transaction(function () use ($entry,$proposalVersion) {
             $entry = DesktopAiRequest::whereKey($entry->id)->lockForUpdate()->firstOrFail();
             abort_unless($entry->status === 'completed',409);
+            abort_if($proposalVersion && !hash_equals($entry->proposalVersion(),$proposalVersion),409,__('workspaces.ai_proposal_stale'));
             if($entry->product_id){
                 Gate::authorize('shop.manage');$book=\App\Models\Product::lockForUpdate()->findOrFail($entry->product_id);
                 abort_unless(hash_equals($entry->source_version,$this->bookVersion($book)),409,__('workspaces.ai_stale'));

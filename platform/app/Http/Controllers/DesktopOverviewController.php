@@ -14,11 +14,17 @@ class DesktopOverviewController extends Controller
         }
         if(Gate::allows('media.view')){
             $widgets['media']=['app'=>'media','count'=>Media::whereNull('archived_at')->count(),'bytes'=>Media::whereNull('archived_at')->sum('bytes'),'items'=>Media::whereNull('archived_at')->latest()->limit(6)->get(['id','title','kind','status','created_at'])];
+            $processing=Media::whereNull('archived_at')->whereIn('status',['processing','needs_attention','failed']);
+            $widgets['processing']=['app'=>'media','count'=>(clone $processing)->count(),'items'=>$processing->latest('updated_at')->limit(6)->get(['id','title','kind','status'])];
         }
         if(Gate::allows('content.edit')){
             foreach(['videos'=>['video','short'],'posts'=>['post']] as $app=>$kinds)$widgets[$app]=['app'=>$app,'items'=>SourceRecord::whereIn('kind',$kinds)->where('source','!=','catalog-reset')->latest('updated_at')->limit(6)->get(['id','title','kind','status','updated_at'])];
+            $review=SourceRecord::where('source','!=','catalog-reset')->whereIn('kind',['video','short','post'])->where(fn($q)=>$q->whereIn('status',['review','needs_attention'])->orWhere('metadata->external_sync_pending_review',true));
+            $widgets['review']=['app'=>'videos','count'=>(clone $review)->count(),'items'=>$review->latest('updated_at')->limit(6)->get(['id','title','kind','status'])->map(fn($record)=>['id'=>$record->id,'title'=>$record->title,'status'=>$record->status,'app'=>$record->kind==='post'?'posts':'videos','ai_context'=>true])];
+            $widgets['assistant']=['app'=>'ai-assistant','items'=>\App\Models\DesktopAiRequest::where('user_id',$request->user()->id)->latest()->limit(6)->get(['id','question','status'])->map(fn($entry)=>['id'=>$entry->id,'title'=>$entry->question,'status'=>$entry->status])];
         }
         if(Gate::allows('content.publish')){
+            $widgets['social-status']=['app'=>'publishing','items'=>\App\Models\Publication::with('record:id,title')->where('provider','!=','website')->latest('updated_at')->limit(6)->get(['id','source_record_id','provider','status'])->map(fn($publication)=>['id'=>$publication->id,'title'=>$publication->record?->title??'—','status'=>$publication->status,'provider'=>$publication->provider])];
             $widgets['calendar']=['app'=>'calendar','items'=>PublicationSchedule::with('record:id,title')->whereIn('status',['scheduled','queued'])->orderBy('publish_at')->limit(6)->get()->map(fn($schedule)=>['id'=>$schedule->id,'title'=>$schedule->record?->title,'due_date'=>$schedule->publish_at->format('Y-m-d H:i'),'status'=>$schedule->status])];
             $widgets['live-studio']=['app'=>'live-studio','items'=>SourceRecord::where('metadata->public_section','live')->whereIn('metadata->live_status',['scheduled','live'])->latest('updated_at')->limit(6)->get(['id','title','status'])];
         }

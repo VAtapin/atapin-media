@@ -23,7 +23,7 @@ class CalendarController extends Controller
             $projects = Project::whereBetween('due_date',[$data['start'],$data['end']])->when($project,fn($q)=>$q->whereKey($project))->limit(500)->get();
             $tasks = Task::with('project:id,title')->whereBetween('due_date',[$data['start'],$data['end']])->when($project,fn($q)=>$q->where('project_id',$project))->limit(1000)->get();
             foreach ($projects as $row) $events->push(['id'=>'project:'.$row->id,'title'=>$row->title,'date'=>$row->due_date->toDateString(),'type'=>'project','status'=>$row->status,'app'=>'projects','subject_id'=>$row->id]);
-            foreach ($tasks as $row) $events->push(['id'=>'task:'.$row->id,'title'=>$row->title,'date'=>$row->due_date->toDateString(),'type'=>'task','status'=>$row->status,'app'=>'tasks','subject_id'=>$row->id]);
+            foreach ($tasks as $row) $events->push(['id'=>'task:'.$row->id,'title'=>$row->title,'date'=>$row->due_date->toDateString(),'time'=>$row->due_time,'type'=>'task','status'=>$row->status,'app'=>'tasks','subject_id'=>$row->id]);
         }
         if (Gate::allows('content.publish')) {
             $rows = PublicationSchedule::with('record:id,title,project_id')->whereBetween('publish_at',[$start->copy()->utc(),$end->copy()->utc()])->when($project,fn($q)=>$q->whereHas('record',fn($q)=>$q->where('project_id',$project)))->limit(1000)->get();

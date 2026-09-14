@@ -11,6 +11,7 @@ Route::middleware('auth')->group(function(){
     Route::get('/desktop/workspaces/{app}',DesktopWorkspaceController::class)->middleware('can:desktop.view');
     Route::get('/desktop/lookups',DesktopLookupController::class)->middleware('can:desktop.view');
     Route::get('/desktop/overview',\App\Http\Controllers\DesktopOverviewController::class)->middleware('can:desktop.view');
+    Route::get('/desktop/migration',\App\Http\Controllers\MigrationWorkspaceController::class)->middleware(['can:desktop.view','can:imports.manage']);
     Route::get('/desktop/publishing/preview',\App\Http\Controllers\PublishingPreviewController::class)->middleware('can:content.publish');
     Route::get('/desktop/live/{record}/monitor',\App\Http\Controllers\LiveMonitorController::class)->middleware('can:content.publish');
     Route::middleware('can:projects.manage')->group(function(){
@@ -29,9 +30,11 @@ Route::middleware('auth')->group(function(){
         Route::get('/desktop/polls/{record}',[\App\Http\Controllers\PollWorkspaceController::class,'show']);
         Route::patch('/desktop/polls/{record}',[\App\Http\Controllers\PollWorkspaceController::class,'update']);
         Route::post('/desktop/content',[ImportedContentController::class,'store']);
+        Route::post('/desktop/content/{record}/accept-review',[ImportedContentController::class,'acceptReview']);
+        Route::get('/desktop/assistant/{entry}',[DesktopAiController::class,'show']);
         Route::get('/desktop/taxonomy',[TaxonomyController::class,'index']);Route::post('/desktop/taxonomy',[TaxonomyController::class,'store']);Route::patch('/desktop/taxonomy/{term}',[TaxonomyController::class,'update']);
         Route::get('/desktop/series',[SeriesController::class,'index']);Route::post('/desktop/series',[SeriesController::class,'store']);Route::get('/desktop/series/{collection}',[SeriesController::class,'show']);Route::patch('/desktop/series/{collection}',[SeriesController::class,'update']);
-        Route::get('/desktop/assistant',[DesktopAiController::class,'index']);Route::post('/desktop/assistant',[DesktopAiController::class,'store'])->middleware('throttle:10,1');Route::post('/desktop/assistant/{entry}/apply',[DesktopAiController::class,'apply']);
+        Route::get('/desktop/assistant',[DesktopAiController::class,'index']);Route::post('/desktop/assistant',[DesktopAiController::class,'store'])->middleware('throttle:10,1');Route::patch('/desktop/assistant/{entry}',[DesktopAiController::class,'update']);Route::post('/desktop/assistant/{entry}/apply',[DesktopAiController::class,'apply']);
         Route::post('/desktop/content/{record}/pdf',[PdfEditionController::class,'record'])->middleware('throttle:10,1');
     });
     Route::middleware('can:shop.manage')->group(function(){
