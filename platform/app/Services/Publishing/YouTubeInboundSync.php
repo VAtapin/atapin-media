@@ -18,12 +18,14 @@ class YouTubeInboundSync
     {
         if (! $this->client->configured()) return 0;
         $count = 0;
+        $pending = ExternalItem::where('provider', 'youtube')->whereIn('status', ['failed', 'discovered'])->pluck('external_id')->all();
         foreach ($this->client->uploadedVideos() as $video) {
             $id = $video['id'] ?? null;
             if (! is_string($id) || $id === '') continue;
             $count++;
             $this->import($video);
         }
+        if ($pending) foreach ($this->client->videosByIds($pending) as $video) $this->import($video);
         return $count;
     }
 

@@ -69,6 +69,13 @@ class AppServiceProvider extends ServiceProvider
             }
         });
         \App\Models\SourceRecord::updated(function (\App\Models\SourceRecord $record) {
+            $before = $record->getRawOriginal('metadata');
+            $before = is_string($before) ? json_decode($before, true) : $before;
+            if (($before['public_published'] ?? false) && $record->wasChanged(['title', 'body', 'metadata', 'status'])) {
+                $publishing = app(\App\Services\Publishing\PublishingService::class);
+                $previous = (new \App\Models\SourceRecord)->setRawAttributes($record->getRawOriginal());
+                if ($publishing->signature($previous) !== $publishing->signature($record)) $publishing->queueChanges($record);
+            }
             if (! $record->wasChanged('metadata') || ! (($record->metadata ?? [])['public_published'] ?? false)) return;
             $before = $record->getOriginal('metadata');
             if (is_string($before)) $before = json_decode($before, true) ?: [];
@@ -78,5 +85,7 @@ class AppServiceProvider extends ServiceProvider
                 ($record->metadata ?? [])['publishing_targets'] ?? null
             );
         });
+        \App\Models\SourceRecord::deleted(fn ($record) => app(\App\Services\Publishing\PublishingService::class)->queueChanges($record));
+        \App\Models\SourceRecord::restored(fn ($record) => app(\App\Services\Publishing\PublishingService::class)->queueChanges($record));
     }
 }

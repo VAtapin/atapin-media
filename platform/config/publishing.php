@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'x' => [
+        'client_id' => env('X_OAUTH_CLIENT_ID'), 'client_secret' => env('X_OAUTH_CLIENT_SECRET'),
+        'redirect_uri' => env('X_OAUTH_REDIRECT_URI', rtrim(env('APP_URL', 'http://localhost'), '/').'/desktop/publishing/x/callback'),
+    ],
     'youtube' => [
         'client_id' => env('YOUTUBE_OAUTH_CLIENT_ID'),
         'client_secret' => env('YOUTUBE_OAUTH_CLIENT_SECRET'),

@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\{Publication, SourceRecord};
 use App\Services\{PublicBroadcast, Settings};
-use App\Services\Publishing\{ConnectionStore, YouTubeLiveRelay};
+use App\Services\Publishing\{ConnectionStore, LiveRelay};
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Symfony\Component\Process\Process;
@@ -26,7 +26,7 @@ class YouTubeLiveRelayTest extends TestCase
 
     public function test_relay_input_uses_existing_authorized_hls_without_exposing_key_in_output(): void
     {
-        $relay = new class(app(ConnectionStore::class)) extends YouTubeLiveRelay {
+        $relay = new class(app(ConnectionStore::class)) extends LiveRelay {
             public function command(): Process { return $this->process('live'); }
         };
         $process = $relay->command();
@@ -54,7 +54,7 @@ class YouTubeLiveRelayTest extends TestCase
         });
         $process->shouldReceive('isRunning')->once()->andReturnTrue();
         $process->shouldReceive('stop')->once()->with(2)->andReturn(0);
-        $relay = new class(app(ConnectionStore::class), $process) extends YouTubeLiveRelay {
+        $relay = new class(app(ConnectionStore::class), $process) extends LiveRelay {
             public function __construct(ConnectionStore $connections, private readonly Process $testProcess) { parent::__construct($connections); }
             protected function process(string $path): Process { return $this->testProcess; }
         };

@@ -12,12 +12,17 @@ class ConnectionStore
 
     public function connection(string $provider): array
     {
+        if (str_starts_with($provider, 'rtmp_')) {
+            $output = $this->liveOutputs()[$provider] ?? null;
+            return $output ? ['provider' => $provider, 'label' => $output['label'], 'external_id' => $provider] : [];
+        }
         $connections = $this->settings->get('social_connections', []);
         return is_array($connections[$provider] ?? null) ? $connections[$provider] : [];
     }
 
     public function credentials(string $provider): array
     {
+        if (str_starts_with($provider, 'rtmp_')) return $this->liveOutputs()[$provider] ?? [];
         $raw = $this->settings->secret('social_'.$provider);
         if (! is_string($raw) || $raw === '') return [];
         try {
@@ -26,6 +31,26 @@ class ConnectionStore
         } catch (\Throwable) {
             return ['access_token' => $raw];
         }
+    }
+
+    public function liveOutputs(): array
+    {
+        $raw = $this->settings->secret('live_outputs');
+        return $raw ? json_decode($raw, true, 512, JSON_THROW_ON_ERROR) : [];
+    }
+
+    public function saveLiveOutput(string $id, string $label, string $url): void
+    {
+        $outputs = $this->liveOutputs();
+        $outputs[$id] = ['label' => $label, 'url' => $url];
+        $this->settings->updateSecrets(['live_outputs' => json_encode($outputs, JSON_THROW_ON_ERROR)]);
+    }
+
+    public function removeLiveOutput(string $id): void
+    {
+        $outputs = $this->liveOutputs();
+        unset($outputs[$id]);
+        $this->settings->updateSecrets(['live_outputs' => json_encode($outputs, JSON_THROW_ON_ERROR)]);
     }
 
     public function connected(string $provider): bool
@@ -55,7 +80,7 @@ class ConnectionStore
     public function safeError(\Throwable $error): string
     {
         $message = $error->getMessage();
-        $secrets = [(string) config('publishing.youtube.client_secret')];
+        $secrets = [(string) config('publishing.youtube.client_secret'), (string) config('publishing.x.client_secret')];
         foreach ($this->publicConnections() as $connection) {
             $credentials = $this->credentials($connection['provider']);
             array_walk_recursive($credentials, static function ($value) use (&$secrets) {
@@ -74,7 +99,7 @@ class ConnectionStore
     {
         $connections = $this->settings->get('social_connections', []);
         if (! is_array($connections)) return [];
-        return collect($connections)->map(function ($connection, $provider) {
+        return [...collect($connections)->map(function ($connection, $provider) {
             return [
                 'provider' => $provider,
                 'external_id' => $connection['external_id'] ?? null,
@@ -82,6 +107,8 @@ class ConnectionStore
                 'connected' => $this->connected((string) $provider),
                 'revoked' => isset($connection['revoked_at']),
             ];
-        })->values()->all();
+        })->values()->all(), ...collect($this->liveOutputs())->map(fn ($output, $provider) => [
+            'provider' => $provider, 'label' => $output['label'], 'external_id' => $provider, 'public_url' => null, 'connected' => true, 'revoked' => false,
+        ])->values()->all()];
     }
 }

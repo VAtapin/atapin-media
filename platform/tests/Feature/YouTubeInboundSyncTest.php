@@ -27,6 +27,7 @@ class YouTubeInboundSyncTest extends TestCase
         $client = $this->mock(YouTubeClient::class);
         $client->shouldReceive('configured')->andReturnTrue();
         $client->shouldReceive('uploadedVideos')->andReturn([$video]);
+        $client->shouldReceive('videosByIds')->andReturn([]);
         return app(YouTubeInboundSync::class);
     }
 
@@ -86,5 +87,20 @@ class YouTubeInboundSyncTest extends TestCase
         $this->assertSame('review', SourceRecord::first()->status);
         $this->assertFalse(SourceRecord::first()->metadata['public_published']);
         $this->assertSame('discovered', ExternalItem::first()->status);
+    }
+
+    public function test_old_pending_import_is_retried_even_outside_daily_discovery_window(): void
+    {
+        $record = SourceRecord::create(['source' => 'youtube', 'source_id' => 'old-pending', 'kind' => 'video', 'title' => 'Old pending', 'status' => 'review', 'metadata' => ['public_published' => false]]);
+        ExternalItem::create(['source_record_id' => $record->id, 'provider' => 'youtube', 'external_id' => 'old-pending', 'kind' => 'video', 'status' => 'failed']);
+        $client = $this->mock(YouTubeClient::class);
+        $client->shouldReceive('configured')->andReturnTrue();
+        $client->shouldReceive('uploadedVideos')->once()->andReturn([]);
+        $client->shouldReceive('videosByIds')->once()->with(['old-pending'])->andReturn([['id' => 'old-pending', 'snippet' => ['publishedAt' => '2020-01-01T12:00:00Z']]]);
+        $this->mock(MediaResolver::class)->shouldReceive('video')->andReturn(['path' => 'canonical.mp4']);
+        app(YouTubeInboundSync::class)->run();
+        $this->assertSame('imported', ExternalItem::first()->status);
+        $this->assertSame('review', $record->fresh()->status);
+        $this->assertFalse($record->fresh()->metadata['public_published']);
     }
 }

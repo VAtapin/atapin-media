@@ -6,7 +6,7 @@
 - [ ] Workflow: проекты, задачи, календарь, продолжение работы.
 - [ ] Content: редактор, темы, книги/PDF, импорт, публичные страницы, поиск.
 - [ ] Media: видео, Shorts, плейлисты, обработка, Podcast.
-- [ ] Publishing: реализованы очередь/автоповторы, Website/YouTube/Facebook/Instagram/Telegram adapters, OAuth YouTube, review-only обратная синхронизация без повторной отправки и reusable YouTube Live relay. Код покрыт regression tests; production API/streaming не проверены. YouTube Community posts и остальные платформы не объявляются реализованными. Подробнее: PUBLISHING.md.
+- [ ] Publishing: очередь без повторного подтверждения; Website/YouTube/Facebook/Instagram/Telegram/X adapters, OAuth YouTube/X, resumable YouTube upload, processing checks, адаптация Beiträge/аудио, ежедневный review-only YouTube import за 24 часа, reusable YouTube Live key и несколько encrypted RTMP-направлений. Поддерживаемые API распространяют Website edits/visibility; explicit/opt-in удаление отделено от обычного снятия. Production API/encoding/streaming не проверены. TikTok unattended Direct Post, нативные YouTube Community posts, произвольные REST API и неподдерживаемые операции платформ не объявляются готовыми. Подробнее: PUBLISHING.md.
 - [ ] KI: провайдер, предложения с подтверждением.
 - [ ] Audience: подписчики, аккаунты, Community, модерация, опросы.
 - [ ] Live: OBS, провайдер, записи, Live, чат.

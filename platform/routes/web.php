@@ -59,10 +59,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/desktop/publishing', [\App\Http\Controllers\PublishingController::class, 'index'])->middleware('can:content.publish')->name('desktop.publishing.index');
     Route::post('/desktop/publishing/publish', [\App\Http\Controllers\PublishingController::class, 'publish'])->middleware(['can:content.publish', 'throttle:30,1'])->name('desktop.publishing.publish');
     Route::post('/desktop/publishing/sync', [\App\Http\Controllers\PublishingController::class, 'syncYouTube'])->middleware(['can:content.publish', 'throttle:10,1'])->name('desktop.publishing.sync');
+    Route::post('/desktop/publishing/live-outputs', [\App\Http\Controllers\PublishingController::class, 'saveLiveOutput'])->middleware(['can:integrations.manage', 'throttle:10,1'])->name('desktop.publishing.outputs.save');
+    Route::delete('/desktop/publishing/live-outputs/{output}', [\App\Http\Controllers\PublishingController::class, 'removeLiveOutput'])->middleware(['can:integrations.manage', 'throttle:10,1'])->name('desktop.publishing.outputs.remove');
     Route::post('/desktop/publishing/publications/{publication}/retry', [\App\Http\Controllers\PublishingController::class, 'retry'])->middleware(['can:content.publish', 'throttle:30,1'])->name('desktop.publishing.retry');
+    Route::delete('/desktop/publishing/publications/{publication}', [\App\Http\Controllers\PublishingController::class, 'removePublication'])->middleware(['can:content.publish', 'throttle:10,1'])->name('desktop.publishing.remove');
     Route::get('/desktop/publishing/youtube/connect', [\App\Http\Controllers\PublishingController::class, 'youtubeConnect'])->middleware('can:integrations.manage')->name('desktop.publishing.youtube.connect');
     Route::get('/desktop/publishing/youtube/callback', [\App\Http\Controllers\PublishingController::class, 'youtubeCallback'])->middleware('can:integrations.manage')->name('desktop.publishing.youtube.callback');
     Route::post('/desktop/publishing/youtube/disconnect', [\App\Http\Controllers\PublishingController::class, 'youtubeDisconnect'])->middleware(['can:integrations.manage', 'throttle:10,1'])->name('desktop.publishing.youtube.disconnect');
+    Route::get('/desktop/publishing/x/connect', [\App\Http\Controllers\XOAuthController::class, 'connect'])->middleware('can:integrations.manage')->name('desktop.publishing.x.connect');
+    Route::get('/desktop/publishing/x/callback', [\App\Http\Controllers\XOAuthController::class, 'callback'])->middleware('can:integrations.manage')->name('desktop.publishing.x.callback');
+    Route::post('/desktop/publishing/x/disconnect', [\App\Http\Controllers\PublishingController::class, 'disconnectX'])->middleware(['can:integrations.manage', 'throttle:10,1'])->name('desktop.publishing.x.disconnect');
     Route::get('/api/desktop/live',[\App\Http\Controllers\PublicBroadcastController::class,'apiIndex'])->middleware('can:content.publish')->name('desktop.live.api.index');
     Route::post('/api/desktop/live',[\App\Http\Controllers\PublicBroadcastController::class,'apiStore'])->middleware('can:content.publish')->name('desktop.live.api.store');
     Route::get('/api/desktop/live/{record}',[\App\Http\Controllers\PublicBroadcastController::class,'apiShow'])->middleware('can:content.publish')->name('desktop.live.api.show');

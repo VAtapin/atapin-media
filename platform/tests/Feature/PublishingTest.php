@@ -156,7 +156,7 @@ class PublishingTest extends TestCase
         $this->assertStringNotContainsString('refresh-secret', $publication->error);
         $this->assertStringNotContainsString('client-secret', $publication->error);
         $this->assertStringNotContainsString('123:secret', $publication->error);
-        $publication->update(['status' => 'processing', 'attempts' => 5]);
+        $publication->update(['status' => 'processing', 'attempts' => 5, 'payload' => [...$publication->payload, 'consecutive_failures' => 4]]);
         (new PublishToPlatform($publication->id))->failed(new \RuntimeException('Failed again'));
         $this->assertNull($publication->fresh()->next_attempt_at);
     }

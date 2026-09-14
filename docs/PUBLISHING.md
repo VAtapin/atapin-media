@@ -1,44 +1,73 @@
 # Publishing
 
-Publishing is a server-side, queue-backed workflow in `platform/`. A record published on the Website is immediately made public and, when destinations are selected, creates one outbound publication per connected platform. Each destination keeps its own queue status, remote ID/URL, attempt count, timestamps, error and retry action.
+Publishing is the existing queue-backed workflow in `platform/`. Publishing on the Website makes the record public immediately and queues selected connected destinations without another confirmation, scheduled hold or approval. Uploading, encoding and platform processing still take technical time. Each destination retains its status, remote ID/URL, attempts, timestamps, error and retry action.
 
-## Current flow
+## Content and destinations
 
-- Videos, Shorts, Beiträge and Live events can be selected in the Publishing window.
-- Website is an internal destination and becomes public in the same application transaction.
-- YouTube, Facebook, Instagram and Telegram use real HTTP connectors when their encrypted connection is configured. Unavailable connector capabilities are marked as skipped or failed per destination; they do not block the Website.
-- YouTube video uploads read the canonical local media file through `MediaOriginalLocator`, so SHA-256 filenames and the public `platform/public/media` catalog remain the source of the file. Imported YouTube files are downloaded to a private temporary directory, then registered in canonical storage and shown as review-only content.
-- YouTube uploads always request `public`, without `publishAt` or a confirmation step. A private response is reported as a failure, not a successful public publication. Google restricts uploads from unverified API projects to private viewing; the installation needs the required [YouTube API audit](https://developers.google.com/youtube/v3/docs/videos/insert).
-- The YouTube video/broadcast ID is saved before thumbnail upload or broadcast binding. A retry resumes those steps instead of creating another video/broadcast. The queue claims work atomically and refuses manual retries of processing or successful publications.
-- Instagram uses the video URL when both video and cover exist, preserves its media container, and checks processing status before publishing. `IN_PROGRESS` schedules another check instead of holding the worker asleep. The returned permalink is used, not a fabricated URL.
-- Reverse YouTube synchronization is scheduled every five minutes. A synchronized item never becomes public automatically: it is created as `review` with `public_published=false` until an editor publishes it.
-- Own outbound YouTube IDs are linked to their original Website records, without another download or review duplicate. External imports retain their existing YouTube publication mapping, so enabling them on the Website does not upload them back to YouTube. Active external Live streams wait for a recording before media download. Existing historical duplicates are not deleted automatically.
+- Publishing offers checkboxes for Videos, Shorts, Beiträge and Live events. Website/YouTube are initially selected when compatible; saved `publishing_targets` govern later automation. Without saved targets, Website publication uses connected platforms. Unsupported destinations do not block the Website.
+- Real connectors exist for YouTube, Facebook, Instagram, Telegram and X. Permissions, account eligibility, file limits and quotas apply. LinkedIn and unidentified services are not implemented connectors.
+- YouTube always requests `public`, without `publishAt`. Nonpublic responses fail visibly. Unverified API projects can be restricted to private uploads; the installation needs the required [YouTube API audit](https://developers.google.com/youtube/v3/docs/videos/insert).
+- A Beitrag containing video uploads that video. For YouTube, a Beitrag without video becomes an MP4: an existing image or scrolling text card, accompanied by existing audio when available. Image/text-only cards last 15 seconds; audio cards follow audio duration. No automatic voice generation is provided. Facebook/X/Instagram use native text/image formats where available and adapt audio to video. Telegram sends audio natively.
+- The shared ffmpeg renderer creates H.264/AAC MP4s, reuses identical adaptations and registers them through existing canonical `public/media/<sha256>.mp4` storage. It does not replace originals or attach derivatives to Website records. Private temporary files are cleaned up.
+- YouTube `post=true` means video adaptation, not native Community publishing. The [Data API activities reference](https://developers.google.com/youtube/v3/docs/activities) does not provide a usable general channel-bulletin publishing method.
+- TikTok Direct Post is excluded from this unattended private publishing workflow. Its [Content Sharing Guidelines](https://developers.tiktok.com/doc/content-sharing-guidelines) require creator-facing control/consent and reject an internal utility for accounts managed by the developer/team as an acceptable audited use case. No unofficial/browser bypass is implemented.
 
-## YouTube Live
+## Upload recovery and publication checks
 
-Live Studio records use `kind=video` with `public_section=live`; Publishing recognizes that existing contract. The first successful Live publication creates one reusable YouTube `liveStream` and stores its stream metadata encrypted with the YouTube connection. Every later event creates only a new public broadcast and binds it to that same reusable stream.
+YouTube uses resumable 8 MiB chunks. Session URL/path/size are encrypted in the publication checkpoint. After interruption, the worker queries accepted bytes and resumes from the server-confirmed offset. Querying the same session after a lost final reply recovers the completed video ID without another upload, following the [resumable upload protocol](https://developers.google.com/youtube/v3/guides/using_resumable_upload_protocol). Expired sessions/changed sources fail visibly instead of silently creating duplicates.
 
-The MediaMTX `runOnAvailable` foreground hook retains `ffmpeg` while it relays the existing authorized local HLS (`http://127.0.0.1:8888/<path>/index.m3u8`) to YouTube. MediaMTX interrupts the hook when the publisher leaves and restarts a crashed hook; `ffmpeg` failures reconnect inside it. One OS file lock prevents competing relays and is released even on process death. There is no detached PID registry, JSON state or separate relay scheduler. FFmpeg output is disabled because diagnostics can include the secret ingestion URL. The hook also exits when the channel is disconnected or the event is no longer public/enabled.
+Video/broadcast IDs are saved before thumbnails/binding. Facebook saves its ID before processing checks; Instagram retains container/media IDs; X retains chunk/media checkpoints and post IDs; Telegram retains message IDs. Retries reuse these. Atomic claims prevent concurrent execution of one publication. This is not universal exactly-once delivery: an operation without API idempotency/recovery can lose its creation reply before saving an ID, especially broadcast creation or sending a new post/message.
 
-Ending the event queues completion of the existing broadcast. Failed completion is retried through the same publication queue; the original publication time is retained. Already completed broadcasts are accepted, while broadcasts that never started are reported separately without an invalid `complete` transition. Local HLS buffering and platform processing are technical latency, not an editorial hold.
+YouTube checks public visibility and processing rejection; uploaded/processing videos schedule another check. Facebook video checks encoding readiness and `published`; Instagram checks container readiness and retrieves the actual permalink; X checks media processing and retrieves its created post. New publications refuse X protected accounts and Telegram private destinations. API confirmation does not prove guest playback in every region: copyright, geographic and later moderation restrictions remain possible.
 
-This means OBS uses the existing single shared local RTMPS address/key. A new YouTube stream key is not created for every Live event.
+Processing checks use the queue, not sleeping workers. Five consecutive failures exhaust automatic retries; pending checks do not consume that failure budget. Manual retry applies to failed work, not queued/processing/successful work.
 
-## Configuration
+## Reverse YouTube import
 
-Set these server environment values in the Plesk application environment, then configure the OAuth redirect URI in Google Cloud to exactly match it:
+`publishing:youtube-sync` runs once daily at midnight in the application's timezone. Discovery considers uploads published within the previous 24 hours, without the old 500-video cap. Previously discovered unfinished/failed items are also rechecked by ID, allowing downloads/Live recordings to finish outside that window. Failed daily runs do not backfill undiscovered older days automatically; historical imports remain an Import Center operation.
 
-- `YOUTUBE_OAUTH_CLIENT_ID` and `YOUTUBE_OAUTH_CLIENT_SECRET` — OAuth web application credentials.
-- `YOUTUBE_OAUTH_REDIRECT_URI` — normally `https://mannavomhimmel.de/desktop/publishing/youtube/callback`.
-- `YOUTUBE_SYNC_DOWNLOADER` — installed `yt-dlp` executable used only for review imports.
-- `LIVE_RELAY_FFMPEG` — installed `ffmpeg` executable used for Live relay.
+Private downloads enter the same canonical SHA-256 registry. Records remain `review`, `public_published=false`, until an editor activates them. Own outbound IDs link to original Website records without a download/review duplicate. External imports retain their YouTube mapping, so activating the Website does not upload them back. Active external Live streams wait for recordings, rather than automatically embedding the currently running stream. Historical duplicates are not removed automatically.
 
-The OAuth access and refresh tokens, including the reusable YouTube stream metadata, are stored in the encrypted `settings.secret.social_youtube` value of this single-tenant installation. Connection metadata is kept separately without tokens. Disconnecting clears the encrypted credentials and blocks queued work, synchronization and relay. OAuth requires a nonempty, matching, single-use session state; reconnecting to a different channel discards the previous channel's refresh token/stream. Stored publication errors redact credentials. No token is written to Git, public media or publication payloads.
+## Live output
 
-The YouTube connector does not claim Community post support: the YouTube Data API does not provide a general channel-bulletin publishing endpoint in this workflow. Video/Short uploads and Live broadcasts are supported.
+Live Studio's existing `kind=video`, `public_section=live` contract is recognized. One reusable YouTube `liveStream`/key is stored encrypted per connected channel. Later events create a public broadcast bound to that same stream, not a new key. OBS retains its existing single local RTMPS address/key.
 
-## Operations
+Publishing accepts named `rtmp_*` destinations with a complete RTMP/RTMPS URL including the platform key. They are Live-only, encrypted, and URLs/keys are never returned in Publishing JSON. This requires an ingestion address/key actually provided by the platform/account. There is no generic arbitrary REST/API connector: each API has distinct authentication and resource/payload contracts.
 
-The existing Laravel scheduler runs `publishing:youtube-sync` every five minutes and `publishing:retry-due` every minute. The latter dispatches due failures (up to five automatic attempts, with increasing backoff) and platform-processing checks. Manual retry remains available after automatic attempts are exhausted. The existing Plesk queue worker handles publications and synchronization; no additional scheduled task or service is needed.
+The existing MediaMTX `runOnAvailable` foreground hook owns one ffmpeg child per selected output, relaying authorized local HLS to YouTube/configured RTMP destinations. A failed output reconnects independently without stopping others. One OS lock prevents competing hooks. No detached PID registry, JSON process manager, new scheduler or additional daemon is introduced. Disconnect/remove/deselect stops that output; a Live title update does not interrupt it. Update ingestion keys off-air.
 
-After updating, run `/opt/plesk/php/8.4/bin/php platform/artisan public:live-config` to regenerate the installed MediaMTX configuration with `runOnAvailable`, `runOnAvailableRestart` and `runOnUnavailable`. MediaMTX supports configuration reload; apply this update off-air. OAuth credentials, Google audit, connected-platform permissions, `yt-dlp`, `ffmpeg`, installed MediaMTX and production streaming need owner-side configuration/verification. HTTP/queue/browser regression tests do not prove a real external publication. The initial Publishing database migration must already be applied (back up before any production migration).
+`relaying` means local ffmpeg is running, not confirmed remote public playback. YouTube additionally polls public broadcast lifecycle and reports `live` only after API confirmation. Ending a Website event queues completion of its existing broadcast, with shared retries; completed and never-started broadcasts are distinguished. Generic RTMP destinations do not have platform-specific public-playback/status API checks.
+
+## Subsequent changes and deletion
+
+Website edits queue supported operations on the existing external ID, including edits during original-upload processing:
+
+| Destination | Text/metadata update | Reversible unpublish | Explicit deletion |
+| --- | --- | --- | --- |
+| YouTube | Title, description, tags, cover | Private visibility | Yes |
+| Facebook | Video title/description; Page post/photo-story message | Video/Page post, not a photo asset | Yes |
+| Telegram | Text or media caption | No | Yes, within Bot API limits |
+| X | Not implemented | No | Yes |
+| Instagram | Not implemented | Not implemented | Not implemented |
+
+YouTube media bytes cannot be replaced by metadata updates. Editing image/audio/text does not automatically re-encode/replace an already published adaptation. Individual platform-specific text/visibility/schedule editors are not implemented; the source record drives supported updates. X editing is not treated as an unrestricted metadata endpoint; Instagram editing/deletion are not promised by this connector.
+
+Default Website unpublication/soft deletion uses reversible hiding where supported and **does not destroy** X/Telegram/photo copies. A per-record GUI checkbox explicitly enables deletion on supported connectors when the Website is unpublished/soft-deleted; off by default, it warns of irreversible deletion. A separate confirmed “delete on platform” action retains local records/files. Restoring hidden records reapplies public visibility; recreating deleted copies requires explicit publication again. Hard deletion is not a reliable remote-cleanup mechanism.
+
+Imported YouTube mappings are protected from ordinary Website metadata/visibility edits. Explicit deletion, or explicitly enabling deletion-on-unpublish, can remove them. Daily reverse import does not overwrite owner edits or implement bidirectional metadata/delete propagation.
+
+## Configuration and operations
+
+Configure secrets on the server, never in Git/chat:
+
+- `YOUTUBE_OAUTH_CLIENT_ID`, `YOUTUBE_OAUTH_CLIENT_SECRET`, `YOUTUBE_OAUTH_REDIRECT_URI`: Google OAuth web app; callback normally `https://mannavomhimmel.de/desktop/publishing/youtube/callback`.
+- `X_OAUTH_CLIENT_ID`, optionally `X_OAUTH_CLIENT_SECRET`, `X_OAUTH_REDIRECT_URI`: OAuth 2.0 user authentication with PKCE; callback normally `https://mannavomhimmel.de/desktop/publishing/x/callback`. Scopes: `tweet.read tweet.write users.read media.write offline.access`. Developer app needs write/media access and [X API credits](https://docs.x.com/x-api/getting-started/pricing). [Official OAuth setup](https://docs.x.com/fundamentals/authentication/oauth-2-0/authorization-code).
+- `YOUTUBE_SYNC_DOWNLOADER`: installed yt-dlp for review imports.
+- `LIVE_RELAY_FFMPEG`: installed ffmpeg for relay/adaptation, with H.264/AAC and drawtext/usable font for text cards.
+- Facebook/Instagram Page/account IDs and authorized tokens; Telegram public channel/group ID and bot token: existing encrypted integration settings, with publishing permissions.
+
+Access/refresh tokens and reusable stream data are encrypted in installation settings; upload-session checkpoints are encrypted too. The platform is single-tenant: each client deployment has its own settings database/encryption key, not shared cross-client credentials. Disconnect clears credentials and blocks subsequent work. OAuth validates nonempty matching one-use state (X also PKCE); errors redact known credentials. Secrets do not enter public media/Publishing JSON.
+
+Existing Plesk scheduler runs daily discovery and `publishing:retry-due` every minute; existing queue workers handle uploads, adaptations, management actions and imports. No new cron/service/dependency/migration is introduced in this follow-up; initial Publishing migration must already be installed. If original foreground hooks were never applied, regenerate MediaMTX config off-air with `/opt/plesk/php/8.4/bin/php platform/artisan public:live-config`; already deployed hooks retain the same entrypoint.
+
+PHP/SQLite, mocked HTTP/Process and browser regressions verify application paths, not real encoding, MediaMTX ingestion, OAuth approval/credits or external playback. Owner-side account configuration and deliberately selected real test publications/streams remain required. These tests perform no production publication/deployment.

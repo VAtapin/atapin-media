@@ -17,40 +17,47 @@ class PublishingController extends Controller
             'records' => $publishing->records()->map(fn (SourceRecord $record) => [
                 'id' => $record->id, 'title' => $record->title, 'kind' => $record->publishingKind(),
                 'public_published' => (bool) ($record->metadata['public_published'] ?? false),
+                'remove_external_on_unpublish' => (bool) ($record->metadata['remove_external_on_unpublish'] ?? false),
             ])->values(),
             'destinations' => [
                 ['provider' => 'website', 'label' => 'Website', 'connected' => true, 'capabilities' => ['video' => true, 'short' => true, 'post' => true, 'live' => true]],
                 ...collect($connections->publicConnections())->map(function (array $connection) use ($registry) {
                     $capabilities = [];
                     try { $capabilities = $registry->get($connection['provider'])->capabilities(); } catch (\Throwable) { }
-                    return [...$connection, 'label' => ucfirst($connection['provider']), 'capabilities' => $capabilities];
+                    return [...$connection, 'label' => $connection['label'] ?? ucfirst($connection['provider']), 'capabilities' => $capabilities];
                 })->values()->all(),
             ],
-            'publications' => Publication::with('record')->latest('updated_at')->limit(100)->get()->map(fn (Publication $item) => [
+            'publications' => Publication::with('record')->latest('updated_at')->limit(100)->get()->map(function (Publication $item) use ($registry) {
+                $actions = [];
+                try { $connector = $registry->get($item->provider); if ($connector instanceof \App\Contracts\ManagesPublications) $actions = $connector->actions(); } catch (\Throwable) { }
+                return [
                 'id' => $item->id, 'record_id' => $item->source_record_id, 'title' => $item->record?->title,
                 'provider' => $item->provider, 'direction' => $item->direction, 'status' => $item->status,
                 'remote_status' => $item->remote_status,
                 'external_id' => $item->external_id, 'external_url' => $item->external_url, 'error' => $item->error,
                 'attempts' => $item->attempts, 'published_at' => $item->published_at?->toIso8601String(),
                 'last_attempt_at' => $item->last_attempt_at?->toIso8601String(), 'next_attempt_at' => $item->next_attempt_at?->toIso8601String(),
-            ])->values(),
+                'can_remove' => $item->external_id && in_array('delete', $actions, true) && ! in_array($item->status, ['queued', 'processing'], true) && $item->remote_status !== 'deleted',
+            ]; })->values(),
             'youtube' => ['configured' => app(YouTubeClient::class)->configured(), 'channel' => $connections->connection('youtube')['public_url'] ?? null],
         ]);
     }
 
     public function publish(Request $request, PublishingService $publishing, ConnectionStore $connections)
     {
-        $data = $request->validate(['record_id' => 'required|integer|exists:source_records,id', 'destinations' => 'required|array|min:1', 'destinations.*' => 'string|in:website,youtube,facebook,instagram,telegram,tiktok,linkedin,x']);
+        $data = $request->validate(['record_id' => 'required|integer|exists:source_records,id', 'destinations' => 'required|array|min:1', 'destinations.*' => ['string', 'regex:/^(website|youtube|facebook|instagram|telegram|x|linkedin|rtmp_[a-z0-9_]{1,27})$/']]);
         $record = SourceRecord::findOrFail($data['record_id']);
+        $request->validate(['remove_external_on_unpublish' => 'nullable|boolean']);
         $this->assertPublishable($record);
         $destinations = array_values(array_unique($data['destinations']));
         foreach (array_diff($destinations, ['website']) as $provider) {
             abort_unless($connections->connected($provider) && ! ($connections->connection($provider)['revoked_at'] ?? false), 422, ucfirst($provider).' is not connected.');
         }
         $wasPublic = (bool) (($record->metadata ?? [])['public_published'] ?? false);
-        DB::transaction(function () use ($record, $destinations) {
+        DB::transaction(function () use ($record, $destinations, $request) {
             $metadata = $record->metadata ?? [];
             $metadata['publishing_targets'] = $destinations;
+            if ($request->has('remove_external_on_unpublish')) $metadata['remove_external_on_unpublish'] = $request->boolean('remove_external_on_unpublish');
             if (in_array('website', $destinations, true)) {
                 $metadata['public_published'] = true;
                 $metadata['public_published_at'] ??= now()->toIso8601String();
@@ -67,6 +74,35 @@ class PublishingController extends Controller
     {
         abort_unless($publishing->retry($publication), 409, __('publishing.retry_unavailable'));
         return response()->json(['status' => 'queued', 'publication_id' => $publication->id]);
+    }
+
+    public function removePublication(Request $request, Publication $publication, PublishingService $publishing)
+    {
+        $request->validate(['confirm' => 'required|accepted']);
+        abort_unless($publishing->queueRemoval($publication), 409);
+        return response()->json(['status' => 'queued']);
+    }
+
+    public function saveLiveOutput(Request $request, ConnectionStore $connections)
+    {
+        $data = $request->validate(['id' => ['required', 'regex:/^rtmp_[a-z0-9_]{1,27}$/'], 'label' => 'required|string|max:100', 'url' => ['required', 'string', 'max:2048', 'regex:~^rtmps?://[^\s]+$~']]);
+        $parts = parse_url($data['url']);
+        abort_unless($parts && ! empty($parts['host']) && ! isset($parts['user']) && ! isset($parts['pass']) && ! isset($parts['fragment']), 422);
+        $connections->saveLiveOutput($data['id'], $data['label'], $data['url']);
+        return response()->json(['status' => 'saved']);
+    }
+
+    public function removeLiveOutput(string $output, ConnectionStore $connections)
+    {
+        abort_unless(preg_match('/^rtmp_[a-z0-9_]{1,27}$/', $output), 404);
+        $connections->removeLiveOutput($output);
+        return response()->json(['status' => 'removed']);
+    }
+
+    public function disconnectX(ConnectionStore $connections)
+    {
+        $connections->forgetCredentials('x');
+        return response()->json(['status' => 'disconnected']);
     }
 
     public function syncYouTube()

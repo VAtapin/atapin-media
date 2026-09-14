@@ -11,7 +11,7 @@ try {
     elseif(in_array($argv[1]??'',['ready','ended'],true)) {
         $record = $broadcast->record($path);
         $broadcast->signal($path,$argv[1]==='ready');
-        if (($argv[1]??'') === 'ready') $app->make(App\Services\Publishing\YouTubeLiveRelay::class)->run($path);
+        if (($argv[1]??'') === 'ready') $app->make(App\Services\Publishing\LiveRelay::class)->run($path);
         elseif ($record) $app->make(App\Services\Publishing\PublishingService::class)->queueLiveCompletion($record);
     }
     else exit(1);

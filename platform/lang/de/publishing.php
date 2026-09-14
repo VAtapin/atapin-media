@@ -1,6 +1,13 @@
 <?php
 
 return [
+    'connect_x' => 'X verbinden', 'live_outputs' => 'Weitere Live-Ziele',
+    'adapted_post' => 'Als Video veröffentlicht, nicht als YouTube-Community-Beitrag',
+    'remove_on_unpublish' => 'Beim Deaktivieren oder Verschieben dieses Materials in den Papierkorb auch externe Veröffentlichungen unwiderruflich löschen (soweit unterstützt). Standardmäßig aus; externes Löschen ist nicht rückgängig zu machen.',
+    'live_outputs_hint' => 'Vollständige RTMP/RTMPS-Adresse einschließlich Stream-Schlüssel eingeben. Das Ziel beim Live-Ereignis auswählen. Schlüssel bleiben verschlüsselt und werden nicht angezeigt.',
+    'output_id' => 'Feste ID (rtmp_…) ', 'output_label' => 'Name', 'output_url' => 'Adresse und Schlüssel', 'save_output' => 'Ziel speichern', 'remove_output' => 'Ziel entfernen',
+    'remove_remote' => 'Auf Plattform löschen', 'confirm_remove_remote' => 'Diese Veröffentlichung auf der externen Plattform unwiderruflich löschen? Das lokale Material bleibt erhalten.',
+    'uploading' => 'Wird hochgeladen', 'hidden' => 'Privat', 'deleted' => 'Auf Plattform gelöscht',
     'eyebrow' => 'Media Desktop · Veröffentlichungen', 'title' => 'Publishing',
     'intro' => 'Ein Inhalt wird auf der Website sofort öffentlich und parallel an alle gewählten Kanäle übertragen.',
     'sync' => 'YouTube synchronisieren', 'connect_youtube' => 'YouTube verbinden',

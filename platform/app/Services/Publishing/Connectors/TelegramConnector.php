@@ -2,12 +2,12 @@
 
 namespace App\Services\Publishing\Connectors;
 
-use App\Contracts\PublishingConnector;
+use App\Contracts\{ManagesPublications, PublishingConnector};
 use App\Models\Publication;
 use App\Services\Publishing\{ConnectionStore, MediaResolver, UnsupportedCapability};
 use Illuminate\Support\Facades\Http;
 
-class TelegramConnector implements PublishingConnector
+class TelegramConnector implements PublishingConnector, ManagesPublications
 {
     public function __construct(private readonly ConnectionStore $connections)
     {
@@ -23,6 +23,27 @@ class TelegramConnector implements PublishingConnector
         return ['video' => true, 'short' => true, 'post' => true, 'live' => false];
     }
 
+    public function actions(): array { return ['update', 'delete']; }
+    public function manage(Publication $publication, string $action): array
+    {
+        $credentials = $this->connections->credentials('telegram');
+        $base = rtrim((string) config('publishing.telegram.api_base'), '/').'/bot'.($credentials['api_key'] ?? $credentials['access_token']);
+        $data = ['chat_id' => $this->connections->connection('telegram')['external_id'], 'message_id' => $publication->external_id];
+        if ($action === 'delete') $method = 'deleteMessage';
+        elseif ($action === 'update') {
+            $caption = trim($publication->record->title."\n\n".(string) $publication->record->body);
+            $media = ($publication->payload['telegram_media'] ?? false) || app(MediaResolver::class)->video($publication->record) || app(MediaResolver::class)->image($publication->record);
+            $method = $media ? 'editMessageCaption' : 'editMessageText';
+            $data[$media ? 'caption' : 'text'] = $caption;
+        } else throw new UnsupportedCapability('Telegram has no reversible private visibility for a channel message.');
+        $response = Http::timeout(60)->post($base.'/'.$method, $data);
+        if (! str_contains((string) $response->json('description'), 'message is not modified')) {
+            $response->throw();
+            if ($response->json('ok') !== true) throw new \RuntimeException('Telegram did not confirm the requested operation.');
+        }
+        return ['remote_status' => $action === 'delete' ? 'deleted' : 'published'];
+    }
+
     public function publish(Publication $publication): array
     {
         $record = $publication->record;
@@ -33,10 +54,15 @@ class TelegramConnector implements PublishingConnector
         $chat = $connection['external_id'] ?? null;
         if (! is_string($token) || $token === '' || ! is_string($chat) || $chat === '') throw new \RuntimeException('Telegram connection is incomplete.');
         if ($record->publishingKind() === 'live') throw new UnsupportedCapability('Telegram Live output is not configured.');
+        if ($publication->external_id) return ['external_id' => $publication->external_id, 'remote_status' => 'published'];
         $base = rtrim((string) config('publishing.telegram.api_base'), '/').'/bot'.$token;
+        $publicChat = Http::timeout(30)->post($base.'/getChat', ['chat_id' => $chat])->throw()->json('result', []);
+        if (empty($publicChat['username']) || ! in_array($publicChat['type'] ?? null, ['channel', 'supergroup'], true)) throw new \RuntimeException('Telegram requires a public channel or group for automatic public distribution.');
         $caption = trim($record->title."\n\n".(string) ($record->body ?? ''));
-        if (in_array($record->kind, ['video', 'short'], true) && ($video = app(MediaResolver::class)->video($record))) {
+        if ($video = app(MediaResolver::class)->video($record)) {
             $response = Http::timeout(300)->attach('video', fopen($video['path'], 'rb'), basename($video['path']))->post($base.'/sendVideo', ['chat_id' => $chat, 'caption' => $caption]);
+        } elseif ($audio = app(MediaResolver::class)->audio($record)) {
+            $response = Http::timeout(300)->attach('audio', fopen($audio['path'], 'rb'), basename($audio['path']))->post($base.'/sendAudio', ['chat_id' => $chat, 'caption' => $caption]);
         } elseif ($image = app(MediaResolver::class)->image($record)) {
             $response = Http::timeout(120)->attach('photo', fopen($image['path'], 'rb'), basename($image['path']))->post($base.'/sendPhoto', ['chat_id' => $chat, 'caption' => $caption]);
         } else {
@@ -45,6 +71,7 @@ class TelegramConnector implements PublishingConnector
         $response->throw();
         $id = $response->json('result.message_id');
         if (! is_numeric($id)) throw new \RuntimeException('Telegram returned no message ID.');
-        return ['external_id' => (string) $id, 'remote_status' => 'published'];
+        $publication->update(['external_id' => (string) $id]);
+        return ['external_id' => (string) $id, 'remote_status' => 'published', 'payload' => ['telegram_media' => (bool) ($video ?? $audio ?? $image ?? null)]];
     }
 }

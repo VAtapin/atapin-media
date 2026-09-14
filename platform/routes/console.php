@@ -40,7 +40,7 @@ Artisan::command('publishing:youtube-sync', function () {
     \App\Jobs\SyncYouTubeChannel::dispatch();
     $this->info('YouTube synchronization queued.');
 });
-Schedule::command('publishing:youtube-sync')->everyFiveMinutes()->withoutOverlapping();
+Schedule::command('publishing:youtube-sync')->daily()->withoutOverlapping();
 Artisan::command('publishing:retry-due', function () {
     $this->info('Publication retries queued: '.app(\App\Services\Publishing\PublishingService::class)->dispatchDue());
 });

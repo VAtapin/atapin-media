@@ -20,6 +20,6 @@ class Publication extends Model
 
     public function record()
     {
-        return $this->belongsTo(SourceRecord::class, 'source_record_id');
+        return $this->belongsTo(SourceRecord::class, 'source_record_id')->withTrashed();
     }
 }

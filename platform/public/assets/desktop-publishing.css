@@ -1,4 +1,7 @@
 .desktop-publishing{padding:28px;display:grid;gap:18px;color:var(--ink,#302b24)}
+.desktop-publishing [data-live-output-form]{justify-content:flex-start;align-items:end;margin-top:14px}
+.desktop-publishing [data-live-output-form] label{display:grid;gap:7px;flex:1;min-width:180px}
+.desktop-publishing [data-live-output-form] input{box-sizing:border-box;width:100%;padding:10px;border:1px solid #cfc7bc;border-radius:10px;background:#fff;font:inherit}
 .desktop-publishing-head,.desktop-publishing-card-head,.desktop-publishing-actions,.desktop-publishing-destination,.desktop-publishing-status-item{display:flex;align-items:center;gap:14px}
 .desktop-publishing-head,.desktop-publishing-card-head{justify-content:space-between}
 .desktop-publishing-head{align-items:flex-start}.desktop-publishing-head h1{margin:.1rem 0 .4rem}.desktop-publishing-head p{max-width:680px}

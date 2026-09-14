@@ -117,7 +117,7 @@ class PublishingConnectorsTest extends TestCase
             },
         ]);
         $client = app(YouTubeClient::class);
-        $client->uploadVideo(Storage::disk('media-canonical')->path('video.mp4'), ['title' => 'Video'], ['privacyStatus' => 'public']);
+        $client->uploadVideo(Storage::disk('media-canonical')->path('video.mp4'), ['title' => 'Video'], ['privacyStatus' => 'public'], $this->publication('youtube'));
         $client->uploadThumbnail('video-id', Storage::disk('media-canonical')->path('cover.jpg'));
         $this->assertSame(['video' => 'actual-video-bytes', 'image' => 'actual-image-bytes'], $bodies);
     }

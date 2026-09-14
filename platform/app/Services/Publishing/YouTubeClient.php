@@ -4,6 +4,8 @@ namespace App\Services\Publishing;
 
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Crypt;
+use App\Models\Publication;
 
 class YouTubeClient
 {
@@ -52,27 +54,64 @@ class YouTubeClient
             ->throw()->json('items.0', []);
     }
 
-    public function uploadVideo(string $path, array $snippet, array $status): array
+    public function uploadVideo(string $path, array $snippet, array $status, Publication $publication): array
     {
         if (! is_file($path)) throw new \RuntimeException('YouTube upload source is unavailable.');
         $mime = mime_content_type($path) ?: 'video/mp4';
-        $init = $this->request()->withHeaders([
-            'X-Upload-Content-Length' => (string) filesize($path),
-            'X-Upload-Content-Type' => $mime,
-        ])->post($this->uploadUrl('videos').'?uploadType=resumable&part=snippet,status', [
-            'snippet' => $snippet,
-            'status' => $status,
-        ])->throw();
-        $location = $init->header('Location');
-        if (! is_string($location) || $location === '') throw new \RuntimeException('YouTube did not return a resumable upload URL.');
-        $handle = fopen($path, 'rb');
-        if (! $handle) throw new \RuntimeException('YouTube upload source cannot be opened.');
-        try {
-            return $this->request()->withHeaders(['Content-Type' => $mime, 'Content-Length' => (string) filesize($path)])
-                ->withBody($handle, $mime)->put($location)->throw()->json();
-        } finally {
-            fclose($handle);
+        return $this->resumeUpload($publication, $path, $mime, $snippet, $status);
+    }
+
+    private function resumeUpload(Publication $publication, string $path, string $mime, array $snippet, array $status): array
+    {
+        $size = filesize($path);
+        $session = $publication->payload['upload_session'] ?? null;
+        if ($session) {
+            $session = json_decode(Crypt::decryptString($session), true, 512, JSON_THROW_ON_ERROR);
+            if ($session['size'] !== $size || $session['path'] !== $path) throw new \RuntimeException('The upload source changed; the existing session cannot be reused.');
+            $url = $session['url'];
+            try {
+                $response = $this->request()->timeout(60)->withHeaders(['Content-Range' => 'bytes */'.$size, 'Content-Length' => '0'])->withBody('', $mime)->put($url);
+            } catch (\Throwable) { throw new \RuntimeException('YouTube upload status is unavailable; the encrypted session has been retained.'); }
+        } else {
+            $init = $this->request()->timeout(60)->withHeaders(['X-Upload-Content-Length' => (string) $size, 'X-Upload-Content-Type' => $mime])
+                ->post($this->uploadUrl('videos').'?uploadType=resumable&part=snippet,status', ['snippet' => $snippet, 'status' => $status])->throw();
+            $url = $init->header('Location');
+            // Never send a bearer token to an arbitrary Location supplied by a remote response.
+            if (! is_string($url) || parse_url($url, PHP_URL_SCHEME) !== 'https' || parse_url($url, PHP_URL_HOST) !== 'www.googleapis.com') throw new \RuntimeException('YouTube returned an invalid upload session.');
+            $publication->update(['payload' => [...($publication->payload ?? []), 'upload_session' => Crypt::encryptString(json_encode(['url' => $url, 'path' => $path, 'size' => $size], JSON_THROW_ON_ERROR))]]);
+            $response = null;
         }
+        $handle = fopen($path, 'rb');
+        if (! $handle) throw new \RuntimeException('The upload source cannot be opened.');
+        try {
+            $offset = 0;
+            $lastOffset = -1;
+            while (true) {
+                if ($response) {
+                    if ($response->successful() && is_string($response->json('id'))) {
+                        $publication->update(['payload' => [...($publication->payload ?? []), 'uploaded_bytes' => $size, 'total_bytes' => $size]]);
+                        return $response->json();
+                    }
+                    if ($response->status() !== 308) throw new \RuntimeException('YouTube upload session failed (HTTP '.$response->status().'); its checkpoint has been retained.');
+                    $range = $response->header('Range');
+                    $offset = $range && preg_match('/^bytes=0-(\d+)$/', $range, $match) ? (int) $match[1] + 1 : 0;
+                }
+                if ($offset >= $size) throw new \RuntimeException('YouTube accepted the bytes but has not returned a video ID. Retry the retained session.');
+                if ($offset <= $lastOffset) throw new \RuntimeException('YouTube upload made no progress; retry the retained session.');
+                $lastOffset = $offset;
+                fseek($handle, $offset);
+                $chunk = fread($handle, min(8 * 1024 * 1024, $size - $offset));
+                if ($chunk === false || $chunk === '') throw new \RuntimeException('The upload source cannot be read.');
+                $end = $offset + strlen($chunk) - 1;
+                $publication->update(['remote_status' => 'uploading', 'payload' => [...($publication->payload ?? []), 'uploaded_bytes' => $offset, 'total_bytes' => $size]]);
+                try {
+                    $response = $this->request()->timeout(120)->withHeaders(['Content-Range' => 'bytes '.$offset.'-'.$end.'/'.$size, 'Content-Length' => (string) strlen($chunk)])
+                        ->withBody($chunk, $mime)->put($url);
+                } catch (\Throwable) {
+                    throw new \RuntimeException('YouTube upload was interrupted; retry will query and resume the retained session.');
+                }
+            }
+        } finally { fclose($handle); }
     }
 
     public function uploadThumbnail(string $videoId, string $path): void
@@ -129,7 +168,24 @@ class YouTubeClient
 
     public function video(string $id): array
     {
-        return $this->request()->get($this->url('videos'), ['part' => 'status', 'id' => $id])->throw()->json('items.0', []);
+        return $this->request()->get($this->url('videos'), ['part' => 'snippet,status,processingDetails', 'id' => $id])->throw()->json('items.0', []);
+    }
+
+    public function updateVideo(string $id, array $snippet, string $privacy): void
+    {
+        $this->request()->put($this->url('videos').'?part=snippet,status', ['id' => $id, 'snippet' => $snippet, 'status' => ['privacyStatus' => $privacy]])->throw();
+    }
+
+    public function deleteVideo(string $id): void
+    {
+        $this->request()->delete($this->url('videos'), ['id' => $id])->throw();
+    }
+
+    public function broadcastStatus(string $id): string
+    {
+        $status = $this->request()->timeout(10)->get($this->url('liveBroadcasts'), ['part' => 'status', 'id' => $id])->throw()->json('items.0.status', []);
+        if (($status['privacyStatus'] ?? null) !== 'public') throw new \RuntimeException('YouTube Live is not confirmed public. Check channel permissions and visibility.');
+        return (string) ($status['lifeCycleStatus'] ?? 'unknown');
     }
 
     public function completeBroadcast(string $id): string
@@ -152,18 +208,33 @@ class YouTubeClient
         $playlistId = $channel['contentDetails']['relatedPlaylists']['uploads'] ?? null;
         if (! is_string($playlistId)) return [];
         $ids = [];
+        $since = now()->subDay();
         $page = null;
         do {
             $query = ['part' => 'contentDetails,snippet', 'playlistId' => $playlistId, 'maxResults' => 50];
             if ($page) $query['pageToken'] = $page;
             $data = $this->request()->get($this->url('playlistItems'), $query)->throw()->json();
-            foreach ($data['items'] ?? [] as $item) if (is_string($item['contentDetails']['videoId'] ?? null)) $ids[] = $item['contentDetails']['videoId'];
+            $older = false;
+            foreach ($data['items'] ?? [] as $item) {
+                $date = $item['contentDetails']['videoPublishedAt'] ?? $item['snippet']['publishedAt'] ?? null;
+                if (! $date || \Illuminate\Support\Carbon::parse($date)->lt($since)) { $older = true; continue; }
+                if (is_string($item['contentDetails']['videoId'] ?? null)) $ids[] = $item['contentDetails']['videoId'];
+            }
             $page = $data['nextPageToken'] ?? null;
-        } while ($page && count($ids) < 500);
+        } while ($page && ! $older);
         $videos = [];
         foreach (array_chunk(array_values(array_unique($ids)), 50) as $chunk) {
             $data = $this->request()->get($this->url('videos'), ['part' => 'snippet,status,contentDetails,liveStreamingDetails', 'id' => implode(',', $chunk)])->throw()->json();
             $videos = [...$videos, ...($data['items'] ?? [])];
+        }
+        return $videos;
+    }
+
+    public function videosByIds(array $ids): array
+    {
+        $videos = [];
+        foreach (array_chunk(array_unique($ids), 50) as $chunk) {
+            $videos = [...$videos, ...$this->request()->get($this->url('videos'), ['part' => 'snippet,status,contentDetails,liveStreamingDetails', 'id' => implode(',', $chunk)])->throw()->json('items', [])];
         }
         return $videos;
     }

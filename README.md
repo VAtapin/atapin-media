@@ -178,7 +178,7 @@ Podcast Series и Episodes, standalone Audio или Audio, полученное 
 
 ### Publishing
 
-Единый workspace для публикации на Website и внешние destinations. Для каждой платформы можно иметь собственные title, description, caption, hashtags, thumbnail, visibility, schedule и platform-specific options.
+Единый workspace с галочками Website, YouTube, Facebook, Instagram, Telegram и X и отдельными Live-only RTMP-направлениями. Website сразу запускает выбранные внешние действия без дополнительного подтверждения; YouTube получает public-видео, в том числе автоматически адаптированные Beiträge/аудио. Live использует один reusable YouTube key. По направлениям видны ошибки, статусы и повторы; YouTube upload возобновляется по серверному checkpoint. Обратный YouTube import — раз в сутки за последние 24 часа, только в Review. Поддерживаемые изменения/снятие/удаление и API-ограничения: [docs/PUBLISHING.md](docs/PUBLISHING.md). Индивидуальные platform-specific редакторы и schedule пока не реализованы; подключение аккаунтов и production-проверка обязательны.
 
 ### Community
 

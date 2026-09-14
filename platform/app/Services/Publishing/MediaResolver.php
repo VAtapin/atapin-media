@@ -35,4 +35,11 @@ class MediaResolver
         $location = $media ? $this->locator->find($media) : null;
         return $media && $location ? ['media' => $media, 'path' => $this->locator->path($location)] : null;
     }
+
+    public function audio(SourceRecord $record): ?array
+    {
+        $media = $this->assets($record)->first(fn (Media $item) => $item->kind === 'audio');
+        $location = $media ? $this->locator->find($media) : null;
+        return $media && $location ? ['media' => $media, 'path' => $this->locator->path($location)] : null;
+    }
 }
