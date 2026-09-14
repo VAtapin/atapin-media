@@ -10,7 +10,7 @@ try {
   page.on('pageerror', error => errors.push(error.message));
   let publications = [{id:1,record_id:1,title:'Video',provider:'youtube',status:'queued'}];
   const data = () => ({
-    records:[{id:1,title:'Video',kind:'video'},{id:2,title:'Post',kind:'post'},{id:3,title:'Live',kind:'live'}],
+    records:[{id:1,title:'Video',kind:'video',publishing_targets:[]},{id:2,title:'Post',kind:'post'},{id:3,title:'Live',kind:'live',publishing_targets:['website','rtmp_live']}],
     destinations:[
       {provider:'website',label:'Website',connected:true},
       {provider:'youtube',label:'YouTube',connected:true,capabilities:{video:true,live:true,post:true}},
@@ -41,6 +41,8 @@ try {
   const select = page.locator('[data-publishing-record]');
   await page.waitForFunction(() => document.querySelector('[data-publishing-record]').options.length === 3);
   assert.equal(await page.locator('input[value="facebook"]').count(), 0);
+  assert(!(await page.locator('input[value="website"]').isChecked()));
+  assert(!(await page.locator('input[value="youtube"]').isChecked()));
   await select.selectOption('2');
   assert(!(await page.locator('input[value="youtube"]').isDisabled()));
   assert(await page.locator('input[value="youtube"]').isChecked());
@@ -58,8 +60,10 @@ try {
   await select.selectOption('3');
   assert(!(await page.locator('[data-remove-on-unpublish]').isChecked()));
   assert(!(await page.locator('input[value="youtube"]').isDisabled()));
+  assert(!(await page.locator('input[value="youtube"]').isChecked()));
   assert(await page.locator('input[value="instagram"]').isDisabled());
   assert(!(await page.locator('input[value="rtmp_live"]').isDisabled()));
+  assert(await page.locator('input[value="rtmp_live"]').isChecked());
   await page.locator('[name="id"]').fill('rtmp_second');
   await page.locator('[name="label"]').fill('Second <Live>');
   await page.locator('[name="url"]').fill('rtmps://example.test/live/secret-key');

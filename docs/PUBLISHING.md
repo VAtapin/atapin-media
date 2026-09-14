@@ -4,7 +4,7 @@ Publishing is the existing queue-backed workflow in `platform/`. Publishing on t
 
 ## Content and destinations
 
-- Publishing offers checkboxes for Videos, Shorts, Beiträge and Live events. Website/YouTube are initially selected when compatible; saved `publishing_targets` govern later automation. Without saved targets, Website publication uses connected platforms. Unsupported destinations do not block the Website.
+- Publishing offers checkboxes for Videos, Shorts, Beiträge and Live events. Saved `publishing_targets`, including an empty selection, are restored in the GUI and govern later automation. Website/YouTube are initially selected only when no choice has been saved. Without saved targets, Website publication uses connected platforms. Unsupported destinations do not block the Website.
 - Real connectors exist for YouTube, Facebook, Instagram, Telegram and X. Permissions, account eligibility, file limits and quotas apply. LinkedIn and unidentified services are not implemented connectors.
 - YouTube always requests `public`, without `publishAt`. Nonpublic responses fail visibly. Unverified API projects can be restricted to private uploads; the installation needs the required [YouTube API audit](https://developers.google.com/youtube/v3/docs/videos/insert).
 - A Beitrag containing video uploads that video. For YouTube, a Beitrag without video becomes an MP4: an existing image or scrolling text card, accompanied by existing audio when available. Image/text-only cards last 15 seconds; audio cards follow audio duration. No automatic voice generation is provided. Facebook/X/Instagram use native text/image formats where available and adapt audio to video. Telegram sends audio natively.
@@ -53,6 +53,8 @@ Website edits queue supported operations on the existing external ID, including 
 YouTube media bytes cannot be replaced by metadata updates. Editing image/audio/text does not automatically re-encode/replace an already published adaptation. Individual platform-specific text/visibility/schedule editors are not implemented; the source record drives supported updates. X editing is not treated as an unrestricted metadata endpoint; Instagram editing/deletion are not promised by this connector.
 
 Default Website unpublication/soft deletion uses reversible hiding where supported and **does not destroy** X/Telegram/photo copies. A per-record GUI checkbox explicitly enables deletion on supported connectors when the Website is unpublished/soft-deleted; off by default, it warns of irreversible deletion. A separate confirmed “delete on platform” action retains local records/files. Restoring hidden records reapplies public visibility; recreating deleted copies requires explicit publication again. Hard deletion is not a reliable remote-cleanup mechanism.
+
+The Website publication status follows its actual ready/public/trash flags and reports `unpublished` after removal, without erasing the publication timestamp. Telegram stores the sent text/media message type together with its ID: later local attachments do not change the edit method. Legacy messages without that checkpoint retain the previous attachment-based fallback; their historical type cannot be recovered reliably from local attachments.
 
 Imported YouTube mappings are protected from ordinary Website metadata/visibility edits. Explicit deletion, or explicitly enabling deletion-on-unpublish, can remove them. Daily reverse import does not overwrite owner edits or implement bidirectional metadata/delete propagation.
 

@@ -32,7 +32,8 @@ class TelegramConnector implements PublishingConnector, ManagesPublications
         if ($action === 'delete') $method = 'deleteMessage';
         elseif ($action === 'update') {
             $caption = trim($publication->record->title."\n\n".(string) $publication->record->body);
-            $media = ($publication->payload['telegram_media'] ?? false) || app(MediaResolver::class)->video($publication->record) || app(MediaResolver::class)->image($publication->record);
+            // Honor the actual sent message type, including an explicitly saved false.
+            $media = $publication->payload['telegram_media'] ?? (bool) (app(MediaResolver::class)->video($publication->record) || app(MediaResolver::class)->image($publication->record) || app(MediaResolver::class)->audio($publication->record));
             $method = $media ? 'editMessageCaption' : 'editMessageText';
             $data[$media ? 'caption' : 'text'] = $caption;
         } else throw new UnsupportedCapability('Telegram has no reversible private visibility for a channel message.');
@@ -71,7 +72,7 @@ class TelegramConnector implements PublishingConnector, ManagesPublications
         $response->throw();
         $id = $response->json('result.message_id');
         if (! is_numeric($id)) throw new \RuntimeException('Telegram returned no message ID.');
-        $publication->update(['external_id' => (string) $id]);
-        return ['external_id' => (string) $id, 'remote_status' => 'published', 'payload' => ['telegram_media' => (bool) ($video ?? $audio ?? $image ?? null)]];
+        $publication->update(['external_id' => (string) $id, 'payload' => [...($publication->payload ?? []), 'telegram_media' => (bool) ($video ?? $audio ?? $image ?? null)]]);
+        return ['external_id' => (string) $id, 'remote_status' => 'published'];
     }
 }

@@ -149,13 +149,17 @@ class PublishingService
     public function queueChanges(SourceRecord $record): void
     {
         $signature = $this->signature($record);
-        $removeRequested = ($record->metadata['remove_external_on_unpublish'] ?? false) && ($record->trashed() || $record->status !== 'ready' || ! ($record->metadata['public_published'] ?? false));
+        $isPublic = $record->status === 'ready' && ! $record->trashed() && ($record->metadata['public_published'] ?? false);
+        $websiteStatus = $isPublic ? 'published' : 'unpublished';
+        Publication::where('source_record_id', $record->id)->where('provider', 'website')->where('direction', 'outbound')
+            ->update(['status' => $websiteStatus, 'remote_status' => $websiteStatus, 'error' => null, 'next_attempt_at' => null]);
+        $removeRequested = ($record->metadata['remove_external_on_unpublish'] ?? false) && ! $isPublic;
         foreach (Publication::where('source_record_id', $record->id)->where('direction', 'outbound')->whereNotNull('external_id')->get() as $publication) {
             if ($publication->provider === 'website' || str_starts_with($publication->provider, 'rtmp_') || (($publication->payload['origin'] ?? null) === 'youtube_sync' && ! $removeRequested)
                 || ($publication->payload['applied_signature'] ?? null) === $signature || in_array($publication->remote_status, ['deleted', 'ended', 'not_started'], true)
                 || in_array($publication->status, ['queued', 'processing'], true) || ($publication->status === 'failed' && empty($publication->payload['action']))) continue;
             // Missing signatures belong to pre-upgrade publications: a source edit still updates them.
-            $action = $record->status === 'ready' && ! $record->trashed() && ($record->metadata['public_published'] ?? false) ? 'update' : 'hide';
+            $action = $isPublic ? 'update' : 'hide';
             if ($action === 'hide' && ($record->metadata['remove_external_on_unpublish'] ?? false)) $action = 'delete';
             try { $connector = $this->registry->get($publication->provider); } catch (UnsupportedCapability) { continue; }
             if (! $connector instanceof \App\Contracts\ManagesPublications || ! in_array($action, $connector->actions(), true)) continue;

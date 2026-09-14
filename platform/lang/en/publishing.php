@@ -7,7 +7,7 @@ return [
     'live_outputs_hint' => 'Enter the complete RTMP/RTMPS address including the stream key. Select this destination for a Live event. Keys remain encrypted and are not displayed.',
     'output_id' => 'Stable ID (rtmp_…) ', 'output_label' => 'Name', 'output_url' => 'Address and key', 'save_output' => 'Save destination', 'remove_output' => 'Remove destination',
     'remove_remote' => 'Delete on platform', 'confirm_remove_remote' => 'Permanently delete this publication on the external platform? The local material will remain.',
-    'uploading' => 'Uploading', 'hidden' => 'Private', 'deleted' => 'Deleted on platform',
+    'uploading' => 'Uploading', 'hidden' => 'Private', 'unpublished' => 'Not published', 'deleted' => 'Deleted on platform',
     'eyebrow' => 'Media Desktop · Publications', 'title' => 'Publishing',
     'intro' => 'Content becomes public on the website immediately and is sent in parallel to the selected channels.',
     'sync' => 'Sync YouTube', 'connect_youtube' => 'Connect YouTube',

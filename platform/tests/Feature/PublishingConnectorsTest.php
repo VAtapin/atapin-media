@@ -122,6 +122,17 @@ class PublishingConnectorsTest extends TestCase
         $this->assertSame(['video' => 'actual-video-bytes', 'image' => 'actual-image-bytes'], $bodies);
     }
 
+    public function test_youtube_deletion_uses_a_query_parameter_and_no_body(): void
+    {
+        $this->connect('youtube');
+        Http::fake(['https://www.googleapis.com/youtube/v3/videos*' => Http::response('', 204)]);
+        app(YouTubeClient::class)->deleteVideo('video-id');
+        Http::assertSent(fn ($request) => $request->method() === 'DELETE'
+            && $request->url() === 'https://www.googleapis.com/youtube/v3/videos?id=video-id'
+            && $request->body() === '');
+        Http::assertSentCount(1);
+    }
+
     public function test_youtube_completion_checks_remote_lifecycle_before_transition(): void
     {
         $this->connect('youtube');

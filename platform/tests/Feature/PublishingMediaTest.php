@@ -196,6 +196,20 @@ class PublishingMediaTest extends TestCase
         Http::assertSentCount(3);
     }
 
+    public function test_telegram_edits_the_sent_text_even_after_a_local_image_is_added(): void
+    {
+        app(Settings::class)->update(['social_connections' => ['telegram' => ['external_id' => '@channel']]]);
+        app(ConnectionStore::class)->saveCredentials('telegram', ['api_key' => 'bot-token']);
+        $image = $this->media('image');
+        $record = SourceRecord::create(['source' => 'website', 'source_id' => 'tg-text-image', 'kind' => 'post', 'title' => 'Changed text', 'status' => 'ready', 'metadata' => ['media_ids' => [$image->id]]]);
+        $publication = Publication::create(['source_record_id' => $record->id, 'provider' => 'telegram', 'status' => 'queued', 'external_id' => '42', 'payload' => ['action' => 'update', 'telegram_media' => false]]);
+        Http::fake(['https://api.telegram.org/botbot-token/editMessageText' => Http::response(['ok' => true])]);
+        app(PublishingService::class)->execute($publication->id);
+        $this->assertSame('published', $publication->fresh()->status);
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/editMessageText') && $request['text'] === 'Changed text');
+        Http::assertSentCount(1);
+    }
+
     public function test_live_title_update_does_not_interrupt_the_running_relay(): void
     {
         app(Settings::class)->update(['social_connections' => ['youtube' => ['external_id' => 'channel']]]);

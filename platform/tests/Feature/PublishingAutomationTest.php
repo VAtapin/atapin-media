@@ -404,6 +404,32 @@ class PublishingAutomationTest extends TestCase
         $this->assertArrayNotHasKey('upload_session', $publication->fresh()->payload);
     }
 
+    public function test_website_status_tracks_unpublication_trash_and_restore(): void
+    {
+        $record = $this->publication()->record;
+        $website = Publication::where('source_record_id', $record->id)->where('provider', 'website')->firstOrFail();
+        $publishedAt = $website->published_at;
+        $record->update(['metadata' => [...$record->metadata, 'public_published' => false]]);
+        $this->assertSame('unpublished', $website->fresh()->status);
+        $this->assertSame('unpublished', $website->fresh()->remote_status);
+        $this->assertEquals($publishedAt, $website->fresh()->published_at);
+        $record->update(['metadata' => [...$record->metadata, 'public_published' => true]]);
+        $this->assertSame('published', $website->fresh()->status);
+        $record->delete();
+        $this->assertSame('unpublished', $website->fresh()->status);
+        $record->restore();
+        $this->assertSame('published', $website->fresh()->status);
+        Http::assertNothingSent();
+    }
+
+    public function test_publishing_api_returns_the_saved_destinations(): void
+    {
+        $record = $this->publication()->record;
+        $record->update(['metadata' => [...$record->metadata, 'publishing_targets' => ['website', 'x']]]);
+        $this->getJson(route('desktop.publishing.index'))->assertOk()->assertJsonPath('records.0.publishing_targets', ['website', 'x']);
+        Http::assertNothingSent();
+    }
+
     public function test_reenabling_website_republishes_the_existing_hidden_video(): void
     {
         $publication = $this->publication();

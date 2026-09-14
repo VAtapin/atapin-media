@@ -29,11 +29,12 @@
 
     const renderDestinations = () => {
       const record = selectedRecord();
+      const selected = Array.isArray(record?.publishing_targets) ? record.publishing_targets : ['website', 'youtube'];
       const removal = root.querySelector('[data-remove-on-unpublish]');
       if (removal) removal.checked = Boolean(record?.remove_external_on_unpublish);
       destinations.innerHTML = state.destinations.filter(destination => destination.connected && !destination.revoked).map(destination => {
         const supported = compatible(destination, record);
-        return `<label class="desktop-publishing-destination"><input type="checkbox" value="${escapeHtml(destination.provider)}" ${supported && (destination.provider === 'website' || destination.provider === 'youtube') ? 'checked' : ''} ${supported ? '' : 'disabled'}><span><strong>${escapeHtml(destination.label)}</strong><small>${escapeHtml(destination.public_url || '')}${supported ? '' : ` · ${escapeHtml(labels().unsupported || 'Unavailable for this content')}`}</small></span></label>`;
+        return `<label class="desktop-publishing-destination"><input type="checkbox" value="${escapeHtml(destination.provider)}" ${supported && selected.includes(destination.provider) ? 'checked' : ''} ${supported ? '' : 'disabled'}><span><strong>${escapeHtml(destination.label)}</strong><small>${escapeHtml(destination.public_url || '')}${supported ? '' : ` · ${escapeHtml(labels().unsupported || 'Unavailable for this content')}`}</small></span></label>`;
       }).join('') || `<p class="desktop-publishing-muted">${escapeHtml(labels().youtube_not_connected || '')}</p>`;
       if (record?.kind === 'post') {
         const hint = document.createElement('p'); hint.className = 'desktop-publishing-muted'; hint.textContent = labels().adapted_post || '';
@@ -41,7 +42,9 @@
       }
     };
     const renderRecords = () => {
+      const selectedId = recordSelect.value;
       recordSelect.innerHTML = state.records.map(record => `<option value="${escapeHtml(record.id)}">${escapeHtml(record.title)} · ${escapeHtml(labels()[record.kind] || record.kind)}</option>`).join('');
+      if (state.records.some(record => String(record.id) === selectedId)) recordSelect.value = selectedId;
       root.querySelector('[data-publishing-empty]').hidden = state.records.length > 0;
       recordSelect.disabled = !state.records.length;
       renderDestinations();

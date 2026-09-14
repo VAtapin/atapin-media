@@ -17,6 +17,7 @@ class PublishingController extends Controller
             'records' => $publishing->records()->map(fn (SourceRecord $record) => [
                 'id' => $record->id, 'title' => $record->title, 'kind' => $record->publishingKind(),
                 'public_published' => (bool) ($record->metadata['public_published'] ?? false),
+                'publishing_targets' => $record->metadata['publishing_targets'] ?? null,
                 'remove_external_on_unpublish' => (bool) ($record->metadata['remove_external_on_unpublish'] ?? false),
             ])->values(),
             'destinations' => [

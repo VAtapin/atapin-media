@@ -178,7 +178,7 @@ class YouTubeClient
 
     public function deleteVideo(string $id): void
     {
-        $this->request()->delete($this->url('videos'), ['id' => $id])->throw();
+        $this->request()->delete($this->url('videos').'?id='.rawurlencode($id))->throw();
     }
 
     public function broadcastStatus(string $id): string
