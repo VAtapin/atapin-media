@@ -51,7 +51,7 @@
         [row.due_date?.slice(0,10), row.due_time].filter(Boolean).join(' '), row.project?.title,
         row.owner?.name, row.assignee?.name, row.source, bookAiState(row)].filter(Boolean).join(' · ');
       b.append(el('strong', row.title || row.name || row.subject || row.question || row.email || ('#' + row.id)), el('small', detail));
-      if (remove) { const action = button('delete', () => remove(row)); action.className = 'desktop-button is-danger workspace-row-remove'; action.addEventListener('click', event => event.stopPropagation(), {capture:true}); b.append(action); }
+      if (remove) { const action = button('delete', () => remove(row)); action.className = 'desktop-button is-danger workspace-row-remove'; action.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); }, {capture:true}); b.append(action); }
       b.addEventListener('click', event => { if (event.target.closest('.workspace-row-remove')) return; select(row); });
       b.addEventListener('keydown', event => { if (event.target === b && ['Enter', ' '].includes(event.key)) { event.preventDefault(); select(row); } }); list.append(b);
     }
@@ -70,7 +70,7 @@
       const meta = [row.author, row.owner?.name, row.project?.title, row.kind ? t(row.kind) : '', row.status ? t(row.status) : '', row.pdf_ready === false ? t('book_pdf_missing') : row.pdf_ready ? t('book_pdf_ready') : '', bookAiState(row)].filter(Boolean);
       body.append(el('small', meta.join(' · '))); if (row.description) body.append(el('span', row.description, 'workspace-card-description'));
       if (vertical) card.append(title, visual, body); else { body.prepend(title); card.append(visual, body); }
-      if (remove) { const action = button('delete', () => remove(row)); action.className = 'desktop-button is-danger workspace-card-remove'; action.addEventListener('click', event => event.stopPropagation(), {capture:true}); card.append(action); }
+      if (remove) { const action = button('delete', () => remove(row)); action.className = 'desktop-button is-danger workspace-card-remove'; action.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); }, {capture:true}); card.append(action); }
       card.addEventListener('click', event => { if (event.target.closest('.workspace-card-remove')) return; select(row); });
       card.addEventListener('keydown', event => { if (event.target === card && ['Enter', ' '].includes(event.key)) { event.preventDefault(); select(row); } }); grid.append(card);
     }
@@ -88,6 +88,7 @@
       if (!window.confirm(t('delete_confirm'))) return;
       await request(config.url + '/' + row.id, {confirmation:'DELETE'}, config.deleteMethod || 'DELETE');
       feedback(root, t('deleted'));
+      window.desktopNotify?.(t('deleted'), row.title || row.name || row.subject || '', 'success');
       document.dispatchEvent(new Event('desktop-media-changed'));
       await load(1);
     });
@@ -101,6 +102,15 @@
       for (const spec of config.fields || []) { const [name, type = 'text', options = [], defaultValue] = spec; const value = row[name] ?? row.metadata?.[name] ?? defaultValue ?? ''; const f = field(name, type, value, options); form.append(f); const input = f.querySelector('input,textarea,select'); if (['title','name','subject','question'].includes(name)) input.required = true; if (type === 'number') { input.min = 0; input.step = name === 'price' ? '0.01' : '1'; input.inputMode = 'decimal'; } if (config.lookups?.[name]) try { await lookup(f, config.lookups[name], value, !!config.multiple?.includes(name)); } catch (error) { f.append(el('small', error.message)); } }
       if (config.readonly?.(row)) for (const input of form.elements) input.disabled = true;
       const save = el('button', t(config.submitLabel || 'save'), 'desktop-button is-primary'); save.type = 'submit'; form.append(save); if (config.readonly?.(row)) save.hidden = true;
+      const aiBusy = root.dataset.workspace === 'books-pdf' && row.id && ['queued','processing'].includes(row.metadata?.book_pdf_ai?.status);
+      if (aiBusy) {
+        const notice = el('div', t('book_ai_wait'), 'workspace-ai-busy');
+        notice.setAttribute('role', 'status');
+        editor.insertBefore(notice, form);
+        for (const input of form.elements) input.disabled = true;
+        save.hidden = true;
+        form.classList.add('is-ai-busy');
+      }
       if (canDelete && row.id && !config.readonly?.(row)) {
         const remove = el('button', t('delete'), 'desktop-button is-danger'); remove.type = 'button';
         remove.addEventListener('click', () => run(root, async () => {
@@ -116,7 +126,7 @@
         }));
         form.append(remove);
       }
-      form.addEventListener('submit', event => { event.preventDefault(); run(root, async () => { save.disabled = true; try { let data = formData(form); if (config.transform) data = config.transform(data); const result = await request(config.url + (row.id ? '/' + row.id : ''), data, row.id ? (config.updateMethod || 'PATCH') : 'POST'); delete form.dataset.dirty; feedback(root, t('saved')); document.dispatchEvent(new Event('desktop-media-changed')); if (!editorMode) await load(page); const id = result.id || result.project_id || result.task_id; if (editorMode && id) await edit({id}); } finally { save.disabled = false; } }); });
+      form.addEventListener('submit', event => { event.preventDefault(); if (form.classList.contains('is-ai-busy')) return; run(root, async () => { save.disabled = true; try { let data = formData(form); if (config.transform) data = config.transform(data); const result = await request(config.url + (row.id ? '/' + row.id : ''), data, row.id ? (config.updateMethod || 'PATCH') : 'POST'); delete form.dataset.dirty; feedback(root, t('saved')); document.dispatchEvent(new Event('desktop-media-changed')); if (!editorMode) await load(page); const id = result.id || result.project_id || result.task_id; if (editorMode && id) await edit({id}); } finally { save.disabled = false; } }); });
       if (generation !== editGeneration || !root.isConnected) return;
       root._workspaceEdit = edit;
       await config.extra?.(editor, row, async () => { delete form.dataset.dirty; if (!editorMode) await load(page); const updated = items.find(item => item.id === row.id); if (updated) await edit(updated); }, root);

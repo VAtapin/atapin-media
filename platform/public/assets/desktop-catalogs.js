@@ -2,6 +2,33 @@
   const W = window.DesktopWorkspaces;
   if (!W) return;
   const {t, el, button, request, run, field, lookup, formData, crud} = W;
+  const bookJobsKey = 'atapin.desktop.book-ai-jobs.v1';
+  const readBookJobs = () => { try { return JSON.parse(localStorage.getItem(bookJobsKey) || '{}') || {}; } catch (_) { return {}; } };
+  const writeBookJobs = jobs => { try { localStorage.setItem(bookJobsKey, JSON.stringify(jobs)); } catch (_) {} };
+  let bookMonitorTimer;
+  const startBookMonitor = () => {
+    clearTimeout(bookMonitorTimer);
+    const jobs = readBookJobs(); const ids = Object.keys(jobs);
+    if (!ids.length) return;
+    bookMonitorTimer = setTimeout(async () => {
+      for (const id of ids) {
+        try {
+          const latest = (await request('/desktop/books/' + id)).product;
+          const state = latest.metadata?.book_pdf_ai?.status;
+          if (['queued','processing'].includes(state)) continue;
+          const title = latest.title || jobs[id].title || '';
+          delete jobs[id]; writeBookJobs(jobs);
+          const failed = state === 'failed'; const partial = state === 'partial';
+          const key = failed ? 'book_ai_failed_message' : partial ? 'book_ai_partial_message' : 'book_ai_ready_message';
+          window.desktopNotify?.(t(failed ? 'book_ai_failed_title' : partial ? 'book_ai_partial_title' : 'book_ai_ready_title'), `${title ? title + ' · ' : ''}${t(key)}`, failed ? 'error' : partial ? 'warning' : 'success', () => W.open('books-pdf', {id:Number(id)}));
+          document.dispatchEvent(new Event('desktop-media-changed'));
+        } catch (_) { /* Keep the job for the next browser tick. */ }
+      }
+      startBookMonitor();
+    }, 5000);
+  };
+  const trackBook = (id, title = '') => { const jobs = readBookJobs(); jobs[id] = {title}; writeBookJobs(jobs); startBookMonitor(); };
+  startBookMonitor();
   const tags = data => ({...data, tags:(data.tags || '').split(',').map(value => value.trim()).filter(Boolean)});
   const bookData = data => { const result = tags(data); const amount = Number(String(result.price ?? '').replace(',', '.')); result.price_cents = Number.isFinite(amount) ? Math.max(0, Math.round(amount * 100)) : 0; delete result.price; return result; };
   const linked = (editor, title, items, app) => {
@@ -41,6 +68,7 @@
   const bookExtra = async (editor, row, load, host) => {
     const state = row.metadata?.book_pdf_ai?.status;
     if (row.id && ['queued','processing'].includes(state)) {
+      trackBook(row.id, row.title || '');
       const poll = async () => {
         if (!editor.isConnected) return;
         try {
@@ -105,7 +133,7 @@
         el('p', t('book_upload_ai_hint'), 'workspace-muted'));
       const form = el('form', undefined, 'workspace-pdf-drop'); const file = field('file', 'file'); file.querySelector('input').accept = 'application/pdf'; file.querySelector('input').required = true;
       const submit = el('button', t('book_analyze'), 'desktop-button is-primary'); submit.type = 'submit'; form.append(file, submit); section.append(form); editor.append(section);
-      form.addEventListener('submit', event => { event.preventDefault(); run(root, async () => { submit.disabled = true; try { const data = await request('/desktop/books/intake', new FormData(form), 'POST'); await edit({id:data.id}); } finally { submit.disabled = false; } }); });
+      form.addEventListener('submit', event => { event.preventDefault(); run(root, async () => { submit.disabled = true; try { const data = await request('/desktop/books/intake', new FormData(form), 'POST'); trackBook(data.id, file.querySelector('input').files[0]?.name || ''); window.desktopNotify?.(t('book_ai_background_title'), t('book_ai_background_message'), 'info'); document.dispatchEvent(new Event('desktop-media-changed')); editor.closest('.os-window')?.querySelector('[data-window-action="close"]')?.click(); } finally { submit.disabled = false; } }); });
       return true;
     },
   };

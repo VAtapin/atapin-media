@@ -11,13 +11,7 @@ class PublicAiChat
     {
         abort_unless($this->available(),422,__('public.ai_chat_unavailable'));
         abort_unless($this->content->forSection('live')->whereKey($record->id)->exists(),404);
-        $request=DB::transaction(function()use($user,$record,$question){
-            $day=now()->timezone(config('platform.timezone'))->toDateString();
-            DB::table('public_ai_budgets')->insertOrIgnore(['day'=>$day,'used'=>0]);
-            $limit=max(0,min(1000,(int)$this->settings->get('ai_chat_daily_limit',20)));
-            abort_unless(DB::table('public_ai_budgets')->where('day',$day)->where('used','<',$limit)->increment('used'),429,__('public.ai_chat_budget'));
-            return PublicAiChatRequest::create(['user_id'=>$user->id,'record_id'=>$record->id,'question'=>$question]);
-        });
+        $request=DB::transaction(fn()=>PublicAiChatRequest::create(['user_id'=>$user->id,'record_id'=>$record->id,'question'=>$question]));
         AnswerPublicAiChat::dispatch($request->id)->afterCommit();return $request;
     }
     public function answer(PublicAiChatRequest $request): string

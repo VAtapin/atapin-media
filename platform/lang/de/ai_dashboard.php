@@ -2,9 +2,10 @@
 
 return [
     'request' => 'Anfrage an die KI',
+    'help' => 'Hilfe',
     'request_hint' => 'Stelle eine Frage zur Administration. Die KI antwortet nur aus der dokumentierten Media-Desktop-Basis und führt keine Aktion aus.',
     'question' => 'Frage',
-    'send' => 'Anfrage senden',
+    'send' => 'Senden',
     'cancel' => 'Schließen',
     'total' => 'Anfragen gesamt',
     'today' => 'Heute',

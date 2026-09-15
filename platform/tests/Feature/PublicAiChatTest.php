@@ -10,15 +10,15 @@ class PublicAiChatTest extends TestCase
 {
     use RefreshDatabase;
     private function event(): SourceRecord {return SourceRecord::create(['source'=>'website','source_id'=>'live','kind'=>'video','title'=>'Public live','body'=>'Published context','status'=>'ready','metadata'=>['public_published'=>true,'public_section'=>'live']]);}
-    private function enable(): void {app(Settings::class)->update(['ai_enabled'=>true,'ai_provider'=>'openai','ai_model'=>'configured-model','ai_chat_enabled'=>true,'ai_chat_daily_limit'=>1]);app(Settings::class)->updateSecrets(['ai_api_key'=>'test-only']);}
-    public function test_login_consent_toggle_and_daily_budget_are_enforced(): void
+    private function enable(): void {app(Settings::class)->update(['ai_enabled'=>true,'ai_provider'=>'openai','ai_model'=>'configured-model','ai_chat_enabled'=>true]);app(Settings::class)->updateSecrets(['ai_api_key'=>'test-only']);}
+    public function test_login_consent_toggle_is_enforced_without_an_application_daily_limit(): void
     {
         Queue::fake();Http::preventStrayRequests();$event=$this->event();$url=route('public.ai-chat',$event);
         $this->postJson($url,['question'=>'Question','consent'=>true])->assertUnauthorized();$this->actingAs(User::factory()->create());
         $this->postJson($url,['question'=>'Question','consent'=>true])->assertUnprocessable();$this->enable();
         $this->postJson($url,['question'=>'Question'])->assertUnprocessable();
         $this->postJson($url,['question'=>'@Assistent Question','consent'=>true])->assertStatus(202);Queue::assertPushed(AnswerPublicAiChat::class);
-        $this->postJson($url,['question'=>'Second question','consent'=>true])->assertStatus(429);
+        $this->postJson($url,['question'=>'Second question','consent'=>true])->assertStatus(202);
         $this->assertStringNotContainsString('Question',\Illuminate\Support\Facades\DB::table('public_ai_chat_requests')->first()->question);
     }
     public function test_only_published_context_is_sent_and_answers_are_private(): void

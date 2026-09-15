@@ -8,6 +8,17 @@
   const clock = document.querySelector('[data-clock]');
   if (!desktop || !template || !startButton || !startMenu || !runningApps || !closeAllButton) return;
 
+  window.desktopNotify = (title, message = '', tone = 'info', action = null) => {
+    let host = document.querySelector('.os-desktop-notifications');
+    if (!host) { host = document.createElement('div'); host.className = 'os-desktop-notifications'; host.setAttribute('aria-live', 'polite'); document.body.append(host); }
+    const notice = document.createElement('div'); notice.className = `os-desktop-notice is-${tone}`;
+    const heading = document.createElement('strong'); heading.textContent = title;
+    const text = document.createElement('span'); text.textContent = message;
+    notice.append(heading); if (message) notice.append(text);
+    if (typeof action === 'function') { notice.tabIndex = 0; notice.setAttribute('role', 'button'); notice.addEventListener('click', () => { action(); notice.remove(); }); notice.addEventListener('keydown', event => { if (['Enter',' '].includes(event.key)) { event.preventDefault(); action(); notice.remove(); } }); }
+    host.append(notice); setTimeout(() => notice.remove(), action ? 15000 : 7000); return notice;
+  };
+
   const MIN_WIDTH = 210;
   const MIN_HEIGHT = 160;
   const SNAP_GAP = 6;

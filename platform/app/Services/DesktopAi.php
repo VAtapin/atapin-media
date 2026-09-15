@@ -16,7 +16,6 @@ class DesktopAi
         $data['context']=[...($data['context']??[]),'locale'=>app()->getLocale()];
         $entry = DB::transaction(function () use ($user,$data,$record,$product) {
             User::whereKey($user->id)->lockForUpdate()->firstOrFail();
-            abort_if(DesktopAiRequest::where('user_id',$user->id)->where('created_at','>=',now()->startOfDay())->count() >= 50,429,__('workspaces.ai_limit'));
             return DesktopAiRequest::create([...$data,'user_id'=>$user->id,'source_version'=>$record?app(ContentState::class)->version($record):($product?$this->bookVersion($product):null)]);
         });
         \App\Jobs\AnswerDesktopAi::dispatch($entry->id)->afterCommit();

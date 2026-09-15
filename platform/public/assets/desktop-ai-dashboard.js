@@ -55,14 +55,14 @@
     if (!trigger || trigger.dataset.aiChatReady) return;
     trigger.dataset.aiChatReady = 'true';
     trigger.addEventListener('click', () => {
-      const {dialog, body} = openGlobalDialog(t('request'));
+      const {dialog, body} = openGlobalDialog(t('help'));
       const hint = document.createElement('p'); hint.className = 'ai-dashboard-muted'; hint.textContent = t('request_hint');
       const form = document.createElement('form'); form.className = 'ai-dashboard-request-form';
       const label = document.createElement('label'); label.textContent = t('question');
       const textarea = document.createElement('textarea'); textarea.name = 'question'; textarea.rows = 8; textarea.required = true; textarea.maxLength = 4000; textarea.placeholder = t('question_help'); label.append(textarea);
       const actions = document.createElement('div'); actions.className = 'workspace-actions';
-      const send = button(t('send'), async () => { if (!form.reportValidity()) return; send.disabled = true; try { await W.request('/desktop/assistant', {purpose:'admin_help', question:textarea.value}, 'POST'); const notice = document.createElement('p'); notice.className = 'ai-dashboard-muted'; notice.textContent = t('request_sent'); body.replaceChildren(notice, button(t('cancel'), () => dialog.close())); } catch (error) { const notice = document.createElement('p'); notice.className = 'workspace-feedback is-error'; notice.textContent = error.message; body.append(notice); } finally { send.disabled = false; } }, true);
-      actions.append(send, button(t('cancel'), () => dialog.close())); form.append(label, actions); body.append(hint, form); textarea.focus();
+      const send = button(t('send'), async () => { if (!form.reportValidity()) return; send.disabled = true; body.querySelector('[data-ai-error]')?.remove(); try { await W.request('/desktop/assistant', {purpose:'admin_help', question:textarea.value}, 'POST'); const notice = document.createElement('p'); notice.className = 'ai-dashboard-muted'; notice.textContent = t('request_sent'); body.replaceChildren(notice); } catch (error) { const notice = document.createElement('p'); notice.dataset.aiError = 'true'; notice.className = 'workspace-feedback is-error'; notice.textContent = error.message; body.append(notice); } finally { send.disabled = false; } }, true);
+      actions.append(send); form.append(label, actions); body.append(hint, form); textarea.focus();
     });
   };
   setupGlobalChat();

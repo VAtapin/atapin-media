@@ -28,7 +28,7 @@ return [
     'desktop_density' => 'Spacing and size', 'desktop_density_comfortable' => 'Comfortable', 'desktop_density_compact' => 'Compact',
     'desktop_shortcut_layout' => 'Shortcut arrangement', 'desktop_shortcut_layout_free' => 'Free placement', 'desktop_shortcut_layout_grid' => 'Align to grid',
     'desktop_effects' => 'Enable visual desktop effects', 'reset_standard_wallpaper' => 'Restore standard wallpaper',
-    'ai_hint' => 'Provider, model, and access for AI features.', 'provider' => 'Provider', 'model' => 'Model', 'api_key' => 'API key', 'ai_input_price' => 'Input price / 1M tokens (USD)', 'ai_output_price' => 'Output price / 1M tokens (USD)', 'ai_price_hint' => 'Optional: enter the prices from your AI provider contract. The dashboard calculates costs only after this is configured.',
+    'ai_hint' => 'Provider, model, and access for AI features.', 'provider' => 'Provider', 'model' => 'Model', 'api_key' => 'API key', 'ai_usage_hint' => 'Token usage is taken from the AI provider response. Prices are not entered manually.',
     'secret_saved' => 'Saved', 'leave_empty_to_keep' => 'Leave empty to keep the saved value', 'enable_ai' => 'Enable AI features',
     'social_hint' => 'Accounts and credentials for publishing channels. Credentials are encrypted.',
     'publishing_hint' => 'Defaults for new publications and automated processes.', 'default_visibility' => 'Default visibility', 'default_timezone' => 'Default timezone',
