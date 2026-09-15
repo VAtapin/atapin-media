@@ -102,7 +102,7 @@
 
 ## Последний связанный commit
 
-- Текущий функциональный блок: `954e8ff` — Fix book card cover layout. Branch/upstream: main → origin/main.
+- Текущий функциональный блок: `ede0aeb` — Make PDF text extractor failure actionable. Branch/upstream: main → origin/main.
 
 - Предыдущий функциональный блок: `034b2cd` — Turn Publishing into external registry.
 
