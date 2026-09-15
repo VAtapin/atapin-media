@@ -50,7 +50,7 @@ class AnalyzeBookPdf implements ShouldQueue
                     }
                 }
                 if ($data) $product = $catalog->save([...$data, 'currency' => $product->currency ?: 'EUR', 'price_cents' => $product->price_cents ?? 0, 'status' => $product->status ?: 'draft'], $product);
-                $product->updateQuietly(['metadata' => [...($product->metadata ?? []), 'book_pdf_ai' => ['status'=>'completed','seed_title'=>$seed,'fields'=>array_keys($data),'source_text_chars'=>(int)($result['_source_text_chars'] ?? 0),'completed_at'=>now()->toIso8601String()]]);
+                $product->updateQuietly(['metadata' => [...($product->metadata ?? []), 'book_pdf_ai' => ['status'=>'completed','seed_title'=>$seed,'fields'=>array_keys($data),'source_text_chars'=>(int)($result['_source_text_chars'] ?? 0),'completed_at'=>now()->toIso8601String()]]]);
             });
         } catch (\Throwable $error) {
             $this->state(Product::find($this->productId), 'failed', $error->getMessage());
