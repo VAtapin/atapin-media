@@ -1,5 +1,21 @@
 (() => {
   const escape = value => String(value ?? '').replace(/[&<>'"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[ch]));
+  const formatDuration = value => {
+    const seconds = Number(value);
+    if (!Number.isFinite(seconds) || seconds < 0) return '';
+    const total = Math.round(seconds);
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60).toString().padStart(2, '0');
+    const rest = (total % 60).toString().padStart(2, '0');
+    return hours ? `${hours}:${minutes}:${rest}` : `${Number(minutes)}:${rest}`;
+  };
+  const formatBytes = value => {
+    const bytes = Number(value);
+    if (!Number.isFinite(bytes) || bytes < 0) return '';
+    const units = ['B', 'KB', 'MB', 'GB']; let size = bytes; let unit = 0;
+    while (size >= 1024 && unit < units.length - 1) { size /= 1024; unit++; }
+    return `${new Intl.NumberFormat('de-DE', {maximumFractionDigits: unit ? 1 : 0}).format(size)} ${units[unit]}`;
+  };
   window.initializeContentLibrary = root => {
     if (!root || root.dataset.initialized) return;
     root.dataset.initialized = 'true';
@@ -9,13 +25,24 @@
     const details = root.querySelector('[data-content-details]');
     const summary = root.querySelector('[data-content-summary]');
     const pagination = root.querySelector('[data-content-pagination]');
+    const section = root.dataset.section || '';
+    const heading = root.querySelector('[data-content-heading]');
+    const intro = root.querySelector('[data-content-intro]');
+    const viewButtons = [...root.querySelectorAll('[data-content-view]')];
     const sectionKinds={videos:['video','short','playlist'],podcast:['video','short'],posts:['post'],community:['poll','comment','live_chat']};
-    const section=root.dataset.section||'';
     let allContent=!section;
+    let currentPayload = null;
+    const viewKey = `atapin.content.view.${section || 'all'}`;
+    let view = 'cards';
+    try { view = localStorage.getItem(viewKey) || 'cards'; } catch (_) {}
+    if (section === 'videos') {
+      if (heading) heading.textContent = heading.dataset.videoHeading || 'Videos';
+      if (intro) intro.textContent = intro.dataset.videoIntro || '';
+    }
     const scopeToggle=document.createElement('button');
     scopeToggle.type='button'; scopeToggle.className='desktop-button'; scopeToggle.dataset.contentScope='';
     if(section){
-      form.append(scopeToggle);
+      (root.querySelector('[data-content-advanced-fields]') || form).append(scopeToggle);
       const updateScope=()=>{
         const allowed=sectionKinds[section]||[];
         form.querySelectorAll('[name="kind"] option').forEach(option=>{
@@ -59,16 +86,38 @@
         const data = await get(`${root.dataset.contentUrl}${playlist ? '/playlists' : ''}?${params}`);
         if (active.signal.aborted || !root.isConnected) return;
         page = data.meta.current_page;
+        currentPayload = data;
         summary.textContent = `${data.meta.total} ${text.records}`;
-        list.innerHTML = data.data.length ? data.data.map(item => {
+        const renderList = () => data.data.length ? data.data.map(item => {
           const homepage = ['video','short'].includes(item.kind) ? publicBadge(Boolean(item.public_homepage), text.public_homepage_active, text.public_homepage_inactive, '⌂') : '';
           const publication = publicBadge(Boolean(item.public_published), text.public_visible, text.publication_unpublished, '✓');
-          return `<li><button type="button" class="media-library-item" data-content-detail="${escape(item.detail_url)}"><span class="media-library-item-main"><strong>${escape(item.title)}</strong><small>${escape(text[`kind_${item.kind}`] || item.kind)} · ${escape(item.source)} · ${escape(item.body)}</small><span class="content-list-badges">${publication}${homepage}</span></span><span class="media-library-status">${escape(text[item.status] || item.status)}</span></button></li>`;
+          const duration = item.video_duration ? formatDuration(item.video_duration) : '';
+          const bytes = item.video_bytes ? formatBytes(item.video_bytes) : '';
+          const technical = [duration, bytes].filter(Boolean).join(' · ');
+          if (section === 'videos' && view === 'cards') return `<li><button type="button" class="content-video-card" data-content-detail="${escape(item.detail_url)}"><span class="content-video-card-visual">${item.cover_url ? `<img src="${escape(item.cover_url)}" alt="" loading="lazy">` : `<span aria-hidden="true">${escape(text[`kind_${item.kind}`] || 'Video')}</span>`}</span><span class="content-video-card-body"><strong>${escape(item.title)}</strong><small>${escape(text[`kind_${item.kind}`] || item.kind)}${item.source ? ` · ${escape(item.source)}` : ''}</small>${item.body ? `<span class="content-video-card-description">${escape(item.body)}</span>` : ''}<span class="content-list-badges">${publication}${homepage}</span><span class="content-video-card-meta">${technical ? `${escape(technical)} · ` : ''}${escape(text[item.status] || item.status)}</span></span></button></li>`;
+          return `<li><button type="button" class="media-library-item content-video-list-item" data-content-detail="${escape(item.detail_url)}">${section === 'videos' ? `<span class="content-video-list-visual">${item.cover_url ? `<img src="${escape(item.cover_url)}" alt="" loading="lazy">` : `<span aria-hidden="true">${escape(text[`kind_${item.kind}`] || 'Video')}</span>`}</span>` : ''}<span class="media-library-item-main"><strong>${escape(item.title)}</strong><small>${escape(text[`kind_${item.kind}`] || item.kind)} · ${escape(item.source)}${technical ? ` · ${escape(technical)}` : ''} · ${escape(item.body)}</small><span class="content-list-badges">${publication}${homepage}</span></span><span class="media-library-status">${escape(text[item.status] || item.status)}</span></button></li>`;
         }).join('') : `<li class="media-library-empty">${escape(text.empty)}</li>`;
+        list.innerHTML = section === 'videos' && view === 'cards' ? `<div class="content-video-card-grid">${renderList()}</div>` : renderList();
         root.dispatchEvent(new CustomEvent('content-list-loaded',{bubbles:true,detail:{items:data.data,playlist}}));
         pagination.innerHTML = `<button type="button" data-content-page="${page - 1}" ${page <= 1 ? 'disabled' : ''}>‹</button><span>${page} / ${data.meta.last_page}</span><button type="button" data-content-page="${page + 1}" ${page >= data.meta.last_page ? 'disabled' : ''}>›</button>`;
       } catch (error) { summary.textContent = error.message; }
     };
+    const setView = next => {
+      view = next;
+      try { localStorage.setItem(viewKey, view); } catch (_) {}
+      root.classList.toggle('is-content-card-view', view === 'cards');
+      root.classList.toggle('is-content-list-view', view === 'list');
+      viewButtons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.contentView === view)));
+      if (currentPayload) {
+        const event = new CustomEvent('content-view-changed');
+        root.dispatchEvent(event);
+        const data = currentPayload;
+        currentPayload = null;
+        load(data.meta.current_page);
+      }
+    };
+    viewButtons.forEach(button => button.addEventListener('click', () => setView(button.dataset.contentView)));
+    setView(view);
     const preview = asset => {
       const url = escape(asset.preview_url);
       if (!asset.preview_url) return '';

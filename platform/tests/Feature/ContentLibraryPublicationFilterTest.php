@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Role;
+use App\Models\Media;
 use App\Models\SourceRecord;
 use App\Models\User;
 use App\Services\Access;
@@ -47,5 +48,29 @@ class ContentLibraryPublicationFilterTest extends TestCase
         $this->getJson('/desktop/content?publication=unpublished')
             ->assertOk()->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.title', 'Private video');
+    }
+
+    public function test_content_library_returns_the_linked_cover_for_video_cards(): void
+    {
+        app(Access::class)->seed();
+        $user = User::factory()->create();
+        $user->roles()->attach(Role::where('name', 'Owner')->firstOrFail());
+        $this->actingAs($user);
+
+        $cover = Media::create([
+            'source' => 'upload', 'source_id' => 'video-cover', 'title' => 'Cover',
+            'original_name' => 'cover.jpg', 'kind' => 'image', 'mime' => 'image/jpeg',
+            'disk' => 'local', 'path' => 'cover.jpg', 'bytes' => 10, 'status' => 'ready',
+        ]);
+        SourceRecord::create([
+            'source' => 'upload', 'source_id' => 'card-video', 'kind' => 'video',
+            'title' => 'Card video', 'body' => 'Description', 'status' => 'ready',
+            'metadata' => ['cover_media_id' => $cover->id],
+        ]);
+
+        $this->getJson('/desktop/content?section=videos')
+            ->assertOk()
+            ->assertJsonPath('data.0.title', 'Card video')
+            ->assertJsonPath('data.0.cover_url', route('media.preview', $cover));
     }
 }

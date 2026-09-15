@@ -30,6 +30,7 @@
 - PWA/operations: public and Desktop layouts expose an installable manifest, offline static shell and Apple touch icon. Settings staff have a private operational health endpoint containing runtime, database, storage capacity, cache, search, owner, queue and scheduler/worker heartbeat facts without secrets. `platform:check` uses the same report; the documented Plesk cron entry point records successful scheduler/queue heartbeats.
 - Analytics dashboard: the existing first-party report is now a compact scan-first view with KPI cards, a clickable daily activity chart, visual top-event/page/content rankings, expandable raw data sections and drill-down details. Data collection, permissions and CSV export remain unchanged.
 - Analytics chart refinement: the selected date range now includes explicit zero-activity days, the main activity line uses a smooth curve with real peaks and drops, and a clickable daily heatmap makes quiet/active periods visible at a glance.
+- Video catalog cleanup: the Videos window now has separated primary/advanced filters and actions, a persistent cards/list switch, and card thumbnails from linked media covers; the existing post/podcast table mode remains unchanged.
 
 ## Важные решения
 
@@ -66,6 +67,7 @@
 - Live remux orchestration покрыта `LiveRecordingRemuxTest`: закрытые сегменты ставятся в unique queue job, FFmpeg вызывается с stream copy/faststart, успешный результат регистрируется в canonical storage, а при ошибке сохраняется fallback-оригинал. Реальный Linux/Plesk FFmpeg и playback smoke-test не запускались.
 - Analytics dashboard: `node --check platform/public/assets/desktop-workspace-operations.js` and `git diff --check` passed. PHP syntax/Blade/browser checks were not run because PHP and a local preview server are unavailable in this Windows session.
 - Analytics chart refinement: `node --check platform/public/assets/desktop-workspace-operations.js` and `git diff --check` passed again after adding zero-day interpolation, curve smoothing and heatmap rendering. PHP/Blade/browser checks remain unavailable in this Windows session.
+- Video catalog cleanup: `node --check` for `desktop-content-library.js` and `desktop-content-columns.js`, plus `git diff --check`, passed. PHP/Blade/browser checks were not run because PHP 8.4 and a local preview server are unavailable in this Windows session.
 
 ## Что рекомендуется следующим
 
@@ -79,5 +81,5 @@
 ## Последний связанный commit
 
 - Предшествующий функциональный commit: `90d6b26` — Complete admin workflows and PWA foundation.
-- Последний функциональный commit: Fix PDF intake job syntax (hash сообщён владельцу после публикации). Branch/upstream: main → origin/main.
+- Последний функциональный commit: текущая переработка окна Videos (commit будет создан после проверок). Branch/upstream: main → origin/main.
 

@@ -277,7 +277,7 @@ return [
     'stage_metadata' => 'Reading descriptions and content',
     'worker_stopped' => 'The background worker ended or reached its time limit. Saved files are kept; please retry.',
     'publication_filter'=>'Publication','all_publication_states'=>'All publication states','publication_published'=>'Published on the website','publication_unpublished'=>'Not published on the website',
-    'all_content'=>'Show all content','section_only'=>'Show this section only',
+    'all_content'=>'Show all content','section_only'=>'Show this section only','content_library_intro'=>'Search, review and edit your materials.','video_library_heading'=>'Video library','video_library_intro'=>'Find videos quickly, check their files and prepare them for publication.',
     'short_description'=>'Short description (8–10 words)', 'short_description_generate'=>'Generate AI short text',
     'short_descriptions_missing'=>'Generate missing short texts','short_descriptions_selected'=>'Short texts for selection',
     'enhancement_queued'=>'Queued','enhancement_running'=>'Processing','enhancement_completed'=>'Completed',
