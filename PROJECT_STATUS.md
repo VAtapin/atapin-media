@@ -92,7 +92,9 @@
 
 ## Последний связанный commit
 
-- Текущий функциональный блок: f58854d — Fix public topic tag filters.
+- Текущий функциональный блок: 0cb299d — Open content editors in separate windows.
+
+- Предыдущий функциональный блок: f58854d — Fix public topic tag filters.
 
 - Предшествующий функциональный commit: `90d6b26` — Complete admin workflows and PWA foundation.
 - Последний функциональный commit: `5f99dbb` — Improve video catalog playback. Branch/upstream: main → origin/main.
