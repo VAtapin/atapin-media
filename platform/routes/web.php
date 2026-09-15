@@ -52,7 +52,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/desktop/community/moderation/{record}',[\App\Http\Controllers\PublicCommunityController::class,'moderate'])->middleware('can:community.moderate')->name('desktop.community-moderate');
     Route::get('/desktop/shop/products',[\App\Http\Controllers\ShopController::class,'index'])->middleware('can:shop.manage')->name('shop.products');
     Route::patch('/desktop/shop/products/{product}',[\App\Http\Controllers\ShopController::class,'update'])->middleware('can:shop.manage')->name('shop.update');
-    Route::patch('/desktop/shop/reviews/{review}',[\App\Http\Controllers\PublicBookReviewController::class,'moderate'])->middleware('can:community.moderate')->name('shop.review-moderate');
+    Route::patch('/desktop/shop/reviews/{review}',[\App\Http\Controllers\BookReviewWorkspaceController::class,'update'])->middleware(['can:community.moderate','can:shop.manage'])->name('shop.review-moderate');
     Route::get('/konto',[\App\Http\Controllers\PublicAccountController::class,'index'])->name('public.account');
     Route::get('/konto/verify/{user}/{hash}',[\App\Http\Controllers\PublicAccountController::class,'verify'])->middleware(['signed','throttle:10,1'])->name('public.account-verify');
     Route::post('/konto/verify',[\App\Http\Controllers\PublicAccountController::class,'resend'])->middleware('throttle:1,15')->name('public.account-resend');
@@ -72,10 +72,19 @@ Route::middleware('auth')->group(function () {
     Route::delete('/desktop/publishing/publications/{publication}', [\App\Http\Controllers\PublishingController::class, 'removePublication'])->middleware(['can:content.publish', 'throttle:10,1'])->name('desktop.publishing.remove');
     Route::get('/desktop/publishing/youtube/connect', [\App\Http\Controllers\PublishingController::class, 'youtubeConnect'])->middleware('can:integrations.manage')->name('desktop.publishing.youtube.connect');
     Route::get('/desktop/publishing/youtube/callback', [\App\Http\Controllers\PublishingController::class, 'youtubeCallback'])->middleware('can:integrations.manage')->name('desktop.publishing.youtube.callback');
+    Route::post('/desktop/publishing/youtube/check', [\App\Http\Controllers\PublishingController::class, 'youtubeCheck'])->middleware(['can:integrations.manage', 'throttle:10,1'])->name('desktop.publishing.youtube.check');
     Route::post('/desktop/publishing/youtube/disconnect', [\App\Http\Controllers\PublishingController::class, 'youtubeDisconnect'])->middleware(['can:integrations.manage', 'throttle:10,1'])->name('desktop.publishing.youtube.disconnect');
     Route::get('/desktop/publishing/x/connect', [\App\Http\Controllers\XOAuthController::class, 'connect'])->middleware('can:integrations.manage')->name('desktop.publishing.x.connect');
     Route::get('/desktop/publishing/x/callback', [\App\Http\Controllers\XOAuthController::class, 'callback'])->middleware('can:integrations.manage')->name('desktop.publishing.x.callback');
+    Route::post('/desktop/publishing/x/check', [\App\Http\Controllers\XOAuthController::class, 'check'])->middleware(['can:integrations.manage', 'throttle:10,1'])->name('desktop.publishing.x.check');
     Route::post('/desktop/publishing/x/disconnect', [\App\Http\Controllers\PublishingController::class, 'disconnectX'])->middleware(['can:integrations.manage', 'throttle:10,1'])->name('desktop.publishing.x.disconnect');
+    Route::post('/desktop/publishing/telegram/check', [\App\Http\Controllers\PublishingController::class, 'telegramCheck'])->middleware(['can:integrations.manage', 'throttle:10,1'])->name('desktop.publishing.telegram.check');
+    Route::post('/desktop/publishing/telegram/disconnect', [\App\Http\Controllers\PublishingController::class, 'telegramDisconnect'])->middleware(['can:integrations.manage', 'throttle:10,1'])->name('desktop.publishing.telegram.disconnect');
+    Route::get('/desktop/publishing/meta/connect', [\App\Http\Controllers\MetaOAuthController::class, 'connect'])->middleware('can:integrations.manage')->name('desktop.publishing.meta.connect');
+    Route::get('/desktop/publishing/meta/callback', [\App\Http\Controllers\MetaOAuthController::class, 'callback'])->middleware('can:integrations.manage')->name('desktop.publishing.meta.callback');
+    Route::post('/desktop/publishing/meta/select', [\App\Http\Controllers\MetaOAuthController::class, 'select'])->middleware(['can:integrations.manage', 'throttle:10,1'])->name('desktop.publishing.meta.select');
+    Route::post('/desktop/publishing/meta/check', [\App\Http\Controllers\MetaOAuthController::class, 'check'])->middleware(['can:integrations.manage', 'throttle:10,1'])->name('desktop.publishing.meta.check');
+    Route::post('/desktop/publishing/meta/disconnect', [\App\Http\Controllers\MetaOAuthController::class, 'disconnect'])->middleware(['can:integrations.manage', 'throttle:10,1'])->name('desktop.publishing.meta.disconnect');
     Route::get('/api/desktop/live',[\App\Http\Controllers\PublicBroadcastController::class,'apiIndex'])->middleware('can:content.publish')->name('desktop.live.api.index');
     Route::post('/api/desktop/live',[\App\Http\Controllers\PublicBroadcastController::class,'apiStore'])->middleware('can:content.publish')->name('desktop.live.api.store');
     Route::get('/api/desktop/live/{record}',[\App\Http\Controllers\PublicBroadcastController::class,'apiShow'])->middleware('can:content.publish')->name('desktop.live.api.show');
@@ -154,6 +163,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/desktop/media/{media}/preview', [MediaController::class,'preview'])->middleware('can:media.view')->name('media.preview');
     Route::post('/desktop/shop', [\App\Http\Controllers\ShopController::class, 'store'])->middleware('can:shop.manage')->name('shop.store');
     Route::put('/desktop/settings', [SettingsController::class,'update'])->middleware('can:settings.manage')->name('settings');
+    Route::post('/desktop/settings/integrations/stripe/test', [SettingsController::class,'testStripe'])->middleware(['can:integrations.manage','throttle:5,1'])->name('settings.integrations.stripe.test');
     Route::post('/desktop/settings/roles', [SettingsController::class,'storeRole'])->middleware('can:users.manage')->name('settings.roles.store');
     Route::put('/desktop/settings/roles/{role}', [SettingsController::class,'updateRole'])->middleware('can:users.manage')->name('settings.roles.update');
 });

@@ -73,10 +73,11 @@ class ContentEnhancementsTest extends TestCase
     public function test_project_author_sayings_and_cover_prompt_are_editable(): void
     {
         Storage::fake('media-canonical');config(['platform.media_upload_reserve_free_bytes'=>0]);
-        $this->actingAs($this->owner())->putJson('/desktop/settings',['section'=>'media_appearance','public_author_name'=>'Oleg','cover_style_prompt'=>'Shared golden style','ai_image_model'=>'test-image','hero_sayings'=>['de'=>['videos'=>'Vertraue auf Gott.']]])->assertOk();
+        $this->actingAs($this->owner())->putJson('/desktop/settings',['section'=>'media_appearance','public_author_name'=>'Oleg','hero_sayings'=>['de'=>['videos'=>'Vertraue auf Gott.']]])->assertOk();
+        $this->putJson('/desktop/settings',['section'=>'ai','ai_provider'=>'none','cover_style_prompt'=>'Shared golden style','ai_image_model'=>'test-image'])->assertOk();
         $a=$this->record(['public_published'=>true]);$this->assertSame('Oleg',app(PublicContent::class)->card($a)['author']);
         $this->get('/videos')->assertOk()->assertSee('Vertraue auf Gott.');
-        $this->putJson('/desktop/settings',['section'=>'media_appearance','cover_style_prompt'=>'x','ai_image_model'=>'x','hero_sayings'=>['de'=>['unknown'=>'x']]])->assertUnprocessable();
+        $this->putJson('/desktop/settings',['section'=>'media_appearance','hero_sayings'=>['de'=>['unknown'=>'x']]])->assertUnprocessable();
     }
     public function test_youtube_comments_are_owned_pending_then_public_without_navigation(): void
     {

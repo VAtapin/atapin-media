@@ -36,7 +36,15 @@
     section.append(el('h3', title));
     for (const item of items || []) {
       const link = el('button', item.title || item.name || ('#' + item.id), 'desktop-button');
-      link.type = 'button'; link.addEventListener('click', () => W.open(app, item)); section.append(link);
+      link.type = 'button'; link.addEventListener('click', () => {
+        if (app === 'content') {
+          const target = item.public_section === 'podcast' ? 'podcast' : item.kind === 'post' ? 'posts' : 'videos';
+          const id = item.record_id || item.id;
+          W.open(target);
+          const openRecord = () => document.querySelector(`[data-content-library][data-section="${CSS.escape(target)}"]`)?.dispatchEvent(new CustomEvent('local-content-open',{detail:{url:'/desktop/content/'+id}}));
+          if (!openRecord()) requestAnimationFrame(openRecord);
+        } else W.open(app, item);
+      }); section.append(link);
     }
     editor.append(section);
   };
@@ -58,14 +66,94 @@
       editor.append(stats);
       editor.append(button('new_task', () => W.openQuick('tasks', {project_id:row.id})));
       linked(editor, t('tasks_count'), row.tasks?.data, 'tasks');
-      linked(editor, t('records_count'), row.records?.data, 'videos');
+      linked(editor, t('records_count'), row.records?.data, 'content');
       linked(editor, t('products_count'), row.products?.data, 'books-pdf');
+      linked(editor, t('publication'), row.publications?.data, 'content');
       window.appendProjectTimeline?.(editor, row.id);
     }
     imageUpload(editor, row, row.id ? `/desktop/projects/${row.id}/cover` : '', load);
   };
   const topicExtra = (editor, row, load) => imageUpload(editor, row, row.id ? `/desktop/taxonomy/${row.id}/cover` : '', load);
+  const organizeBookForm = editor => {
+    const form = editor.querySelector(':scope > form');
+    if (!form || form.querySelector('.workspace-more-settings')) return;
+    form.classList.add('workspace-book-form');
+    const more = el('details', undefined, 'workspace-more-settings'); more.dataset.bookMoreSettings = 'true';
+    more.append(el('summary', t('further_settings')));
+    for (const name of ['subtitle','edition_text','publication_date','tags','seo_title','seo_description','project_id','taxonomy_term_ids','external_shop_url']) {
+      const control = form.elements.namedItem(name);
+      const label = control?.closest('label');
+      if (label) more.append(label);
+    }
+    const save = form.querySelector('button[type="submit"]');
+    form.insertBefore(more, save);
+  };
+  const reviewText = (key, values = {}) => {
+    let value = window.desktopBookReviewLabels?.[key] || key;
+    for (const [name, replacement] of Object.entries(values)) value = value.replace(`:${name}`, replacement);
+    return value;
+  };
+  const bookReviews = root => {
+    if (root.dataset.canModerateReviews !== 'true') return;
+    const open = () => {
+      root.querySelector('[data-book-review-dialog]')?.remove();
+      const dialog = el('dialog', undefined, 'workspace-review-dialog'); dialog.dataset.bookReviewDialog = 'true';
+      const header = el('header', undefined, 'workspace-review-head');
+      const heading = el('h2', reviewText('title')); heading.id = `book-review-heading-${Date.now()}`;
+      const close = el('button', reviewText('close'), 'desktop-button'); close.type = 'button'; close.addEventListener('click', () => dialog.close());
+      header.append(heading, close); dialog.setAttribute('aria-labelledby', heading.id);
+      const intro = el('p', reviewText('intro'), 'workspace-muted');
+      const filters = el('form', undefined, 'workspace-review-filters');
+      const searchLabel = el('label', reviewText('search')); const search = el('input'); search.type = 'search'; search.name = 'q'; search.maxLength = 120; searchLabel.append(search);
+      const statusLabel = el('label', t('status')); const status = el('select'); status.name = 'status';
+      for (const value of ['', 'pending', 'published', 'rejected']) status.add(new Option(reviewText(value || 'all'), value));
+      statusLabel.append(status); const submit = el('button', t('refresh'), 'desktop-button'); submit.type = 'submit'; filters.append(searchLabel, statusLabel, submit);
+      const feedback = el('p', '', 'workspace-review-feedback'); feedback.setAttribute('role', 'status'); feedback.setAttribute('aria-live', 'polite');
+      const list = el('section', undefined, 'workspace-review-list');
+      const pager = el('nav', undefined, 'workspace-review-pager'); pager.setAttribute('aria-label', t('pages'));
+      dialog.append(header, intro, filters, feedback, list, pager);
+      const load = async (page = 1, notice = '') => {
+        feedback.textContent = t('loading'); feedback.classList.remove('is-error');
+        try {
+          const query = new URLSearchParams({page}); if (search.value.trim()) query.set('q', search.value.trim()); if (status.value) query.set('status', status.value);
+          const result = await request('/desktop/book-reviews?' + query);
+          list.replaceChildren();
+          if (!result.data.length) list.append(el('p', reviewText('empty'), 'workspace-empty'));
+          for (const review of result.data) {
+            const card = el('article', undefined, 'workspace-review-card');
+            const cardHead = el('header');
+            const title = el('h3', review.product?.title || `#${review.product_id}`);
+            const badge = el('span', reviewText(review.status), `workspace-review-status is-${review.status}`); cardHead.append(title, badge);
+            const meta = el('p', `${review.user?.name || reviewText('anonymous')} · ${reviewText('rating', {rating:review.rating})} · ${new Date(review.created_at).toLocaleDateString()}`, 'workspace-muted');
+            const body = el('p', review.body, 'workspace-review-body');
+            const actions = el('div', undefined, 'workspace-review-actions');
+            for (const [next, key] of [['published', 'approve'], ['rejected', 'reject']]) {
+              const action = el('button', reviewText(key), `desktop-button${next === 'rejected' ? ' is-danger' : ' is-primary'}`); action.type = 'button'; action.disabled = review.status === next;
+              action.addEventListener('click', async () => {
+                action.disabled = true;
+                try { await request('/desktop/book-reviews/' + review.id, {status:next}, 'PATCH'); await load(result.current_page, reviewText('saved')); }
+                catch (error) { feedback.textContent = error.message; feedback.classList.add('is-error'); action.disabled = false; }
+              });
+              actions.append(action);
+            }
+            card.append(cardHead, meta, body, actions); list.append(card);
+          }
+          pager.replaceChildren();
+          const previous = el('button', reviewText('previous'), 'desktop-button'); previous.type = 'button'; previous.disabled = result.current_page <= 1; previous.addEventListener('click', () => load(result.current_page - 1));
+          const pageInfo = el('span', `${result.current_page} / ${result.last_page} · ${result.total}`);
+          const next = el('button', reviewText('next'), 'desktop-button'); next.type = 'button'; next.disabled = result.current_page >= result.last_page; next.addEventListener('click', () => load(result.current_page + 1));
+          pager.append(previous, pageInfo, next); feedback.textContent = notice;
+        } catch (error) { feedback.textContent = error.message; feedback.classList.add('is-error'); }
+      };
+      filters.addEventListener('submit', event => { event.preventDefault(); load(1); });
+      dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+      dialog.addEventListener('close', () => dialog.remove(), {once:true}); root.append(dialog); dialog.showModal(); load();
+    };
+    const trigger = el('button', reviewText('title'), 'desktop-button'); trigger.type = 'button'; trigger.dataset.bookReviews = 'true'; trigger.addEventListener('click', open);
+    root.querySelector('[data-workspace-actions]').prepend(trigger);
+  };
   const bookExtra = async (editor, row, load, host) => {
+    organizeBookForm(editor);
     const state = row.metadata?.book_pdf_ai?.status;
     if (row.id && ['queued','processing'].includes(state)) {
       trackBook(row.id, row.title || '');
@@ -97,7 +185,7 @@
       }
     }
     if (row.metadata?.book_pdf_ai?.error) panel.append(el('p', `${t('book_ai_error')}: ${row.metadata.book_pdf_ai.error}`, 'workspace-feedback is-error'));
-    editor.prepend(panel);
+    editor.querySelector(':scope > form')?.after(panel);
     if (!row.id) return;
     const assets = row.assets || [];
     for (const asset of assets) {
@@ -114,7 +202,7 @@
     form.addEventListener('submit', event => { event.preventDefault(); run(host, async () => { submit.disabled = true; try { const data = new FormData(form); if (!file.querySelector('input').files.length) throw new Error(t('book_pdf_required')); await request(`/desktop/books/${row.id}/assets`, data, 'POST'); if (host._workspaceEdit) await host._workspaceEdit({id:row.id}); else await load(); } finally { submit.disabled = false; } }); });
   };
   const projectConfig = {
-    url:'/desktop/projects', newLabel:'new_project', inlineEdit:true, quickCreate:{fields:[['title'],['type','select',[['','—'],'mixed','video','post','book','podcast','live']]]}, detail:async row => { const data = await request('/desktop/projects/' + row.id); return {...data.project, tasks:data.tasks, records:data.records, products:data.products}; }, updateMethod:'PUT', statuses:['idea','script','production','review','published'],
+    url:'/desktop/projects', newLabel:'new_project', inlineEdit:true, quickCreate:{fields:[['title'],['type','select',[['','—'],'mixed','video','post','book','podcast','live']]]}, detail:async row => { const data = await request('/desktop/projects/' + row.id); return {...data.project, tasks:data.tasks, records:data.records, products:data.products, publications:data.publications}; }, updateMethod:'PUT', statuses:['idea','script','production','review','published'],
     filters:[['type','select','',[['',t('all')],'mixed','video','post','book','podcast','live']],['user_id','select'],['due_before','date']], filterLookups:{user_id:'users'},
     fields:[['title'],['description','textarea'],['type','select',['mixed','video','post','book','podcast','live'],'mixed'],['status','select',['idea','script','production','review','published'],'idea'],['user_id','select'],['team_ids','select'],['start_date','date'],['due_date','date'],['next_action'],['tags']],
     lookups:{user_id:'users',team_ids:'users'}, multiple:['team_ids'], transform:tags, extra:projectExtra,
@@ -124,7 +212,8 @@
     lookups:{parent_id:'terms'}, extra:topicExtra,
   };
   const bookConfig = {
-    url:'/desktop/books', newLabel:'new_book', statuses:['draft','active','archived'],
+    url:'/desktop/books', newLabel:'new_book', inlineEdit:true, statuses:['draft','active','archived'],
+    quickCreate:{fields:[['title']],transform:data=>bookData({...data,currency:'EUR',status:'draft'})},
     fields:[['title'],['subtitle'],['description','textarea'],['author'],['contents','textarea'],['edition_text','textarea'],['isbn'],['language','select',['de','en'],'de'],['page_count','number'],['publication_date','date'],['tags'],['seo_title'],['seo_description','textarea'],['price','number',[],0],['currency','select',['EUR','USD','CHF','GBP'],'EUR'],['status','select',['draft','active','archived'],'draft'],['project_id','select'],['taxonomy_term_ids','select'],['external_shop_url','url']],
     lookups:{project_id:'projects',taxonomy_term_ids:'terms'}, multiple:['taxonomy_term_ids'], transform:bookData,
     detail:async row => { const data = await request('/desktop/books/' + row.id); return {...data.product, price:data.product.price_cents === null || data.product.price_cents === undefined ? '' : (Number(data.product.price_cents) / 100).toFixed(2), assets:data.assets}; }, extra:bookExtra,
@@ -133,11 +222,11 @@
         el('p', t('book_upload_ai_hint'), 'workspace-muted'));
       const form = el('form', undefined, 'workspace-pdf-drop'); const file = field('file', 'file'); file.querySelector('input').accept = 'application/pdf'; file.querySelector('input').required = true;
       const submit = el('button', t('book_analyze'), 'desktop-button is-primary'); submit.type = 'submit'; form.append(file, submit); section.append(form); editor.append(section);
-      form.addEventListener('submit', event => { event.preventDefault(); run(root, async () => { submit.disabled = true; try { const data = await request('/desktop/books/intake', new FormData(form), 'POST'); trackBook(data.id, file.querySelector('input').files[0]?.name || ''); window.desktopNotify?.(t('book_ai_background_title'), t('book_ai_background_message'), 'info'); document.dispatchEvent(new Event('desktop-media-changed')); editor.closest('.os-window')?.querySelector('[data-window-action="close"]')?.click(); } finally { submit.disabled = false; } }); });
+      form.addEventListener('submit', event => { event.preventDefault(); run(root, async () => { submit.disabled = true; try { const data = await request('/desktop/books/intake', new FormData(form), 'POST'); trackBook(data.id, file.querySelector('input').files[0]?.name || ''); window.desktopNotify?.(t('book_ai_background_title'), t('book_ai_background_message'), 'info'); document.dispatchEvent(new Event('desktop-media-changed')); await edit({id:data.id}); } finally { submit.disabled = false; } }); });
       return true;
     },
   };
   W.register('projects', root => crud(root, projectConfig));
   W.register('topics', root => crud(root, topicConfig));
-  W.register('books-pdf', root => crud(root, bookConfig));
+  W.register('books-pdf', root => { const workspace = crud(root, bookConfig); const intake = button('upload_pdf', () => workspace.edit({})); intake.dataset.bookPdfIntake = 'true'; root.querySelector('[data-workspace-actions]').prepend(intake); bookReviews(root); return workspace; });
 })();

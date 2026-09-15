@@ -23,6 +23,14 @@ class ConnectionStore
     public function credentials(string $provider): array
     {
         if (str_starts_with($provider, 'rtmp_')) return $this->liveOutputs()[$provider] ?? [];
+        $credentialProvider = $this->connection($provider)['credential_provider'] ?? $provider;
+        if (! is_string($credentialProvider) || $credentialProvider === '') $credentialProvider = $provider;
+
+        return $this->storedCredentials($credentialProvider);
+    }
+
+    private function storedCredentials(string $provider): array
+    {
         $raw = $this->settings->secret('social_'.$provider);
         if (! is_string($raw) || $raw === '') return [];
         try {
@@ -55,18 +63,37 @@ class ConnectionStore
 
     public function connected(string $provider): bool
     {
+        $connection = $this->connection($provider);
+        $credentials = $this->credentials($provider);
         if (! str_starts_with($provider, 'rtmp_')) {
-            $id = $this->connection($provider)['external_id'] ?? null;
-            if (! is_string($id) || $id === '' || ! array_intersect_key(array_filter($this->credentials($provider)), array_flip(SocialConnections::tokenKeys($provider)))) return false;
+            $id = $connection['external_id'] ?? null;
+            if (! is_string($id) || $id === '' || ! array_intersect_key(array_filter($credentials), array_flip(SocialConnections::tokenKeys($provider)))) return false;
         }
-        return (bool) $this->connection($provider)
-            && empty($this->connection($provider)['revoked_at'])
-            && (bool) $this->credentials($provider);
+        if (! empty($connection['revoked_at'])) return false;
+        $refreshable = in_array($provider, ['youtube', 'x'], true) && is_string($credentials['refresh_token'] ?? null) && $credentials['refresh_token'] !== '';
+
+        return (bool) $connection
+            && (! $this->expired($provider) || $refreshable)
+            && (bool) $credentials;
+    }
+
+    public function expired(string $provider): bool
+    {
+        $connection = $this->connection($provider);
+        if (! empty($connection['revoked_at'])) return true;
+        $expiresAt = $connection['expires_at'] ?? $this->credentials($provider)['expires_at'] ?? null;
+        if ($expiresAt === null || $expiresAt === '') return false;
+        if (is_numeric($expiresAt)) return (int) $expiresAt > 0 && (int) $expiresAt <= now()->timestamp;
+        try {
+            return now()->greaterThanOrEqualTo(\Illuminate\Support\Carbon::parse((string) $expiresAt));
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     public function saveCredentials(string $provider, array $credentials, bool $replace = false): void
     {
-        $current = $replace ? [] : $this->credentials($provider);
+        $current = $replace ? [] : $this->storedCredentials($provider);
         $merged = array_filter([...$current, ...$credentials], static fn ($value) => $value !== null && $value !== '');
         $this->settings->updateSecrets(['social_'.$provider => json_encode($merged, JSON_THROW_ON_ERROR)]);
     }
@@ -85,7 +112,7 @@ class ConnectionStore
     {
         $message = $error->getMessage();
         $oauth = app(OAuthAppCredentials::class);
-        $secrets = [$oauth->get('youtube')['client_secret'], $oauth->get('x')['client_secret']];
+        $secrets = [$oauth->get('youtube')['client_secret'], $oauth->get('x')['client_secret'], $oauth->get('meta')['client_secret']];
         foreach ($this->publicConnections() as $connection) {
             $credentials = $this->credentials($connection['provider']);
             array_walk_recursive($credentials, static function ($value) use (&$secrets) {

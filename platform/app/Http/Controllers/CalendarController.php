@@ -3,14 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\{Project, Task, PublicationSchedule, SourceRecord};
-use App\Services\EditorialPlanning;
+use App\Services\{EditorialPlanning, TaskRecurrence};
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 
 class CalendarController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, TaskRecurrence $recurrence)
     {
         abort_unless(Gate::allows('projects.manage')||Gate::allows('content.publish'),403);
         $data = $request->validate(['start'=>'required|date_format:Y-m-d','end'=>'required|date_format:Y-m-d|after_or_equal:start',
@@ -21,9 +21,19 @@ class CalendarController extends Controller
         $project = $data['project_id'] ?? null; $events = collect();
         if (Gate::allows('projects.manage')) {
             $projects = Project::whereBetween('due_date',[$data['start'],$data['end']])->when($project,fn($q)=>$q->whereKey($project))->limit(500)->get();
-            $tasks = Task::with('project:id,title')->whereBetween('due_date',[$data['start'],$data['end']])->when($project,fn($q)=>$q->where('project_id',$project))->limit(1000)->get();
+            $tasks = Task::with('project:id,title')->where(function($query) use ($data) {
+                $query->whereBetween('due_date',[$data['start'],$data['end']])
+                    ->orWhere(function($query) use ($data) {
+                        $query->where('recurrence','!=','once')->whereDate('due_date','<=',$data['end'])
+                            ->where(fn($query)=>$query->whereNull('recurrence_until')->orWhereDate('recurrence_until','>=',$data['start']));
+                    });
+            })->when($project,fn($q)=>$q->where('project_id',$project))->limit(1000)->get();
             foreach ($projects as $row) $events->push(['id'=>'project:'.$row->id,'title'=>$row->title,'date'=>$row->due_date->toDateString(),'type'=>'project','status'=>$row->status,'app'=>'projects','subject_id'=>$row->id]);
-            foreach ($tasks as $row) $events->push(['id'=>'task:'.$row->id,'title'=>$row->title,'date'=>$row->due_date->toDateString(),'time'=>$row->due_time,'type'=>'task','status'=>$row->status,'app'=>'tasks','subject_id'=>$row->id]);
+            $taskOccurrences = 0;
+            foreach ($tasks as $row) foreach ($recurrence->dates($row,$start,$end,$timezone) as $date) {
+                if ($taskOccurrences++ >= 1000) break 2;
+                $events->push(['id'=>'task:'.$row->id.':'.$date,'title'=>$row->title,'date'=>$date,'time'=>$row->due_time,'type'=>'task','status'=>$row->status,'recurrence'=>$row->recurrence,'app'=>'tasks','subject_id'=>$row->id]);
+            }
         }
         if (Gate::allows('content.publish')) {
             $rows = PublicationSchedule::with('record:id,title,project_id')->whereBetween('publish_at',[$start->copy()->utc(),$end->copy()->utc()])->when($project,fn($q)=>$q->whereHas('record',fn($q)=>$q->where('project_id',$project)))->limit(1000)->get();
@@ -36,7 +46,7 @@ class CalendarController extends Controller
         }
         if ($data['type'] ?? '') $events = $events->where('type',$data['type']);
         if ($data['provider'] ?? '') $events = $events->filter(fn($event)=>in_array($data['provider'],$event['providers']??[],true));
-        return response()->json(['data'=>$events->sortBy(fn($row)=>$row['date'].' '.($row['time']??'00:00'))->values(),'timezone'=>$timezone,'limit'=>1000,'limited'=>($projects??collect())->count()>=500||($tasks??collect())->count()>=1000||($rows??collect())->count()>=1000||($live??collect())->count()>=1000]);
+        return response()->json(['data'=>$events->sortBy(fn($row)=>$row['date'].' '.($row['time']??'00:00'))->values(),'timezone'=>$timezone,'limit'=>1000,'limited'=>($projects??collect())->count()>=500||($tasks??collect())->count()>=1000||($taskOccurrences??0)>=1000||($rows??collect())->count()>=1000||($live??collect())->count()>=1000]);
     }
 
     public function store(Request $request, EditorialPlanning $planning)

@@ -41,7 +41,7 @@ export async function initialize(root,event){
   try{
     const server=await request(endpoint+'/server');if(disposed)return;labels=server.labels;
     const mode=value=>{root.dataset.studioMode=value;panel.hidden=value!=='browser';grid.hidden=value==='browser';if(value==='browser')for(const frame of root.querySelectorAll('[data-live-console] iframe')){frame.removeAttribute('src');frame.hidden=true;}for(const button of tabs.children)button.setAttribute('aria-pressed',String(button.dataset.mode===value));};
-    for(const [value,label]of [['obs','OBS'],['browser',t('title')]]){const button=W.el('button',label,'desktop-button');button.type='button';button.dataset.mode=value;button.onclick=()=>mode(value);tabs.append(button);}mode(root.dataset.studioMode||'obs');
+    for(const [value,label]of [['obs',t('obs_mode')],['browser',t('browser_mode')]]){const button=W.el('button',label,'desktop-button');button.type='button';button.dataset.mode=value;button.onclick=()=>mode(value);tabs.append(button);}mode(root.dataset.studioMode||'obs');
     const telemetry=W.el('p');telemetry.dataset.studioTelemetry='';panel.append(W.el('h3',t('title')+' · '+event.title),W.el('p',t('intro')),canvas,controls,status,telemetry);
     const cameraChoice=select('camera'),micChoice=select('microphone');cameraChoice.append(new Option(t('none'),'none'));micChoice.append(new Option(t('microphone'),''));
     const scenes=select('scene');for(const key of ['camera','screen','image'])scenes.append(new Option(t(key+'_scene'),key));scenes.onchange=()=>{scene=scenes.value;};

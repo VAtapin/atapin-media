@@ -30,10 +30,16 @@
       return `${period.start.toLocaleDateString(locale,{day:'numeric',month:'short'})} – ${period.end.toLocaleDateString(locale,{day:'numeric',month:'short',year:'numeric'})}`;
     };
     const hideEditor=()=>{editor.hidden=true;editor.replaceChildren();};
+    const openTarget=event=>{
+      if(['projects','tasks'].includes(event.app)){W.open(event.app,{id:event.subject_id});return;}
+      W.open(event.app);
+      if(event.app==='live-studio')document.querySelector('.os-window[data-app-id="live-studio"] [data-live-studio]')?.dispatchEvent(new CustomEvent('desktop-live-open',{detail:{id:event.subject_id}}));
+      if(event.app==='publishing')document.querySelector('.os-window[data-app-id="publishing"] [data-publishing]')?.dispatchEvent(new CustomEvent('desktop-publishing-open',{detail:{recordId:event.subject_id,scheduleId:event.schedule_id,title:event.title,providers:event.providers||[]}}));
+    };
     const select=event=>{
       editor.hidden=false;editor.className='workspace-editor workspace-calendar-detail';
       const meta=el('p',undefined,'workspace-calendar-detail-meta');meta.append(el('span',t(event.type),`workspace-calendar-type is-${event.type}`),document.createTextNode(` ${event.date}${event.time?' · '+event.time:''} · ${t(event.status)}`));
-      const controls=el('div',undefined,'workspace-actions'),open=button('open',()=>W.open(event.app,['projects','tasks'].includes(event.app)?{id:event.subject_id}:undefined));controls.append(open,button('close',hideEditor));
+      const controls=el('div',undefined,'workspace-actions'),open=button('open',()=>openTarget(event));controls.append(open,button('close',hideEditor));
       editor.replaceChildren(el('h2',event.title),meta,controls);
       if(event.providers?.length)editor.append(el('p',`${t('providers')}: ${event.providers.map(t).join(', ')}`));
       if(event.status==='failed')editor.append(el('p',t('schedule_failed'),'workspace-feedback is-error'));

@@ -24,6 +24,44 @@ class TelegramConnector implements PublishingConnector, ManagesPublications
     }
 
     public function actions(): array { return ['update', 'delete']; }
+
+    public function checkConnection(): array
+    {
+        if (! $this->connections->connected('telegram')) throw new \RuntimeException('Telegram is disconnected.');
+        $credentials = $this->connections->credentials('telegram');
+        $connection = $this->connections->connection('telegram');
+        $token = $credentials['api_key'] ?? $credentials['access_token'] ?? null;
+        $chatId = $connection['external_id'] ?? null;
+        if (! is_string($token) || $token === '' || ! is_string($chatId) || $chatId === '') throw new \RuntimeException('Telegram connection is incomplete.');
+
+        $base = rtrim((string) config('publishing.telegram.api_base'), '/').'/bot'.$token;
+        $botResponse = Http::timeout(30)->post($base.'/getMe')->throw();
+        $bot = $botResponse->json('result', []);
+        if ($botResponse->json('ok') !== true || ! is_numeric($bot['id'] ?? null)) throw new \RuntimeException('Telegram did not confirm the bot identity.');
+
+        $chatResponse = Http::timeout(30)->post($base.'/getChat', ['chat_id' => $chatId])->throw();
+        $chat = $chatResponse->json('result', []);
+        if ($chatResponse->json('ok') !== true || empty($chat['username']) || ! in_array($chat['type'] ?? null, ['channel', 'supergroup'], true)) {
+            throw new \RuntimeException('Telegram requires a public channel or group.');
+        }
+
+        $memberResponse = Http::timeout(30)->post($base.'/getChatMember', ['chat_id' => $chatId, 'user_id' => $bot['id']])->throw();
+        $member = $memberResponse->json('result', []);
+        if ($memberResponse->json('ok') !== true || ! in_array($member['status'] ?? null, ['administrator', 'creator'], true)) {
+            throw new \RuntimeException('Telegram bot is not an administrator of the destination.');
+        }
+        if (($chat['type'] ?? null) === 'channel' && ($member['status'] ?? null) !== 'creator' && ($member['can_post_messages'] ?? false) !== true) {
+            throw new \RuntimeException('Telegram bot cannot post to the destination channel.');
+        }
+
+        return [
+            'bot_username' => is_string($bot['username'] ?? null) ? $bot['username'] : null,
+            'chat_id' => (string) ($chat['id'] ?? $chatId),
+            'chat_username' => is_string($chat['username'] ?? null) ? $chat['username'] : null,
+            'chat_title' => is_string($chat['title'] ?? null) ? $chat['title'] : null,
+        ];
+    }
+
     public function manage(Publication $publication, string $action): array
     {
         $credentials = $this->connections->credentials('telegram');

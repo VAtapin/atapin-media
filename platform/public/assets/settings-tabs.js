@@ -46,6 +46,13 @@
         forms.forEach(item => item.classList.remove('is-dirty'));
       }
       dirty = dirtyForms.size > 0;
+      if (form?.matches('[data-stripe-settings]')) {
+        const test = form.querySelector('[data-stripe-test]');
+        if (test) {
+          test.disabled = value || form.dataset.stripeCanTest !== '1';
+          test.title = value ? app.dataset.stripeSaveBeforeTest : '';
+        }
+      }
       post('atapin.settings.dirty', { dirty });
     };
 
@@ -144,7 +151,7 @@
         if (clientSecret && template.oauth_url) clientSecret.required = Boolean(template.oauth_client_secret_required) && !template.oauth_client_secret_saved;
         const miniApp = Boolean(form.querySelector('[name="mini_app_enabled"][type="checkbox"]')?.checked);
         const identifier = form.querySelector('[name="external_id"]');
-        if (identifier) identifier.required = ['facebook', 'instagram'].includes(provider) || (provider === 'telegram' && !miniApp);
+        if (identifier) identifier.required = provider === 'telegram' && !miniApp;
         const username = form.querySelector('[name="bot_username"]');
         if (username) username.required = provider === 'telegram' && miniApp;
       }
@@ -181,14 +188,96 @@
       const form = event.target.closest('form');
       configureConnection(form, 'social', form.querySelector('[name="provider"]').value);
     });
-    app.querySelector('[data-connection-copy]')?.addEventListener('click', async event => {
-      const input = event.currentTarget.closest('[data-connection-redirect]')?.querySelector('[data-connection-redirect-uri]');
+    app.querySelectorAll('[data-connection-copy]').forEach(button => button.addEventListener('click', async event => {
+      const target = event.currentTarget.dataset.copyTarget;
+      const input = target ? app.querySelector(`#${CSS.escape(target)}`) : event.currentTarget.closest('[data-connection-redirect]')?.querySelector('[data-connection-redirect-uri]');
       if (!input?.value) return;
       try {
         if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(input.value);
         else { input.select(); document.execCommand('copy'); }
         showNotice(app.dataset.connectionCopied);
       } catch (_) { showNotice(app.dataset.connectionCopyFailed, true); }
+    }));
+    const metaRequest = async (url, body = null) => {
+      const token = app.querySelector('[name="_token"]')?.value || '';
+      const response = await fetch(url, {
+        method:'POST', credentials:'same-origin',
+        headers:{ Accept:'application/json', 'X-Requested-With':'XMLHttpRequest', 'X-CSRF-TOKEN':token, ...(body ? {'Content-Type':'application/json'} : {}) },
+        body: body ? JSON.stringify(body) : null,
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        const error = new Error(payload.message || 'Meta');
+        error.payload = payload;
+        throw error;
+      }
+      return payload;
+    };
+    const updateConnectionStatuses = (providers, status, label) => providers.forEach(provider => app.querySelectorAll(`[data-connection-status="${CSS.escape(provider)}"]`).forEach(element => {
+      element.textContent = label;
+      element.className = `desktop-settings-status is-${status}`;
+    }));
+    app.addEventListener('click', async event => {
+      const button = event.target.closest('[data-meta-action], [data-social-action]');
+      if (!button || !app.contains(button)) return;
+      event.preventDefault();
+      const action = button.dataset.metaAction || button.dataset.socialAction;
+      const providers = (button.dataset.statusProviders || (button.dataset.metaAction ? 'facebook,instagram' : '')).split(',').filter(Boolean);
+      button.disabled = true;
+      try {
+        const payload = await metaRequest(button.dataset.metaUrl || button.dataset.socialUrl);
+        updateConnectionStatuses(providers, payload.status || (action === 'disconnect' ? 'expired' : 'connected'), payload.status_label || '');
+        showNotice(payload.message || '');
+        if (action === 'disconnect') app.querySelectorAll('[data-meta-action], [data-social-action]').forEach(control => {
+          const affected = (control.dataset.statusProviders || (control.dataset.metaAction ? 'facebook,instagram' : '')).split(',').filter(Boolean);
+          if (affected.some(provider => providers.includes(provider))) control.disabled = true;
+        });
+      } catch (error) {
+        updateConnectionStatuses(providers, error.payload?.status || 'error', error.payload?.status_label || app.dataset.connectionSaved || '');
+        showNotice(error.message, true);
+        button.disabled = false;
+      }
+    });
+    const metaPageSelect = app.querySelector('[data-meta-page-select]');
+    if (metaPageSelect) metaPageSelect.addEventListener('submit', async event => {
+      if (!directDesktop) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const button = event.submitter;
+      if (button) button.disabled = true;
+      try {
+        const payload = await metaRequest(metaPageSelect.action, {page_id:new FormData(metaPageSelect).get('page_id')});
+        showNotice(payload.message || '');
+        window.location.assign('/desktop?open=settings');
+      } catch (error) {
+        showNotice(error.message, true);
+        if (button) button.disabled = false;
+      }
+    });
+    const updateStripe = configuration => {
+      const form = app.querySelector('[data-stripe-settings]');
+      if (!form || !configuration) return;
+      form.dataset.stripeCanTest = configuration.can_test ? '1' : '0';
+      const status = form.querySelector('[data-stripe-status]');
+      if (status) {
+        status.textContent = configuration.status_label || '';
+        status.className = `desktop-settings-status is-${configuration.status || 'not_configured'}`;
+      }
+      const test = form.querySelector('[data-stripe-test]');
+      if (test) test.disabled = !configuration.can_test;
+    };
+    app.querySelector('[data-stripe-test]')?.addEventListener('click', async event => {
+      const button = event.currentTarget, form = button.closest('[data-stripe-settings]');
+      if (form.classList.contains('is-dirty')) { showNotice(app.dataset.stripeSaveBeforeTest, true); return; }
+      button.disabled = true;
+      try {
+        const response = await fetch(form.dataset.stripeTestUrl, { method:'POST', credentials:'same-origin', headers:{ Accept:'application/json', 'X-Requested-With':'XMLHttpRequest', 'X-CSRF-TOKEN':form.querySelector('[name="_token"]').value } });
+        const payload = await response.json();
+        updateStripe(payload.stripe);
+        if (!response.ok) throw new Error(Object.values(payload.errors || {}).flat().join(' ') || payload.message || 'Stripe');
+        showNotice(app.dataset.stripeTested);
+      } catch (error) { showNotice(error.message, true); }
+      finally { button.disabled = form.dataset.stripeCanTest !== '1'; }
     });
     app.querySelector('[data-contact-next]')?.addEventListener('click',async event=>{
       const button=event.currentTarget;button.disabled=true;
@@ -280,32 +369,69 @@
           form.querySelectorAll('input[type="password"]').forEach(input => input.value = '');
         }
         if (payload.section === 'social') {
-          const provider = payload.provider;
+          const provider = payload.provider, definition = socialDefinitions[provider] || {};
           Object.assign(socialDefinitions[provider] || {}, {
             oauth_configured: payload.oauth_configured,
             oauth_client_id_saved: payload.oauth_client_id_saved,
             oauth_client_secret_saved: payload.oauth_client_secret_saved,
             oauth_client_secret_required: payload.oauth_client_secret_required,
+            connected: payload.connected,
+            oauth_url: payload.oauth_url,
+            check_url: payload.check_url,
+            disconnect_url: payload.disconnect_url,
             status: payload.connection_status,
             status_label: payload.connection_status_label,
           });
           configureConnection(form, 'social', provider);
           const list = app.querySelector('[data-connection-list="social"]');
           let button = [...list.querySelectorAll('[data-provider]')].find(item => item.dataset.provider === provider);
-          if (!button) {
-            button = document.createElement('button'); button.type = 'button'; button.className = 'desktop-settings-connection';
-            button.dataset.connectionOpen = 'social'; button.dataset.provider = provider;
-            const title = document.createElement('strong'); title.textContent = socialDefinitions[provider]?.label || provider;
-            button.append(title, document.createElement('span'));
-            list.querySelector('.desktop-settings-empty')?.remove(); list.append(button);
-            button.addEventListener('click', () => openConnection(button));
+          if (payload.connection_saved === false) {
+            button?.closest('.desktop-settings-connection-row')?.remove();
+          } else {
+            let row = button?.closest('.desktop-settings-connection-row');
+            if (!row) {
+              row = document.createElement('div'); row.className = 'desktop-settings-connection-row';
+              button = document.createElement('button'); button.type = 'button'; button.className = 'desktop-settings-connection';
+              button.dataset.connectionOpen = 'social'; button.dataset.provider = provider;
+              row.append(button); list.querySelector('.desktop-settings-empty')?.remove(); list.append(row);
+              button.addEventListener('click', () => openConnection(button));
+            }
+            button.dataset.publicUrl = payload.public_url || '';
+            button.dataset.externalId = payload.external_id || '';
+            button.dataset.botUsername = payload.bot_username || '';
+            button.dataset.miniAppEnabled = payload.mini_app_enabled ? '1' : '0';
+            const title = document.createElement('strong'); title.textContent = definition.label || provider;
+            const status = document.createElement('span'); status.className = `desktop-settings-status is-${payload.connection_status || 'not_configured'}`;
+            status.dataset.connectionStatus = provider; status.textContent = payload.connection_status_label || '';
+            if (['facebook','instagram'].includes(provider)) status.dataset.metaStatus = provider;
+            if (payload.external_id) {
+              const account = document.createElement('span'); account.className = 'desktop-settings-connection-account';
+              const accountName = document.createElement('b'); accountName.textContent = payload.public_url || payload.external_id;
+              const accountId = document.createElement('small'); accountId.textContent = `${app.dataset.socialAccountLabel}: ${payload.external_id}`;
+              account.append(accountName, accountId); button.replaceChildren(title, account, status);
+            } else button.replaceChildren(title, status);
+            const edit = document.createElement('small'); edit.textContent = app.dataset.socialEdit; button.append(edit);
+
+            let actions = row.querySelector('.desktop-settings-connection-actions');
+            if (!actions) { actions = document.createElement('div'); actions.className = 'desktop-settings-connection-actions'; row.append(actions); }
+            actions.replaceChildren();
+            if (definition.oauth_configured && !payload.connected && definition.oauth_url) {
+              const connect = document.createElement('a'); connect.className = 'desktop-settings-secondary'; connect.href = definition.oauth_url; connect.textContent = app.dataset.socialConnect; actions.append(connect);
+            }
+            const addAction = (action, url, label) => {
+              if (!url) return;
+              const control = document.createElement('button'); control.type = 'button'; control.className = 'desktop-settings-secondary'; control.textContent = label;
+              control.dataset.socialAction = action; control.dataset.socialUrl = url;
+              control.dataset.statusProviders = ['facebook','instagram'].includes(provider) ? 'facebook,instagram' : provider;
+              if (['facebook','instagram'].includes(provider)) { control.dataset.metaAction = action; control.dataset.metaUrl = url; }
+              actions.append(control);
+            };
+            if (payload.connected) addAction('check', definition.check_url, app.dataset.socialCheck);
+            if (payload.connected) addAction('disconnect', definition.disconnect_url, app.dataset.socialDisconnect);
+            if (!actions.children.length) actions.remove();
           }
-          button.dataset.publicUrl = form.querySelector('[name="public_url"]').value;
-          button.dataset.externalId = form.querySelector('[name="external_id"]').value;
-          button.dataset.botUsername = form.querySelector('[name="bot_username"]').value;
-          button.dataset.miniAppEnabled = form.querySelector('[name="mini_app_enabled"][type="checkbox"]').checked ? '1' : '0';
-          button.querySelector('span').textContent = payload.connection_status_label || app.dataset.connectionSaved || '';
         }
+        if (payload.section === 'integrations' && payload.provider === 'stripe') updateStripe(payload.stripe);
         if (legalLocale && form.querySelector('[name="section"]')?.value === 'system') {
           legalDocuments[legalLocale.value] = Object.fromEntries([...form.querySelectorAll('[data-rich-editor]')]
             .map(editor => [editor.dataset.richEditor, editor.innerHTML]));

@@ -1,5 +1,6 @@
 <?php
 return [
+    'obs_mode'=>'Use OBS', 'browser_mode'=>'Broadcast in browser',
     'title'=>'Browser studio', 'intro'=>'Prepare your camera, microphone and scenes locally. Nothing is broadcast until you explicitly go live.',
     'podcast_draft'=>'Create Podcast draft from saved audio', 'podcast_created'=>'Podcast draft created — not published.', 'audio_unavailable'=>'Save your audio recording in Media Library first.',
     'screen_stop'=>'Stop screen sharing',

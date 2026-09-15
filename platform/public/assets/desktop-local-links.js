@@ -19,7 +19,7 @@
   });
   document.addEventListener('content-selected',event => {
     const item=event.detail, details=event.target, t=window.desktopImportLabels;
-    if(!['video','short'].includes(item.kind) || details.closest('[data-content-library]').dataset.canEdit!=='true') return;
+    if(item.public_section==='podcast'||!['video','short'].includes(item.kind) || details.closest('[data-content-library]').dataset.canEdit!=='true') return;
     const panel=document.createElement('details'); panel.className='media-inspector';
     panel.innerHTML=`<summary>${escape(t.attach_local_video)}</summary><p>${escape(t.attach_local_hint)}</p><form><input name="video_query" maxlength="120" aria-label="${escape(t.cover_search)}" placeholder="${escape(t.cover_search)}"><button type="submit" class="desktop-button">${escape(t.cover_find)}</button></form><div data-local-video-results></div><p role="status"></p>`;
     details.append(panel);

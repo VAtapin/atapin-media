@@ -33,6 +33,15 @@ $iconSet = config('desktop.icon_sets.'.$desktopAppearance['icon_set'], config('d
 $wallpaper = config('desktop.wallpapers.'.$desktopAppearance['wallpaper']);
 $wallpaperUrl = is_array($wallpaper) ? ($wallpaper['path'] ?? null) : null;
 $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppearance['custom_wallpaper']) ? route('desktop.wallpaper') : null;
+$workspaceLabels = array_replace(__('workspaces'), [
+    'new_project'=>__('ui.new_project'), 'new_task'=>__('ui.new_task'),
+    'task_status_open'=>__('ui.task_status_open'), 'task_status_planned'=>__('ui.task_status_planned'), 'task_status_working'=>__('ui.task_status_working'), 'task_status_waiting'=>__('ui.task_status_waiting'), 'task_status_done'=>__('ui.task_status_done'),
+    'task_recurrence'=>__('ui.task_recurrence'), 'task_recurrence_once'=>__('ui.task_recurrence_once'), 'task_recurrence_daily'=>__('ui.task_recurrence_daily'), 'task_recurrence_weekly'=>__('ui.task_recurrence_weekly'), 'task_recurrence_monthly'=>__('ui.task_recurrence_monthly'), 'task_recurrence_custom'=>__('ui.task_recurrence_custom'),
+    'task_recurrence_interval'=>__('ui.task_recurrence_interval'), 'task_recurrence_unit'=>__('ui.task_recurrence_unit'), 'task_recurrence_until'=>__('ui.task_recurrence_until'), 'task_recurrence_day'=>__('ui.task_recurrence_day'), 'task_recurrence_week'=>__('ui.task_recurrence_week'), 'task_recurrence_month'=>__('ui.task_recurrence_month'), 'further_settings'=>__('ui.further_settings'),
+    'view_board'=>__('ui.view_board'), 'view_list'=>__('ui.view_list'),
+    'recurrence'=>__('ui.task_recurrence'), 'recurrence_interval'=>__('ui.task_recurrence_interval'), 'recurrence_unit'=>__('ui.task_recurrence_unit'), 'recurrence_until'=>__('ui.task_recurrence_until'),
+    'states'=>array_replace(__('workspaces.states'), ['planned'=>__('ui.task_status_planned')]),
+]);
 @endphp
 <!doctype html>
 <html lang="de">
@@ -40,16 +49,16 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Desktop · {{ config('platform.brand') }}</title>
-    <link rel="icon" href="/favicon.png"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/brand/owner/app-icon.png"><meta name="theme-color" content="#8b6a3d"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=4"><link rel="stylesheet" href="/assets/desktop-windows.css?v=5"><link rel="stylesheet" href="/assets/desktop-settings.css?v=4">
-    <link rel="stylesheet" href="/assets/desktop-app.css?v=3"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=11"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=3"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=3"><link rel="stylesheet" href="/assets/desktop-community.css?v=3"><link rel="stylesheet" href="/assets/desktop-publishing.css?v=4">
-    <link rel="stylesheet" href="/assets/desktop-workspaces.css?v=11">
+    <link rel="icon" href="/favicon.png"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/brand/owner/app-icon.png"><meta name="theme-color" content="#8b6a3d"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=4"><link rel="stylesheet" href="/assets/desktop-windows.css?v=5"><link rel="stylesheet" href="/assets/desktop-settings.css?v=6">
+    <link rel="stylesheet" href="/assets/desktop-app.css?v=3"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=12"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=3"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=4"><link rel="stylesheet" href="/assets/desktop-community.css?v=3"><link rel="stylesheet" href="/assets/desktop-publishing.css?v=4">
+    <link rel="stylesheet" href="/assets/desktop-workspaces.css?v=14">
     <link rel="stylesheet" href="/assets/desktop-overview.css?v=2">
-    <script>window.desktopWorkspaceLabels=@json(array_replace(__('workspaces'),['new_project'=>__('ui.new_project'),'new_task'=>__('ui.new_task')])); window.desktopAiLabels=@json(__('ai_dashboard'));</script>
-    <script src="/assets/desktop-workspaces.js?v=9" defer></script>
+    <script>window.desktopWorkspaceLabels=@json($workspaceLabels); window.desktopBookReviewLabels=@json(__('book-reviews')); window.desktopAiLabels=@json(__('ai_dashboard'));</script>
+    <script src="/assets/desktop-workspaces.js?v=11" defer></script>
     <script src="/assets/public-pwa.js?v=1" defer></script>
-    <script src="/assets/desktop-workspace-content.js?v=5" defer></script>
+    <script src="/assets/desktop-workspace-content.js?v=7" defer></script>
     <script src="/assets/desktop-ai-dashboard.js?v=2" defer></script>
-    <script src="/assets/desktop-catalogs.js?v=5" defer></script>
+    <script src="/assets/desktop-catalogs.js?v=7" defer></script>
     <script src="/assets/desktop-subscriber-import.js?v=1" defer></script>
     <script src="/assets/desktop-ai-proposal.js?v=1" defer></script>
     <script src="/assets/desktop-migration-wizard.js?v=1" defer></script>
@@ -62,11 +71,11 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <script src="/assets/desktop-live-console.js?v=2" defer></script>
     <script src="/assets/desktop-publishing-preview.js?v=2" defer></script>
     <script src="/assets/desktop-community-sync.js?v=1" defer></script>
-    <script src="/assets/desktop-workspace-operations.js?v=6" defer></script>
-    <script src="/assets/desktop-editor-workflow.js?v=5" defer></script>
+    <script src="/assets/desktop-workspace-operations.js?v=7" defer></script>
+    <script src="/assets/desktop-editor-workflow.js?v=6" defer></script>
     <script src="/assets/desktop-shortcuts.js?v=3" defer></script>
     <link rel="stylesheet" href="/assets/desktop-import-workflow.css?v=3">
-    <script src="/assets/desktop-os.js?v=20" defer></script><script src="/assets/settings-tabs.js?v=8" defer></script><script src="/assets/desktop-media-library.js?v=15" defer></script><script src="/assets/desktop-import-center.js?v=12" defer></script><script src="/assets/desktop-live-studio.js?v=7" defer></script><script src="/assets/desktop-publishing.js?v=5" defer></script>
+    <script src="/assets/desktop-os.js?v=20" defer></script><script src="/assets/settings-tabs.js?v=10" defer></script><script src="/assets/desktop-media-library.js?v=15" defer></script><script src="/assets/desktop-import-center.js?v=12" defer></script><script src="/assets/desktop-live-studio.js?v=8" defer></script><script src="/assets/desktop-publishing.js?v=6" defer></script>
 </head>
 <body class="os-body">
 <main class="os-desktop" data-desktop data-storage-key="atapin.desktop.{{ auth()->id() }}.v1"
@@ -166,14 +175,14 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     @endif
     <script>window.desktopImportLabels = @json(__('imports')); window.desktopLiveLabels = @json(__('desktop-live')); window.desktopPublishingLabels = @json(__('publishing'));</script>
     <script src="/assets/desktop-import-workflow.js?v=2" defer></script>
-    <script src="/assets/desktop-content-lifecycle.js?v=2" defer></script>
+    <script src="/assets/desktop-content-lifecycle.js?v=3" defer></script>
     <script src="/assets/desktop-content-composite.js?v=2" defer></script>
-    <script src="/assets/desktop-content-library.js?v=14" defer></script>
+    <script src="/assets/desktop-content-library.js?v=15" defer></script>
     <script src="/assets/desktop-content-organization.js?v=3" defer></script>
-    <script src="/assets/desktop-content-enhancements.js?v=3" defer></script>
-    <script src="/assets/desktop-local-links.js?v=1" defer></script>
+    <script src="/assets/desktop-content-enhancements.js?v=4" defer></script>
+    <script src="/assets/desktop-local-links.js?v=2" defer></script>
     <script src="/assets/desktop-media-technical.js?v=1" defer></script>
-    <script src="/assets/desktop-content-assignment.js?v=10" defer></script>
+    <script src="/assets/desktop-content-assignment.js?v=11" defer></script>
     <script src="/assets/desktop-media-organization.js?v=4" defer></script>
     <script src="/assets/desktop-media-cover.js?v=2" defer></script>
     <script src="/assets/desktop-import-versions.js?v=1" defer></script>

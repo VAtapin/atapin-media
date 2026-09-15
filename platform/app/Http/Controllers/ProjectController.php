@@ -1,6 +1,6 @@
 <?php
 namespace App\Http\Controllers;
-use App\Models\Project;
+use App\Models\{Project, Publication};
 use App\Services\{Audit,Workflow};
 use App\Services\MediaLibrary;
 use Illuminate\Http\Request;
@@ -23,12 +23,26 @@ class ProjectController extends Controller
 
     public function show(Project $project)
     {
-        $project->load('owner:id,name')->loadCount(['tasks','tasks as done_tasks_count'=>fn($q)=>$q->where('status','done')]);
+        $project->load('owner:id,name')->loadCount([
+            'tasks', 'tasks as open_tasks_count'=>fn($q)=>$q->where('status','!=','done'),
+            'tasks as done_tasks_count'=>fn($q)=>$q->where('status','done'), 'records', 'products',
+        ]);
         $cover = $project->cover_media_id ? \App\Models\Media::find($project->cover_media_id) : null;
+        $records = $project->records()->latest()->paginate(30, ['id','title','kind','status','metadata'], 'records_page')
+            ->through(fn($record)=>['id'=>$record->id,'title'=>$record->title,'kind'=>$record->kind,'status'=>$record->status,
+                'public_section'=>$record->metadata['public_section']??null]);
+        $publications = Publication::with('record:id,title,kind,metadata')->where('direction','outbound')
+            ->whereHas('record',fn($query)=>$query->where('project_id',$project->id))
+            ->latest('updated_at')->paginate(30, ['id','source_record_id','provider','status','remote_status','published_at','updated_at'], 'publications_page')
+            ->through(fn($publication)=>['id'=>$publication->id,'record_id'=>$publication->source_record_id,
+                'title'=>$publication->record?->title,'kind'=>$publication->record?->kind,
+                'public_section'=>$publication->record?->metadata['public_section']??null,'provider'=>$publication->provider,
+                'status'=>$publication->remote_status?:$publication->status]);
         return response()->json(['project'=>[...$project->toArray(),'cover_url'=>$cover?->previewUrl()],
             'tasks'=>$project->tasks()->with('assignee:id,name')->orderBy('due_date')->paginate(30, ['*'], 'tasks_page'),
-            'records'=>$project->records()->latest()->paginate(30, ['id','title','kind','status'], 'records_page'),
+            'records'=>$records,
             'products'=>$project->products()->latest()->paginate(30, ['id','title','status'], 'products_page'),
+            'publications'=>$publications,
             'timeline'=>\App\Models\AuditEvent::where(function($query)use($project){
                 $query->where(fn($q)=>$q->where('action','project.saved')->where('subject',(string)$project->id))
                     ->orWhere(fn($q)=>$q->where('action','task.saved')->where(fn($q)=>$q->whereIn('subject',$project->tasks()->select('id'))->orWhere('context->project_id',$project->id)->orWhere('context->previous_project_id',$project->id)));

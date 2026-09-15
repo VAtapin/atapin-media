@@ -6,10 +6,14 @@ use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Crypt;
 use App\Models\Publication;
+use App\Services\Settings;
 
 class YouTubeClient
 {
-    public function __construct(private readonly ConnectionStore $connections)
+    public function __construct(
+        private readonly ConnectionStore $connections,
+        private readonly Settings $settings,
+    )
     {
     }
 
@@ -58,6 +62,83 @@ class YouTubeClient
     {
         return $this->request($credentials)->timeout(30)->get($this->url('channels'), ['part' => 'id,snippet,contentDetails', 'mine' => 'true'])
             ->throw()->json('items.0', []);
+    }
+
+    public function check(): array
+    {
+        $connection = $this->connections->connection('youtube');
+        $channelId = $connection['external_id'] ?? null;
+        if (! is_string($channelId) || $channelId === '' || ! empty($connection['revoked_at'])) {
+            throw new YouTubeConnectionExpired('YouTube is not connected.');
+        }
+        if (! $this->oauthConfigured()) {
+            throw new YouTubeConnectionCheckFailed('configuration', 'YouTube OAuth application credentials are missing.');
+        }
+
+        $api = $this->request()->timeout(30);
+        $credentials = $this->connections->credentials('youtube');
+        $accessToken = $credentials['access_token'] ?? null;
+        if (! is_string($accessToken) || $accessToken === '') throw new YouTubeConnectionExpired('YouTube access token is missing.');
+
+        $tokenInfo = Http::acceptJson()->timeout(30)->get((string) config('publishing.youtube.oauth_token_info'), [
+            'access_token' => $accessToken,
+        ]);
+        if (in_array($tokenInfo->status(), [400, 401], true)) throw new YouTubeConnectionExpired('YouTube access token expired.');
+        if ($tokenInfo->status() === 403) throw new YouTubeConnectionCheckFailed('permissions', 'YouTube token permissions cannot be inspected.');
+        if (! $tokenInfo->successful()) throw new \RuntimeException('YouTube token inspection failed (HTTP '.$tokenInfo->status().').');
+        if (is_numeric($tokenInfo->json('expires_in')) && (int) $tokenInfo->json('expires_in') <= 0) {
+            throw new YouTubeConnectionExpired('YouTube access token expired.');
+        }
+
+        $oauth = app(OAuthAppCredentials::class)->get('youtube');
+        $audience = $tokenInfo->json('aud');
+        if (! is_string($audience) || ! hash_equals((string) $oauth['client_id'], $audience)) {
+            throw new YouTubeConnectionCheckFailed('configuration', 'YouTube token belongs to another OAuth application.');
+        }
+        $granted = preg_split('/\s+/', trim((string) $tokenInfo->json('scope', '')), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $required = preg_split('/\s+/', trim((string) config('publishing.youtube.scope')), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        if ($required === [] || array_diff($required, $granted)) {
+            throw new YouTubeConnectionCheckFailed('permissions', 'YouTube publishing permission is missing.');
+        }
+
+        $channelResponse = $api->get($this->url('channels'), ['part' => 'id,snippet', 'mine' => 'true']);
+        if ($channelResponse->status() === 401) throw new YouTubeConnectionExpired('YouTube access token expired.');
+        if ($channelResponse->status() === 403) throw new YouTubeConnectionCheckFailed('permissions', 'YouTube channel permission is missing.');
+        if (! $channelResponse->successful()) throw new \RuntimeException('YouTube channel check failed (HTTP '.$channelResponse->status().').');
+        $channel = $channelResponse->json('items.0', []);
+        if (! is_array($channel) || ! is_string($channel['id'] ?? null) || $channel['id'] === '') {
+            throw new YouTubeConnectionCheckFailed('channel_access', 'No YouTube channel is accessible.');
+        }
+        if (! hash_equals($channelId, $channel['id'])) {
+            throw new YouTubeConnectionCheckFailed('channel_identity', 'The authorized YouTube channel does not match the saved channel.');
+        }
+
+        $this->markHealthy($channel);
+
+        return [
+            'id' => $channelId,
+            'name' => $channel['snippet']['title'] ?? $connection['display_name'] ?? $channelId,
+            'publishing_scope' => true,
+            'checked_at' => now()->toIso8601String(),
+        ];
+    }
+
+    public function markError(string $reason = 'error'): void
+    {
+        $social = $this->settings->get('social_connections', []);
+        if (! is_array($social['youtube'] ?? null)) return;
+        $social['youtube']['last_error_at'] = now()->toIso8601String();
+        $social['youtube']['last_error_reason'] = $reason;
+        $this->settings->update(['social_connections' => $social]);
+    }
+
+    public function markExpired(): void
+    {
+        $social = $this->settings->get('social_connections', []);
+        if (! is_array($social['youtube'] ?? null)) return;
+        $social['youtube']['revoked_at'] = now()->toIso8601String();
+        unset($social['youtube']['last_error_at'], $social['youtube']['last_error_reason']);
+        $this->settings->update(['social_connections' => $social]);
     }
 
     public function uploadVideo(string $path, array $snippet, array $status, Publication $publication): array
@@ -270,7 +351,7 @@ class YouTubeClient
 
     private function request(?array $credentials = null): PendingRequest
     {
-        if ($credentials === null && ! $this->connections->connected('youtube')) throw new \RuntimeException('YouTube is disconnected.');
+        if ($credentials === null && ! $this->connections->connected('youtube')) throw new YouTubeConnectionExpired('YouTube is disconnected.');
         $credentials ??= $this->connections->credentials('youtube');
         $expiresAt = (int) ($credentials['expires_at'] ?? 0);
         if ((! is_string($credentials['access_token'] ?? null) || $expiresAt && $expiresAt <= now()->addMinute()->timestamp) && ! empty($credentials['refresh_token'])) {
@@ -281,14 +362,31 @@ class YouTubeClient
                 'refresh_token' => $credentials['refresh_token'],
                 'grant_type' => 'refresh_token',
             ]);
-            if (! $response->successful()) throw new \RuntimeException('YouTube OAuth token refresh failed.');
-            if (! $this->connections->connected('youtube')) throw new \RuntimeException('YouTube was disconnected during token refresh.');
+            if (! $response->successful()) {
+                if ($response->json('error') === 'invalid_grant') throw new YouTubeConnectionExpired('YouTube refresh token expired or was revoked.');
+                throw new \RuntimeException('YouTube OAuth token refresh failed (HTTP '.$response->status().').');
+            }
+            if (! $this->connections->connected('youtube')) throw new YouTubeConnectionExpired('YouTube was disconnected during token refresh.');
             $refreshed = $this->tokenPayload([...$response->json(), 'refresh_token' => $credentials['refresh_token']]);
             $this->connections->saveCredentials('youtube', $refreshed);
             $credentials = [...$credentials, ...$refreshed];
         }
-        if (! is_string($credentials['access_token'] ?? null) || $credentials['access_token'] === '') throw new \RuntimeException('YouTube is not connected.');
+        if (! is_string($credentials['access_token'] ?? null) || $credentials['access_token'] === '') throw new YouTubeConnectionExpired('YouTube is not connected.');
         return Http::acceptJson()->withToken($credentials['access_token'])->timeout(3500);
+    }
+
+    private function markHealthy(array $channel): void
+    {
+        $social = $this->settings->get('social_connections', []);
+        if (! is_array($social['youtube'] ?? null)) return;
+        unset($social['youtube']['revoked_at'], $social['youtube']['last_error_at'], $social['youtube']['last_error_reason']);
+        $social['youtube']['checked_at'] = now()->toIso8601String();
+        if (is_string($channel['snippet']['title'] ?? null) && $channel['snippet']['title'] !== '') $social['youtube']['display_name'] = $channel['snippet']['title'];
+        $customUrl = $channel['snippet']['customUrl'] ?? null;
+        $social['youtube']['public_url'] = is_string($customUrl) && $customUrl !== ''
+            ? 'https://www.youtube.com/'.$customUrl
+            : 'https://www.youtube.com/channel/'.$channel['id'];
+        $this->settings->update(['social_connections' => $social]);
     }
 
     private function url(string $resource): string

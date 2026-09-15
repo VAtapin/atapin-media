@@ -145,9 +145,9 @@ class FoundationTest extends TestCase
             ->assertOk()->assertJson(['status'=>'saved','section'=>'social','provider'=>'telegram']);
         $this->assertSame('https://t.me/manna', app(Settings::class)->get('social_connections')['telegram']['public_url']);
         $this->assertStringContainsString('telegram-secret', app(Settings::class)->secret('social_telegram'));
-        $this->putJson('/desktop/settings', ['section'=>'integrations','provider'=>'stripe','account_id'=>'acct_123','api_key'=>'stripe-secret'])
+        $this->putJson('/desktop/settings', ['section'=>'integrations','provider'=>'stripe','mode'=>'test','publishable_key'=>'pk_test_fixture_public','api_key'=>'sk_test_fixture_secret','webhook_secret'=>'whsec_fixture_signing'])
             ->assertOk()->assertJson(['status'=>'saved','section'=>'integrations','provider'=>'stripe']);
-        $this->assertSame('acct_123', app(Settings::class)->get('integration_connections')['stripe']['external_id']);
+        $this->assertSame('test', app(Settings::class)->get('integration_connections')['stripe']['mode']);
         $this->put('/desktop/settings', ['section'=>'publishing','publishing_default_visibility'=>'internal','publishing_default_timezone'=>'Europe/Berlin','publishing_approval_required'=>'1'])->assertRedirect();
         $this->assertTrue(app(Settings::class)->get('publishing_approval_required'));
         $this->putJson('/desktop/settings', ['section'=>'desktop_design','desktop_icon_set'=>'manna','desktop_wallpaper'=>'navy','desktop_accent'=>'gold','desktop_density'=>'comfortable','desktop_shortcut_layout'=>'grid','desktop_effects'=>true])
@@ -171,7 +171,7 @@ class FoundationTest extends TestCase
         $this->get('/desktop/shop')->assertStatus(405);
         $desktop = $this->get('/desktop')->assertOk();
         foreach (['Videos','Beiträge','Bücher & PDF','Podcast','Live Studio','Media Library','Projekte','Aufgaben','Kalender','Community','Newsletter','Themen & Kategorien','Publishing','Shop & Verkäufe','KI-Assistent','Analytics','Import Center','Integrationen','Einstellungen'] as $name) $desktop->assertSee($name);
-        $desktop->assertSee('desktop-settings', false)->assertSee('/assets/desktop-settings.css?v=4', false)
+        $desktop->assertSee('desktop-settings', false)->assertSee('/assets/desktop-settings.css?v=6', false)
             ->assertSee($owner->email)->assertSee('data-user-cancel', false)->assertSee('data-user-create-cancel', false)
             ->assertDontSee('/assets/app.css', false)->assertDontSee('<iframe', false);
         foreach (['Subscribers','Bilder','Audio','Dateien'] as $removedApp) $desktop->assertDontSee('data-app-name="'.$removedApp.'"', false);

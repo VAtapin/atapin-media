@@ -60,10 +60,28 @@ class ImportedContentController extends Controller
     public function store(Request $request, \App\Services\Importing\ContentAssignment $assignment)
     {
         $data = $request->validate(['title'=>'required|string|max:255','body'=>'nullable|string|max:1000000',
-            'kind'=>'required|in:video,short,post','public_section'=>'required|in:videos,beitraege,podcast','status'=>'required|in:unsorted,ready,needs_attention']);
-        $record = SourceRecord::create(['source'=>'manual','source_id'=>(string)\Illuminate\Support\Str::uuid(),
-            'title'=>$data['title'],'body'=>$data['body'] ?? '','kind'=>$data['kind'],'status'=>$data['status'],
-            'metadata'=>['public_section'=>$data['public_section'],'public_published'=>false,'classification_origin'=>'manual']]);
+            'kind'=>'required|in:video,short,post','public_section'=>'required|in:videos,beitraege,podcast','status'=>'required|in:unsorted,review,ready,needs_attention',
+            'podcast_media_id'=>'nullable|prohibited_unless:public_section,podcast|uuid|exists:media,id',
+            'public_published'=>'sometimes|boolean','tags'=>'sometimes|array|max:30','tags.*'=>'string|max:100',
+            ...\App\Services\ContentEditorData::rules(),
+            'podcast_format'=>'nullable|required_if:public_section,podcast|prohibited_unless:public_section,podcast|in:audio,video']);
+        if($request->filled('podcast_media_id')||$request->filled('cover_media_id'))\Illuminate\Support\Facades\Gate::authorize('media.edit');
+        if($request->hasAny(['public_published','public_published_at']))\Illuminate\Support\Facades\Gate::authorize('content.publish');
+        $record = \Illuminate\Support\Facades\DB::transaction(function () use ($data,$assignment) {
+            $metadata=['public_section'=>$data['public_section'],'public_published'=>false,'classification_origin'=>'manual'];
+            $record = SourceRecord::create(['source'=>'manual','source_id'=>(string)\Illuminate\Support\Str::uuid(),
+                'title'=>$data['title'],'body'=>$data['body'] ?? '','kind'=>$data['kind'],'status'=>$data['status'],'metadata'=>$metadata]);
+            $editorData=\Illuminate\Support\Arr::except($data,['public_section','podcast_media_id','cover_media_id']);
+            if($data['public_section']==='podcast')$editorData['target_profile']='podcast';
+            $assignment->record($record,$editorData);
+            if($mediaId=$data['podcast_media_id']??null){
+                $media=Media::findOrFail($mediaId);$format=$data['podcast_format']??'audio';
+                abort_unless($media->kind===$format,422,__('imports.podcast_media_format_mismatch'));
+                app(\App\Services\Importing\ContentAssets::class)->change($record,['action'=>'replace','role'=>$format,'media_id'=>$mediaId]);
+            }
+            if($coverId=$data['cover_media_id']??null)app(\App\Services\Importing\ContentAssets::class)->change($record,['action'=>'replace','role'=>'cover','media_id'=>$coverId]);
+            return $record;
+        });
         app(\App\Services\Audit::class)->record('content.created',(string)$record->id);
         return response()->json(['status'=>'saved','id'=>$record->id,'detail_url'=>route('content.show',$record)],201);
     }
@@ -85,15 +103,28 @@ class ImportedContentController extends Controller
 
     public function update(Request $request, SourceRecord $record, \App\Services\Importing\ContentAssignment $assignment)
     {
+        if($request->filled('podcast_media_id')||$request->filled('cover_media_id'))\Illuminate\Support\Facades\Gate::authorize('media.edit');
         if($request->hasAny(['public_published','public_section','public_homepage'])||($record->metadata['public_published']??false)||($record->metadata['public_homepage']??false))\Illuminate\Support\Facades\Gate::authorize('content.publish');
         if($request->hasAny(['platform_metadata','public_published_at']))\Illuminate\Support\Facades\Gate::authorize('content.publish');
-        $assignment->record($record, $request->validate(['title' => 'required|string|max:255', 'body' => 'nullable|string|max:1000000',
+        $data=$request->validate(['title' => 'required|string|max:255', 'body' => 'nullable|string|max:1000000',
             'kind' => 'required|in:'.implode(',',SourceRecord::KINDS), 'status' => 'required|in:unsorted,review,ready,needs_attention',
             'target_profile'=>'nullable|in:media_library,videos,shorts,posts,polls,comments,podcast',
             'public_published'=>'sometimes|boolean','public_homepage'=>'sometimes|boolean',
             'public_section'=>'sometimes|in:videos,beitraege,podcast,live,community',
+            'podcast_media_id'=>'sometimes|nullable|uuid|exists:media,id',
             'short_description'=>'nullable|string|max:300',
-            'tags' => 'nullable|array|max:30', 'tags.*' => 'string|max:100', ...\App\Services\ContentEditorData::rules()]));
+            'tags' => 'nullable|array|max:30', 'tags.*' => 'string|max:100', ...\App\Services\ContentEditorData::rules()]);
+        \Illuminate\Support\Facades\DB::transaction(function()use($record,$assignment,$data){
+            $isPodcast=($record->metadata['public_section']??null)==='podcast'||($data['target_profile']??null)==='podcast';
+            abort_if(array_key_exists('podcast_media_id',$data)&&!$isPodcast,422);
+            $assignment->record($record,\Illuminate\Support\Arr::except($data,['podcast_media_id']));
+            if($mediaId=$data['podcast_media_id']??null){
+                $format=$data['podcast_format']??$record->metadata['podcast_format']??'audio';
+                abort_unless(Media::findOrFail($mediaId)->kind===$format,422,__('imports.podcast_media_format_mismatch'));
+                app(\App\Services\Importing\ContentAssets::class)->change($record,['action'=>'replace','role'=>$format,'media_id'=>$mediaId]);
+            }
+            if($isPodcast&&($coverId=$data['cover_media_id']??null))app(\App\Services\Importing\ContentAssets::class)->change($record,['action'=>'replace','role'=>'cover','media_id'=>$coverId]);
+        });
         return response()->json(['status' => 'saved']);
     }
 
@@ -140,7 +171,7 @@ class ImportedContentController extends Controller
         $externalPublications = Publication::where('source_record_id', $record->id)->where('direction', 'outbound')->where('provider', '!=', 'website')->get()->map(fn ($publication) => ['provider'=>$publication->provider,'status'=>$publication->status,'remote_status'=>$publication->remote_status,'external_url'=>$publication->external_url,'published_at'=>$publication->published_at,'origin'=>($publication->payload['origin']??null)==='youtube_sync'?'youtube_sync':'outbound'])->values();
         $version=app(\App\Services\Importing\ContentState::class)->version($record);
         return response()->json(['id' => $record->id, 'title' => $record->title, 'body' => ($metadata['body_format']??'plain')==='html'?app(\App\Services\RichContent::class)->sanitize($record->body??''):$record->body,
-            ...array_intersect_key($metadata,array_flip(['workflow_stage','slug','locale','episode_number','season','public_published_at'])),
+            ...array_intersect_key($metadata,array_flip(['workflow_stage','slug','locale','episode_number','season','podcast_format','primary_audio_id','primary_video_id','public_published_at'])),
             ...array_intersect_key($metadata,array_flip(['author','seo_title','seo_description','transcript','guest','external_podcast_url','cover_media_id','taxonomy_term_ids'])),
             'short_description'=>$metadata['short_description']??'', 'short_description_job'=>$metadata['short_description_job']['state']??null,
             'structure_review'=>app(\App\Services\ContentStructureReview::class)->status($record),
@@ -151,7 +182,7 @@ class ImportedContentController extends Controller
             'kind' => $record->kind, 'source' => $record->source, 'source_id' => $record->source_id, 'status' => $record->status,
             'parent_source_id' => $metadata['parent_source_id'] ?? null, 'poll' => $metadata['poll'] ?? null,
             'author' => $metadata['author'] ?? null, 'tags' => $metadata['tags'] ?? [], 'classification' => $metadata['classification'] ?? null,
-            'target_profile'=>($metadata['library_only']??false) ? 'media_library' : match($record->kind){'video'=>'videos','short'=>'shorts','post'=>'posts','poll'=>'polls','comment'=>'comments',default=>'media_library'},
+            'target_profile'=>($metadata['library_only']??false) ? 'media_library' : (($metadata['public_section']??null)==='podcast'?'podcast':match($record->kind){'video'=>'videos','short'=>'shorts','post'=>'posts','poll'=>'polls','comment'=>'comments',default=>'media_library'}),
             'archive_data'=>(bool)($metadata['archive_data']??false),'takeout_data'=>$metadata['takeout_data']??[],
             'public_published'=>(bool)($metadata['public_published']??false),'public_homepage'=>(bool)($metadata['public_homepage']??false),
             'public_section'=>$publicContent->section($record),

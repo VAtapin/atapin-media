@@ -1,7 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 use App\Models\{Product,BookReview};
-use App\Services\{PublicBooks,Audit};
+use App\Services\PublicBooks;
 use Illuminate\Http\Request;
 class PublicBookReviewController extends Controller {
     public function store(Request $request,Product $product,PublicBooks $books){
@@ -11,5 +11,4 @@ class PublicBookReviewController extends Controller {
         $message=__('public.comment_pending');
         return $request->expectsJson()?response()->json(['message'=>$message,'kind'=>'review']):back()->with('public_status',$message);
     }
-    public function moderate(Request $request,BookReview $review,Audit $audit){$data=$request->validate(['status'=>'required|in:published,rejected']);$review->update($data);$audit->record('shop.review_moderated',(string)$review->id);return back()->with('public_status',__('public.saved'));}
 }

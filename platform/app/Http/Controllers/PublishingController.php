@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Jobs\SyncYouTubeChannel;
 use App\Models\{Publication, SourceRecord};
-use App\Services\Publishing\{ConnectionStore, ConnectorRegistry, PublishingService, YouTubeClient};
+use App\Services\Publishing\{ConnectionStore, ConnectorRegistry, PublishingService, YouTubeClient, YouTubeConnectionCheckFailed, YouTubeConnectionExpired};
+use App\Services\Publishing\Connectors\TelegramConnector;
 use App\Services\Settings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -142,7 +143,11 @@ class PublishingController extends Controller
     public function disconnectX(ConnectionStore $connections)
     {
         $connections->forgetCredentials('x');
-        return response()->json(['status' => 'disconnected']);
+        return response()->json([
+            'status' => 'expired',
+            'status_label' => __('social.status_expired'),
+            'message' => __('social.connection_disconnected', ['provider' => 'X']),
+        ]);
     }
 
     public function syncYouTube()
@@ -200,10 +205,110 @@ class PublishingController extends Controller
         return $this->youtubeOAuthReturn(__('publishing.youtube_connected'));
     }
 
-    public function youtubeDisconnect(ConnectionStore $connections)
+    public function youtubeDisconnect(ConnectionStore $connections, Settings $settings)
     {
         $connections->forgetCredentials('youtube');
-        return response()->json(['status' => 'revoked']);
+        $social = $settings->get('social_connections', []);
+        if (is_array($social['youtube'] ?? null)) {
+            $social['youtube']['external_id'] = null;
+            unset(
+                $social['youtube']['display_name'],
+                $social['youtube']['revoked_at'],
+                $social['youtube']['last_error_at'],
+                $social['youtube']['last_error_reason'],
+                $social['youtube']['checked_at'],
+            );
+            $settings->update(['social_connections' => $social]);
+        }
+        return response()->json([
+            'status' => 'configured',
+            'status_label' => __('social.status_configured'),
+            'message' => __('publishing.youtube_disconnected'),
+        ]);
+    }
+
+    public function youtubeCheck(Request $request, YouTubeClient $client, ConnectionStore $connections)
+    {
+        try {
+            return response()->json([
+                'status' => 'connected',
+                'status_label' => __('social.status_connected'),
+                'message' => __('publishing.youtube_check_succeeded'),
+                'connection' => $client->check(),
+            ]);
+        } catch (YouTubeConnectionExpired $error) {
+            $client->markExpired();
+            Log::warning('YouTube connection check found an expired token.', [
+                'user_id' => $request->user()?->id,
+                'error' => $connections->safeError($error),
+            ]);
+            return response()->json([
+                'status' => 'expired',
+                'status_label' => __('social.status_expired'),
+                'message' => __('publishing.youtube_token_expired'),
+            ], 422);
+        } catch (YouTubeConnectionCheckFailed $error) {
+            $status = $error->reason === 'configuration' ? 'error' : 'permission';
+            $client->markError($status);
+            Log::warning('YouTube connection check found insufficient access.', [
+                'user_id' => $request->user()?->id,
+                'reason' => $error->reason,
+                'error' => $connections->safeError($error),
+            ]);
+            return response()->json([
+                'status' => $status,
+                'status_label' => __('social.status_'.$status),
+                'message' => __('publishing.youtube_check_'.$error->reason),
+            ], 422);
+        } catch (\Throwable $error) {
+            $client->markError();
+            Log::warning('YouTube connection check failed.', [
+                'user_id' => $request->user()?->id,
+                'error_type' => $error::class,
+                'error' => $connections->safeError($error),
+            ]);
+            return response()->json([
+                'status' => 'error',
+                'status_label' => __('social.status_error'),
+                'message' => __('publishing.youtube_check_failed'),
+            ], 422);
+        }
+    }
+
+    public function telegramCheck(Request $request, TelegramConnector $telegram, ConnectionStore $connections, Settings $settings)
+    {
+        try {
+            $account = $telegram->checkConnection();
+            $this->recordConnectionCheck($settings, 'telegram', true);
+            return response()->json([
+                'status' => 'connected',
+                'status_label' => __('social.status_connected'),
+                'message' => __('social.connection_checked', ['provider' => 'Telegram']),
+                'connection' => $account,
+            ]);
+        } catch (\Throwable $error) {
+            $this->recordConnectionCheck($settings, 'telegram', false);
+            Log::warning('Telegram connection check failed.', [
+                'user_id' => $request->user()?->id,
+                'error_type' => $error::class,
+                'error' => $connections->safeError($error),
+            ]);
+            return response()->json([
+                'status' => 'error',
+                'status_label' => __('social.status_error'),
+                'message' => __('social.connection_check_failed', ['provider' => 'Telegram']),
+            ], 422);
+        }
+    }
+
+    public function telegramDisconnect(ConnectionStore $connections)
+    {
+        $connections->forgetCredentials('telegram');
+        return response()->json([
+            'status' => 'expired',
+            'status_label' => __('social.status_expired'),
+            'message' => __('social.connection_disconnected', ['provider' => 'Telegram']),
+        ]);
     }
 
     private function assertPublishable(SourceRecord $record): void
@@ -217,5 +322,18 @@ class PublishingController extends Controller
     private function youtubeOAuthReturn(string $message, bool $error = false)
     {
         return redirect('/desktop?open=settings')->with('saved_section', 'social')->with($error ? 'desktop_error' : 'status', $message);
+    }
+
+    private function recordConnectionCheck(Settings $settings, string $provider, bool $successful): void
+    {
+        $connections = $settings->get('social_connections', []);
+        if (! is_array($connections[$provider] ?? null)) return;
+        if ($successful) {
+            unset($connections[$provider]['last_error_at']);
+            $connections[$provider]['checked_at'] = now()->toIso8601String();
+        } else {
+            $connections[$provider]['last_error_at'] = now()->toIso8601String();
+        }
+        $settings->update(['social_connections' => $connections]);
     }
 }

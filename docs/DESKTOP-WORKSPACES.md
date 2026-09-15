@@ -17,8 +17,8 @@ The Desktop uses the existing Laravel/Blade window shell, database, permissions 
 
 ## Stripe setup — admin only
 
-1. In **Einstellungen → Integrationen → Stripe**, save the API key and Webhook Secret. Values are encrypted in the existing settings store, never `.env` or Git. Partial updates preserve other saved credentials; secrets are never returned to the browser.
-2. In Stripe, register `https://mannavomhimmel.de/payments/stripe/webhook` for `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired` and `charge.refunded`. Use the matching test/live keys and endpoint signing secret. Do not send credentials in chat.
+1. In **Einstellungen → Integrationen → Stripe**, choose Test or Live mode and save the matching Publishable Key, Secret Key and Webhook Signing Secret. Values are encrypted in the existing settings store, never `.env` or Git. Empty fields preserve saved credentials; secrets are never returned to the browser. The read-only **Verbindung testen** action calls Stripe's account endpoint with the saved Secret Key and records only a safe connected/error status.
+2. Copy the exact URL shown in the Stripe settings (production: `https://mannavomhimmel.de/payments/stripe/webhook`) and register it in Stripe for `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired` and `charge.refunded`. Use the matching test/live keys and endpoint signing secret. Do not send credentials in chat.
 3. Attach a complete private PDF and activate a priced book. Verified users can start a real Stripe Checkout; returning from Checkout does **not** grant access. Only a valid signed webhook with the matching session, amount and currency grants an entitlement. Repeated notifications are idempotent; a full refund revokes that sale's access. Partial refunds do not revoke the complete purchase.
 4. Purchased PDF download is authorization-protected and also linked from the customer's account. Archived books remain available to their entitled purchasers.
 

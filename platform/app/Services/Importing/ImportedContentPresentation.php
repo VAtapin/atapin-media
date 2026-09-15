@@ -44,7 +44,7 @@ class ImportedContentPresentation
             return ['id' => $media->id, 'title' => $media->title, 'kind' => $media->kind, 'mime' => $media->mime,
                 'role' => $media->asset_role, 'available' => $available, 'bytes' => $media->bytes,
                 'download_url' => $available ? $media->downloadUrl() : null,
-                'preview_url' => $available && in_array($media->mime, ['image/jpeg','image/png','image/webp','image/gif','audio/mpeg','audio/ogg','video/mp4','video/webm','application/pdf'], true) ? $media->previewUrl() : null];
+                'preview_url' => $available && in_array($media->mime, ['image/jpeg','image/png','image/webp','image/gif','audio/mpeg','audio/ogg','audio/mp4','audio/wav','audio/x-wav','audio/flac','video/mp4','video/webm','application/pdf'], true) ? $media->previewUrl() : null];
         });
     }
 

@@ -20,7 +20,7 @@ class ContentLifecycleController extends Controller
     }
     public function assets(Request $request,SourceRecord $record,ContentAssets $assets,Audit $audit)
     {
-        $data=$request->validate(['action'=>'required|in:attach,replace,detach','role'=>'required|in:video,cover,attachment',
+        $data=$request->validate(['action'=>'required|in:attach,replace,detach','role'=>'required|in:video,audio,cover,attachment',
             'media_id'=>'required_unless:action,detach|nullable|uuid|exists:media,id','old_media_id'=>'required_if:action,detach|nullable|uuid|exists:media,id']);
         $assets->change($record,$data);$audit->record('content.assets_changed',(string)$record->id,\Illuminate\Support\Arr::only($data,['action','role','media_id','old_media_id']));
         return response()->json(['status'=>'saved']);

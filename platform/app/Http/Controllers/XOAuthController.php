@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\Publishing\{ConnectionStore, XClient};
+use App\Services\Publishing\{ConnectionStore, XClient, XConnectionCheckFailed, XConnectionExpired};
 use App\Services\Settings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{DB, Http, Log};
@@ -20,7 +20,7 @@ class XOAuthController extends Controller
         $request->session()->put('publishing.x.oauth', ['state' => $state, 'verifier' => $verifier]);
         return redirect()->away('https://x.com/i/oauth2/authorize?'.http_build_query([
             'response_type' => 'code', 'client_id' => $clientId, 'redirect_uri' => route('desktop.publishing.x.callback'),
-            'scope' => 'tweet.read tweet.write users.read media.write offline.access', 'state' => $state,
+            'scope' => implode(' ', XClient::REQUIRED_SCOPES), 'state' => $state,
             'code_challenge' => rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '='), 'code_challenge_method' => 'S256',
         ]));
     }
@@ -64,6 +64,53 @@ class XOAuthController extends Controller
         }
 
         return $this->oauthReturn(__('publishing.x_connected'));
+    }
+
+    public function check(Request $request, XClient $client, ConnectionStore $connections)
+    {
+        try {
+            return response()->json([
+                'status' => 'connected',
+                'status_label' => __('social.status_connected'),
+                'message' => __('publishing.x_check_succeeded'),
+                'connection' => $client->check(),
+            ]);
+        } catch (XConnectionExpired $error) {
+            $client->markExpired();
+            Log::warning('X connection check found an expired token.', [
+                'user_id' => $request->user()?->id,
+                'error' => $connections->safeError($error),
+            ]);
+            return response()->json([
+                'status' => 'expired',
+                'status_label' => __('social.status_expired'),
+                'message' => __('publishing.x_token_expired'),
+            ], 422);
+        } catch (XConnectionCheckFailed $error) {
+            $client->markError();
+            Log::warning('X connection check found insufficient access.', [
+                'user_id' => $request->user()?->id,
+                'reason' => $error->reason,
+                'error' => $connections->safeError($error),
+            ]);
+            return response()->json([
+                'status' => 'error',
+                'status_label' => __('social.status_error'),
+                'message' => __('publishing.x_check_'.$error->reason),
+            ], 422);
+        } catch (\Throwable $error) {
+            $client->markError();
+            Log::warning('X connection check failed.', [
+                'user_id' => $request->user()?->id,
+                'error_type' => $error::class,
+                'error' => $connections->safeError($error),
+            ]);
+            return response()->json([
+                'status' => 'error',
+                'status_label' => __('social.status_error'),
+                'message' => __('publishing.x_check_failed'),
+            ], 422);
+        }
     }
 
     private function oauthReturn(string $message, bool $error = false)

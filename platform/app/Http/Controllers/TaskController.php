@@ -25,7 +25,11 @@ class TaskController extends Controller
 
     public function store(Request $request, Workflow $workflow)
     {
-        $request->merge(['status'=>$request->input('status') ?: 'open','priority'=>$request->input('priority') ?: 'normal']);
+        $request->merge([
+            'status'=>$request->input('status') ?: ($request->filled('due_date') ? 'planned' : 'open'),
+            'priority'=>$request->input('priority') ?: 'normal',
+            'recurrence'=>$request->input('recurrence') ?: 'once',
+        ]);
         $task = $workflow->saveTask($this->data($request));
         if ($request->expectsJson()) return response()->json(['status'=>'saved','task_id'=>$task->id]);
         return back()->with('status', __('ui.saved'));
@@ -42,6 +46,9 @@ class TaskController extends Controller
             'description'=>'nullable|string|max:20000','status'=>[$partial?'sometimes':'required',Rule::in(Task::STATES)],
             'project_id'=>'nullable|integer|exists:projects,id','assigned_to'=>'nullable|integer|exists:users,id',
             'due_date'=>'nullable|date_format:Y-m-d','due_time'=>'nullable|date_format:H:i','priority'=>['sometimes','required',Rule::in(Task::PRIORITIES)],
+            'recurrence'=>['sometimes','required',Rule::in(Task::RECURRENCES)],
+            'recurrence_interval'=>'nullable|integer|min:1|max:365','recurrence_unit'=>['nullable',Rule::in(Task::RECURRENCE_UNITS)],
+            'recurrence_until'=>'nullable|date_format:Y-m-d',
             'source_record_id'=>'nullable|integer|exists:source_records,id',
             'tags'=>'nullable|array|max:50','tags.*'=>'required|string|max:100',
             'checklist'=>'nullable|array|max:100','checklist.*.text'=>'required|string|max:255','checklist.*.done'=>'required|boolean']);

@@ -11,20 +11,20 @@ try {
   let page=await browser.newPage({viewport:{width:1672,height:941}});const errors=[];page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(10000);
   await fs.mkdir('tests/artifacts',{recursive:true});
   for(const width of [1672,390]){
-    await page.setViewportSize({width,height:width===1672?941:844});await page.goto(base);await page.evaluate(()=>document.fonts.ready);
+    await page.setViewportSize({width,height:width===1672?941:844});await page.goto(base,{waitUntil:'domcontentloaded',timeout:30000});await page.evaluate(()=>document.fonts.ready);
     const geometry=await page.evaluate(()=>{const feature=document.querySelector('.public-overview-feature'),copy=feature.querySelector('.public-feature-content'),author=feature.querySelector('.public-feature-author'),play=feature.querySelector('.public-play');const f=feature.getBoundingClientRect(),c=copy.getBoundingClientRect(),a=author.getBoundingClientRect(),p=play.getBoundingClientRect();return {overflow:document.documentElement.scrollWidth>innerWidth,border:getComputedStyle(feature).borderTopColor,author:author.textContent,play:p.x+p.width/2-f.x,width:f.width,copyBottom:c.bottom,authorTop:a.top};});
     assert(!geometry.overflow,JSON.stringify(geometry));assert.match(geometry.author,/Testautor/);assert(geometry.play>geometry.width/2);assert(geometry.copyBottom<=geometry.authorTop+2,JSON.stringify(geometry));
     await page.screenshot({path:`tests/artifacts/content-enhancements-${width}.png`,fullPage:true});
   }
-  await page.setViewportSize({width:1672,height:941});await page.goto(base+'/login');await page.locator('[name=email]').fill('test@example.com');await page.locator('[name=password]').fill('kurz5');await page.locator('form button').click();await page.waitForURL('**/desktop');
-  await page.goto(base+'/desktop?open=settings');
+  await page.setViewportSize({width:1672,height:941});await page.goto(base+'/login',{waitUntil:'domcontentloaded',timeout:30000});await page.locator('[name=email]').fill('test@example.com');await page.locator('[name=password]').fill('kurz5');await page.locator('form button').click();await page.waitForURL('**/desktop');
+  await page.goto(base+'/desktop?open=settings',{waitUntil:'domcontentloaded',timeout:30000});
   await page.locator('.os-window [data-settings-tab="media_appearance"]').click();
-  const settings=page.locator('.os-window [data-settings-panel="media_appearance"]');assert(await settings.locator('[name=cover_style_prompt]').isVisible());assert(await settings.locator('[name=public_author_photo]').count());
-  await page.goto(base+'/desktop?open=podcast');await page.locator('.os-window[data-app-id=podcast] [data-content-list]').getByText('Podcast Browser',{exact:true}).click();
-  await page.waitForSelector('.os-window[data-app-id^="podcast-"] [data-prepare-media=podcast]');assert(await page.locator('.os-window[data-app-id^="podcast-"] [name=short_description]').isVisible());
+  const settings=page.locator('.os-window [data-settings-panel="media_appearance"]');assert(await settings.locator('[name=public_author_photo]').count());assert.equal(await settings.locator('[name=cover_style_prompt]').count(),0);await page.locator('.os-window [data-settings-tab="ai"]').click();const aiSettings=page.locator('.os-window [data-settings-panel="ai"]');await aiSettings.locator('details').filter({hasText:'Bilder & Cover'}).locator('summary').click();assert(await aiSettings.locator('[name=cover_style_prompt]').isVisible());
+  await page.goto(base+'/desktop?open=podcast',{waitUntil:'domcontentloaded',timeout:30000});const podcast=page.locator('.os-window[data-app-id=podcast] [data-content-library]'),podcastWindows=await page.locator('.os-window').count();await podcast.locator('[data-content-list]').getByText('Podcast Browser',{exact:true}).click();
+  const podcastEditor=podcast.locator('[data-podcast-episode]');await podcastEditor.waitFor();assert.equal(await page.locator('.os-window').count(),podcastWindows);assert.equal(await page.locator('.os-window[data-app-id^="podcast-"]').count(),0);assert(await podcastEditor.locator('[name=body]').isVisible());
   page=await browser.newPage({viewport:{width:1672,height:941}});page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(10000);
-  await page.goto(base+'/login');await page.locator('[name=email]').fill('viewer@example.com');await page.locator('[name=password]').fill('kurz5');await page.locator('form button').click();await page.waitForURL('**/konto');
-  await page.goto(base+fixture.url);await page.evaluate(()=>{window.testPlayer=document.querySelector('video');window.testMarker='same-document';});
+  await page.goto(base+'/login',{waitUntil:'domcontentloaded',timeout:30000});await page.locator('[name=email]').fill('viewer@example.com');await page.locator('[name=password]').fill('kurz5');await page.locator('form button').click();await page.waitForURL('**/konto');
+  await page.goto(base+fixture.url,{waitUntil:'domcontentloaded',timeout:30000});await page.evaluate(()=>{window.testPlayer=document.querySelector('video');window.testMarker='same-document';});
   const details=page.locator('.public-full-description');assert.equal(await details.getAttribute('open'),null);await details.locator('summary').click();assert.match(await details.textContent(),/Originalbeschreibung/);await page.waitForFunction(()=>document.querySelector('.public-full-description summary').textContent==='Weniger anzeigen');
   const reaction=page.locator('form[data-public-form]').filter({has:page.locator('[name=enabled]')}).first();
   assert.equal(await reaction.count(),1);const before=await reaction.locator('[name=enabled]').inputValue();

@@ -1,6 +1,6 @@
 <?php
 namespace App\Http\Controllers;
-use App\Services\Settings;
+use App\Services\{Settings,StripePayments};
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
@@ -18,7 +18,8 @@ class SettingsController extends Controller
             'contactInbox'=>Gate::allows('settings.manage')?\App\Models\ContactMessage::latest('id')->paginate(20):null,
             'roles' => $canManageUsers ? Role::with('permissions')->orderBy('name')->get() : collect(),
             'users' => $canManageUsers ? User::with('roles')->orderBy('name')->get() : collect(),
-            'permissions' => $canManageUsers ? Permission::orderBy('name')->get() : collect(), 'secretStatus' => [
+            'permissions' => $canManageUsers ? Permission::orderBy('name')->get() : collect(),
+            'stripeEditor' => Gate::allows('integrations.manage') ? app(StripePayments::class)->configuration() : null, 'secretStatus' => [
                 'ai_api_key' => $settings->hasSecret('ai_api_key'),
             ]];
     }
@@ -30,28 +31,42 @@ class SettingsController extends Controller
         if ($section === 'publishing') Gate::authorize('content.publish');
         $rules = match ($section) {
             'media_appearance'=>['public_author_name'=>'nullable|string|max:120','public_author_photo'=>'nullable|image|mimes:jpg,jpeg,png,webp|max:3072',
-                'cover_style_prompt'=>'required|string|max:4000','ai_image_model'=>'required|string|max:120','hero_sayings'=>'sometimes|array:de,en',
+                'cover_style_prompt'=>'sometimes|required|string|max:4000','ai_image_model'=>'sometimes|required|string|max:120','hero_sayings'=>'sometimes|array:de,en',
                 'hero_sayings.*'=>'array:start,videos,beitraege,buecher,podcast,live,community,ueber-uns,unsere-mission','hero_sayings.*.*'=>'nullable|string|max:500'],
             'imports' => ['import_duration_rule'=>'required|array:enabled,min_seconds,max_seconds,target_profile', 'import_duration_rule.enabled'=>'required|boolean',
                 'import_duration_rule.min_seconds'=>'required|numeric|min:0.001|max:86400', 'import_duration_rule.max_seconds'=>'required|numeric|gte:import_duration_rule.min_seconds|max:86400',
                 'import_duration_rule.target_profile'=>['required',Rule::in(['posts','videos','shorts'])]],
             'legacy' => ['site_name' => 'required|string|max:120', 'site_description' => 'nullable|string|max:500', 'contact_email' => 'nullable|email|max:255', 'desktop_icon_set' => ['required', Rule::in(array_keys(config('desktop.icon_sets')))], 'desktop_wallpaper' => ['required', Rule::in($wallpapers)], 'desktop_accent' => ['required', Rule::in(array_keys(config('desktop.accents')))], 'desktop_custom_wallpaper' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072', 'dimensions:min_width=320,min_height=180,max_width=2560,max_height=1440']],
             'desktop_design' => ['desktop_icon_set' => ['required', Rule::in(array_keys(config('desktop.icon_sets')))], 'desktop_wallpaper' => ['required', Rule::in($wallpapers)], 'desktop_accent' => ['required', Rule::in(array_keys(config('desktop.accents')))], 'desktop_density' => ['required', Rule::in(['comfortable','compact'])], 'desktop_shortcut_layout' => ['required', Rule::in(['free','grid'])], 'desktop_effects' => 'nullable|boolean', 'desktop_custom_wallpaper' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072', 'dimensions:min_width=320,min_height=180,max_width=2560,max_height=1440']],
-            'ai' => ['ai_provider' => ['required', Rule::in(['none','openai','anthropic','azure'])], 'ai_model' => 'nullable|string|max:120', 'ai_api_key' => 'nullable|string|max:2000', 'ai_enabled' => 'nullable|boolean', 'ai_auto_classify' => 'nullable|boolean','ai_chat_enabled'=>'nullable|boolean'],
+            'ai' => ['ai_provider' => ['required', Rule::in(['none','openai','anthropic','azure'])], 'ai_model' => 'nullable|string|max:120', 'ai_api_key' => 'nullable|string|max:2000', 'ai_enabled' => 'nullable|boolean', 'ai_auto_classify' => 'nullable|boolean','ai_chat_enabled'=>'nullable|boolean',
+                'cover_style_prompt'=>'sometimes|required|string|max:4000','ai_image_model'=>'sometimes|required|string|max:120'],
             'social' => app(\App\Services\Publishing\SocialConnections::class)->rules($request),
             'publishing' => ['publishing_default_visibility' => ['required', Rule::in(['private','internal','public'])], 'publishing_default_timezone' => 'required|timezone', 'publishing_approval_required' => 'nullable|boolean', 'publishing_automation_enabled' => 'nullable|boolean'],
-            'integrations' => ['provider' => ['required', Rule::in(['stripe','google_drive','google_calendar','google_analytics','mailchimp','zapier','webhook'])], 'public_url' => 'nullable|url|max:1000', 'account_id' => 'nullable|string|max:255', 'api_key' => 'nullable|string|max:2000', 'oauth_client_id' => 'nullable|string|max:2000', 'access_token' => 'nullable|string|max:4000', 'webhook_secret' => 'nullable|string|max:2000'],
+            'integrations' => ['provider' => ['required', Rule::in(['stripe','google_drive','google_calendar','google_analytics','mailchimp','zapier','webhook'])], 'mode' => ['nullable', Rule::in(['test','live'])],
+                'public_url' => 'nullable|url|max:1000', 'account_id' => 'nullable|string|max:255', 'publishable_key' => $request->input('provider')==='stripe'?['nullable','string','max:255','regex:/^pk_(test|live)_[A-Za-z0-9_]+$/']:'nullable',
+                'api_key' => $request->input('provider')==='stripe'?['nullable','string','max:2000','regex:/^sk_(test|live)_[A-Za-z0-9_]+$/']:'nullable|string|max:2000', 'oauth_client_id' => 'nullable|string|max:2000',
+                'access_token' => 'nullable|string|max:4000', 'webhook_secret' => $request->input('provider')==='stripe'?['nullable','string','max:2000','regex:/^whsec_[A-Za-z0-9_]+$/']:'nullable|string|max:2000'],
             'system' => ['site_name' => 'required|string|max:120', 'site_description' => 'nullable|string|max:500', 'contact_email' => 'nullable|email|max:255', 'system_locale' => ['required', Rule::in(config('platform.locales'))], 'system_timezone' => 'required|timezone', 'system_branding_name' => 'nullable|string|max:120', 'legal_locale' => ['nullable', Rule::in(config('platform.locales'))], 'impressum' => 'nullable|string|max:50000', 'privacy_policy' => 'nullable|string|max:50000', 'editorial_policy' => 'nullable|string|max:50000'],
             default => abort(404),
         };
         $values = $request->validate($rules);
         if ($section === 'social') {
-            app(\App\Services\Publishing\SocialConnections::class)->save($values, $settings);
+            $saved = app(\App\Services\Publishing\SocialConnections::class)->save($values, $settings);
             if ($request->expectsJson()) {
                 $provider = $values['provider'];
                 $editor = app(\App\Services\Publishing\SocialConnections::class)->editor()[$provider];
+                $connection = app(\App\Services\Publishing\ConnectionStore::class)->connection($provider);
                 return response()->json(['status' => 'saved', 'section' => $section, 'provider' => $provider,
+                    'connection_saved' => $saved,
                     'connection_status' => $editor['status'], 'connection_status_label' => $editor['status_label'],
+                    'connected' => $editor['connected'],
+                    'public_url' => $connection['public_url'] ?? null,
+                    'external_id' => $connection['external_id'] ?? null,
+                    'bot_username' => $connection['bot_username'] ?? null,
+                    'mini_app_enabled' => ! empty($connection['mini_app_enabled']),
+                    'oauth_url' => $editor['oauth_url'],
+                    'check_url' => $editor['check_url'],
+                    'disconnect_url' => $editor['disconnect_url'],
                     'oauth_configured' => $editor['oauth_configured'],
                     'oauth_client_id_saved' => $editor['oauth_client_id_saved'],
                     'oauth_client_secret_saved' => $editor['oauth_client_secret_saved'],
@@ -72,6 +87,11 @@ class SettingsController extends Controller
             return back()->withErrors(['desktop_custom_wallpaper' => __('ui.desktop_custom_wallpaper_required')])->withInput();
         }
         if ($section === 'integrations') {
+            if (($values['provider']??null) === 'stripe') {
+                $stripe = app(StripePayments::class)->saveConfiguration($values);
+                if ($request->expectsJson()) return response()->json(['status' => 'saved', 'section' => $section, 'provider' => 'stripe', 'stripe' => $stripe]);
+                return back()->with('status', __('ui.saved'))->with('saved_section', $section);
+            }
             $collectionKey = 'integration_connections';
             $connections = $settings->get($collectionKey, []);
             $provider = $values['provider'];
@@ -111,6 +131,13 @@ class SettingsController extends Controller
         $settings->updateSecrets($secrets);
         if ($request->expectsJson()) return response()->json(['status' => 'saved', 'section' => $section]);
         return back()->with('status', __('ui.saved'))->with('saved_section', $section);
+    }
+    public function testStripe(StripePayments $payments)
+    {
+        Gate::authorize('integrations.manage');
+        $stripe=$payments->testConnection();
+        if($stripe['status']==='error')return response()->json(['message'=>__('stripe.test_failed'),'errors'=>['stripe'=>[__('stripe.test_failed')]],'stripe'=>$stripe],422);
+        return response()->json(['status'=>'tested','stripe'=>$stripe]);
     }
     private function sanitizeLegalMarkup(?string $markup): string
     {

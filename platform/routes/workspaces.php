@@ -1,6 +1,6 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\{DesktopWorkspaceController,DesktopLookupController,ProjectController,TaskController,CalendarController,TaxonomyController,BookWorkspaceController,PdfEditionController,SeriesController,NewsletterWorkspaceController,DesktopAiController,AnalyticsController,IntegrationWorkspaceController,CommunityInboxController,CheckoutController,ImportedContentController};
+use App\Http\Controllers\{DesktopWorkspaceController,DesktopLookupController,ProjectController,TaskController,CalendarController,TaxonomyController,BookWorkspaceController,BookReviewWorkspaceController,PdfEditionController,SeriesController,NewsletterWorkspaceController,DesktopAiController,AnalyticsController,IntegrationWorkspaceController,CommunityInboxController,CheckoutController,ImportedContentController};
 
 Route::post('/payments/stripe/webhook',[CheckoutController::class,'webhook'])->middleware('throttle:120,1')->name('payments.stripe-webhook');
 Route::match(['get','post'],'/newsletter/{subscription}/optout',[NewsletterWorkspaceController::class,'optout'])->middleware(['signed','throttle:20,1'])->name('public.newsletter-optout');
@@ -39,6 +39,10 @@ Route::middleware('auth')->group(function(){
     });
     Route::middleware('can:shop.manage')->group(function(){
         Route::get('/desktop/books',[BookWorkspaceController::class,'index']);Route::post('/desktop/books',[BookWorkspaceController::class,'store']);Route::post('/desktop/books/intake',[BookWorkspaceController::class,'intake'])->middleware('throttle:10,1');Route::get('/desktop/books/{product}',[BookWorkspaceController::class,'show']);Route::patch('/desktop/books/{product}',[BookWorkspaceController::class,'update']);Route::delete('/desktop/books/{product}',[BookWorkspaceController::class,'destroy']);Route::post('/desktop/books/{product}/analyze',[BookWorkspaceController::class,'analyze'])->middleware('throttle:10,1');Route::post('/desktop/books/{product}/assets',[BookWorkspaceController::class,'asset']);Route::post('/desktop/books/{product}/pdf',[PdfEditionController::class,'book'])->middleware('throttle:10,1');Route::get('/desktop/sales',[BookWorkspaceController::class,'sales']);
+    });
+    Route::middleware(['can:shop.manage','can:community.moderate'])->group(function(){
+        Route::get('/desktop/book-reviews',[BookReviewWorkspaceController::class,'index']);
+        Route::patch('/desktop/book-reviews/{review}',[BookReviewWorkspaceController::class,'update']);
     });
     Route::middleware('can:subscribers.manage')->group(function(){
         Route::middleware('can:media.view')->group(function(){Route::post('/desktop/subscribers/csv/inspect',[\App\Http\Controllers\SubscriberCsvController::class,'inspect'])->middleware('throttle:10,1');Route::post('/desktop/subscribers/csv',[\App\Http\Controllers\SubscriberCsvController::class,'store'])->middleware('throttle:5,1');Route::get('/desktop/subscribers/csv/{run}',[\App\Http\Controllers\SubscriberCsvController::class,'show']);});

@@ -2,6 +2,7 @@
 namespace App\Services;
 use App\Models\Project;
 use App\Models\Task;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 class Workflow
 {
@@ -29,6 +30,24 @@ class Workflow
             $date = array_key_exists('due_date',$data) ? $data['due_date'] : $task->due_date;
             abort_if(!empty($data['due_time']) && !$date,422,__('workspaces.deadline_date_required'));
             if (!$date) $data['due_time'] = null;
+            $recurrence = array_key_exists('recurrence',$data) ? $data['recurrence'] : ($task->recurrence ?: 'once');
+            $recurrenceInterval = array_key_exists('recurrence_interval',$data) ? $data['recurrence_interval'] : ($task->recurrence_interval ?: 1);
+            $recurrenceUnit = array_key_exists('recurrence_unit',$data) ? $data['recurrence_unit'] : $task->recurrence_unit;
+            $recurrenceUntil = array_key_exists('recurrence_until',$data) ? $data['recurrence_until'] : $task->recurrence_until;
+            abort_if($recurrence !== 'once' && !$date,422,__('ui.task_recurrence_requires_date'));
+            abort_if($recurrence === 'custom' && (!$recurrenceInterval || $recurrenceInterval < 1),422,__('ui.task_recurrence_custom_interval'));
+            abort_if($recurrence === 'custom' && !in_array($recurrenceUnit,Task::RECURRENCE_UNITS,true),422,__('ui.task_recurrence_custom_unit'));
+            abort_if($recurrence !== 'once' && $date && $recurrenceUntil && Carbon::parse($recurrenceUntil)->lt(Carbon::parse($date)),422,__('ui.task_recurrence_until_invalid'));
+            if ($recurrence === 'once') {
+                $data['recurrence_interval'] = 1;
+                $data['recurrence_unit'] = null;
+                $data['recurrence_until'] = null;
+            } elseif ($recurrence !== 'custom') {
+                $data['recurrence_interval'] = 1;
+                $data['recurrence_unit'] = null;
+            } else {
+                $data['recurrence_interval'] = $recurrenceInterval;
+            }
             $task->fill($data); $task->save(); $task->project?->touch();
             app(Audit::class)->record('task.saved',(string)$task->id,['status'=>$task->status,'previous_status'=>$previous,'project_id'=>$task->project_id,'previous_project_id'=>$previousProject]); return $task;
         });

@@ -128,7 +128,10 @@ jobs:
           touch /tmp/desktop-workspaces-ci.sqlite
           php artisan migrate --force
           php tests/desktop-workspaces-fixture.php
+          timeout 90 node tests/book-workspace-browser.mjs
+          timeout 90 node tests/podcast-live-workspaces-browser.mjs
           timeout 150 node tests/desktop-workspaces-browser.mjs
+          timeout 90 node tests/book-reviews-browser.mjs
           timeout 150 node tests/admin-completion-browser.mjs
           timeout 150 node tests/admin-review-browser.mjs
         env:

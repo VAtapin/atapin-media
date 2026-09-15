@@ -1,6 +1,6 @@
 <?php
 namespace Tests\Feature;
-use App\Models\{User,Role,Project,Task,Product,Sale,Media,SourceRecord,TaxonomyTerm,Collection,DesktopAiRequest,NewsletterCampaign,NewsletterSubscription,NewsletterDelivery,PublicationSchedule};
+use App\Models\{User,Role,Project,Task,Product,Sale,Media,SourceRecord,TaxonomyTerm,Collection,DesktopAiRequest,NewsletterCampaign,NewsletterSubscription,NewsletterDelivery,Publication,PublicationSchedule};
 use App\Services\{Access,Settings,Taxonomy,PdfEditions,NewsletterCampaigns,DesktopAi,EditorialPlanning,StripePayments,PublicBooks};
 use App\Jobs\{GeneratePdfEdition,DeliverNewsletter,AnswerDesktopAi,PublishScheduledContent};
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -40,7 +40,11 @@ class DesktopWorkspacesTest extends TestCase
         $id=$this->postJson('/desktop/projects',['title'=>'Serie','status'=>'idea','due_date'=>'2026-10-10'])->assertOk()->json('project_id');
         $this->postJson('/desktop/tasks',['title'=>'Skript','status'=>'open','project_id'=>$id,'assigned_to'=>$this->owner->id,'due_date'=>'2026-10-01'])->assertOk();
         $record=$this->record();app(\App\Services\Importing\ContentAssignment::class)->record($record,['project_id'=>$id]);
-        $this->getJson('/desktop/projects/'.$id)->assertOk()->assertJsonPath('tasks.data.0.title','Skript')->assertJsonPath('records.data.0.id',$record->id);
+        Publication::create(['source_record_id'=>$record->id,'provider'=>'x','direction'=>'outbound','status'=>'published','remote_status'=>'public']);
+        $this->getJson('/desktop/projects/'.$id)->assertOk()->assertJsonPath('tasks.data.0.title','Skript')
+            ->assertJsonPath('project.open_tasks_count',1)->assertJsonPath('project.records_count',1)
+            ->assertJsonPath('records.data.0.id',$record->id)->assertJsonPath('records.data.0.public_section','beitraege')
+            ->assertJsonPath('publications.data.0.record_id',$record->id)->assertJsonPath('publications.data.0.provider','x');
         $this->getJson('/desktop/tasks?mine=1&project_id='.$id)->assertOk()->assertJsonPath('total',1);
         $this->getJson('/desktop/projects?q=Serie')->assertJsonPath('data.0.records_count',1);
     }
@@ -49,10 +53,27 @@ class DesktopWorkspacesTest extends TestCase
         $project=$this->postJson('/desktop/projects',['title'=>'Schnelles Projekt'])->assertOk()->json('project_id');
         $this->assertDatabaseHas('projects',['id'=>$project,'title'=>'Schnelles Projekt','status'=>'idea','type'=>'mixed','user_id'=>$this->owner->id]);
         $task=$this->postJson('/desktop/tasks',['title'=>'Schnelle Aufgabe','project_id'=>$project,'due_date'=>'2026-10-12'])->assertOk()->json('task_id');
-        $this->assertDatabaseHas('tasks',['id'=>$task,'title'=>'Schnelle Aufgabe','status'=>'open','priority'=>'normal','project_id'=>$project,'due_date'=>'2026-10-12']);
+        $this->assertDatabaseHas('tasks',['id'=>$task,'title'=>'Schnelle Aufgabe','status'=>'planned','priority'=>'normal','recurrence'=>'once','project_id'=>$project,'due_date'=>'2026-10-12']);
         $this->getJson('/desktop/planning?start=2026-10-12&end=2026-10-12')->assertOk()->assertJsonPath('data.0.type','task')->assertJsonPath('data.0.subject_id',$task);
         $this->postJson('/desktop/projects',[])->assertUnprocessable()->assertJsonValidationErrors('title');
         $this->postJson('/desktop/tasks',[])->assertUnprocessable()->assertJsonValidationErrors('title');
+    }
+    public function test_recurring_tasks_share_the_task_and_calendar_data_model(): void
+    {
+        $task=$this->postJson('/desktop/tasks',['title'=>'Wöchentliche Aufgabe','due_date'=>'2026-10-05','recurrence'=>'weekly','recurrence_until'=>'2026-10-31'])->assertOk()->json('task_id');
+        $this->assertDatabaseHas('tasks',['id'=>$task,'status'=>'planned','recurrence'=>'weekly','recurrence_interval'=>1,'recurrence_unit'=>null,'recurrence_until'=>'2026-10-31']);
+        $calendar=$this->getJson('/desktop/planning?start=2026-10-01&end=2026-10-31')->assertOk();
+        $this->assertSame(['2026-10-05','2026-10-12','2026-10-19','2026-10-26'],collect($calendar->json('data'))->where('subject_id',$task)->pluck('date')->all());
+        $this->patchJson('/desktop/tasks/'.$task,['recurrence'=>'custom','recurrence_interval'=>2,'recurrence_unit'=>'week'])->assertOk();
+        $calendar=$this->getJson('/desktop/planning?start=2026-10-01&end=2026-10-31')->assertOk();
+        $this->assertSame(['2026-10-05','2026-10-19'],collect($calendar->json('data'))->where('subject_id',$task)->pluck('date')->all());
+        $this->patchJson('/desktop/tasks/'.$task,['recurrence'=>'custom','recurrence_interval'=>null,'recurrence_unit'=>'week'])->assertUnprocessable();
+        $this->postJson('/desktop/tasks',['title'=>'Ungültig','recurrence'=>'daily'])->assertUnprocessable();
+
+        $this->patchJson('/desktop/tasks/'.$task,[
+            'due_date'=>'2026-11-15', 'recurrence'=>'once', 'recurrence_until'=>'2026-10-31',
+        ])->assertOk();
+        $this->assertDatabaseHas('tasks',['id'=>$task,'due_date'=>'2026-11-15','recurrence'=>'once','recurrence_interval'=>1,'recurrence_unit'=>null,'recurrence_until'=>null]);
     }
     public function test_catalog_cards_can_have_images_and_pdf_intake_is_queued(): void
     {

@@ -13,8 +13,8 @@ class SocialConnections
     {
         return [
             'youtube' => ['label' => 'YouTube', 'fields' => ['public_url', 'oauth_client_id', 'oauth_client_secret'], 'oauth' => 'desktop.publishing.youtube.connect'],
-            'facebook' => ['label' => 'Facebook', 'fields' => ['public_url', 'external_id', 'access_token']],
-            'instagram' => ['label' => 'Instagram', 'fields' => ['public_url', 'external_id', 'access_token']],
+            'facebook' => ['label' => 'Facebook', 'fields' => ['public_url', 'oauth_client_id', 'oauth_client_secret'], 'oauth' => 'desktop.publishing.meta.connect', 'oauth_provider' => 'meta', 'oauth_callback' => 'desktop.publishing.meta.callback'],
+            'instagram' => ['label' => 'Instagram', 'fields' => ['public_url'], 'oauth' => 'desktop.publishing.meta.connect', 'oauth_provider' => 'meta', 'oauth_callback' => 'desktop.publishing.meta.callback'],
             'telegram' => ['label' => 'Telegram', 'fields' => ['public_url', 'external_id', 'api_key', 'bot_username', 'mini_app_enabled']],
             'x' => ['label' => 'X', 'fields' => ['public_url', 'oauth_client_id', 'oauth_client_secret'], 'oauth' => 'desktop.publishing.x.connect'],
             'tiktok' => ['label' => 'TikTok', 'fields' => ['public_url']],
@@ -42,17 +42,20 @@ class SocialConnections
             foreach ($definition['fields'] as $field) $labels[$field] = __('social.'.$provider.'.'.$field);
             $connection = $connections->connection($provider);
             $connected = $connections->connected($provider);
-            $oauthCredentials = isset($definition['oauth']) ? $oauth->get($provider) : [];
-            $oauthSecretRequired = $provider !== 'x';
-            $oauthConfigured = isset($definition['oauth']) && $oauth->configured($provider, $oauthSecretRequired);
+            $oauthProvider = $definition['oauth_provider'] ?? $provider;
+            $oauthCredentials = isset($definition['oauth']) ? $oauth->get($oauthProvider) : [];
+            $oauthSecretRequired = $oauthProvider !== 'x';
+            $oauthConfigured = isset($definition['oauth']) && $oauth->configured($oauthProvider, $oauthSecretRequired);
             $hasConfiguration = isset($definition['oauth']) ? $oauthConfigured : collect($connection)
                 ->except(['provider', 'configured_at', 'revoked_at'])
                 ->contains(fn ($value) => $value !== null && $value !== '' && $value !== false);
-            $status = $connected ? 'connected' : (! empty($connection['revoked_at']) ? 'expired' : ($hasConfiguration ? 'configured' : 'not_configured'));
+            $status = ! empty($connection['last_error_at'])
+                ? (($connection['last_error_reason'] ?? null) === 'permission' ? 'permission' : 'error')
+                : ($connected ? 'connected' : ($connections->expired($provider) ? 'expired' : ($hasConfiguration ? 'configured' : 'not_configured')));
 
             return [...$definition, 'labels' => $labels, 'hint' => __('social.'.$provider.'.hint'),
                 'oauth_url' => isset($definition['oauth']) ? route($definition['oauth']) : null,
-                'oauth_redirect_uri' => isset($definition['oauth']) ? route('desktop.publishing.'.$provider.'.callback') : null,
+                'oauth_redirect_uri' => isset($definition['oauth']) ? route($definition['oauth_callback'] ?? 'desktop.publishing.'.$provider.'.callback') : null,
                 'oauth_configured' => $oauthConfigured,
                 'oauth_client_id_saved' => ($oauthCredentials['client_id'] ?? '') !== '',
                 'oauth_client_secret_saved' => ($oauthCredentials['client_secret'] ?? '') !== '',
@@ -60,6 +63,20 @@ class SocialConnections
                 'connected' => $connected,
                 'status' => $status,
                 'status_label' => __('social.status_'.$status),
+                'check_url' => match (true) {
+                    in_array($provider, ['facebook', 'instagram'], true) => route('desktop.publishing.meta.check'),
+                    $provider === 'youtube' => route('desktop.publishing.youtube.check'),
+                    $provider === 'x' => route('desktop.publishing.x.check'),
+                    $provider === 'telegram' => route('desktop.publishing.telegram.check'),
+                    default => null,
+                },
+                'disconnect_url' => match (true) {
+                    in_array($provider, ['facebook', 'instagram'], true) => route('desktop.publishing.meta.disconnect'),
+                    $provider === 'youtube' => route('desktop.publishing.youtube.disconnect'),
+                    $provider === 'x' => route('desktop.publishing.x.disconnect'),
+                    $provider === 'telegram' => route('desktop.publishing.telegram.disconnect'),
+                    default => null,
+                },
             ];
         })->all();
     }
@@ -80,46 +97,57 @@ class SocialConnections
                 default => 'nullable|string|max:4000',
             } : 'prohibited';
         }
-        if (in_array($provider, ['facebook', 'instagram', 'telegram'], true)) {
+        if ($provider === 'telegram') {
             $store = app(ConnectionStore::class);
-            $miniAppOnly = $provider === 'telegram' && $request->boolean('mini_app_enabled') && ! $request->filled('external_id') && empty($store->connection($provider)['external_id']);
+            $miniAppOnly = $request->boolean('mini_app_enabled') && ! $request->filled('external_id') && empty($store->connection($provider)['external_id']);
             if (! $miniAppOnly) {
                 $rules['external_id'] = empty($store->connection($provider)['external_id']) ? 'required|string|max:255' : 'sometimes|required|string|max:255';
                 $hasToken = (bool) array_intersect_key(array_filter($store->credentials($provider)), array_flip(self::tokenKeys($provider)));
-                $key = $provider === 'telegram' ? 'api_key' : 'access_token';
-                $rules[$key] = $hasToken ? 'nullable|string|max:4000' : 'required|string|max:4000';
+                $rules['api_key'] = $hasToken ? 'nullable|string|max:4000' : 'required|string|max:4000';
             }
-            if ($provider === 'telegram' && $request->boolean('mini_app_enabled')) $rules['bot_username'][0] = 'required';
+            if ($request->boolean('mini_app_enabled')) $rules['bot_username'][0] = 'required';
         }
-        if (in_array($provider, ['youtube', 'x'], true)) {
-            $stored = app(OAuthAppCredentials::class)->get($provider);
+        if (in_array($provider, ['youtube', 'x', 'facebook'], true)) {
+            $oauthProvider = $provider === 'facebook' ? 'meta' : $provider;
+            $stored = app(OAuthAppCredentials::class)->get($oauthProvider);
             $rules['oauth_client_id'] = [Rule::requiredIf(($stored['client_id'] ?? '') === ''), 'nullable', 'string', 'max:4000'];
-            $rules['oauth_client_secret'] = [Rule::requiredIf($provider === 'youtube' && ($stored['client_secret'] ?? '') === ''), 'nullable', 'string', 'max:4000'];
+            $rules['oauth_client_secret'] = [Rule::requiredIf($provider !== 'x' && ($stored['client_secret'] ?? '') === ''), 'nullable', 'string', 'max:4000'];
         }
         return $rules;
     }
 
-    public function save(array $values, Settings $settings): void
+    public function save(array $values, Settings $settings): bool
     {
-        DB::transaction(function () use ($values, $settings) {
+        return DB::transaction(function () use ($values, $settings): bool {
             $provider = $values['provider'];
             $connections = $settings->get('social_connections', []);
             $connection = $connections[$provider] ?? [];
             $metadata = array_intersect_key($values, array_flip(['public_url', 'external_id', 'bot_username', 'mini_app_enabled']));
-            $connections[$provider] = [...$connection, ...$metadata, 'provider' => $provider, 'configured_at' => now()->toIso8601String()];
+            $next = [...$connection, ...$metadata];
+            $hasMetadata = collect($next)->except(['provider', 'configured_at', 'checked_at', 'last_error_at', 'last_error_reason', 'revoked_at'])
+                ->contains(fn ($value) => $value !== null && $value !== '' && $value !== false);
+            if (! $hasMetadata && ! in_array($provider, ['youtube', 'x', 'facebook'], true)) {
+                if ($connection) {
+                    unset($connections[$provider]);
+                    $settings->update(['social_connections' => $connections]);
+                }
+                return false;
+            }
+            $connections[$provider] = [...$next, 'provider' => $provider, 'configured_at' => now()->toIso8601String()];
             // Editing a profile URL does not reconnect an explicitly revoked account.
             $credentials = array_filter(array_intersect_key($values, array_flip(['api_key', 'access_token'])), fn ($value) => is_string($value) && $value !== '');
             if ($credentials) {
                 unset($connections[$provider]['revoked_at']);
                 app(ConnectionStore::class)->saveCredentials($provider, $credentials);
             }
-            if (in_array($provider, ['youtube', 'x'], true)) {
-                app(OAuthAppCredentials::class)->save($provider, [
+            if (in_array($provider, ['youtube', 'x', 'facebook'], true)) {
+                app(OAuthAppCredentials::class)->save($provider === 'facebook' ? 'meta' : $provider, [
                     'client_id' => $values['oauth_client_id'] ?? null,
                     'client_secret' => $values['oauth_client_secret'] ?? null,
                 ]);
             }
             $settings->update(['social_connections' => $connections]);
+            return true;
         });
     }
 }

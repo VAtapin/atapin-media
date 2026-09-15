@@ -15,7 +15,7 @@
     if (!root || root.dataset.initialized === 'true') return;
     root.dataset.initialized = 'true';
     let browserStudio=null;
-    const studioModule=import('/assets/desktop-browser-studio.js?v=1').then(module=>{browserStudio=module;return module;});
+    const studioModule=import('/assets/desktop-browser-studio.js?v=2').then(module=>{browserStudio=module;return module;});
     const form = root.querySelector('[data-live-form]');
     const empty = root.querySelector('[data-live-editor-empty]');
     const events = root.querySelector('[data-live-events]');
@@ -43,6 +43,7 @@
     const posterProgress = root.querySelector('[data-live-poster-progress]');
     const saveButton = form.querySelector('button[type="submit"]');
     let current = null;
+    let selectionGeneration = 0;
     let selectedPosterFile = null;
     const view = {mode:'day', date:today(), page:1};
     dateFilter.value = view.date;
@@ -151,9 +152,10 @@
     };
     const loadEvent = async id => {
       if(browserStudio?.busy(root)){setFeedback(window.desktopLiveLabels.close_warning||'End the active broadcast or recording first.',true);return;}
+      const generation = ++selectionGeneration;
       setFeedback('');
-      try { fillForm(await requestData(`${root.dataset.apiBase}/${id}`)); }
-      catch (error) { setFeedback(error.message || labels().load_error, true); }
+      try { const data=await requestData(`${root.dataset.apiBase}/${id}`);if(generation===selectionGeneration)fillForm(data); }
+      catch (error) { if(generation===selectionGeneration)setFeedback(error.message || labels().load_error, true); }
     };
     const indexUrl = () => {
       const url = new URL(root.dataset.apiIndex, window.location.origin);
@@ -169,12 +171,13 @@
       renderList(window.liveStudioEvents);
     };
     const loadIndex = async selectFirst => {
+      const selectionAtStart=selectionGeneration;
       listStatus.hidden = false;
       try {
         const response = await request(indexUrl());
         applyIndex(response);
         listStatus.hidden = true;
-        if (selectFirst) {
+        if (selectFirst && selectionGeneration===selectionAtStart) {
           if (response.data?.[0]) await loadEvent(response.data[0].id);
           else newEvent();
         }
@@ -182,10 +185,10 @@
       } catch (error) {
         listStatus.textContent = error.message || labels().load_error;
         setFeedback(error.message || labels().load_error, true);
-        newEvent();
+        if(selectionGeneration===selectionAtStart)newEvent();
       }
     };
-    const newEvent = () => { if(browserStudio?.busy(root)){setFeedback(window.desktopLiveLabels.close_warning||'End the active broadcast or recording first.',true);return;}setFeedback(''); showIngest({}); fillForm({}); };
+    const newEvent = () => { if(browserStudio?.busy(root)){setFeedback(window.desktopLiveLabels.close_warning||'End the active broadcast or recording first.',true);return;}selectionGeneration+=1;setFeedback(''); showIngest({}); fillForm({}); };
     root.querySelector('[data-live-new]').addEventListener('click', newEvent);
     root.querySelector('[data-live-copy]').addEventListener('click', async event => {
       const url = root.querySelector('[data-live-url]').textContent;
@@ -224,6 +227,7 @@
     posterDrop?.addEventListener('drop', event => { event.preventDefault(); posterDrop.classList.remove('is-dragging'); selectPosterFile(event.dataTransfer.files?.[0]); });
     preview.addEventListener('click', () => window.open(preview.dataset.url, '_blank', 'noopener'));
     root.querySelector('[data-live-help]').addEventListener('click', () => root.closest('.os-window')?.querySelector('[data-window-action="help"]')?.click());
+    root.addEventListener('desktop-live-open',event=>{const id=Number(event.detail?.id);if(Number.isInteger(id)&&id>0)loadEvent(id);});
     events.addEventListener('click', event => { const button = event.target.closest('[data-live-event]'); if (button) loadEvent(button.dataset.liveEvent); });
     currentEvents.addEventListener('click', event => { const button = event.target.closest('[data-live-event]'); if (button) loadEvent(button.dataset.liveEvent); });
     form.addEventListener('submit', async event => {

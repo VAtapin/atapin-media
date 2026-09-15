@@ -1,11 +1,9 @@
 <section class="desktop-settings-panel" data-settings-panel="media_appearance" hidden>
-    <header class="desktop-settings-heading"><h2>{{ __('imports.media_appearance') }}</h2></header>
+    <header class="desktop-settings-heading"><div><span>Website</span><h2>{{ __('ui.settings_website_author') }}</h2><p>{{ __('ui.settings_website_author_hint') }}</p></div></header>
     <form class="desktop-settings-form" method="post" enctype="multipart/form-data" action="{{ route('settings') }}">@csrf @method('PUT')<input type="hidden" name="section" value="media_appearance">
         <label>{{ __('imports.project_author') }}<input name="public_author_name" maxlength="120" value="{{ $settings['public_author_name']??'' }}"></label>
         <label>{{ __('imports.author_photo') }}<input type="file" name="public_author_photo" accept="image/jpeg,image/png,image/webp"></label>
         @if($settings['public_author_image']??null)<img src="{{ $settings['public_author_image'] }}" alt="" width="64" height="64">@endif
-        <label>{{ __('imports.cover_style') }}<textarea name="cover_style_prompt" rows="4" maxlength="4000">{{ $settings['cover_style_prompt']??\App\Services\AiCoverGenerator::STYLE }}</textarea></label>
-        <label>{{ __('imports.image_model') }}<input name="ai_image_model" maxlength="120" value="{{ $settings['ai_image_model']??'gpt-image-2.5-flare' }}"></label>
         <details><summary>{{ __('imports.hero_sayings') }}</summary>
             @foreach(config('platform.locales') as $locale)
             <h3>{{ strtoupper($locale) }}</h3>

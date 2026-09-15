@@ -47,9 +47,15 @@
       if (heading) heading.textContent = heading.dataset.videoHeading || 'Videos';
       if (intro) intro.textContent = intro.dataset.videoIntro || '';
     }
+    if (section === 'podcast') {
+      root.classList.add('is-podcast-workspace');
+      const createEpisode = root.querySelector('[data-content-new]');
+      if (createEpisode) createEpisode.textContent = text.podcast_new_episode || 'New podcast episode';
+      details.innerHTML = `<div class="podcast-editor-empty"><strong>${escape(text.podcast_episode || 'Podcast Episode')}</strong><p>${escape(text.podcast_select_episode || text.empty)}</p></div>`;
+    }
     const scopeToggle=document.createElement('button');
     scopeToggle.type='button'; scopeToggle.className='desktop-button'; scopeToggle.dataset.contentScope='';
-    if(section && !editorMode){
+    if(section && !editorMode && section !== 'podcast'){
       (root.querySelector('[data-content-advanced-fields]') || form).append(scopeToggle);
       const updateScope=()=>{
         const allowed=sectionKinds[section]||[];
@@ -170,10 +176,11 @@
       }
       const url = event.detail?.url || event.target.closest('[data-content-detail]')?.dataset.contentDetail;
       if (!url) return;
-      if (!editorMode) {
+      if (!editorMode && section !== 'podcast') {
         openContentEditor(section, url);
         return;
       }
+      if (section === 'podcast') root.classList.add('has-podcast-editor');
       if (details.dataset.dirty === 'true' && !window.confirm(text.discard_edits)) return;
       delete details.dataset.dirty;
       const generation = ++detailGeneration;

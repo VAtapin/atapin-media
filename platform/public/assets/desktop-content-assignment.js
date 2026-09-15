@@ -8,6 +8,7 @@
   };
   window.appendContentAssignment = (details, type, item) => {
     const text = window.desktopImportLabels;
+    if(type==='record'&&item.public_section==='podcast'&&window.appendPodcastEditor){window.appendPodcastEditor(details,item);return;}
     const select = (name, values, current) => `<label>${escape(text[name])}<select name="${name}">${values.map(value => `<option value="${value}" ${value === current ? 'selected' : ''}>${escape(text[value] || text['kind_'+value] || value)}</option>`).join('')}</select></label>`;
     const form = document.createElement('form'); form.className = 'content-assignment';
     const confidence = item.classification_confidence ?? item.classification?.confidence;
@@ -129,7 +130,7 @@
   document.addEventListener('content-selected', event => {
     const item = event.detail;
     const details = event.target.closest?.('[data-content-details]');
-    if (!details || !supported(item) || details.dataset.dirty === 'true') return;
+    if (!details || !supported(item) || item.public_section==='podcast' || details.dataset.dirty === 'true') return;
     const toolbar = details.querySelector('.content-assignment .media-library-toolbar-row');
     if (!toolbar || toolbar.querySelector('[data-structure-check]')) return;
     const button = document.createElement('button');

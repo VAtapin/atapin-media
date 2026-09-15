@@ -11,7 +11,7 @@
   document.addEventListener('content-enhancements-queued',event=>refreshers.get(event.target)?.());
   document.addEventListener('content-selected',event=>{
     const item=event.detail,details=event.target,root=details.closest('[data-content-library]');
-    if(!root||root.dataset.canEdit!=='true'||root.dataset.canMediaEdit!=='true'||item.archive_data||!['video','short','post'].includes(item.kind))return;
+    if(!root||root.dataset.canEdit!=='true'||root.dataset.canMediaEdit!=='true'||item.archive_data||item.public_section==='podcast'||!['video','short','post'].includes(item.kind))return;
     const panel=document.createElement('section');panel.className='media-inspector';panel.dataset.mediaPreparation='';
     const heading=document.createElement('h4');heading.textContent=labels().media_preparation;panel.append(heading);
     for(const operation of ['frame','ai_cover',...(item.public_section==='podcast'?['podcast']:[])]){

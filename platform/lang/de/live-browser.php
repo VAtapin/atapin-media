@@ -1,5 +1,6 @@
 <?php
 return [
+    'obs_mode'=>'OBS verwenden', 'browser_mode'=>'Direkt im Browser senden',
     'title'=>'Browser-Studio', 'intro'=>'Kamera, Mikrofon und Szenen lokal vorbereiten. Erst „Live starten“ überträgt öffentlich.',
     'podcast_draft'=>'Podcast-Entwurf aus gespeichertem Audio erstellen', 'podcast_created'=>'Podcast-Entwurf erstellt — nicht veröffentlicht.', 'audio_unavailable'=>'Eigene Audio-Aufnahme zuerst in Media Library speichern.',
     'screen_stop'=>'Bildschirmfreigabe beenden',
