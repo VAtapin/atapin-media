@@ -60,6 +60,7 @@
     let controller;
     let playlistUrl = null;
     let detailGeneration = 0;
+    let currentPlaylist = false;
     const publicBadge = (active, activeText, inactiveText, icon) => {
       const label = active ? activeText : inactiveText;
       return `<span class="content-list-badge ${active ? 'is-active' : 'is-inactive'}" title="${escape(label)}" aria-label="${escape(label)}"><span class="content-list-badge-icon" aria-hidden="true">${icon}</span><span>${escape(label)}</span></span>`;
@@ -68,6 +69,27 @@
       const response = await fetch(url, { credentials:'same-origin', headers:{Accept:'application/json'} });
       if (!response.ok) throw new Error(text.load_error);
       return response.json();
+    };
+    const playable = item => item.video_url ? `<button type="button" class="content-video-play" data-content-play data-video-url="${escape(item.video_url)}" aria-label="${escape(text.video_play || 'Play video')}">▶</button>` : '';
+    const videoVisual = (item, className) => `<span class="${className}" data-content-preview>${item.cover_url ? `<img src="${escape(item.cover_url)}" alt="" loading="lazy">` : `<span aria-hidden="true">${escape(text[`kind_${item.kind}`] || 'Video')}</span>`}${playable(item)}</span>`;
+    const renderPayload = (data, playlist = false) => {
+      currentPayload = data;
+      currentPlaylist = playlist;
+      page = data.meta.current_page;
+      summary.textContent = `${data.meta.total} ${text.records}`;
+      const renderList = () => data.data.length ? data.data.map(item => {
+        const homepage = ['video','short'].includes(item.kind) ? publicBadge(Boolean(item.public_homepage), text.public_homepage_active, text.public_homepage_inactive, '⌂') : '';
+        const publication = publicBadge(Boolean(item.public_published), text.public_visible, text.publication_unpublished, '✓');
+        const duration = item.video_duration ? formatDuration(item.video_duration) : '';
+        const bytes = item.video_bytes ? formatBytes(item.video_bytes) : '';
+        const technical = [duration, bytes].filter(Boolean).join(' · ');
+        if (section === 'videos' && view === 'cards') return `<li><article class="content-video-card">${videoVisual(item, 'content-video-card-visual')}<button type="button" class="content-video-card-open" data-content-detail="${escape(item.detail_url)}"><span class="content-video-card-body"><strong>${escape(item.title)}</strong><small>${escape(text[`kind_${item.kind}`] || item.kind)}${item.source ? ` · ${escape(item.source)}` : ''}</small>${item.body ? `<span class="content-video-card-description">${escape(item.body)}</span>` : ''}<span class="content-list-badges">${publication}${homepage}</span><span class="content-video-card-meta">${technical ? `${escape(technical)} · ` : ''}${escape(text[item.status] || item.status)}</span></span></button></article></li>`;
+        if (section === 'videos') return `<li><article class="media-library-item content-video-list-item">${videoVisual(item, 'content-video-list-visual')}<button type="button" class="content-video-list-open" data-content-detail="${escape(item.detail_url)}"><span class="media-library-item-main"><strong>${escape(item.title)}</strong><small>${escape(text[`kind_${item.kind}`] || item.kind)} · ${escape(item.source)}${technical ? ` · ${escape(technical)}` : ''} · ${escape(item.body)}</small><span class="content-list-badges">${publication}${homepage}</span></span></button><span class="media-library-status">${escape(text[item.status] || item.status)}</span></article></li>`;
+        return `<li><button type="button" class="media-library-item" data-content-detail="${escape(item.detail_url)}"><span class="media-library-item-main"><strong>${escape(item.title)}</strong><small>${escape(text[`kind_${item.kind}`] || item.kind)} · ${escape(item.source)} · ${escape(item.body)}</small><span class="content-list-badges">${publication}${homepage}</span></span><span class="media-library-status">${escape(text[item.status] || item.status)}</span></button></li>`;
+      }).join('') : `<li class="media-library-empty">${escape(text.empty)}</li>`;
+      list.innerHTML = section === 'videos' && view === 'cards' ? `<div class="content-video-card-grid">${renderList()}</div>` : renderList();
+      root.dispatchEvent(new CustomEvent('content-list-loaded',{bubbles:true,detail:{items:data.data,playlist}}));
+      pagination.innerHTML = `<button type="button" data-content-page="${page - 1}" ${page <= 1 ? 'disabled' : ''}>‹</button><span>${page} / ${data.meta.last_page}</span><button type="button" data-content-page="${page + 1}" ${page >= data.meta.last_page ? 'disabled' : ''}>›</button>`;
     };
     const load = async (number = 1) => {
       controller?.abort(); controller = new AbortController();
@@ -85,21 +107,7 @@
         if (playlist) params.delete('kind');
         const data = await get(`${root.dataset.contentUrl}${playlist ? '/playlists' : ''}?${params}`);
         if (active.signal.aborted || !root.isConnected) return;
-        page = data.meta.current_page;
-        currentPayload = data;
-        summary.textContent = `${data.meta.total} ${text.records}`;
-        const renderList = () => data.data.length ? data.data.map(item => {
-          const homepage = ['video','short'].includes(item.kind) ? publicBadge(Boolean(item.public_homepage), text.public_homepage_active, text.public_homepage_inactive, '⌂') : '';
-          const publication = publicBadge(Boolean(item.public_published), text.public_visible, text.publication_unpublished, '✓');
-          const duration = item.video_duration ? formatDuration(item.video_duration) : '';
-          const bytes = item.video_bytes ? formatBytes(item.video_bytes) : '';
-          const technical = [duration, bytes].filter(Boolean).join(' · ');
-          if (section === 'videos' && view === 'cards') return `<li><button type="button" class="content-video-card" data-content-detail="${escape(item.detail_url)}"><span class="content-video-card-visual">${item.cover_url ? `<img src="${escape(item.cover_url)}" alt="" loading="lazy">` : `<span aria-hidden="true">${escape(text[`kind_${item.kind}`] || 'Video')}</span>`}</span><span class="content-video-card-body"><strong>${escape(item.title)}</strong><small>${escape(text[`kind_${item.kind}`] || item.kind)}${item.source ? ` · ${escape(item.source)}` : ''}</small>${item.body ? `<span class="content-video-card-description">${escape(item.body)}</span>` : ''}<span class="content-list-badges">${publication}${homepage}</span><span class="content-video-card-meta">${technical ? `${escape(technical)} · ` : ''}${escape(text[item.status] || item.status)}</span></span></button></li>`;
-          return `<li><button type="button" class="media-library-item content-video-list-item" data-content-detail="${escape(item.detail_url)}">${section === 'videos' ? `<span class="content-video-list-visual">${item.cover_url ? `<img src="${escape(item.cover_url)}" alt="" loading="lazy">` : `<span aria-hidden="true">${escape(text[`kind_${item.kind}`] || 'Video')}</span>`}</span>` : ''}<span class="media-library-item-main"><strong>${escape(item.title)}</strong><small>${escape(text[`kind_${item.kind}`] || item.kind)} · ${escape(item.source)}${technical ? ` · ${escape(technical)}` : ''} · ${escape(item.body)}</small><span class="content-list-badges">${publication}${homepage}</span></span><span class="media-library-status">${escape(text[item.status] || item.status)}</span></button></li>`;
-        }).join('') : `<li class="media-library-empty">${escape(text.empty)}</li>`;
-        list.innerHTML = section === 'videos' && view === 'cards' ? `<div class="content-video-card-grid">${renderList()}</div>` : renderList();
-        root.dispatchEvent(new CustomEvent('content-list-loaded',{bubbles:true,detail:{items:data.data,playlist}}));
-        pagination.innerHTML = `<button type="button" data-content-page="${page - 1}" ${page <= 1 ? 'disabled' : ''}>‹</button><span>${page} / ${data.meta.last_page}</span><button type="button" data-content-page="${page + 1}" ${page >= data.meta.last_page ? 'disabled' : ''}>›</button>`;
+        renderPayload(data, playlist);
       } catch (error) { summary.textContent = error.message; }
     };
     const setView = next => {
@@ -108,13 +116,7 @@
       root.classList.toggle('is-content-card-view', view === 'cards');
       root.classList.toggle('is-content-list-view', view === 'list');
       viewButtons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.contentView === view)));
-      if (currentPayload) {
-        const event = new CustomEvent('content-view-changed');
-        root.dispatchEvent(event);
-        const data = currentPayload;
-        currentPayload = null;
-        load(data.meta.current_page);
-      }
+      if (currentPayload) renderPayload(currentPayload, currentPlaylist);
     };
     viewButtons.forEach(button => button.addEventListener('click', () => setView(button.dataset.contentView)));
     setView(view);
@@ -126,7 +128,30 @@
       if (asset.mime === 'application/pdf') return `<iframe class="media-library-preview pdf" src="${url}" title="PDF" sandbox></iframe>`;
       return '';
     };
+    const playInline = control => {
+      const visual = control.closest('[data-content-preview]');
+      const url = control.dataset.videoUrl;
+      if (!visual || !url || visual.classList.contains('is-playing')) return;
+      const video = document.createElement('video');
+      video.className = 'content-video-inline-player';
+      video.controls = true;
+      video.autoplay = true;
+      video.playsInline = true;
+      video.preload = 'metadata';
+      video.src = url;
+      video.setAttribute('aria-label', text.video_play || 'Video');
+      visual.replaceChildren(video);
+      visual.classList.add('is-playing');
+      video.play().catch(() => {});
+    };
     const selectContent = async event => {
+      const playControl = event.target.closest?.('[data-content-play]');
+      if (playControl) {
+        event.preventDefault();
+        event.stopPropagation();
+        playInline(playControl);
+        return;
+      }
       const url = event.detail?.url || event.target.closest('[data-content-detail]')?.dataset.contentDetail;
       if (!url) return;
       if (details.dataset.dirty === 'true' && !window.confirm(text.discard_edits)) return;

@@ -48,7 +48,8 @@ class VideoInventory
         $technical = $grammar->wrap('video_asset.metadata->technical_status');
         $state = (clone $asset)->selectRaw("CASE WHEN $technical IN ('queued','processing','failed') THEN $technical ELSE video_asset.status END");
 
-        $query->addSelect(['video_duration' => $duration, 'video_bytes' => $bytes, 'video_processing' => $state]);
+        $videoId = (clone $asset)->select('video_asset.id');
+        $query->addSelect(['video_id' => $videoId, 'video_duration' => $duration, 'video_bytes' => $bytes, 'video_processing' => $state]);
         foreach (['duration_min' => ['>=', $duration], 'duration_max' => ['<=', $duration], 'bytes_min' => ['>=', $bytes], 'bytes_max' => ['<=', $bytes]] as $key => [$operator, $subquery]) {
             if (isset($filters[$key])) {
                 $query->whereRaw('('.$subquery->toSql().') '.$operator.' CAST(? AS DECIMAL(20,3))', [...$subquery->getBindings(), $filters[$key]]);

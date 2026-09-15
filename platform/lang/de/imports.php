@@ -286,7 +286,7 @@ return [
     'stage_metadata' => 'Beschreibungen und Inhalte werden eingelesen',
     'worker_stopped' => 'Der Hintergrundprozess wurde beendet oder hat sein Zeitlimit erreicht. Gespeicherte Dateien bleiben erhalten; bitte erneut versuchen.',
     'publication_filter'=>'Veröffentlichung','all_publication_states'=>'Alle Veröffentlichungszustände','publication_published'=>'Auf der Website veröffentlicht','publication_unpublished'=>'Nicht auf der Website veröffentlicht',
-    'all_content'=>'Alle Inhalte anzeigen','section_only'=>'Nur diesen Bereich anzeigen','content_library_intro'=>'Materialien suchen, prüfen und bearbeiten.','video_library_heading'=>'Videobibliothek','video_library_intro'=>'Videos schnell finden, prüfen und für die Veröffentlichung vorbereiten.',
+    'all_content'=>'Alle Inhalte anzeigen','section_only'=>'Nur diesen Bereich anzeigen','content_library_intro'=>'Materialien suchen, prüfen und bearbeiten.','video_library_heading'=>'Videobibliothek','video_library_intro'=>'Videos schnell finden, prüfen und für die Veröffentlichung vorbereiten.','video_play'=>'Video abspielen',
     'short_description'=>'Kurzbeschreibung (8–10 Wörter)', 'short_description_generate'=>'Kurztext mit KI erstellen',
     'short_descriptions_missing'=>'Fehlende Kurztexte erstellen','short_descriptions_selected'=>'Kurztexte für Auswahl',
     'enhancement_queued'=>'Wartet auf Verarbeitung','enhancement_running'=>'Wird verarbeitet','enhancement_completed'=>'Fertig',

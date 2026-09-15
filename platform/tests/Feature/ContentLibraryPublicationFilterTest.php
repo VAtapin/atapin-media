@@ -62,15 +62,21 @@ class ContentLibraryPublicationFilterTest extends TestCase
             'original_name' => 'cover.jpg', 'kind' => 'image', 'mime' => 'image/jpeg',
             'disk' => 'local', 'path' => 'cover.jpg', 'bytes' => 10, 'status' => 'ready',
         ]);
+        $video = Media::create([
+            'source' => 'upload', 'source_id' => 'card-video-file', 'title' => 'Video',
+            'original_name' => 'video.mp4', 'kind' => 'video', 'mime' => 'video/mp4',
+            'disk' => 'local', 'path' => 'video.mp4', 'bytes' => 100, 'status' => 'ready',
+        ]);
         SourceRecord::create([
             'source' => 'upload', 'source_id' => 'card-video', 'kind' => 'video',
             'title' => 'Card video', 'body' => 'Description', 'status' => 'ready',
-            'metadata' => ['cover_media_id' => $cover->id],
+            'metadata' => ['cover_media_id' => $cover->id, 'media_ids' => [$cover->id, $video->id]],
         ]);
 
         $this->getJson('/desktop/content?section=videos')
             ->assertOk()
             ->assertJsonPath('data.0.title', 'Card video')
-            ->assertJsonPath('data.0.cover_url', route('media.preview', $cover));
+            ->assertJsonPath('data.0.cover_url', route('media.preview', $cover))
+            ->assertJsonPath('data.0.video_url', route('media.preview', $video));
     }
 }

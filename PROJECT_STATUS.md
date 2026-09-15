@@ -31,6 +31,7 @@
 - Analytics dashboard: the existing first-party report is now a compact scan-first view with KPI cards, a clickable daily activity chart, visual top-event/page/content rankings, expandable raw data sections and drill-down details. Data collection, permissions and CSV export remain unchanged.
 - Analytics chart refinement: the selected date range now includes explicit zero-activity days, the main activity line uses a smooth curve with real peaks and drops, and a clickable daily heatmap makes quiet/active periods visible at a glance.
 - Video catalog cleanup: the Videos window now has separated primary/advanced filters and actions, a persistent cards/list switch, and card thumbnails from linked media covers; the existing post/podcast table mode remains unchanged.
+- Video catalog refinement: card columns are compact enough for three videos in the split view, card/list switching reuses the loaded page without a second request, list thumbnails no longer overlap text, and available local video files can play inline from the catalog.
 
 ## Важные решения
 
@@ -70,6 +71,7 @@
 - Analytics dashboard: `node --check platform/public/assets/desktop-workspace-operations.js` and `git diff --check` passed. PHP syntax/Blade/browser checks were not run because PHP and a local preview server are unavailable in this Windows session.
 - Analytics chart refinement: `node --check platform/public/assets/desktop-workspace-operations.js` and `git diff --check` passed again after adding zero-day interpolation, curve smoothing and heatmap rendering. PHP/Blade/browser checks remain unavailable in this Windows session.
 - Video catalog cleanup: `node --check` for `desktop-content-library.js` and `desktop-content-columns.js`, plus `git diff --check`, passed. PHP/Blade/browser checks were not run because PHP 8.4 and a local preview server are unavailable in this Windows session.
+- Video catalog refinement: `node --check` for `desktop-content-library.js` and `desktop-content-columns.js`, plus `git diff --check`, passed. PHP/Blade/browser checks remain unavailable because PHP 8.4 and a local preview server are not installed in this Windows session.
 
 ## Что рекомендуется следующим
 

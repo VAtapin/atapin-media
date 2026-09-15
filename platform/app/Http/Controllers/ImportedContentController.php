@@ -39,6 +39,7 @@ class ImportedContentController extends Controller
         if($isVideo)app(\App\Services\VideoInventory::class)->apply($query->select('source_records.*'),$data);
         $page = $query->paginate(30);
         $covers = Media::whereIn('id', $page->getCollection()->pluck('metadata.cover_media_id')->filter()->unique())->get()->keyBy('id');
+        $videos = Media::whereIn('id', $page->getCollection()->pluck('video_id')->filter()->unique())->get()->keyBy('id');
         return response()->json(['data' => $page->getCollection()->map(fn ($record) => [
             'id' => $record->id, 'title' => $record->title, 'body' => mb_substr($record->body ?? '', 0, 250),
             'kind' => $record->kind, 'source' => $record->source, 'status' => $record->status,
@@ -47,6 +48,7 @@ class ImportedContentController extends Controller
             'created_at'=>$record->created_at,'updated_at'=>$record->updated_at,'published_at'=>$record->metadata['public_published_at']??null,
             'project'=>$canSeeProjects?$record->project?->title:null,'workflow_stage'=>$record->metadata['workflow_stage']??null,
             'cover_url'=>$covers->get($record->metadata['cover_media_id']??null)?->previewUrl(),
+            'video_url'=>$videos->get($record->video_id)?->previewUrl(),
             'video_duration'=>isset($record->video_duration)?(float)$record->video_duration:null,'video_bytes'=>$record->video_bytes!==null?(int)$record->video_bytes:null,'video_processing'=>$record->video_processing,
             'detail_url' => route('content.show', $record),
         ]), 'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total()]]);
