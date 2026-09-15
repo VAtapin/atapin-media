@@ -10,15 +10,17 @@
     const item=event.detail,details=event.target,root=details.closest('[data-content-library]');
     if(!root||root.dataset.canEdit!=='true'||item.kind==='playlist')return;
     const tools=document.createElement('section');tools.className='media-inspector';tools.dataset.contentLifecycle='';
-    tools.innerHTML=`<div class="media-library-toolbar-row"><button class="desktop-button" type="button" data-trash>${esc(item.trashed?t().trash_restore:t().delete_content)}</button>${!item.trashed&&root.dataset.canMediaEdit==='true'?`${item.public_section==='podcast'?'':`<button class="desktop-button" type="button" data-choose-role="cover">${esc(t().replace_cover)}</button>${['video','short'].includes(item.kind)?`<button class="desktop-button" type="button" data-choose-role="video">${esc(t().replace_video)}</button>`:''}`}<button class="desktop-button" type="button" data-choose-role="attachment">${esc(t().add_attachment)}</button>`:''}</div><p role="status"></p><div data-choice hidden></div>${!item.trashed&&root.dataset.canMediaEdit==='true'&&item.public_section!=='podcast'?`<div>${item.assets.map(asset=>`<p>${esc(asset.title)} <button class="desktop-button" type="button" data-replace-asset="${asset.id}">${esc(t().replace_attachment)}</button> <button class="desktop-button" type="button" data-detach-asset="${asset.id}">${esc(t().remove_attachment)}</button></p>`).join('')}</div>`:''}`;
-    details.prepend(tools);const message=tools.querySelector('[role=status]'),choice=tools.querySelector('[data-choice]');let mode,generation=0;
+    tools.innerHTML=`<div class="media-library-toolbar-row"><button class="desktop-button" type="button" data-trash>${esc(item.trashed?t().trash_restore:t().delete_content)}</button>${!item.trashed&&root.dataset.canMediaEdit==='true'?`${item.public_section==='podcast'?'':`<button class="desktop-button" type="button" data-choose-role="cover">${esc(t().replace_cover)}</button>${['video','short'].includes(item.kind)?`<button class="desktop-button" type="button" data-choose-role="video">${esc(t().replace_video)}</button>`:''}`}<button class="desktop-button" type="button" data-choose-role="attachment">${esc(t().add_attachment)}</button>`:''}</div><p role="status"></p><div data-choice hidden></div>${!item.trashed&&root.dataset.canMediaEdit==='true'&&item.public_section!=='podcast'?`<div>${item.assets.map(asset=>`<p>${esc(asset.title)} <button class="desktop-button" type="button" data-detach-asset="${asset.id}">${esc(t().remove_attachment)}</button></p>`).join('')}</div>`:''}`;
+    details.append(tools);const message=tools.querySelector('[role=status]'),choice=tools.querySelector('[data-choice]');let mode,generation=0;
     const dirty=()=>{if(details.dataset.dirty==='true'){message.textContent=t().save_before_ai;return true;}return false;};
     const reload=()=>{root.dispatchEvent(new CustomEvent('local-content-open',{detail:{url:'/desktop/content/'+item.id}}));changed();};
     const apply=async id=>{if(dirty())return;await send('/desktop/content/'+item.id+'/assets',{...mode,media_id:id});reload();};
     const search=async(page=1)=>{
       const current=++generation;
       try{
-        const params=new URLSearchParams({archive:'active',page,q:choice.querySelector('[name=q]').value});if(mode.kind)params.set('kind',mode.kind);
+        const q=choice.querySelector('[name=q]').value.trim();
+        if(q.length<2){choice.querySelector('[data-results]').textContent=t().replacement_search_first;return;}
+        const params=new URLSearchParams({archive:'active',page,q});if(mode.kind)params.set('kind',mode.kind);
         const reply=await fetch('/desktop/media/library?'+params,{headers:{Accept:'application/json'},credentials:'same-origin'});if(!reply.ok)throw new Error(t().load_error);const result=await reply.json();
         if(current!==generation||!tools.isConnected)return;
         choice.querySelector('[data-results]').innerHTML=result.data.map(file=>`<p><button class="desktop-button" type="button" data-use-media="${file.id}">${esc(file.title)} · ${esc(file.formatted_size)}</button></p>`).join('')+`<div class="media-library-pagination"><button class="desktop-button" type="button" data-choice-page="${page-1}" ${page<=1?'disabled':''}>‹</button><span>${page}/${result.meta.last_page}</span><button class="desktop-button" type="button" data-choice-page="${page+1}" ${page>=result.meta.last_page?'disabled':''}>›</button></div>`;
@@ -33,7 +35,7 @@
         const file=e.target.files[0];if(!file||dirty())return;tools.inert=true;
         try{const id=await window.uploadDesktopMedia(file,root.dataset.userId,(n,total)=>message.textContent=t().upload_running+' '+Math.floor(n/total*100)+' %',null,{profile:kind==='image'?'cover':kind==='video'?'video':'attachment'});await apply(id);}
         catch(error){message.textContent=error.message;}finally{tools.inert=false;}
-      });search();
+      });choice.querySelector('[data-results]').textContent=t().replacement_search_first;
     };
     tools.addEventListener('click',async event=>{
       const button=event.target.closest('button');if(!button)return;
@@ -43,7 +45,6 @@
           await send('/desktop/content/'+item.id+(item.trashed?'/restore':''),item.trashed?{}:{confirmation:'DELETE'},item.trashed?'POST':'DELETE');details.replaceChildren();changed();return;
         }
         if(button.dataset.chooseRole)return choose(button.dataset.chooseRole);
-        if(button.dataset.replaceAsset)return choose('attachment',item.assets.find(a=>a.id===button.dataset.replaceAsset));
         if(button.dataset.detachAsset){if(dirty()||!confirm(t().remove_attachment_confirm))return;await send('/desktop/content/'+item.id+'/assets',{action:'detach',role:'attachment',old_media_id:button.dataset.detachAsset});return reload();}
         if(button.dataset.choicePage)return search(Number(button.dataset.choicePage));
         if(button.dataset.useMedia){if(dirty()||!confirm(t().replacement_confirm))return;button.disabled=true;await apply(button.dataset.useMedia);}
@@ -53,7 +54,7 @@
   document.addEventListener('content-selected',selected);document.addEventListener('content-trashed-selected',selected);
   window.appendMediaLifecycle=(details,item)=>{
     if(details.closest('[data-media-library]')?.dataset.canEdit!=='true')return;
-    const tools=document.createElement('section');tools.className='media-inspector';tools.innerHTML=`<button type="button" class="desktop-button">${esc(item.archived?t().trash_restore:t().delete_file)}</button><p role="status"></p>`;details.prepend(tools);
+    const tools=document.createElement('section');tools.className='media-inspector';tools.innerHTML=`<button type="button" class="desktop-button">${esc(item.archived?t().trash_restore:t().delete_file)}</button><p role="status"></p>`;details.append(tools);
     tools.querySelector('button').onclick=async e=>{if(details.dataset.dirty==='true'){tools.querySelector('[role=status]').textContent=t().save_before_ai;return;}if(!item.archived&&!confirm(t().delete_file_confirm))return;e.target.disabled=true;try{await send('/desktop/media/organize',{ids:[item.id],archived:!item.archived},'PATCH');details.replaceChildren();document.dispatchEvent(new CustomEvent('desktop-media-changed',{detail:{fileRemoved:true}}));}catch(error){tools.querySelector('[role=status]').textContent=error.message;e.target.disabled=false;}};
   };
 })();

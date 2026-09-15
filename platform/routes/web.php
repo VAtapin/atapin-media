@@ -142,6 +142,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/desktop/content/structure/batch', [\App\Http\Controllers\ContentStructureController::class,'batch'])->middleware(['can:content.edit','throttle:5,1'])->name('content.structure.batch');
     Route::post('/desktop/content/{record}/structure', [\App\Http\Controllers\ContentStructureController::class,'store'])->middleware(['can:content.edit','throttle:30,1'])->name('content.structure');
     Route::get('/desktop/content/{record}/imports/{snapshot}', [\App\Http\Controllers\ImportedContentController::class,'importVersion'])->middleware('can:media.view')->name('content.import-version');
+    Route::delete('/desktop/content/{record}/imports/{snapshot}', [\App\Http\Controllers\ImportVersionController::class,'destroy'])->middleware(['can:media.view','can:content.edit'])->name('content.import-version.delete');
     Route::get('/desktop/content/playlists', [\App\Http\Controllers\ImportedContentController::class,'playlists'])->middleware('can:media.view')->name('content.playlists');
     Route::get('/desktop/content/playlists/{collection}', [\App\Http\Controllers\ImportedContentController::class,'playlist'])->middleware('can:media.view')->name('content.playlist');
     Route::get('/desktop/content/{record}/children', [\App\Http\Controllers\ImportedContentController::class,'children'])->middleware('can:media.view')->name('content.children');

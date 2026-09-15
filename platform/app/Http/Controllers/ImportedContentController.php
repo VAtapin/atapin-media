@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 use App\Models\{Media, Publication};
 use App\Models\SourceRecord;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class ImportedContentController extends Controller
 {
@@ -165,6 +166,7 @@ class ImportedContentController extends Controller
     public function show(SourceRecord $record, \App\Services\Importing\ImportedContentPresentation $presentation)
     {
         $metadata = $record->metadata;
+        $canDeleteVersion=Gate::allows('content.edit')&&(!($metadata['public_published']??false)||Gate::allows('content.publish'));
         $assets = $presentation->assets($record);
         $publicContent=app(\App\Services\PublicContent::class);
         $publicUrl=$publicContent->visible($record)?$publicContent->card($record)['url']:null;
@@ -198,7 +200,9 @@ class ImportedContentController extends Controller
             'import_enriched' => (bool) ($metadata['import_enriched'] ?? false),
             'pending_review'=>$record->status==='review'||($metadata['external_sync_pending_review']??false),
             'import_versions' => \App\Models\SourceRecordSnapshot::where('source_record_id',$record->id)->latest()->limit(20)->get(['id','title','created_at'])
-                ->map(fn ($snapshot) => ['title'=>$snapshot->title,'created_at'=>$snapshot->created_at,'url'=>route('content.import-version',[$record,$snapshot])]),
+                ->map(fn ($snapshot) => ['id'=>$snapshot->id,'title'=>$snapshot->title,'created_at'=>$snapshot->created_at,
+                    'url'=>route('content.import-version',[$record,$snapshot]),
+                    'delete_url'=>$canDeleteVersion?route('content.import-version.delete',[$record,$snapshot]):null]),
             'assets' => $assets, 'private' => $publicUrl===null]);
     }
 

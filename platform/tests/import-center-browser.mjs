@@ -51,6 +51,12 @@ try {
   await inspector.locator('[data-open-local-content]').filter({hasText:'Browser playlist video'}).click();
   const contentEditor=page.locator('.os-window[data-app-id^="videos-"] [data-content-library]').last();
   await contentEditor.locator('[data-content-details][data-record-id]').waitFor();
+  assert(await contentEditor.locator('[data-content-details]').evaluate(node => {
+    const form=node.querySelector(':scope > form.content-editor-form');
+    const secondary=node.querySelector(':scope > details.content-editor-secondary');
+    return form && secondary && form.compareDocumentPosition(secondary)&Node.DOCUMENT_POSITION_FOLLOWING;
+  }));
+  assert.equal(await contentEditor.locator('[data-content-details] > p.content-original-text').count(),0);
   await media.locator('[data-library-content-toggle]').click();
   await media.locator('[data-library-content-toggle]').click();
   const content = media.locator('[data-content-library]');
@@ -82,7 +88,12 @@ try {
   await media.locator('[data-media-upload-input]').setInputFiles({name:fileName,mimeType:'text/plain',buffer:Buffer.from('Original from browser')});
   await media.locator('[data-media-upload-queue]').waitFor({state:'hidden'});
   await media.locator('[data-library-details][data-current-id]').waitFor();
-  await media.locator('[data-library-details] .media-library-download').waitFor();
+  await media.locator('[data-library-details] .media-library-download').waitFor({state:'attached'});
+  assert(await media.locator('[data-library-details]').evaluate(node => {
+    const form=node.querySelector(':scope > form.content-editor-form');
+    const secondary=node.querySelector(':scope > details.content-editor-secondary');
+    return form && secondary && form.compareDocumentPosition(secondary)&Node.DOCUMENT_POSITION_FOLLOWING;
+  }));
   const assignment = media.locator('[data-library-details] .content-assignment');
   await assignment.locator('[name=title]').fill(reviewedFile);
     const refreshResponse = page.waitForResponse(response => response.url().includes('/desktop/media/library') && response.request().method() === 'GET');
@@ -126,7 +137,10 @@ try {
   await media.locator('[data-content-list]').getByText(reviewedFile).click();
   const contentAssignment = contentEditor.locator('[data-content-details] .content-assignment');
   await contentAssignment.locator('[name=title]').fill(reviewedPost);
-  await contentAssignment.locator('[name=body]').fill('Original post text');
+  await contentAssignment.locator('[name=body]').evaluate(node=>{
+    if(node.dataset.richText!==undefined)window.DesktopRichText.setValue(node,'<p>Original post text</p>');
+    else {node.value='Original post text';node.dispatchEvent(new Event('input',{bubbles:true}));}
+  });
   await contentAssignment.locator('[name=status]').selectOption('ready');
   await contentAssignment.locator('button[type=submit]').click();
   await media.locator('[data-content-list]').getByText(reviewedPost).waitFor();
@@ -143,6 +157,7 @@ try {
   const replacement=page.waitForResponse(r=>r.url().endsWith('/assets')&&r.request().method()==='POST');
   await lifecycle.locator('[data-replacement-upload]').setInputFiles({name:'replacement-cover.png',mimeType:'image/png',buffer:coverBytes});
   assert((await replacement).ok());
+  await contentEditor.locator('[data-content-details] > details.content-editor-secondary > summary').click();
   await contentEditor.locator('[data-content-details] img.media-library-preview').waitFor();
   page.once('dialog',d=>d.accept());await lifecycle.locator('[data-trash]').click();
   await media.locator('[data-content-list]').getByText(reviewedPost).waitFor({state:'hidden'});
@@ -164,7 +179,9 @@ try {
   await contentEditor.locator('.content-playlist-items li').first().getByText('Browser playlist video').waitFor();
   await contentEditor.locator('[data-content-details]').getByText('Nur Text / Metadaten vorhanden').waitFor();
   await contentEditor.locator('[data-content-details] [data-content-detail]').getByText('Lokalen Inhalt öffnen').click();
-  await page.locator('.os-window[data-app-id^="videos-"] [data-content-details] p.content-original-text').last().getByText('Original description').waitFor();
+  const reopenedBody=page.locator('.os-window[data-app-id^="videos-"] [data-content-details] [name=body]').last();
+  await reopenedBody.waitFor({state:'attached'});
+  assert((await reopenedBody.inputValue()).includes('Original description'));
   await fs.mkdir('tests/artifacts',{recursive:true});
   await page.screenshot({path:'tests/artifacts/import-library-desktop.png'});
   console.log('Library assignments, replacements, trash and playlists passed.');

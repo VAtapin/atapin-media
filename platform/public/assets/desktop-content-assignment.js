@@ -10,7 +10,7 @@
     const text = window.desktopImportLabels;
     if(type==='record'&&item.public_section==='podcast'&&window.appendPodcastEditor){window.appendPodcastEditor(details,item);return;}
     const select = (name, values, current) => `<label>${escape(text[name])}<select name="${name}">${values.map(value => `<option value="${value}" ${value === current ? 'selected' : ''}>${escape(text[value] || text['kind_'+value] || value)}</option>`).join('')}</select></label>`;
-    const form = document.createElement('form'); form.className = 'content-assignment';
+    const form = document.createElement('form'); form.className = 'content-assignment content-editor-form';
     const confidence = item.classification_confidence ?? item.classification?.confidence;
     if (confidence != null) {
       const label = document.createElement('p'); label.textContent = `${text.ai_confidence}: ${Math.round(Number(confidence)*100)} %`;
@@ -49,7 +49,7 @@
     }
     let publication, homepage, homepageLabel;
     if(type==='record' && !item.archive_data && ['video','short','post','poll','comment','live_chat'].includes(item.kind) && details.closest('[data-content-library]')?.querySelector('[data-can-publish]')){
-      const label=document.createElement('label');publication=document.createElement('input');publication.type='checkbox';publication.checked=Boolean(item.public_published);
+      const label=document.createElement('label');label.className='content-assignment-checkbox';publication=document.createElement('input');publication.type='checkbox';publication.checked=Boolean(item.public_published);
       label.append(publication,document.createTextNode(text.public_published));
       const hint=document.createElement('small');hint.textContent=text.public_published_hint;label.append(hint);
       form.insertBefore(label,form.querySelector('.media-library-toolbar-row'));
@@ -74,6 +74,17 @@
       }
     }
     if(type==='record')window.extendDesktopContentEditor?.(form,item,details);
+    const compact=document.createElement('div');compact.className='content-editor-field-grid';
+    for(const name of ['kind','status','target_profile','public_section']){
+      const label=form.querySelector(`[name="${name}"]`)?.closest('label');
+      if(label)compact.append(label);
+    }
+    const firstBlock=form.querySelector('[name=short_description]')?.closest('label')||form.querySelector('[name=body]')?.closest('label')||form.querySelector('[name=title]')?.closest('label');
+    if(compact.childElementCount)(firstBlock||form.firstElementChild).after(compact);
+    const taxonomy=form.querySelector('.content-taxonomy-field');if(taxonomy)compact.after(taxonomy);
+    const tags=form.querySelector('[name=tags]')?.closest('label');if(tags)(taxonomy||compact).after(tags);
+    for(const advanced of form.querySelectorAll(':scope > details'))form.append(advanced);
+    form.querySelector('[data-ai]').title=text.ai_classify_hint;
     form.addEventListener('input', () => {details.dataset.dirty = 'true';});
     form.addEventListener('change', () => {details.dataset.dirty = 'true';});
     const perform = async operation => {
@@ -95,7 +106,7 @@
       if (details.dataset.dirty === 'true') {message.textContent = text.save_before_ai; return;}
       perform(async () => {await request('/desktop/content/classify',{type,id:String(item.id)}); message.textContent = text.ai_queued;});
     });
-    details.append(form);
+    details.insertBefore(form,details.querySelector(':scope > .content-editor-secondary')||details.firstChild);
   };
   document.addEventListener('click', async event => {
     const button = event.target.closest('[data-classify-batch]'); if (!button) return;

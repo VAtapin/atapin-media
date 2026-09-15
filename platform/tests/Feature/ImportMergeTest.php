@@ -69,4 +69,43 @@ class ImportMergeTest extends TestCase
         $this->getJson('/desktop/content/'.$record->id.'/imports/'.$snapshot->id)->assertOk()->assertJsonPath('body','Original text');
         $this->getJson('/desktop/content/'.$other->id.'/imports/'.$snapshot->id)->assertNotFound();
     }
+    public function test_import_versions_can_be_deleted_individually_without_changing_current_content(): void
+    {
+        Queue::fake();
+        $importer=app(ContentMetadataImporter::class);
+        $record=$importer->record('youtube','version-delete','post','Original title','Original text',[]);
+        $importer->record('youtube','version-delete','post','Later title','Later text',['takeout_schema_version'=>2]);
+        $record->refresh()->update(['title'=>'Owner title','body'=>'Owner edit','status'=>'ready']);
+        $versions=SourceRecordSnapshot::where('source_record_id',$record->id)->orderBy('id')->get();
+        $this->assertCount(2,$versions);
+
+        app(\App\Services\Access::class)->seed();
+        $owner=\App\Models\User::factory()->create();
+        $owner->roles()->attach(\App\Models\Role::where('name','Owner')->firstOrFail());
+        $editor=\App\Models\User::factory()->create();
+        $editor->roles()->attach(\App\Models\Role::where('name','Mediengestalter')->firstOrFail());
+        $url='/desktop/content/'.$record->id.'/imports/'.$versions[0]->id;
+        $this->actingAs(\App\Models\User::factory()->create())->deleteJson($url,['confirmation'=>'DELETE'])->assertForbidden();
+        $this->actingAs($editor)->deleteJson($url,['confirmation'=>'NO'])->assertUnprocessable();
+        $this->actingAs($editor)->deleteJson($url,['confirmation'=>'DELETE'])->assertOk();
+        $this->assertDatabaseMissing('source_record_snapshots',['id'=>$versions[0]->id]);
+        $this->assertDatabaseHas('audit_events',['action'=>'content.import_version_deleted','subject'=>(string)$record->id]);
+        $this->assertDatabaseHas('source_record_snapshots',['id'=>$versions[1]->id]);
+        $this->assertSame('Owner title',$record->fresh()->title);
+        $this->assertSame('Owner edit',$record->fresh()->body);
+        $this->deleteJson('/desktop/content/'.$record->id.'/imports/'.$versions[1]->id,['confirmation'=>'DELETE'])->assertOk();
+        $this->assertDatabaseMissing('source_record_snapshots',['id'=>$versions[1]->id]);
+        $this->assertSame('Owner edit',$record->fresh()->body);
+
+        $other=$importer->record('youtube','other-version-delete','post','Other','Other text',[]);
+        $this->deleteJson('/desktop/content/'.$other->id.'/imports/'.$versions[1]->id,['confirmation'=>'DELETE'])->assertNotFound();
+        $record->refresh()->update(['metadata'=>[...$record->metadata,'public_published'=>true]]);
+        $importer->record('youtube','version-delete','post','Newest title','Newest text',[]);
+        $newest=SourceRecordSnapshot::where('source_record_id',$record->id)->latest()->firstOrFail();
+        $this->getJson('/desktop/content/'.$record->id)->assertOk()->assertJsonPath('import_versions.0.delete_url',null);
+        $this->deleteJson('/desktop/content/'.$record->id.'/imports/'.$newest->id,['confirmation'=>'DELETE'])->assertForbidden();
+        $this->actingAs($owner)->getJson('/desktop/content/'.$record->id)->assertOk()
+            ->assertJsonPath('import_versions.0.delete_url',route('content.import-version.delete',[$record,$newest]));
+        $this->actingAs($owner)->deleteJson('/desktop/content/'.$record->id.'/imports/'.$newest->id,['confirmation'=>'DELETE'])->assertOk();
+    }
 }

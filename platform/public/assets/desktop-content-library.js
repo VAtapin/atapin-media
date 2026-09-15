@@ -204,7 +204,16 @@
         if(item.takeout_data&&Object.keys(item.takeout_data).length)details.insertAdjacentHTML('beforeend',`<details class="media-inspector"><summary>${escape(text.takeout_original_data)}</summary>${item.archive_data?`<p>${escape(text.takeout_archive_private)}</p>`:''}<pre class="content-original-text">${escape(JSON.stringify(item.takeout_data,null,2))}</pre></details>`);
         details.dataset.currentUrl=url;
         if (item.items) details.insertAdjacentHTML('beforeend', `<p>${escape(text.playlist_hint)}</p><ol class="content-playlist-items">${item.items.map(member=>`<li value="${escape(member.position)}"><span class="content-playlist-title">${escape(member.title||member.source_id||text.unavailable)}</span><small>${escape(member.has_local_video ? text.local_file : member.detail_url ? text.metadata_only : text.missing_content)}</small>${member.detail_url ? `<button type="button" class="desktop-button" data-content-detail="${escape(member.detail_url)}">${escape(text.open_content)}</button>` : ''}${member.external_url ? external(member.external_url) : ''}</li>`).join('')}</ol>${item.previous_url ? `<button type="button" class="desktop-button" data-content-detail="${escape(item.previous_url)}">‹</button>` : ''}${item.next_url ? `<button type="button" class="desktop-button" data-content-detail="${escape(item.next_url)}">›</button>` : ''}`);
-        if (root.dataset.canEdit === 'true' && item.kind !== 'playlist' && !item.trashed) window.appendContentAssignment?.(details, 'record', item);
+        if (root.dataset.canEdit === 'true' && item.kind !== 'playlist' && !item.trashed) {
+          details.querySelector(':scope > h3')?.remove();
+          details.querySelector(':scope > p.content-original-text')?.remove();
+          const secondary=document.createElement('details');secondary.className='media-inspector content-editor-secondary';
+          secondary.innerHTML=`<summary>${escape(text.editor_source_details)}</summary>`;
+          const back=details.firstElementChild?.matches('button[data-content-detail]')?details.firstElementChild:null;
+          for(const child of [...details.childNodes])if(child!==back)secondary.append(child);
+          details.append(secondary);
+          window.appendContentAssignment?.(details, 'record', item);
+        }
         details.dispatchEvent(new CustomEvent(item.trashed?'content-trashed-selected':'content-selected', { bubbles: true, detail: item }));
       } catch (error) { if (generation === detailGeneration && root.isConnected) details.textContent = error.message; }
     };

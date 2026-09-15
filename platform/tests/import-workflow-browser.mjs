@@ -17,8 +17,11 @@ try {
  await library.locator('[data-content-summary]').getByText('Inhalte').waitFor();
  await page.route('**/desktop/content/takeout-ui-fixture',route=>route.fulfill({json:{id:'takeout-ui-fixture',kind:'poll',source:'youtube',title:'Original quiz',body:'Original text',status:'unsorted',assets:[],private:true,poll:{options:[{text:'Yes',is_correct:true,explanation:'Original explanation'}]},references:[{text:'Not available',missing:true,detail_url:null}],takeout_data:{post:{text:'<script>window.takeoutExecuted=true</script>'}}}}));
  await library.evaluate(root=>root.dispatchEvent(new CustomEvent('local-content-open',{detail:{url:'/desktop/content/takeout-ui-fixture'}})));const fixtureEditor=page.locator('.os-window[data-app-id^="videos-"] [data-content-library]').last();
+ await fixtureEditor.locator('[data-content-details] > details.content-editor-secondary > summary').click();
  await fixtureEditor.locator('[data-content-details] li').filter({hasText:'Yes — Richtige Antwort'}).waitFor();await fixtureEditor.getByText('Original explanation',{exact:true}).waitFor();
- const original=fixtureEditor.locator('[data-content-details] details').filter({hasText:'Originaldaten aus Takeout'});await original.locator('summary').click();assert((await original.locator('pre').textContent()).includes('<script>'));assert.equal(await page.evaluate(()=>window.takeoutExecuted),undefined);
+ const originalSummary=fixtureEditor.locator('[data-content-details] details > summary').filter({hasText:'Originaldaten aus Takeout'});
+ await originalSummary.click();const original=originalSummary.locator('..');
+ assert((await original.locator('pre').textContent()).includes('<script>'));assert.equal(await page.evaluate(()=>window.takeoutExecuted),undefined);
  assert.equal(await library.locator('a[href*="youtube.com"]').count(),0);
  await page.route('**/desktop/content/takeout-account-fixture',route=>route.fulfill({json:{id:'takeout-account-fixture',kind:'channel',source:'youtube',title:'Private channel',body:'',status:'unsorted',assets:[],private:true,archive_data:true,takeout_data:{channel:{title:'Original channel'}}}}));
  await library.evaluate(root=>root.dispatchEvent(new CustomEvent('local-content-open',{detail:{url:'/desktop/content/takeout-account-fixture'}})));const accountEditor=page.locator('.os-window[data-app-id^="videos-"] [data-content-library]').last();

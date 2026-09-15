@@ -12,6 +12,8 @@
 - Задачи поддерживают состояния `open/planned/working/waiting/done`, приоритеты, сроки, проект, ответственного, checklist/tags и повторение `once/daily/weekly/monthly/custom`. Повторы вычисляются из одной задачи без создания дубликатов. Доска и список сохранены; календарь показывает задачи, публикации и Live и открывает точную исходную запись.
 - Книги/PDF имеют title-first intake, inline editor, queued PDF analysis/generation, private originals, sample/full attachments и Stripe-entitlements. Рецензии перенесены в native Desktop-диалог с фильтрами, пагинацией и approve/reject; legacy `book-admin` UI удалён, старый маршрут безопасно перенаправляет в Bücher & PDF.
 - Jodit Editor 4.13.9 размещён локально и используется для `Beschreibung`, `Inhaltsverzeichnis`, текста полной PDF-редакции, длинных текстов Beiträge/Videos/Podcast и страниц `Website & Autor` (Impressum, Datenschutz, редакционные сведения, Über uns, Mission, правила Community). Самодельные rich-text панели заменены. Публичные книги, материалы, homepage book feature и информационные страницы отображают безопасную HTML-разметку вместо буквальных тегов; короткие карточки книг используют plain-text excerpt. PDF-генератор сохраняет разрешённое оформление текста.
+- Редакторы Beiträge/Videos и Media Library открывают рабочую форму первой: длинный дубль текста/предпросмотра убран сверху, сведения об источнике и файлах свернуты ниже, селекты собраны в адаптивную сетку, темы остаются у основных полей. `Mit KI einordnen` сохранена с пояснением. У привязанного файла убрана отдельная кнопка `Ersetzen`; выбор существующего материала теперь не загружает полный архив и требует адресный поиск от двух символов.
+- Сохранённые импорт-версии показывают дату и удаляются по одной красным крестом после подтверждения. Удаление требует `content.edit` (для опубликованной записи также `content.publish`), записывается в audit и не меняет текущий `SourceRecord` или оригинальные медиафайлы.
 - Podcast создаётся и редактируется inline поверх существующих `SourceRecord`, `Media`, assignments/assets. Поддержаны audio/video podcast, cover/file, episode/season, историческая дата публикации и явный переход к Publishing для будущего расписания.
 - Live Studio имеет явные OBS и Browser modes, responsive 30/70 layout, существующий Browser Studio/WHIP/recording pipeline и связанную OBS-Hilfe. Неподдерживаемая фиктивная Facebook Live-трансляция не добавлялась.
 - Настройки разделены по назначению: KI cover-настройки находятся в `KI → Bilder & Cover`, а `Website & Autor` содержит данные автора и website sayings.
@@ -29,6 +31,7 @@
 - Taxonomy assignments используют существующие canonical subject types `record` и `product`; новых migrations и изменений Composer/npm dependencies в этом блоке нет.
 - Rich-text HTML при сохранении и публичном выводе проходит общий `RichContent` sanitizer: разрешены редакционные заголовки, списки, цитаты, таблицы, безопасные ссылки и ограниченное выравнивание. Скрипты, event-атрибуты, iframe и произвольные стили не допускаются. Jodit подключён как локальный статический vendor asset с MIT license; Composer/npm dependencies и схема БД не менялись.
 - Обложка категории на главной выводится только из публичного canonical image storage; private media-preview URL не попадает в публичную страницу. Если обложка не загружена, используется нейтральный синий фон. При единственной категории её темы располагаются рядом с изображением на desktop и под ним на mobile.
+- Удаление импорт-версии касается только выбранной строки snapshot. Следующий повторный импорт того же источника может создать эту версию заново; подавление повторного импорта удалённых snapshot не добавлялось без отдельного решения по provenance.
 
 ## Известные ограничения
 
@@ -38,21 +41,23 @@
 - Перед production migration обязателен backup базы данных.
 - Вставка изображений непосредственно в rich-text пока отключена: её следует добавить отдельным блоком через защищённую Media Library и проверку public media URLs; arbitrary URL/base64 images не допускаются.
 - Старый тест `DesktopWorkspacesTest::test_calendar_uses_local_time_and_respects_access` после перехода локальной даты воспроизводимо получает `null` вместо `10:30`; он не связан с taxonomy, но требует отдельной стабилизации календарного теста/границы timezone.
+- Полный Playwright-сценарий приложения локально не завершился: Chrome/Edge не переходили на `127.0.0.1` из этой среды, хотя тестовый PHP-сервер отвечал. Сквозные проверки остаются в CI; изолированные браузерные проверки этого блока прошли.
 
 ## Проверки
 
-- Для текущей правки главной и taxonomy: **35 PHP tests, 304 assertions — passed** на локальном PHP 8.4 / SQLite. Полный suite не повторялся для локальной UI-правки; старый сбой календарного теста остаётся отдельной проблемой.
-- Edge browser в изолированной fixture-базе: главная на desktop `1672 × 941` и mobile `390 × 844`, загрузка обложки категории, отсутствие горизонтального переполнения и JavaScript errors — passed; desktop/mobile screenshots визуально просмотрены.
-- PHP/Node syntax затронутых файлов и Blade `view:cache` — passed; generated view cache очищен. Composer audit и npm build не требуются: manifest dependencies не менялись.
+- Полный локальный PHP suite на PHP 8.4 / SQLite без указанного старого календарного теста: **459 tests, 3716 assertions — passed**. Этот тест не заявлен как прошедший.
+- Изолированные Chrome browser checks: форма Beiträge/Media Library и сетка селектов на `1672 × 941` и `390 × 844`, положение Jodit/taxonomy/действий с файлами, адресный поиск и индивидуальное удаление импорт-версий — passed. Сквозные проверки обновлены в CI, но локально не прошли по ограничению браузерного localhost.
+- PHP/Node syntax затронутых файлов, Blade `view:cache`, routes `route:cache` — passed; generated caches очищены. Composer audit и npm build не требуются: manifest dependencies не менялись.
 
 ## Что рекомендуется следующим
 
-- Получить commit с обновлённым блоком категорий на production, очистить compiled Blade views и выполнить `platform:check`; migrations, Composer и Node build для этого блока не нужны.
+- Получить Desktop/Import commit на production, очистить cached routes и compiled Blade views; затем выполнить документированный `platform:check`. Migrations, Composer и Node build для этого блока не нужны.
+- При следующем запуске CI проверить обновлённые сквозные браузерные сценарии на штатном Linux/Chromium окружении.
 - Отдельно спроектировать защищённый выбор изображений из Media Library для Jodit, если изображения в тексте нужны владельцу.
 - В настройках по очереди сохранить app credentials и пройти реальные OAuth/API checks Meta, YouTube, X, Telegram и Stripe test mode. Секреты в чат не присылать.
 - Выполнить production smoke-test задач/календаря, книг/рецензий, Podcast/Live и `platform:check`.
 
 ## Последний связанный commit
 
-- Текущий функциональный блок: этот commit — `Show category covers with grouped home topics`. Branch/upstream: `main` → `origin/main`.
-- Предыдущий функциональный commit: `d883020` — `Add safe Jodit rich text editing`.
+- Текущий функциональный блок: этот commit — `Streamline desktop content editing and import versions`. Branch/upstream: `main` → `origin/main`.
+- Предыдущий функциональный commit: `70cde4a` — `Show category covers with grouped home topics`.
