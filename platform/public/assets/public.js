@@ -99,18 +99,24 @@ for(const form of document.querySelectorAll('[data-public-form],[data-public-aja
     if(!response.ok)throw new Error(publicFormError(result,response));
     if(form.dataset.publicAjax==='message'){
       form.reset();document.dispatchEvent(new Event('public-live-refresh'));publicFormMessage(form,result.message||window.publicLabels.message_sent);
-    }else if(form.dataset.publicForm!==undefined&&result.kind==='state'&&typeof result.enabled==='boolean'){
-      button?.classList.toggle('current',result.enabled);
-      button?.setAttribute('aria-pressed',String(result.enabled));
-      const input=form.querySelector('[name=enabled]');if(input)input.value=result.enabled?'0':'1';
+    }else if(form.dataset.publicForm!==undefined&&result.kind==='state'){
       let status=form.querySelector('[data-public-form-message]');if(!status){status=document.createElement('small');status.dataset.publicFormMessage='';status.setAttribute('role','status');form.append(status);}publicFormMessage(form,result.message||window.publicLabels.saved);
+      if(result.action==='vote'){
+        form.classList.add('is-submitted');for(const input of form.querySelectorAll('input[type=radio],input[type=checkbox]'))input.disabled=true;
+        if(button){button.textContent=result.message||window.publicLabels.saved;button.disabled=true;}
+        window.setTimeout(()=>window.location.reload(),500);
+      }else if(typeof result.enabled==='boolean'){
+        button?.classList.toggle('current',result.enabled);
+        button?.setAttribute('aria-pressed',String(result.enabled));
+        const input=form.querySelector('[name=enabled]');if(input)input.value=result.enabled?'0':'1';
+      }
     }
     if(form.dataset.publicAjax==='account-remove')form.closest('.public-account-item')?.remove();
     if(publicResetKinds.has(form.dataset.publicAjax))form.reset();
     if(form.dataset.publicAjax!=='message'&&form.dataset.publicForm===undefined)publicFeedback(result.message||window.publicLabels.saved);
   }catch(error){
     if(form.dataset.publicAjax==='message'||form.dataset.publicForm!==undefined){let status=form.querySelector('[data-public-form-message]');if(!status){status=document.createElement('small');status.dataset.publicFormMessage='';status.setAttribute('role','status');form.append(status);}publicFormMessage(form,error.message);}else publicFeedback(error.message);
-  }finally{if(button)button.disabled=false;}
+  }finally{if(button&&!form.classList.contains('is-submitted'))button.disabled=false;}
 });
 for(const player of document.querySelectorAll('[data-progress-url]')){
   player.addEventListener('loadedmetadata',()=>{const position=Number(player.dataset.resume);if(position>0&&position<player.duration)player.currentTime=position;},{once:true});

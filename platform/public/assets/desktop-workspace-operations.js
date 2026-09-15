@@ -2,15 +2,96 @@
   const W=window.DesktopWorkspaces,{t,el,button,field,lookup,formData,request,run}=W;
   const dateString=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   W.register('calendar',async root=>{
-    let cursor=new Date(),mode='month';const filters=root.querySelector('[data-workspace-filters]'),actions=root.querySelector('[data-workspace-actions]');filters.append(field('date','date',dateString(cursor)),field('type','select','',[['',t('all')],'project','task','publication','live']),field('provider','select','',[['',t('all')],'website','youtube','facebook','instagram','telegram','x']));
-    const load=()=>run(root,async()=>{cursor=new Date((filters.elements.date.value||dateString(cursor))+'T12:00:00');let start=new Date(cursor),end=new Date(cursor);if(mode==='month'){start.setDate(1);end=new Date(cursor.getFullYear(),cursor.getMonth()+1,0,12);}else if(mode==='week'){start.setDate(start.getDate()-(start.getDay()+6)%7);end=new Date(start);end.setDate(end.getDate()+6);}else end.setDate(end.getDate()+30);
-      const query=new URLSearchParams({start:dateString(start),end:dateString(end),type:filters.elements.type.value,provider:filters.elements.provider.value});const d=await request('/desktop/planning?'+query),list=root.querySelector('[data-workspace-list]');list.replaceChildren();W.feedback(root,d.timezone+(d.limited?' · '+t('limited'):''));
-      const select=event=>{const editor=root.querySelector('[data-workspace-editor]');editor.replaceChildren(el('h2',event.title),el('p',`${event.date} ${event.time||''} · ${t(event.status)}`),button('open',()=>W.open(event.app,['projects','tasks'].includes(event.app)?{id:event.subject_id}:undefined)));if(event.status==='failed')editor.append(el('p',t('schedule_failed')));if(event.schedule_id&&['scheduled','queued'].includes(event.status))editor.append(button('cancel',()=>run(root,async()=>{await request('/desktop/planning/'+event.schedule_id,undefined,'DELETE');load();})));};
-      if(mode==='list'){W.rows(root,d.data.map(e=>({...e,status:e.status,title:e.date+' '+e.title})),select);return;}
-      const grid=el('div',undefined,'workspace-calendar');if(mode==='month'){for(let i=0;i<(start.getDay()+6)%7;i++)grid.append(el('div'));}for(let day=new Date(start);day<=end;day.setDate(day.getDate()+1)){const cell=el('section',undefined,'workspace-day');cell.append(el('strong',day.toLocaleDateString(document.documentElement.lang,{day:'numeric',month:'short',weekday:'short'})));for(const event of d.data.filter(e=>e.date===dateString(day))){const b=button('open',()=>select(event));b.className='workspace-row';b.textContent=`${event.time||''} ${event.title}`;cell.append(b);}grid.append(cell);}list.append(grid);
+    root.classList.add('workspace-calendar-root');
+    const layout=root.querySelector('.workspace-layout'),list=root.querySelector('[data-workspace-list]'),editor=root.querySelector('[data-workspace-editor]'),filters=root.querySelector('[data-workspace-filters]'),actions=root.querySelector('[data-workspace-actions]');
+    layout.classList.add('workspace-calendar-layout');editor.hidden=true;
+    let cursor=new Date(),mode='month';cursor.setHours(12,0,0,0);
+    const clone=date=>new Date(date.getTime()),addDays=(date,days)=>{const next=clone(date);next.setDate(next.getDate()+days);next.setHours(12,0,0,0);return next;};
+    const monday=date=>addDays(date,-((date.getDay()+6)%7));
+    const dateField=field('calendar_date','date',dateString(cursor));dateField.querySelector('input').name='date';
+    const projectField=field('project_id','select');
+    const typeField=field('calendar_type','select','',[['',t('all')],'project','task','publication','live']);typeField.querySelector('select').name='type';
+    const providerField=field('provider','select','',[['',t('all')],'website','youtube','facebook','instagram','telegram','x']);
+    filters.append(dateField,projectField,typeField,providerField,button('refresh',()=>load()));
+    lookup(projectField,'projects').catch(error=>W.feedback(root,error.message,true));
+    const rangeLabel=el('strong','', 'workspace-calendar-range');
+    const modeButtons=new Map();
+    const range=()=>{
+      if(mode==='month'){
+        const monthStart=new Date(cursor.getFullYear(),cursor.getMonth(),1,12),monthEnd=new Date(cursor.getFullYear(),cursor.getMonth()+1,0,12);
+        return {start:monday(monthStart),end:addDays(monday(monthEnd),6),monthStart,monthEnd};
+      }
+      if(mode==='week'){const start=monday(cursor);return {start,end:addDays(start,6)};}
+      return {start:clone(cursor),end:addDays(cursor,30)};
+    };
+    const formatRange=period=>{
+      const locale=document.documentElement.lang||'de';
+      if(mode==='month')return cursor.toLocaleDateString(locale,{month:'long',year:'numeric'});
+      return `${period.start.toLocaleDateString(locale,{day:'numeric',month:'short'})} – ${period.end.toLocaleDateString(locale,{day:'numeric',month:'short',year:'numeric'})}`;
+    };
+    const hideEditor=()=>{editor.hidden=true;editor.replaceChildren();};
+    const select=event=>{
+      editor.hidden=false;editor.className='workspace-editor workspace-calendar-detail';
+      const meta=el('p',undefined,'workspace-calendar-detail-meta');meta.append(el('span',t(event.type),`workspace-calendar-type is-${event.type}`),document.createTextNode(` ${event.date}${event.time?' · '+event.time:''} · ${t(event.status)}`));
+      const controls=el('div',undefined,'workspace-actions'),open=button('open',()=>W.open(event.app,['projects','tasks'].includes(event.app)?{id:event.subject_id}:undefined));controls.append(open,button('close',hideEditor));
+      editor.replaceChildren(el('h2',event.title),meta,controls);
+      if(event.providers?.length)editor.append(el('p',`${t('providers')}: ${event.providers.map(t).join(', ')}`));
+      if(event.status==='failed')editor.append(el('p',t('schedule_failed'),'workspace-feedback is-error'));
+      if(event.schedule_id&&['scheduled','queued'].includes(event.status))editor.querySelector('.workspace-actions').append(button('cancel',()=>run(root,async()=>{await request('/desktop/planning/'+event.schedule_id,undefined,'DELETE');hideEditor();load();})));
+      editor.scrollIntoView({block:'nearest',behavior:'smooth'});
+    };
+    const eventButton=event=>{
+      const item=el('button',undefined,`workspace-calendar-event is-${event.type}`);item.type='button';item.title=[event.time,event.title,t(event.type),t(event.status)].filter(Boolean).join(' · ');
+      if(event.time)item.append(el('time',event.time));item.append(el('span',event.title));item.addEventListener('click',()=>select(event));return item;
+    };
+    const renderMonth=(events,period)=>{
+      const surface=el('div',undefined,'workspace-calendar-surface is-month');surface.dataset.calendarSurface='month';
+      const weekdays=el('div',undefined,'workspace-calendar-weekdays');for(let day=0;day<7;day++)weekdays.append(el('span',addDays(monday(cursor),day).toLocaleDateString(document.documentElement.lang||'de',{weekday:'short'})));
+      const grid=el('div',undefined,'workspace-calendar-grid');
+      for(let day=clone(period.start);day<=period.end;day=addDays(day,1)){
+        const key=dateString(day),cell=el('section',undefined,'workspace-calendar-day');cell.dataset.calendarDay=key;
+        if(day.getMonth()!==cursor.getMonth())cell.classList.add('is-outside');if(key===dateString(new Date()))cell.classList.add('is-today');
+        const heading=el('div',undefined,'workspace-calendar-day-heading');heading.append(el('span',day.toLocaleDateString(document.documentElement.lang||'de',{day:'numeric'})),el('small',day.toLocaleDateString(document.documentElement.lang||'de',{weekday:'short'})));cell.append(heading);
+        const dayEvents=events.get(key)||[];for(const event of dayEvents)cell.append(eventButton(event));if(!dayEvents.length)cell.append(el('span','', 'workspace-calendar-day-empty'));grid.append(cell);
+      }
+      surface.append(weekdays,grid);list.append(surface);
+    };
+    const renderWeek=(events,period)=>{
+      const surface=el('div',undefined,'workspace-calendar-surface is-week');surface.dataset.calendarSurface='week';const grid=el('div',undefined,'workspace-calendar-week');
+      for(let day=clone(period.start);day<=period.end;day=addDays(day,1)){
+        const key=dateString(day),cell=el('section',undefined,'workspace-calendar-week-day');cell.dataset.calendarDay=key;if(key===dateString(new Date()))cell.classList.add('is-today');
+        const head=el('header');head.append(el('span',day.toLocaleDateString(document.documentElement.lang||'de',{weekday:'short'})),el('strong',day.toLocaleDateString(document.documentElement.lang||'de',{day:'numeric',month:'short'})));cell.append(head);
+        const dayEvents=events.get(key)||[];if(dayEvents.length)for(const event of dayEvents)cell.append(eventButton(event));else cell.append(el('p',t('calendar_no_events'),'workspace-calendar-empty'));grid.append(cell);
+      }
+      surface.append(grid);list.append(surface);
+    };
+    const renderList=(events,period)=>{
+      const surface=el('div',undefined,'workspace-calendar-list');surface.dataset.calendarSurface='list';let count=0;
+      for(let day=clone(period.start);day<=period.end;day=addDays(day,1)){
+        const rows=events.get(dateString(day))||[];if(!rows.length)continue;count+=rows.length;const group=el('section',undefined,'workspace-calendar-list-day');group.append(el('h3',day.toLocaleDateString(document.documentElement.lang||'de',{weekday:'long',day:'numeric',month:'long'})));
+        for(const event of rows){const item=el('button',undefined,`workspace-calendar-list-event is-${event.type}`);item.type='button';item.append(el('time',event.time||t('calendar_all_day')),el('span',event.title),el('small',`${t(event.type)} · ${t(event.status)}`));item.addEventListener('click',()=>select(event));group.append(item);}surface.append(group);
+      }
+      if(!count)surface.append(el('p',t('calendar_no_events'),'workspace-empty'));list.append(surface);
+    };
+    const load=()=>run(root,async()=>{
+      const chosen=new Date((filters.elements.date.value||dateString(cursor))+'T12:00:00');if(!Number.isNaN(chosen.getTime()))cursor=chosen;
+      const period=range(),query=new URLSearchParams({start:dateString(period.start),end:dateString(period.end),project_id:filters.elements.project_id.value,type:filters.elements.type.value,provider:filters.elements.provider.value});
+      const data=await request('/desktop/planning?'+query);list.replaceChildren();hideEditor();rangeLabel.textContent=formatRange(period);for(const [key,item] of modeButtons)item.classList.toggle('is-primary',key===mode),item.setAttribute('aria-pressed',String(key===mode));
+      W.feedback(root,`${data.timezone}${data.limited?' · '+t('limited'):''}`);const events=new Map();for(const event of data.data){if(!events.has(event.date))events.set(event.date,[]);events.get(event.date).push(event);}
+      if(mode==='month')renderMonth(events,period);else if(mode==='week')renderWeek(events,period);else renderList(events,period);
     });
-    const shift=direction=>{if(mode==='month')cursor.setMonth(cursor.getMonth()+direction);else cursor.setDate(cursor.getDate()+direction*(mode==='week'?7:30));filters.elements.date.value=dateString(cursor);load();};actions.append(button('previous',()=>shift(-1)),button('next',()=>shift(1)));for(const view of ['month','week','list'])actions.append(button(view,()=>{mode=view;load();}));filters.append(button('refresh',load));filters.addEventListener('submit',e=>{e.preventDefault();load();});
-    if(root.dataset.canPublish==='true')actions.append(button('schedule',()=>run(root,async()=>{const editor=root.querySelector('[data-workspace-editor]');editor.replaceChildren(el('h2',t('schedule')));const f=el('form'),material=field('record_id','select');f.append(material);await lookup(material,'records');const time=field('publish_at','datetime-local');time.querySelector('input').required=true;f.append(time);for(const provider of ['website','youtube','facebook','instagram','telegram','x']){const p=field(provider,'checkbox',provider==='website');p.querySelector('input').dataset.provider=provider;f.append(p);}const save=el('button',t('schedule'),'desktop-button');f.append(save);f.addEventListener('submit',e=>{e.preventDefault();run(root,async()=>{await request('/desktop/planning',{record_id:f.elements.record_id.value,publish_at:f.elements.publish_at.value,providers:[...f.querySelectorAll('[data-provider]:checked')].map(n=>n.dataset.provider)},'POST');W.feedback(root,t('saved'));load();});});editor.append(f);})));load();
+    const shift=direction=>{if(mode==='month')cursor=new Date(cursor.getFullYear(),cursor.getMonth()+direction,1,12);else cursor=addDays(cursor,direction*(mode==='week'?7:31));filters.elements.date.value=dateString(cursor);load();};
+    actions.append(button('previous',()=>shift(-1)),button('today',()=>{cursor=new Date();cursor.setHours(12,0,0,0);filters.elements.date.value=dateString(cursor);load();}),button('next',()=>shift(1)),rangeLabel);
+    for(const view of ['month','week','list']){const control=button(view,()=>{mode=view;load();});control.classList.add('workspace-calendar-mode');modeButtons.set(view,control);actions.append(control);}
+    filters.addEventListener('submit',event=>{event.preventDefault();load();});
+    filters.addEventListener('change',event=>{if(event.target.matches('select'))load();});
+    if(root.dataset.canPublish==='true')actions.append(button('schedule',()=>run(root,async()=>{
+      editor.hidden=false;editor.className='workspace-editor workspace-calendar-detail';editor.replaceChildren(el('h2',t('schedule')));const f=el('form'),material=field('record_id','select');f.append(material);await lookup(material,'records');const time=field('publish_at','datetime-local');time.querySelector('input').required=true;f.append(time);
+      const destinations=el('fieldset',undefined,'workspace-calendar-destinations');destinations.append(el('legend',t('providers')));for(const provider of ['website','youtube','facebook','instagram','telegram','x']){const p=field(provider,'checkbox',provider==='website');p.querySelector('input').dataset.provider=provider;destinations.append(p);}f.append(destinations);
+      const controls=el('div',undefined,'workspace-actions'),save=el('button',t('schedule'),'desktop-button is-primary');save.type='submit';controls.append(save,button('close',hideEditor));f.append(controls);
+      f.addEventListener('submit',event=>{event.preventDefault();run(root,async()=>{save.disabled=true;try{await request('/desktop/planning',{record_id:f.elements.record_id.value,publish_at:f.elements.publish_at.value,providers:[...f.querySelectorAll('[data-provider]:checked')].map(node=>node.dataset.provider)},'POST');W.feedback(root,t('saved'));hideEditor();load();}finally{save.disabled=false;}});});editor.append(f);editor.scrollIntoView({block:'nearest',behavior:'smooth'});
+    })));
+    load();
   });
   W.register('analytics',root=>{
     root.querySelector('.workspace-layout').classList.add('is-wide');const filters=root.querySelector('[data-workspace-filters]'),end=new Date(),start=new Date();start.setDate(start.getDate()-29);filters.append(field('start','date',dateString(start)),field('end','date',dateString(end)));

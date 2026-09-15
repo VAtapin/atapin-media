@@ -13,7 +13,7 @@ class Polls
     }
     public function allowed(SourceRecord $record,?User $user): bool
     {
-        if (!$user || $user->isStaffAccount()) return false;
+        if (!$user) return false;
         return ($record->metadata['poll']['audience']??'registered')!=='subscriber' || NewsletterSubscription::where('email',$user->email)->where('status','active')->whereNotNull('confirmed_at')->whereNotNull('consented_at')->exists();
     }
     public function results(SourceRecord $record,?User $user): bool

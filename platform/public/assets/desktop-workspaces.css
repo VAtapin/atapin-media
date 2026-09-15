@@ -1,2 +1,64 @@
 .desktop-workspace{height:100%;overflow:auto;box-sizing:border-box;padding:24px;color:#072a55;background:#f6f8fb;font:13px Inter,sans-serif}.workspace-head{display:flex;align-items:start;justify-content:space-between;gap:16px;margin-bottom:18px}.workspace-head h1{font:26px 'Playfair Display',serif;margin:4px 0 8px}.workspace-head p{max-width:650px;margin:4px 0;color:#52708e}.workspace-eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:2px}.workspace-head [data-workspace-actions],.workspace-filters,.workspace-pager,.workspace-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.workspace-filters{margin-bottom:16px}.desktop-workspace input,.desktop-workspace textarea,.desktop-workspace select{box-sizing:border-box;width:100%;border:1px solid #cbd6e5;border-radius:8px;padding:9px;background:white;color:#072a55;font:inherit}.desktop-workspace input[type=checkbox]{width:auto}.workspace-filters>label{min-width:120px;max-width:210px}.workspace-layout{display:grid;grid-template-columns:minmax(230px,1fr) minmax(280px,1.1fr);gap:20px;align-items:start}.workspace-list,.workspace-editor{min-width:0}.workspace-row{display:block;width:100%;text-align:left;padding:14px;border:1px solid #dce4ee;background:#fff;border-radius:10px;margin-bottom:8px;color:inherit;cursor:pointer;overflow-wrap:anywhere}.workspace-row:hover,.workspace-row:focus-visible{border-color:#b8852e;box-shadow:0 2px 10px #092e5515}.workspace-row strong,.workspace-row small{display:block}.workspace-row small{color:#52708e;margin-top:6px}.workspace-editor{background:#fff;border:1px solid #dce4ee;border-radius:12px;padding:18px;box-sizing:border-box}.workspace-editor form{display:grid;gap:12px}.workspace-editor label{display:grid;gap:6px}.workspace-editor label:has(input[type=checkbox]){display:flex;align-items:center}.workspace-editor h2{font:20px 'Playfair Display',serif;margin-top:0}.workspace-feedback{padding:0 0 12px;overflow-wrap:anywhere}.workspace-feedback.is-error{color:#a82222}.workspace-pager{justify-content:center;margin-top:16px}.workspace-empty{padding:20px;color:#52708e;line-height:1.7}.workspace-table{width:100%;border-collapse:collapse}.workspace-table th,.workspace-table td{text-align:left;padding:10px;border-bottom:1px solid #e5ebf2;overflow-wrap:anywhere}.workspace-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}.workspace-metric{background:#fff;padding:18px;border:1px solid #dce4ee;border-radius:10px}.workspace-metric strong{display:block;font-size:25px;margin-top:8px}.workspace-board{display:grid;grid-template-columns:repeat(4,minmax(180px,1fr));gap:10px;overflow-x:auto}.workspace-board h2{font-size:14px}.workspace-board section{background:#eaf0f6;border-radius:10px;padding:10px}.workspace-calendar{display:grid;grid-template-columns:repeat(7,minmax(90px,1fr));gap:6px;overflow:auto}.workspace-day{min-height:90px;background:white;border:1px solid #dce4ee;padding:7px;border-radius:8px}.workspace-day .workspace-row{padding:6px;font-size:11px}.workspace-layout.is-wide{display:block}.workspace-layout.is-wide .workspace-editor:empty{display:none}.workspace-editor pre{white-space:pre-wrap;overflow-wrap:anywhere}.workspace-file-list{padding-left:18px}.workspace-rich{border:1px solid #cbd6e5;min-height:120px;padding:12px;border-radius:8px;overflow-wrap:anywhere}.content-assignment .workspace-actions{margin:10px 0}.workspace-inline{margin-top:14px;height:auto;max-height:70vh}.workspace-link{color:#075895;text-decoration:underline}.workspace-lookup-search{font-size:11px!important;padding:6px!important}.workspace-editor iframe{width:100%;min-height:240px;border:1px solid #dce4ee}.workspace-error button{margin-top:10px}@media(max-width:700px){.desktop-workspace{padding:14px}.workspace-layout{grid-template-columns:1fr}.workspace-head{flex-direction:column}.workspace-head h1{font-size:23px}.workspace-calendar{grid-template-columns:repeat(7,minmax(65px,1fr))}.workspace-table{font-size:11px}.workspace-board{grid-template-columns:repeat(4,180px)}}
 .workspace-inline{overflow:auto}.workspace-inline .desktop-workspace{height:auto;min-height:0}
+
+/* Calendar is a primary planning surface and uses the complete window width. */
+.workspace-calendar-root{background:linear-gradient(180deg,#f8fafc 0,#f1f5f9 100%)}
+.workspace-calendar-root .workspace-head{margin-bottom:12px}
+.workspace-calendar-root .workspace-head [data-workspace-actions]{justify-content:flex-end;max-width:720px}
+.workspace-calendar-root .workspace-feedback{min-height:18px;padding:0 0 8px;color:#60758c;font-size:12px}
+.workspace-calendar-root .workspace-filters{display:grid;grid-template-columns:minmax(150px,.8fr) minmax(190px,1.25fr) minmax(155px,.9fr) minmax(155px,.9fr) auto;gap:10px;padding:14px;margin-bottom:14px;background:#fff;border:1px solid #d8e1ec;border-radius:14px;box-shadow:0 7px 24px #173b6510}
+.workspace-calendar-root .workspace-filters>label{min-width:0;max-width:none;font-size:11px;font-weight:700;color:#46627f}
+.workspace-calendar-root .workspace-filters>.desktop-button{align-self:end;min-height:36px}
+.workspace-calendar-root .workspace-calendar-range{min-width:155px;padding:8px 10px;text-align:center;font-size:14px;color:#173d66}
+.workspace-calendar-root .workspace-calendar-mode[aria-pressed=true]{background:#0b477e;border-color:#0b477e;color:#fff;box-shadow:0 4px 12px #0b477e25}
+.workspace-calendar-layout{display:block!important}
+.workspace-calendar-layout>.workspace-list{width:100%}
+.workspace-calendar-layout>.workspace-editor[hidden]{display:none}
+.workspace-calendar-surface,.workspace-calendar-list{overflow:hidden;background:#fff;border:1px solid #d7e1ec;border-radius:15px;box-shadow:0 10px 30px #173b6512}
+.workspace-calendar-weekdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));background:#eef3f8;border-bottom:1px solid #d7e1ec}
+.workspace-calendar-weekdays span{padding:10px 8px;text-align:center;color:#587089;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+.workspace-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.workspace-calendar-day{position:relative;min-width:0;min-height:116px;padding:7px;border:0;border-right:1px solid #e0e7ef;border-bottom:1px solid #e0e7ef;background:#fff;box-sizing:border-box}
+.workspace-calendar-day:nth-child(7n){border-right:0}
+.workspace-calendar-day.is-outside{background:#f5f7fa;color:#8a9aac}
+.workspace-calendar-day.is-today{background:#f4f8fd;box-shadow:inset 0 0 0 2px #b8842e}
+.workspace-calendar-day-heading{display:flex;justify-content:space-between;align-items:center;min-height:27px;margin-bottom:4px}
+.workspace-calendar-day-heading span{display:grid;place-items:center;width:27px;height:27px;border-radius:50%;font-size:13px;font-weight:800}
+.workspace-calendar-day.is-today .workspace-calendar-day-heading span{background:#b8842e;color:#fff}
+.workspace-calendar-day-heading small{display:none;color:#71859a;font-size:9px;text-transform:uppercase}
+.workspace-calendar-event{display:flex;width:100%;min-width:0;gap:5px;align-items:flex-start;margin:3px 0;padding:6px 7px;border:0;border-left:3px solid #58789a;border-radius:6px;background:#edf3f9;color:#133c66;text-align:left;font:600 10px/1.25 Inter,sans-serif;cursor:pointer}
+.workspace-calendar-event time{flex:0 0 auto;font-size:9px;font-weight:800;color:#355a7d}
+.workspace-calendar-event span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.workspace-calendar-event:hover,.workspace-calendar-event:focus-visible{filter:brightness(.97);box-shadow:0 2px 8px #173b6520;outline:2px solid #fff;outline-offset:-3px}
+.workspace-calendar-event.is-project,.workspace-calendar-list-event.is-project{border-color:#466b92;background:#e8f0f8}
+.workspace-calendar-event.is-task,.workspace-calendar-list-event.is-task{border-color:#3381b5;background:#e5f3fb}
+.workspace-calendar-event.is-publication,.workspace-calendar-list-event.is-publication{border-color:#b8842e;background:#fff4dc;color:#624715}
+.workspace-calendar-event.is-live,.workspace-calendar-list-event.is-live{border-color:#a74d62;background:#fbeaf0;color:#6f2638}
+.workspace-calendar-week{display:grid;grid-template-columns:repeat(7,minmax(110px,1fr));min-width:770px}
+.workspace-calendar-surface.is-week{overflow-x:auto}
+.workspace-calendar-week-day{min-height:330px;padding:10px;border:0;border-right:1px solid #e0e7ef;background:#fff}
+.workspace-calendar-week-day:last-child{border-right:0}
+.workspace-calendar-week-day.is-today{background:#f4f8fd;box-shadow:inset 0 3px #b8842e}
+.workspace-calendar-week-day>header{display:grid;gap:3px;margin:-10px -10px 10px;padding:11px 10px 9px;border-bottom:1px solid #e0e7ef;text-align:center}
+.workspace-calendar-week-day>header span{font-size:10px;font-weight:800;text-transform:uppercase;color:#667e96}
+.workspace-calendar-week-day>header strong{font-size:13px}
+.workspace-calendar-week-day .workspace-calendar-event{padding:8px 7px;font-size:11px;flex-wrap:wrap}
+.workspace-calendar-week-day .workspace-calendar-event span{flex-basis:100%;white-space:normal}
+.workspace-calendar-empty{margin:24px 4px;color:#8a9aaa;text-align:center;font-size:11px}
+.workspace-calendar-list{display:grid;gap:0}
+.workspace-calendar-list-day{display:grid;grid-template-columns:175px minmax(0,1fr);gap:0 12px;padding:13px 15px;border-bottom:1px solid #e3e9f0}
+.workspace-calendar-list-day:last-child{border-bottom:0}
+.workspace-calendar-list-day h3{grid-row:1/span 99;margin:3px 0;color:#355774;font-size:13px;text-transform:capitalize}
+.workspace-calendar-list-event{display:grid;grid-template-columns:64px minmax(0,1fr) 150px;align-items:center;gap:12px;width:100%;padding:10px 12px;border:0;border-left:4px solid #58789a;border-radius:8px;margin:2px 0;background:#f1f5f9;color:#123b63;text-align:left;cursor:pointer}
+.workspace-calendar-list-event time{font-size:11px;font-weight:800}
+.workspace-calendar-list-event span{font-weight:700;overflow-wrap:anywhere}
+.workspace-calendar-list-event small{text-align:right;color:#647c93}
+.workspace-calendar-detail{margin-top:14px;padding:18px 20px;border-radius:14px;box-shadow:0 9px 25px #173b6512}
+.workspace-calendar-detail h2{margin-bottom:8px}
+.workspace-calendar-detail-meta{display:flex;align-items:center;gap:8px;color:#587089}
+.workspace-calendar-type{display:inline-block;padding:4px 8px;border-radius:999px;background:#e8f0f8;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.workspace-calendar-type.is-live{background:#fbeaf0;color:#852f45}.workspace-calendar-type.is-publication{background:#fff0cf;color:#725014}
+.workspace-calendar-destinations{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;border:1px solid #d7e1ec;border-radius:10px;padding:12px}
+.workspace-calendar-destinations legend{padding:0 6px;font-weight:700}.workspace-calendar-destinations label{display:flex!important;gap:6px;align-items:center}
+@media(max-width:1000px){.workspace-calendar-root .workspace-head{display:block}.workspace-calendar-root .workspace-head [data-workspace-actions]{justify-content:flex-start;max-width:none;margin-top:12px}.workspace-calendar-root .workspace-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.workspace-calendar-root .workspace-filters>.desktop-button{justify-self:start}.workspace-calendar-day{min-height:104px}.workspace-calendar-day-heading small{display:block}.workspace-calendar-event{display:block}.workspace-calendar-event time{display:block;margin-bottom:2px}}
+@media(max-width:700px){.workspace-calendar-root{padding:12px}.workspace-calendar-root .workspace-filters{grid-template-columns:1fr 1fr;padding:10px}.workspace-calendar-root .workspace-calendar-range{order:-1;flex-basis:100%;text-align:left;padding-left:0}.workspace-calendar-surface.is-month{overflow-x:auto}.workspace-calendar-weekdays,.workspace-calendar-grid{min-width:700px}.workspace-calendar-list-day{grid-template-columns:1fr;padding:12px}.workspace-calendar-list-day h3{grid-row:auto;margin-bottom:8px}.workspace-calendar-list-event{grid-template-columns:55px minmax(0,1fr)}.workspace-calendar-list-event small{grid-column:2;text-align:left}.workspace-calendar-destinations{grid-template-columns:repeat(2,minmax(0,1fr))}}

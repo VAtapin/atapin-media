@@ -17,11 +17,14 @@ class PublicAccountTest extends TestCase {
         $response->assertDontSee('action="'.route('public.account-profile').'"',false);
         $this->post('/konto/verify')->assertRedirect();$this->patch('/konto/profile',['name'=>'Changed','current_password'=>'password','password'=>'new-password-123','password_confirmation'=>'new-password-123'])->assertNotFound();Queue::assertNotPushed(VerifyPublicAccount::class);
     }
-    public function test_staff_cannot_create_public_content_states(): void {
+    public function test_staff_can_vote_but_cannot_create_other_public_content_states(): void {
         app(Access::class)->seed();$owner=User::factory()->create();$owner->roles()->attach(Role::where('name','Owner')->firstOrFail());
         $record=SourceRecord::create(['source'=>'website','source_id'=>'staff-state','kind'=>'video','title'=>'Staff video','status'=>'ready','metadata'=>['public_published'=>true]]);
         $this->actingAs($owner)->postJson(route('public.record-state',$record),['action'=>'bookmark'])->assertForbidden();
         $this->assertDatabaseMissing('public_content_states',['user_id'=>$owner->id,'subject_id'=>$record->id]);
+        $poll=SourceRecord::create(['source'=>'website','source_id'=>'staff-poll','kind'=>'poll','title'=>'Staff poll','status'=>'ready','metadata'=>['public_section'=>'community','public_published'=>true,'poll'=>['active'=>true,'audience'=>'registered','options'=>[['text'=>'Ja'],['text'=>'Nein']]]]]);
+        $this->postJson(route('public.record-state',$poll),['action'=>'vote','option'=>0])->assertOk()->assertJsonPath('action','vote');
+        $this->assertDatabaseHas('public_content_states',['user_id'=>$owner->id,'subject_id'=>$poll->id,'action'=>'vote']);
     }
     public function test_regular_account_shows_personal_history_sections(): void {
         $user=User::factory()->create(['email'=>'reader@example.test']);$book=Product::create(['title'=>'Meine gekaufte Lektüre','description'=>'Book','price_cents'=>990,'currency'=>'EUR','status'=>'active']);

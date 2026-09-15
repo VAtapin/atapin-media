@@ -47,8 +47,10 @@ class PublicParticipation
     }
     private function persist(User $user,$subject,array $data): void
     {
-        abort_unless(!$user->isStaffAccount(),403);
         $action=$data['action'];
+        // Staff accounts keep their public account separate, but an authenticated
+        // editor or administrator may still take part in an explicitly published poll.
+        abort_unless(!$user->isStaffAccount()||$action==='vote',403);
         abort_unless(in_array($action,$subject instanceof Product?['bookmark','progress']:['bookmark','like','reminder','progress','vote']),422);
         if($action==='reminder')abort_unless(app(PublicContent::class)->section($subject)==='live',422);
         if($action==='vote'){

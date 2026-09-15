@@ -179,6 +179,12 @@ class PublicPagesTest extends TestCase
         $this->postJson($voteUrl,['action'=>'vote','option'=>2])->assertStatus(422);
         $record->update(['metadata'=>['public_published'=>false]]);$this->postJson($url,['action'=>'bookmark'])->assertNotFound();
     }
+    public function test_poll_card_has_readable_options_and_inline_feedback(): void
+    {
+        $poll=$this->record('poll',['public_section'=>'community','poll'=>['active'=>true,'audience'=>'registered','options'=>[['text'=>'Erste ausführliche Antwort'],['text'=>'Zweite Antwort']]]]);
+        $response=$this->actingAs(User::factory()->create())->get('/community')->assertOk();
+        $response->assertSee('public-poll-options',false)->assertSee('public-poll-option-copy',false)->assertSee('data-public-poll',false)->assertSee('data-public-form-message',false)->assertSee($poll->title);
+    }
     public function test_comments_and_chat_are_saved_for_review_and_private_children_stay_hidden(): void
     {
         \Illuminate\Support\Facades\Queue::fake();
