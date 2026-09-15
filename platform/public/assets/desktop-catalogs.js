@@ -56,7 +56,7 @@
       const stats = el('div', undefined, 'workspace-editor-callout');
       stats.append(el('strong', `${t('open_tasks_count')}: ${row.open_tasks_count || 0}`), el('span', `${t('records_count')}: ${row.records_count || 0} · ${t('products_count')}: ${row.products_count || 0}`));
       editor.append(stats);
-      editor.append(button('new_task', () => W.open('tasks', {project_id:row.id})));
+      editor.append(button('new_task', () => W.openQuick('tasks', {project_id:row.id})));
       linked(editor, t('tasks_count'), row.tasks?.data, 'tasks');
       linked(editor, t('records_count'), row.records?.data, 'videos');
       linked(editor, t('products_count'), row.products?.data, 'books-pdf');
@@ -114,7 +114,7 @@
     form.addEventListener('submit', event => { event.preventDefault(); run(host, async () => { submit.disabled = true; try { const data = new FormData(form); if (!file.querySelector('input').files.length) throw new Error(t('book_pdf_required')); await request(`/desktop/books/${row.id}/assets`, data, 'POST'); if (host._workspaceEdit) await host._workspaceEdit({id:row.id}); else await load(); } finally { submit.disabled = false; } }); });
   };
   const projectConfig = {
-    url:'/desktop/projects', detail:async row => { const data = await request('/desktop/projects/' + row.id); return {...data.project, tasks:data.tasks, records:data.records, products:data.products}; }, updateMethod:'PUT', statuses:['idea','script','production','review','published'],
+    url:'/desktop/projects', newLabel:'new_project', inlineEdit:true, quickCreate:{fields:[['title'],['type','select',[['','—'],'mixed','video','post','book','podcast','live']]]}, detail:async row => { const data = await request('/desktop/projects/' + row.id); return {...data.project, tasks:data.tasks, records:data.records, products:data.products}; }, updateMethod:'PUT', statuses:['idea','script','production','review','published'],
     filters:[['type','select','',[['',t('all')],'mixed','video','post','book','podcast','live']],['user_id','select'],['due_before','date']], filterLookups:{user_id:'users'},
     fields:[['title'],['description','textarea'],['type','select',['mixed','video','post','book','podcast','live'],'mixed'],['status','select',['idea','script','production','review','published'],'idea'],['user_id','select'],['team_ids','select'],['start_date','date'],['due_date','date'],['next_action'],['tags']],
     lookups:{user_id:'users',team_ids:'users'}, multiple:['team_ids'], transform:tags, extra:projectExtra,

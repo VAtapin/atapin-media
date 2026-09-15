@@ -1,5 +1,5 @@
 (() => {
-  const modules = new Map(), controllers = new Map(), pending = new Map();
+  const modules = new Map(), controllers = new Map(), pending = new Map(), pendingQuick = new Map();
   const labels = () => window.desktopWorkspaceLabels || {};
   const t = key => labels()[key] || key?.split('.').reduce((value, part) => value?.[part], labels()) || labels().states?.[key] || labels().titles?.[key] || ({q:labels().search, file:labels().upload, count:labels().events, occurred_on:labels().start})[key] || key;
   const bookAiState = row => { const state = row.metadata?.book_pdf_ai?.status; return state ? `${t('book_ai_status')}: ${t('states.' + state) || state}` : ''; };
@@ -40,6 +40,7 @@
   };
   const formData = form => { const data = {}; for (const input of form.elements) { if (!input.name || input.disabled) continue; data[input.name] = input.type === 'checkbox' ? input.checked : input.multiple ? [...input.selectedOptions].map(o => o.value) : input.type === 'datetime-local' && input.value ? new Date(input.value).toISOString() : input.value || null; } return data; };
   const open = (app, row) => { if (row) pending.set(app, row); document.querySelector(`.os-start-menu [data-open-app="${CSS.escape(app)}"]`)?.click(); const api = controllers.get(app); if (row && api?.root.isConnected) { pending.delete(app); run(api.root, () => api.edit(row)); } };
+  const openQuick = (app, initial = {}) => { const api = controllers.get(app); if (api?.root.isConnected) { run(api.root, () => api.quickCreate(initial)); return; } pendingQuick.set(app, initial); document.querySelector(`.os-start-menu [data-open-app="${CSS.escape(app)}"]`)?.click(); };
   const openSeparate = (app, row = {}) => { pending.set(app, row); const win = window.openDesktopProgram?.(app, {forceNew:true}); if (!win) document.querySelector(`.os-start-menu [data-open-app="${CSS.escape(app)}"]`)?.click(); return win; };
   const pager = (root, page, load) => { const nav = root.querySelector('[data-workspace-pager]'); nav.replaceChildren(); const current = page.current_page || page.meta?.current_page || 1, last = page.last_page || page.meta?.last_page || 1; const prev = button('previous', () => load(current - 1)), next = button('next', () => load(current + 1)); prev.disabled = current <= 1; next.disabled = current >= last; nav.append(prev, el('span', `${current} / ${last} · ${page.total ?? page.meta?.total ?? ''}`), next); };
   const listRows = (root, items, select, remove) => {
@@ -82,7 +83,11 @@
     root.classList.toggle('workspace-editor-mode', editorMode);
     root.classList.toggle('workspace-catalog-mode', !editorMode);
     const viewKey = `atapin.workspace.view.${root.dataset.workspace}`; let view = 'cards'; try { view = localStorage.getItem(viewKey) || 'cards'; } catch (_) {}
-    const select = row => editorMode ? edit(row) : openSeparate(root.dataset.workspace, row);
+    const select = row => {
+      if (editorMode) return edit(row);
+      if (config.inlineEdit) { root.classList.add('has-inline-editor'); return run(root, () => edit(row)); }
+      return openSeparate(root.dataset.workspace, row);
+    };
     const canDelete = config.delete || ['projects', 'topics', 'books-pdf'].includes(root.dataset.workspace);
     const deleteItem = row => run(root, async () => {
       if (!window.confirm(t('delete_confirm'))) return;
@@ -93,6 +98,27 @@
       await load(1);
     });
     const renderItems = () => view === 'list' ? listRows(root, items, select, canDelete ? deleteItem : null) : cards(root, items, select, canDelete ? deleteItem : null);
+    const quickCreate = async (initial = {}) => {
+      const quick = config.quickCreate;
+      if (!quick) { openSeparate(root.dataset.workspace); return; }
+      root.querySelector('[data-workspace-quick-create]')?.close();
+      const dialog = el('dialog', undefined, 'workspace-quick-dialog'); dialog.dataset.workspaceQuickCreate = 'true';
+      const form = el('form'); form.method = 'dialog';
+      const header = el('header', undefined, 'workspace-quick-head'); header.append(el('h2', t(config.newLabel || 'new')));
+      const close = button('close', () => dialog.close()); close.setAttribute('aria-label', t('close')); header.append(close); form.append(header);
+      const fields = el('div', undefined, 'workspace-quick-fields'); form.append(fields);
+      for (const spec of quick.fields || []) {
+        const [name, type = 'text', options = [], defaultValue] = spec, value = initial[name] ?? defaultValue ?? '', label = field(name, type, value, options); fields.append(label);
+        const input = label.querySelector('input,textarea,select'); if (name === 'title') input.required = true;
+        if (quick.lookups?.[name]) try { await lookup(label, quick.lookups[name], value); } catch (error) { label.append(el('small', error.message)); }
+      }
+      const heading = header.querySelector('h2'); heading.id = `workspace-quick-heading-${Date.now()}`; dialog.setAttribute('aria-labelledby', heading.id);
+      const message = el('p', '', 'workspace-quick-feedback'); message.setAttribute('role', 'alert'); message.tabIndex = -1; form.append(message);
+      const actions = el('div', undefined, 'workspace-quick-actions'), cancel = button('cancel', () => dialog.close()), save = el('button', t(quick.submitLabel || 'save'), 'desktop-button is-primary'); save.type = 'submit'; actions.append(cancel, save); form.append(actions);
+      form.addEventListener('submit', event => { event.preventDefault(); run(root, async () => { save.disabled = true; message.textContent = ''; message.classList.remove('is-error'); try { let data = formData(form); if (quick.transform) data = quick.transform(data); await request(config.url, data, 'POST'); dialog.close(); feedback(root, t('saved')); window.desktopNotify?.(t('saved'), t(config.newLabel || 'new'), 'success'); document.dispatchEvent(new Event('desktop-media-changed')); await load(1); } catch (error) { message.textContent = error.message; message.classList.add('is-error'); message.focus(); } finally { save.disabled = false; } }); });
+      dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); }); dialog.addEventListener('close', () => dialog.remove(), {once:true});
+      dialog.append(form); root.append(dialog); dialog.showModal(); fields.querySelector('[name=title]')?.focus();
+    };
     const edit = async (row = {}) => {
       const generation = ++editGeneration; if (config.detail && row.id) row = await config.detail(row); if (generation !== editGeneration || !root.isConnected) return;
       const editor = root.querySelector('[data-workspace-editor]'); if (editor.querySelector('form')?.dataset.dirty === 'true' && !window.confirm(window.desktopImportLabels?.discard_edits || t('save_before_action'))) return;
@@ -130,13 +156,14 @@
       if (generation !== editGeneration || !root.isConnected) return;
       root._workspaceEdit = edit;
       await config.extra?.(editor, row, async () => { delete form.dataset.dirty; if (!editorMode) await load(page); const updated = items.find(item => item.id === row.id); if (updated) await edit(updated); }, root);
+      if (config.inlineEdit && window.matchMedia('(max-width:700px)').matches) { const heading = editor.querySelector('h2'); heading.tabIndex = -1; heading.focus({preventScroll:true}); editor.scrollIntoView({block:'start', behavior:'smooth'}); }
     };
     const load = async (number = page) => run(root, async () => { page = number; feedback(root, t('loading')); const data = formData(filters); delete data.q; if (filters.elements.q?.value) data.q = filters.elements.q.value; const query = new URLSearchParams(Object.entries(data).filter(([,v]) => v !== null).map(([key,value]) => [key, typeof value === 'boolean' ? Number(value) : value])); query.set('page', page); const result = await request(config.url + '?' + query); const resultPage = config.page ? config.page(result) : result; items = resultPage.data || []; renderItems(); pager(root, resultPage, load); feedback(root, config.notice?.(result) || ''); config.afterLoad?.(items, select, root); });
     if (editorMode) { filters.hidden = true; actions.hidden = true; root.querySelector('[data-workspace-list]').hidden = true; root.querySelector('[data-workspace-pager]').hidden = true; const row = pending.get(root.dataset.workspace) || {}; pending.delete(root.dataset.workspace); run(root, () => edit(row)); }
-    else { filters.append(field('q','search')); if (config.statuses) filters.append(field('status','select','',[['',t('all')], ...config.statuses])); for (const f of config.filters || []) { const label = field(...f); filters.append(label); if (config.filterLookups?.[f[0]]) lookup(label, config.filterLookups[f[0]]).catch(error => feedback(root, error.message, true)); } filters.append(button('refresh', () => load(1))); const cardsButton = button('book_view_cards', () => { view = 'cards'; try { localStorage.setItem(viewKey, view); } catch (_) {} renderItems(); cardsButton.setAttribute('aria-pressed','true'); listButton.setAttribute('aria-pressed','false'); }); const listButton = button('book_view_list', () => { view = 'list'; try { localStorage.setItem(viewKey, view); } catch (_) {} renderItems(); cardsButton.setAttribute('aria-pressed','false'); listButton.setAttribute('aria-pressed','true'); }); cardsButton.setAttribute('aria-pressed', String(view === 'cards')); listButton.setAttribute('aria-pressed', String(view === 'list')); actions.append(button(config.newLabel || 'new', () => openSeparate(root.dataset.workspace)), cardsButton, listButton, button('refresh', () => load())); root.querySelector('[data-workspace-editor]').replaceChildren(el('p', t('choose'))); document.addEventListener('desktop-media-changed', () => { if (root.isConnected) load(1); }); load(); }
-    const api = {root, load, edit:select, get items() { return items; }}; controllers.set(root.dataset.workspace, api); return api;
+    else { filters.append(field('q','search')); if (config.statuses) filters.append(field('status','select','',[['',t('all')], ...config.statuses])); for (const f of config.filters || []) { const label = field(...f); filters.append(label); if (config.filterLookups?.[f[0]]) lookup(label, config.filterLookups[f[0]]).catch(error => feedback(root, error.message, true)); } filters.append(button('refresh', () => load(1))); const cardsButton = button('book_view_cards', () => { view = 'cards'; try { localStorage.setItem(viewKey, view); } catch (_) {} renderItems(); cardsButton.setAttribute('aria-pressed','true'); listButton.setAttribute('aria-pressed','false'); }); const listButton = button('book_view_list', () => { view = 'list'; try { localStorage.setItem(viewKey, view); } catch (_) {} renderItems(); cardsButton.setAttribute('aria-pressed','false'); listButton.setAttribute('aria-pressed','true'); }); cardsButton.setAttribute('aria-pressed', String(view === 'cards')); listButton.setAttribute('aria-pressed', String(view === 'list')); const createButton = button(config.newLabel || 'new', () => quickCreate()); if (config.quickCreate) { createButton.classList.add('is-primary'); createButton.textContent = '+ ' + t(config.newLabel || 'new'); } actions.append(createButton, cardsButton, listButton, button('refresh', () => load())); root.querySelector('[data-workspace-editor]').replaceChildren(el('p', t('choose'))); document.addEventListener('desktop-media-changed', () => { if (root.isConnected) load(1); }); load(); if (config.inlineEdit && pending.has(root.dataset.workspace)) { const requested = pending.get(root.dataset.workspace); pending.delete(root.dataset.workspace); select(requested); } }
+    const api = {root, load, edit:select, quickCreate, get items() { return items; }}; controllers.set(root.dataset.workspace, api); if (!editorMode && pendingQuick.has(root.dataset.workspace)) { const initial = pendingQuick.get(root.dataset.workspace); pendingQuick.delete(root.dataset.workspace); run(root, () => quickCreate(initial)); } return api;
   };
   const mount = async (content, app, options = {}) => { content.replaceChildren(el('p', t('loading'), 'workspace-empty')); try { const response = await fetch('/desktop/workspaces/' + encodeURIComponent(app), {credentials:'same-origin', headers:{Accept:'text/html'}}); if (!response.ok) throw new Error(t('error') + ` (${response.status})`); const html = await response.text(); if (!content.isConnected) return; content.innerHTML = html; const root = content.querySelector('[data-workspace]'); root.dataset.workspaceMode = options.mode || 'catalog'; const initialize = modules.get(app); if (!initialize) throw new Error(t('error')); await initialize(root); } catch (e) { content.replaceChildren(el('p', e.message, 'workspace-empty'), button('refresh', () => mount(content, app, options))); } };
-  window.DesktopWorkspaces = {register:(name,module) => modules.set(name,module), t, el, request, button, feedback, run, field, lookup, formData, open, openSeparate, pager, rows:listRows, cards, table, crud, mount, clean};
+  window.DesktopWorkspaces = {register:(name,module) => modules.set(name,module), t, el, request, button, feedback, run, field, lookup, formData, open, openQuick, openSeparate, pager, rows:listRows, cards, table, crud, mount, clean};
   window.initializeDesktopWorkspace = mount;
 })();

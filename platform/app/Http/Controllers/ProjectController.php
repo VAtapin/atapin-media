@@ -40,6 +40,7 @@ class ProjectController extends Controller
 
     public function store(Request $request, Workflow $workflow)
     {
+        $request->merge(['status'=>$request->input('status') ?: 'idea','type'=>$request->input('type') ?: 'mixed']);
         $data=$this->data($request);$data['user_id']??=$request->user()->id;
         $project = $workflow->saveProject($data);
         if ($request->expectsJson()) return response()->json(['status'=>'saved','project_id'=>$project->id]);

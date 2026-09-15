@@ -44,6 +44,16 @@ class DesktopWorkspacesTest extends TestCase
         $this->getJson('/desktop/tasks?mine=1&project_id='.$id)->assertOk()->assertJsonPath('total',1);
         $this->getJson('/desktop/projects?q=Serie')->assertJsonPath('data.0.records_count',1);
     }
+    public function test_projects_and_tasks_support_title_only_quick_creation(): void
+    {
+        $project=$this->postJson('/desktop/projects',['title'=>'Schnelles Projekt'])->assertOk()->json('project_id');
+        $this->assertDatabaseHas('projects',['id'=>$project,'title'=>'Schnelles Projekt','status'=>'idea','type'=>'mixed','user_id'=>$this->owner->id]);
+        $task=$this->postJson('/desktop/tasks',['title'=>'Schnelle Aufgabe','project_id'=>$project,'due_date'=>'2026-10-12'])->assertOk()->json('task_id');
+        $this->assertDatabaseHas('tasks',['id'=>$task,'title'=>'Schnelle Aufgabe','status'=>'open','priority'=>'normal','project_id'=>$project,'due_date'=>'2026-10-12']);
+        $this->getJson('/desktop/planning?start=2026-10-12&end=2026-10-12')->assertOk()->assertJsonPath('data.0.type','task')->assertJsonPath('data.0.subject_id',$task);
+        $this->postJson('/desktop/projects',[])->assertUnprocessable()->assertJsonValidationErrors('title');
+        $this->postJson('/desktop/tasks',[])->assertUnprocessable()->assertJsonValidationErrors('title');
+    }
     public function test_catalog_cards_can_have_images_and_pdf_intake_is_queued(): void
     {
         config(['platform.media_upload_reserve_free_bytes'=>0]);\Illuminate\Support\Facades\Storage::fake('local');

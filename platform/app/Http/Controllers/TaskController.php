@@ -25,6 +25,7 @@ class TaskController extends Controller
 
     public function store(Request $request, Workflow $workflow)
     {
+        $request->merge(['status'=>$request->input('status') ?: 'open','priority'=>$request->input('priority') ?: 'normal']);
         $task = $workflow->saveTask($this->data($request));
         if ($request->expectsJson()) return response()->json(['status'=>'saved','task_id'=>$task->id]);
         return back()->with('status', __('ui.saved'));
