@@ -44,6 +44,14 @@ class DesktopWorkspacesTest extends TestCase
         $this->getJson('/desktop/tasks?mine=1&project_id='.$id)->assertOk()->assertJsonPath('total',1);
         $this->getJson('/desktop/projects?q=Serie')->assertJsonPath('data.0.records_count',1);
     }
+    public function test_quick_task_creation_uses_defaults_and_reaches_calendar(): void
+    {
+        $project=Project::create(['title'=>'Schnellprojekt','status'=>'idea']);
+        $taskId=$this->postJson('/desktop/tasks',['title'=>'Schnelle Aufgabe','project_id'=>$project->id,'due_date'=>'2026-10-12'])->assertOk()->json('task_id');
+        $task=Task::findOrFail($taskId);$this->assertSame('open',$task->status);$this->assertSame('normal',$task->priority);
+        $this->getJson('/desktop/tasks?q=Schnelle Aufgabe')->assertOk()->assertJsonPath('data.0.id',$taskId);
+        $this->getJson('/desktop/planning?start=2026-10-12&end=2026-10-12')->assertOk()->assertJsonPath('data.0.type','task')->assertJsonPath('data.0.subject_id',$taskId);
+    }
     public function test_catalog_cards_can_have_images_and_pdf_intake_is_queued(): void
     {
         config(['platform.media_upload_reserve_free_bytes'=>0]);\Illuminate\Support\Facades\Storage::fake('local');

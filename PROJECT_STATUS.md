@@ -11,6 +11,7 @@
 - Laravel 13 / PHP 8.4, single-tenant foundation, auth/users/RBAC, encrypted settings, audit и Media Desktop с 21 программой, сохранением окон, Snap Layouts и персональным оформлением. Blade/progressive JavaScript; обязательной Node production-сборки нет.
 - Desktop overview: реальные permission-scoped проекты/задачи, storage, обработка/проблемы медиа, Review queue, свои AI-предложения, публикации, Live, inbox и system queue. Видимость/порядок/ширина widgets сохраняются per-account/device; drag и keyboard reorder, один столбец на mobile и в узком окне. Media item открывает конкретный файл.
 - Native Desktop: проекты со связанными задачами/материалами/книгами, проекты дополнены типом, team, start date, cover/tags/next action и task progress; задачи с ответственными/датой и временем срока, content link, priority, checklist/tags и доской. Календарь переработан в полноширинный planning workspace: корректные month/week/list periods, семь колонок, today navigation, project/type/provider filters, отдельные цвета проектов, задач, публикаций и Live, понятные детали и responsive horizontal fallback для узких окон. Темы/иерархические категории, книги/PDF, продажи, рассылки/подписчики, AI history, first-party аналитика и состояния интеграций сохранены. Поиск, фильтры и пагинация, в том числе зависимых списков проектов и серий. Проекты имеют paginated историю actual status transitions; перенос задачи сохраняет её историю в прежнем проекте; фильтры задач включают assignee/priority/content type/deadline. Пустой список означает отсутствие подходящих данных, а не заглушку программы.
+- Aufgaben quick create: `Neu` открывает компактный modal в текущем Aufgaben-окне только с Titel, optional Projekt и Frist; API принимает этот минимальный payload, применяет безопасные defaults `open`/`normal`, а задача со сроком остаётся единым объектом и автоматически видна в Kalender.
 - Existing редактор материалов дополнен проектом, темами, автором, SEO, обложкой/файлами, гостем/транскриптом/Podcast URL и отдельными текстами платформ. Независимые editorial stage/review, canonical slug/locale и историческая дата публикации для publisher и Podcast episode/season; приватный actual public-template preview не публикует и не пишет playback/progress. Beiträge поддерживают очищенный HTML и PDF; ручное создание сохраняет unpublished draft без автоматической AI-разметки. Content Library имеет selectable table/saved columns, sort/direction и project/topic/phase/Review filters. Серии используют Collection/CollectionItem и эпизоды разных источников; Podcast сохраняет SourceRecord/Media, без параллельной модели.
 - Календарные публикации сохраняют UTC и одобренную версию материала, перепроверяют ready/status/permissions/connections через existing queue. Изменённый материал требует повторного планирования; unclaimed scheduled/queued jobs можно отменить. Existing Plesk scheduler запускает desktop:dispatch-due каждую минуту.
 - Книги: каталог, subtitle/publication date/tags/SEO и author/ISBN/language, публичное оглавление и отдельный приватный полный текст PDF, cover/sample/full attachments и queued Dompdf generation. Полные PDF приватны; платный полный файл нельзя назначить своей же бесплатной Leseprobe. Цена обновляет download roles; originals сохраняются, stale PDF jobs не заменяют текущую редакцию.
@@ -62,8 +63,11 @@
 - Live segment replay merge отсутствует. Задержка старта отдельного replay не диагностирована: ранее /live был пуст, playback-check URL давал 404; нужен доступный event URL. Автоматический remux касается каждого закрытого сегмента отдельно и не объединяет сегменты.
 - Takeout не проверен на всех языках/форматах и не гарантирует новый Short flag. Checkpoints межобъектные, не побайтовые ZIP; большой hash/extraction может превысить мягкий slice. Требуются disk reserve, ffprobe/ffmpeg и реальная browser playback проверка больших файлов.
 - Existing homepage header overflow на 820 px не затрагивался. 100% pixel match всего проекта не заявляется; screenshots новых проектов и публичной книги desktop/mobile просмотрены.
+- В Aufgaben/Projekte ещё не закрыты все пункты нового Desktop-ТЗ: Board хранит четыре legacy-state вместо отдельных Inbox и Geplant, recurrence отсутствует, а создание проекта и подробное открытие задачи/проекта (в том числе из Kalender) пока используют вторичное Desktop-окно. У проекта есть один `due_date`, но нет отдельной коллекции Projekttermine/Fristen.
 
 ## Проверки
+
+- Aufgaben quick create: `node --check` прошёл для `desktop-workspaces.js`, `desktop-workspace-content.js` и `desktop-workspaces-browser.mjs`; `git diff --check` прошёл. Добавлены Feature-сценарий minimal create → defaults → task list → Kalender и browser-сценарий compact modal без нового Desktop window → Board → Kalender. Laravel и browser execution не запускались: PHP 8.4 и Playwright отсутствуют в этой Windows-сессии; Composer подтвердил отсутствие `php`.
 
 - Catalog deletion actions: shared CRUD editors now expose a confirmation-protected Delete action for projects, books and topics/categories; related tasks/materials/files remain intact where deletion is supported. node --check desktop-workspaces.js and git diff --check passed; Laravel tests remain unavailable because PHP 8.4 is not installed in this Windows session.
 
@@ -95,6 +99,8 @@
 
 ## Что рекомендуется следующим
 
+- Следующим блоком привести `Neues Projekt` и подробности Aufgabe/Projekt к modal/drawer внутри текущего окна, затем отдельной forward-compatible задачей добавить Inbox/Geplant и recurrence с календарным разворачиванием без дублирующих расписаний.
+
 - После backup применить migration для taxonomy_terms.cover_media_id, проверить наличие pdftotext, настройки OpenAI и обработку AnalyzeBookPdf; затем открыть карточки/список проектов, тем и книг на desktop/mobile.
 
 - Off-air после Plesk backup получить release, применить forward migrations create_live_browser_sessions, create_channel_message_sync и allow_unverified_subscriber_imports с PHP 8.4 и очистить config/routes/views. Browser Studio и admin completion не добавляют Composer/Node dependencies; добавлены только существующий scheduler command для YouTube comments и operational heartbeats в cron entry point. В админке включить protected server/browser configuration; hosting owner однократно проверяет certificate/FFmpeg/firewall 8189/FPM workers. Затем проверить OBS, browser HLS/recording/output, inbound comments and `platform:check` на сервере. Production агентом не обновлялся.
@@ -104,9 +110,11 @@
 
 ## Последний связанный commit
 
-- Текущий функциональный блок: `91ae83d` — Fix help dialog button contrast. Branch/upstream: main → origin/main.
+- Текущий функциональный блок: Add compact task quick creation (поверх `6db1a6a`; итоговый hash определяется atomic commit этого статуса).
 
-- Предыдущий функциональный блок: `034b2cd` — Turn Publishing into external registry.
+- Предыдущий функциональный блок: `91ae83d` — Fix help dialog button contrast. Branch/upstream: main → origin/main.
+
+- Предшествующий функциональный блок: `034b2cd` — Turn Publishing into external registry.
 
 - Предыдущий функциональный блок: f58854d — Fix public topic tag filters.
 

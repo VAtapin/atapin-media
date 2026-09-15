@@ -25,7 +25,8 @@ class TaskController extends Controller
 
     public function store(Request $request, Workflow $workflow)
     {
-        $task = $workflow->saveTask($this->data($request));
+        $data = $this->data($request); $data['status'] ??= 'open'; $data['priority'] ??= 'normal';
+        $task = $workflow->saveTask($data);
         if ($request->expectsJson()) return response()->json(['status'=>'saved','task_id'=>$task->id]);
         return back()->with('status', __('ui.saved'));
     }
@@ -38,7 +39,7 @@ class TaskController extends Controller
     private function data(Request $request, bool $partial=false): array
     {
         return $request->validate(['title'=>($partial?'sometimes|':'').'required|string|max:255',
-            'description'=>'nullable|string|max:20000','status'=>[$partial?'sometimes':'required',Rule::in(Task::STATES)],
+            'description'=>'nullable|string|max:20000','status'=>['sometimes','required',Rule::in(Task::STATES)],
             'project_id'=>'nullable|integer|exists:projects,id','assigned_to'=>'nullable|integer|exists:users,id',
             'due_date'=>'nullable|date_format:Y-m-d','due_time'=>'nullable|date_format:H:i','priority'=>['sometimes','required',Rule::in(Task::PRIORITIES)],
             'source_record_id'=>'nullable|integer|exists:source_records,id',
