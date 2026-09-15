@@ -64,6 +64,15 @@ class AnalyzeBookPdf implements ShouldQueue
 
     private function state(?Product $product, string $status): void
     {
-        if ($product) $product->updateQuietly(['metadata' => [...($product->metadata ?? []), 'book_pdf_ai' => [...($product->metadata['book_pdf_ai'] ?? [], 'status'=>$status, 'updated_at'=>now()->toIso8601String()]]]);
+        if (! $product) return;
+
+        $metadata = $product->metadata ?? [];
+        $metadata['book_pdf_ai'] = [
+            ...($metadata['book_pdf_ai'] ?? []),
+            'status' => $status,
+            'updated_at' => now()->toIso8601String(),
+        ];
+
+        $product->updateQuietly(['metadata' => $metadata]);
     }
 }
