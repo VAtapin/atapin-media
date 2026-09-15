@@ -38,14 +38,14 @@
 @include('public.empty')
 @endforelse</div>
  @if($record)
- @if($communityBlocked)<div class="public-chat-block-notice" role="alert">{{ __('public.chat_blocked_three') }}</div>@else<form method="post" action="{{ route('public.message-submit',$record) }}" data-public-ajax="message">@csrf
+  @if($communityBlocked)<div class="public-chat-block-notice" role="alert">{{ __('public.chat_blocked_three') }}</div>@else<form class="public-chat-compose" method="post" action="{{ route('public.message-submit',$record) }}" data-public-ajax="message">@csrf
  <label class="public-sr-only" for="chat-body">{{ __('public.write_message') }}</label>
  <input id="chat-body" name="body" required minlength="2" maxlength="5000" placeholder="{{ __('public.write_message') }}">
  <button type="submit" class="public-button public-chat-send">{{ __('public.send') }}</button><p data-public-form-message class="public-chat-feedback" role="status" hidden></p>
  </form><small>{{ __('public.chat_guest_hint') }}</small>@if(session('public_status'))<p class="public-chat-feedback public-feedback" data-auto-dismiss role="status"><span>{{ session('public_status') }}</span><button type="button" class="public-feedback-close" data-dismiss-feedback aria-label="{{ __('public.close') }}" title="{{ __('public.close') }}">×</button></p>@endif @endif
  @auth
  @if(app(\App\Services\PublicAiChat::class)->available())
-<form method="post" action="{{ route('public.ai-chat',$record) }}" data-ai-form>@csrf
+ <form class="public-ai-chat-form" method="post" action="{{ route('public.ai-chat',$record) }}" data-ai-form>@csrf
 <label for="ai-question">{{ __('public.ai_chat_label') }}</label>
 <input id="ai-question" name="question" required minlength="2" maxlength="1000" placeholder="@Assistent …">
 <label><input type="checkbox" name="consent" value="1" required>{{ __('public.ai_chat_consent') }}</label>
@@ -54,7 +54,7 @@
  </form>
  @endif
  @endauth
- @else<input placeholder="{{ __('public.write_message') }}" disabled>
+  @else<input class="public-chat-disabled-input" placeholder="{{ __('public.write_message') }}" disabled>
 @endif
  <div class="public-action-row">
 <button type="button" class="public-button public-button-secondary public-icon-button" data-share aria-label="{{ __('public.share') }}" title="{{ __('public.share') }}">@include('public.icon',['name'=>'share'])<span class="public-sr-only">{{ __('public.share') }}</span></button>

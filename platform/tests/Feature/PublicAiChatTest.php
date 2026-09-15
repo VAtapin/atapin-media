@@ -26,7 +26,7 @@ class PublicAiChatTest extends TestCase
         Queue::fake();$this->enable();$event=$this->event();
         SourceRecord::create(['source'=>'website','source_id'=>'private','kind'=>'post','title'=>'Private secret','body'=>'Private archive secret','status'=>'ready','metadata'=>['public_published'=>false]]);
         Http::fake(['api.openai.com/*'=>Http::response(['status'=>'completed','output'=>[['content'=>[['type'=>'output_text','text'=>'Short answer']]]]] )]);
-        $user=User::factory()->create();$this->actingAs($user)->postJson(route('public.ai-chat',$event),['question'=>'Question','consent'=>true])->assertStatus(202);
+        $user=User::factory()->create();$this->actingAs($user)->get('/live?event='.$event->id)->assertOk()->assertSee('class="public-ai-chat-form"',false);$this->postJson(route('public.ai-chat',$event),['question'=>'Question','consent'=>true])->assertStatus(202);
         $entry=PublicAiChatRequest::firstOrFail();$job=new AnswerPublicAiChat($entry->id);$job->handle(app(PublicAiChat::class));$job->handle(app(PublicAiChat::class));
         Http::assertSent(fn($request)=>$request['model']==='configured-model'&&$request['store']===false&&$request['max_output_tokens']===400&&str_contains($request['input'],'Published context')&&!str_contains($request['input'],'Private archive secret'));Http::assertSentCount(1);
         $this->getJson(route('public.ai-chat-status',$entry))->assertJson(['status'=>'completed','answer'=>'Short answer']);
