@@ -22,6 +22,7 @@
 - Publishing: destination-specific text preview и contextual AI; реальные YouTube/Facebook/Instagram/Telegram/X connectors, independent RTMP Live outputs, selected-destination jobs, resumable YouTube uploads/processing/retries, Website edits/hide/delete по поддерживаемым API, daily reverse YouTube Review import. OAuth YouTube/X Client ID/Secret вводит только администратор в Einstellungen → Social Media; encrypted credentials не берутся из .env и не возвращаются браузеру. Partial integration save сохраняет другие secrets.
 - Media Library/imports: protected preview/download/Range, resumable files/folders/archives, pause/resume/stop/retry, trash/restore, SHA-256 dedupe, playlist links, checkpoints и пообъектные отчёты. Импорт сам по себе не публикует материалы. Canonical public/media/SHA-256 и прямые original MP4 URLs сохранены, документы приватны. Takeout сохраняет originals/source revisions/manual edits/trash/exclusions и сообщает неизвестные schemas. Podcast audio, frame covers и explicit AI cover/short-description используют existing background jobs. Import Center имеет восьмиэтапный permission-scoped Migration assistant с existing tools и paginated Review queue/AI actions; explicit review acceptance оставляет draft unpublished и открывает реальный editor. Personal review marks не являются доказательством импорта.
 - Imported text structure review: для YouTube/документных Beiträge, Videos и Shorts добавлена AI-проверка только структуры HTML без изменения текста, с автоматическим применением, индивидуальной кнопкой и массовым запуском по текущим фильтрам. Повторная проверка неизменённого body пропускается; stale/изменённый текст не перезаписывается.
+- Public topic filters: счётчики и выдача используют единое нормализованное сравнение тегов, включая лишние пробелы и Unicode-варианты; фильтр больше не показывает пустую страницу при ненулевом счётчике темы.
 - Public Website: approved branding/owner assets, десять data-driven страниц, детали/каталоги/фильтры/поиск/пагинация, local video/audio, comments/reactions/newsletter/account, AJAX forms, Live HLS/heartbeat и афиша/fallback. Article covers/gallery показываются целиком и открываются в accessible lightbox. Mobile book overflow устранён; Public/Desktop CSS изолированы. Live detail chat теперь подстраивается под высоту левой колонки, а composer и KI-форма имеют отдельную компактную responsive-разметку.
 - Mobile Beiträge cards keep their two-column grid but switch each card to image-above-text, with a readable 4:5 preview and wider title/excerpt area; desktop card layout is unchanged. Video details keep a wide shell while contained portrait playback gets a blurred poster backdrop; public-pages stylesheet cache version is v19.
 - Public article image containers keep full `contain` rendering and use a very light, translucent, softly blurred color backdrop derived from the same image; the neutral background remains dominant.
@@ -76,6 +77,7 @@
 - Video catalog refinement: `node --check` for `desktop-content-library.js` and `desktop-content-columns.js`, plus `git diff --check`, passed. PHP/Blade/browser checks remain unavailable because PHP 8.4 and a local preview server are not installed in this Windows session.
 
 - Imported text structure review: node --check platform/public/assets/desktop-content-assignment.js and git diff --check passed. Laravel Feature/Blade/browser checks were not run because PHP 8.4 and a local preview server are unavailable in this Windows session.
+- Public topic filters: git diff --check passed. Public Laravel Feature/Blade checks were not run because PHP 8.4 is unavailable in this Windows session.
 
 ## Что рекомендуется следующим
 
@@ -88,7 +90,7 @@
 
 ## Последний связанный commit
 
-- Текущий функциональный блок: Improve PDF intake diagnostics and catalog deletion.
+- Текущий функциональный блок: f58854d — Fix public topic tag filters.
 
 - Предшествующий функциональный commit: `90d6b26` — Complete admin workflows and PWA foundation.
 - Последний функциональный commit: `5f99dbb` — Improve video catalog playback. Branch/upstream: main → origin/main.

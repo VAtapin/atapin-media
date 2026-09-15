@@ -59,6 +59,12 @@ class PublicPagesTest extends TestCase
         $this->get('/suche?q=Database')->assertOk()->assertSee('Database post');
         $this->get('/podcast?sort=bad')->assertRedirect();
     }
+    public function test_topic_count_and_filter_share_normalized_tag_matching(): void
+    {
+        $this->record('post',['tags'=>['Buße ','Emotionen']]);
+        $this->get('/beitraege')->assertViewHas('topics',fn($topics)=>($topics['Buße']??0)===1);
+        $this->get('/beitraege?tag=Buße')->assertViewHas('items',fn($items)=>$items->total()===1);
+    }
     public function test_homepage_feature_prefers_the_newest_selected_video(): void
     {
         $selected=[$this->record('video',['public_homepage'=>true]),$this->record('short',['public_homepage'=>true])];

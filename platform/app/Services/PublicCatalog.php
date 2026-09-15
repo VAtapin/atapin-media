@@ -3,6 +3,7 @@ namespace App\Services;
 
 use App\Models\{Collection,Product,SourceRecord,PublicContentState};
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class PublicCatalog
 {
@@ -13,9 +14,9 @@ class PublicCatalog
         $data=$request->validate(['q'=>'nullable|string|max:120','tag'=>'nullable|string|max:100','sort'=>'nullable|in:latest,oldest,popular','series'=>'nullable|integer|min:1','page'=>'nullable|integer|min:1|max:100000']);
         $query=$section==='buecher'?$this->books->query():$this->content->withViewCounts($section==='search'?$this->content->query()->whereIn('kind',['video','short','post','poll']):$this->content->forSection($section));
         if($data['q']??'')$query->where(fn($q)=>$q->where('title','like','%'.$data['q'].'%')->orWhere($section==='buecher'?'description':'body','like','%'.$data['q'].'%'));
-        if($data['tag']??''){
+        $tagFilter = trim((string) ($data['tag'] ?? ''));
+        if($tagFilter){
             if($section==='buecher')$query->where(fn($q)=>$q->whereJsonContains('metadata->tags',$data['tag'])->orWhere('title','like','%'.$data['tag'].'%')->orWhere('description','like','%'.$data['tag'].'%'));
-            else $query->whereJsonContains('metadata->tags',$data['tag']);
         }
         if(($data['series']??null)&&$section!=='buecher'){
             $collection=Collection::where('metadata->public_published',true)->findOrFail($data['series']);
@@ -25,7 +26,11 @@ class PublicCatalog
         if($sort==='popular'&&$section!=='buecher')$query->orderByDesc('public_view_count');
         $query->orderBy('created_at',$sort==='oldest'?'asc':'desc')->orderByDesc('id');
         $mapper=$section==='buecher'?$this->books->card(...):$this->content->card(...);
-        $page=$query->paginate($section==='beitraege'?6:8)->withQueryString();
+        $perPage=$section==='beitraege'?6:8;
+        if($tagFilter&&$section!=='buecher'){
+            $tagged=$query->get()->filter(fn($record)=>$this->hasTag($record,$tagFilter))->values();
+            $page=new LengthAwarePaginator($tagged->forPage($request->integer('page',1),$perPage)->values(),$tagged->count(),$perPage,$request->integer('page',1),['path'=>$request->url(),'query'=>$request->query()]);
+        }else $page=$query->paginate($perPage)->withQueryString();
         $items=$page->through($mapper);
         $featured=$items->first();
         $record=null;
@@ -60,10 +65,25 @@ class PublicCatalog
     public function topics(string $section): array
     {
         $topics=[];
+        $labels=[];
         foreach(($section==='buecher'?$this->books->query():$this->content->forSection($section))->limit(2000)->pluck('metadata') as $metadata)
-            foreach(array_unique(array_filter($metadata['tags']??[],'is_string')) as $tag)$topics[$tag]=($topics[$tag]??0)+1;
-        arsort($topics);return array_slice($topics,0,10,true);
+            foreach(array_unique(array_filter($metadata['tags']??[],'is_string')) as $tag){
+                $label=$this->normalizeTag($tag);if($label==='')continue;
+                $key=$this->tagKey($label);$labels[$key]??=$label;$topics[$key]=($topics[$key]??0)+1;
+            }
+        arsort($topics);$result=[];foreach(array_slice(array_keys($topics),0,10) as $key)$result[$labels[$key]]=$topics[$key];return $result;
     }
+    private function hasTag(SourceRecord $record,string $tag): bool
+    {
+        $wanted=$this->tagKey($tag);
+        return collect([...($record->metadata['tags']??[]),...($record->metadata['taxonomy_tags']??[])])->contains(fn($value)=>is_string($value)&&$this->tagKey($value)===$wanted);
+    }
+    private function normalizeTag(string $tag): string
+    {
+        $tag=preg_replace('/\s+/u',' ',trim($tag))??trim($tag);
+        return class_exists('Normalizer') ? (\Normalizer::normalize($tag,\Normalizer::FORM_C)??$tag) : $tag;
+    }
+    private function tagKey(string $tag): string { return mb_strtolower($this->normalizeTag($tag),'UTF-8'); }
     public function series(string $section)
     {
         if(!in_array($section,['videos','podcast']))return collect();
