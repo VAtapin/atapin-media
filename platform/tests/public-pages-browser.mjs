@@ -37,6 +37,20 @@ try {
       assert.equal(overflow.ok,true,`${route}: overflow at ${width}: ${JSON.stringify(overflow.offenders)}`);
       assert(await page.locator('.public-header').isVisible(),route);
       assert.equal(await page.locator('main').count(),1,route);
+      if(route==='/'&&await page.locator('[data-public-home-topics]').count()){
+        const cards=page.locator('.public-home-topic-card');
+        assert.equal(await cards.count(),2,'Home displays the two topic cards, not their parent category');
+        assert.equal(await cards.filter({has:page.getByRole('heading',{name:'Glaube & Leben',exact:true})}).count(),0,'Parent category rendered as a home topic card');
+        for(const link of await page.locator('.public-home-topic-card nav a').evaluateAll(nodes=>nodes.map(node=>new URL(node.href).pathname+new URL(node.href).search))){
+          assert.match(link,/^\/(videos|beitraege|buecher)\?taxonomy=/,'Home topic links must open one explicit content section');
+        }
+      }
+      if(['/videos','/beitraege','/buecher'].includes(route)&&await page.locator('[data-public-taxonomy]').count()){
+        assert(await page.locator('.public-taxonomy-group').first().isVisible(),`${route}: taxonomy navigation is visible`);
+        for(const link of await page.locator('[data-public-taxonomy] nav a').evaluateAll(nodes=>nodes.map(node=>new URL(node.href).pathname+new URL(node.href).search))){
+          assert(link.startsWith(`${route}?taxonomy=`),`${route}: taxonomy link escaped the current content section: ${link}`);
+        }
+      }
       if(route==='/'||route==='/buecher'){
         const decorated=page.locator('.public-section-cards, .public-panel-heading, .public-empty-slot');
         for(const text of await decorated.allTextContents())assert(!text.includes('→'),`${route}: decorative arrow remains`);

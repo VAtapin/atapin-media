@@ -73,14 +73,83 @@
     }
     imageUpload(editor, row, row.id ? `/desktop/projects/${row.id}/cover` : '', load);
   };
-  const topicExtra = (editor, row, load) => imageUpload(editor, row, row.id ? `/desktop/taxonomy/${row.id}/cover` : '', load);
+  const taxonomyAssignments = (editor, row, host) => {
+    if (!row.id) return;
+    const panel = el('section', undefined, 'workspace-taxonomy-assignments');
+    const head = el('header');
+    head.append(el('div', undefined, 'workspace-taxonomy-heading'));
+    head.firstChild.append(el('h3', t('taxonomy_assignment_title')), el('p', t('taxonomy_assignment_hint'), 'workspace-muted'));
+    const counts = el('p', '', 'workspace-taxonomy-counts'); head.append(counts); panel.append(head);
+    const scopes = ['posts','videos'];
+    if (document.querySelector('.os-start-menu [data-open-app="books-pdf"]')) scopes.push('books');
+    const tabs = el('nav', undefined, 'workspace-taxonomy-tabs'); tabs.setAttribute('aria-label', t('taxonomy_assignment_title'));
+    const filters = el('form', undefined, 'workspace-taxonomy-filters');
+    const search = field('q','search'), assigned = field('taxonomy_assignment_filter','select','all',[
+      ['all',t('all')],['1',t('taxonomy_assigned_only')],['0',t('taxonomy_unassigned_only')],
+    ]);
+    filters.append(search, assigned);
+    const list = el('div', undefined, 'workspace-taxonomy-list');
+    const actions = el('div', undefined, 'workspace-taxonomy-actions'), pager = el('nav', undefined, 'workspace-taxonomy-pager'), message = el('p');
+    message.className = 'workspace-feedback'; message.setAttribute('role','status'); message.setAttribute('aria-live','polite');
+    panel.append(tabs, filters, list, actions, pager, message); editor.append(panel);
+    let scope = 'posts', page = 1, current = null, debounce, loadGeneration = 0;
+    const selectedIds = () => [...list.querySelectorAll('input[type="checkbox"]:checked')].map(input => Number(input.value));
+    const control = (key, handler, cls = 'desktop-button') => { const node = el('button', t(key), cls); node.type = 'button'; node.addEventListener('click', handler); return node; };
+    const updateCounts = data => { counts.textContent = scopes.map(name => `${t('taxonomy_scope_'+name)}: ${data.counts?.[name] || 0}`).join(' · '); };
+    const load = async (nextPage = page) => run(host, async () => {
+      const generation = ++loadGeneration; page = nextPage; message.textContent = t('loading');
+      const query = new URLSearchParams({scope,page});
+      if (search.querySelector('input').value.trim()) query.set('q', search.querySelector('input').value.trim());
+      if (assigned.querySelector('select').value !== 'all') query.set('assigned', assigned.querySelector('select').value);
+      const result = await request(`/desktop/taxonomy/${row.id}/assignments?${query}`); if (generation !== loadGeneration || !panel.isConnected) return; current = result; updateCounts(current); list.replaceChildren();
+      if (!current.data.length) list.append(el('p', t('empty'), 'workspace-empty'));
+      for (const item of current.data) {
+        const line = el('label', undefined, 'workspace-taxonomy-item'), checkbox = el('input'); checkbox.type = 'checkbox'; checkbox.value = item.id;
+        const content = el('span'); content.append(el('strong', item.title), el('small', [item.status ? t(item.status) : '', item.assigned ? t('taxonomy_assigned') : t('taxonomy_not_assigned')].filter(Boolean).join(' · ')));
+        const open = control('open', event => { event.preventDefault(); if (scope === 'books') W.open('books-pdf',{id:item.id}); else window.openContentEditor?.(scope === 'posts' ? 'posts' : 'videos', `/desktop/content/${item.id}`); });
+        line.append(checkbox, content, open); list.append(line);
+      }
+      pager.replaceChildren();
+      const previous = control('previous', () => load(page - 1)), next = control('next', () => load(page + 1)); previous.disabled = page <= 1; next.disabled = page >= current.last_page;
+      pager.append(previous, el('span', `${page} / ${current.last_page} · ${current.total}`), next); message.textContent = '';
+    });
+    const change = operation => run(host, async () => {
+      const ids = selectedIds(); if (!ids.length) { message.textContent = t('taxonomy_assignment_selection_required'); return; }
+      for (const node of actions.querySelectorAll('button')) node.disabled = true;
+      try {
+        const subjectType = scope === 'books' ? 'product' : 'record';
+        const result = await request(`/desktop/taxonomy/${row.id}/assignments`, {scope,subject_type:subjectType,operation,subject_ids:ids}, 'PATCH');
+        updateCounts(result); await load(page); message.textContent = t('saved');
+      } finally { for (const node of actions.querySelectorAll('button')) node.disabled = false; }
+    });
+    actions.append(control('taxonomy_select_page', () => { for (const input of list.querySelectorAll('input[type="checkbox"]')) input.checked = true; }),
+      control('taxonomy_add_selected', () => change('add'), 'desktop-button is-primary'), control('taxonomy_remove_selected', () => change('remove'), 'desktop-button is-danger'));
+    for (const name of scopes) {
+      const tab = control('taxonomy_scope_'+name, () => { scope = name; page = 1; for (const button of tabs.children) button.setAttribute('aria-pressed', String(button === tab)); load(1); });
+      tab.setAttribute('aria-pressed', String(name === scope)); tabs.append(tab);
+    }
+    filters.addEventListener('submit', event => { event.preventDefault(); load(1); });
+    search.querySelector('input').addEventListener('input', () => { clearTimeout(debounce); debounce = setTimeout(() => load(1), 250); });
+    assigned.querySelector('select').addEventListener('change', () => load(1));
+    load();
+  };
+  const topicExtra = (editor, row, load, host) => {
+    imageUpload(editor, row, row.id ? `/desktop/taxonomy/${row.id}/cover` : '', load);
+    taxonomyAssignments(editor, row, host);
+  };
   const organizeBookForm = editor => {
     const form = editor.querySelector(':scope > form');
     if (!form || form.querySelector('.workspace-more-settings')) return;
     form.classList.add('workspace-book-form');
+    const taxonomy = form.elements.namedItem('taxonomy_term_ids')?.closest('label');
+    if (taxonomy) {
+      taxonomy.classList.add('workspace-taxonomy-field');
+      const description = form.elements.namedItem('description')?.closest('label');
+      if (description) description.after(taxonomy);
+    }
     const more = el('details', undefined, 'workspace-more-settings'); more.dataset.bookMoreSettings = 'true';
     more.append(el('summary', t('further_settings')));
-    for (const name of ['subtitle','edition_text','publication_date','tags','seo_title','seo_description','project_id','taxonomy_term_ids','external_shop_url']) {
+    for (const name of ['subtitle','edition_text','publication_date','tags','seo_title','seo_description','project_id','external_shop_url']) {
       const control = form.elements.namedItem(name);
       const label = control?.closest('label');
       if (label) more.append(label);

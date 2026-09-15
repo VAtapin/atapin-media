@@ -32,7 +32,7 @@ class BookWorkspaceController extends Controller
         $request->validate(['confirmation'=>'required|in:DELETE']);
         $productId = $product->id;
         DB::transaction(function () use ($product) {
-            DB::table('taxonomy_assignments')->where('subject_type', Product::class)->where('subject_id', (string) $product->id)->delete();
+            DB::table('taxonomy_assignments')->where('subject_type', 'product')->where('subject_id', (string) $product->id)->delete();
             DB::table('media_usages')->where('subject_type', Product::class)->where('subject_id', (string) $product->id)->delete();
             DB::table('book_reviews')->where('product_id', $product->id)->delete();
             $product->delete();

@@ -126,8 +126,10 @@ class DesktopWorkspacesTest extends TestCase
         $this->deleteJson('/desktop/taxonomy/'.$term,['confirmation'=>'DELETE'])->assertOk();
         $this->assertDatabaseMissing('taxonomy_terms',['id'=>$term]);$this->assertSame([], $record->fresh()->metadata['taxonomy_term_ids'] ?? []);$this->assertDatabaseCount('taxonomy_assignments',0);
 
-        $book=$this->product();$this->deleteJson('/desktop/books/'.$book->id,['confirmation'=>'DELETE'])->assertOk();
-        $this->assertDatabaseMissing('products',['id'=>$book->id]);
+        $book=$this->product();$bookTerm=TaxonomyTerm::create(['name'=>'Bücher','kind'=>'topic','slug'=>'books-delete','active'=>true]);app(Taxonomy::class)->sync($book,[$bookTerm->id]);
+        $this->assertDatabaseHas('taxonomy_assignments',['subject_type'=>'product','subject_id'=>(string)$book->id]);
+        $this->deleteJson('/desktop/books/'.$book->id,['confirmation'=>'DELETE'])->assertOk();
+        $this->assertDatabaseMissing('products',['id'=>$book->id]);$this->assertDatabaseMissing('taxonomy_assignments',['subject_type'=>'product','subject_id'=>(string)$book->id]);
     }
     public function test_taxonomy_rename_deactivation_and_cycles(): void
     {
@@ -136,6 +138,72 @@ class DesktopWorkspacesTest extends TestCase
         $this->patchJson('/desktop/taxonomy/'.$id,['name'=>'Hoffnung','kind'=>'topic','active'=>true,'parent_id'=>$id])->assertUnprocessable();
         $this->postJson('/desktop/taxonomy',['name'=>'Hoffnung','kind'=>'topic','active'=>true])->assertUnprocessable();
         $this->patchJson('/desktop/taxonomy/'.$id,['name'=>'Hoffnung','kind'=>'topic','active'=>false])->assertOk();$this->assertSame(['manual'],$record->fresh()->metadata['tags']);$this->assertDatabaseCount('taxonomy_assignments',0);
+    }
+    public function test_taxonomy_bulk_assignments_are_scoped_typed_and_preserve_other_terms(): void
+    {
+        $term=TaxonomyTerm::create(['name'=>'Anatomie','kind'=>'topic','slug'=>'anatomie','active'=>true]);
+        $other=TaxonomyTerm::create(['name'=>'Medizin','kind'=>'category','slug'=>'medizin','active'=>true]);
+        $post=$this->record(['title'=>'Anatomie Beitrag']);
+        $secondPost=$this->record(['title'=>'Zweiter Beitrag']);
+        $video=$this->record(['kind'=>'video','title'=>'Anatomie Video','metadata'=>['public_section'=>'videos','public_published'=>false]]);
+        $podcast=$this->record(['kind'=>'video','title'=>'Podcast Video','metadata'=>['public_section'=>'podcast','public_published'=>false]]);
+        $live=$this->record(['kind'=>'video','title'=>'Live Video','metadata'=>['public_section'=>'live','public_published'=>false]]);
+        $community=$this->record(['kind'=>'post','title'=>'Community Beitrag','metadata'=>['public_section'=>'community','public_published'=>false]]);
+        $archive=$this->record(['kind'=>'post','title'=>'Archiv Beitrag','metadata'=>['archive_data'=>true,'public_published'=>false]]);
+        $reset=$this->record(['source'=>'catalog-reset','title'=>'Zurückgesetzter Beitrag']);
+        $book=$this->product(['title'=>'Anatomie Buch']);
+        app(Taxonomy::class)->sync($post,[$other->id]);
+
+        $this->getJson('/desktop/taxonomy/'.$term->id.'/assignments?scope=posts&q=Anatomie')->assertOk()
+            ->assertJsonPath('data.0.id',$post->id)->assertJsonPath('data.0.subject_type','record')->assertJsonPath('data.0.assigned',false);
+        $this->getJson('/desktop/taxonomy/'.$term->id.'/assignments?scope=videos')->assertOk()
+            ->assertJsonCount(1,'data')->assertJsonPath('data.0.id',$video->id);
+
+        $this->patchJson('/desktop/taxonomy/'.$term->id.'/assignments',['scope'=>'posts','subject_type'=>'record','operation'=>'add','subject_ids'=>[$post->id,$secondPost->id]])->assertOk()
+            ->assertJsonPath('counts.posts',2);
+        $this->patchJson('/desktop/taxonomy/'.$term->id.'/assignments',['scope'=>'videos','subject_type'=>'record','operation'=>'add','subject_ids'=>[$video->id]])->assertOk()
+            ->assertJsonPath('counts.videos',1);
+        $this->patchJson('/desktop/taxonomy/'.$term->id.'/assignments',['scope'=>'books','subject_type'=>'product','operation'=>'add','subject_ids'=>[$book->id]])->assertOk()
+            ->assertJsonPath('counts.books',1);
+        $this->assertEqualsCanonicalizing([$other->id,$term->id],$post->fresh()->metadata['taxonomy_term_ids']);
+        $this->assertSame([$term->id],$video->fresh()->metadata['taxonomy_term_ids']);
+        $this->assertSame([$term->id],$book->fresh()->metadata['taxonomy_term_ids']);
+
+        $this->patchJson('/desktop/taxonomy/'.$term->id.'/assignments',['scope'=>'posts','subject_type'=>'record','operation'=>'replace','subject_ids'=>[$secondPost->id]])->assertOk()
+            ->assertJsonPath('counts.posts',1)->assertJsonPath('counts.videos',1)->assertJsonPath('counts.books',1);
+        $this->assertSame([$other->id],$post->fresh()->metadata['taxonomy_term_ids']);
+        $this->assertSame([$term->id],$secondPost->fresh()->metadata['taxonomy_term_ids']);
+
+        $this->patchJson('/desktop/taxonomy/'.$term->id.'/assignments',['scope'=>'posts','subject_type'=>'product','operation'=>'add','subject_ids'=>[$post->id]])
+            ->assertUnprocessable()->assertJsonValidationErrors('subject_type');
+        $this->patchJson('/desktop/taxonomy/'.$term->id.'/assignments',['scope'=>'videos','subject_type'=>'record','operation'=>'add','subject_ids'=>[$podcast->id]])
+            ->assertUnprocessable()->assertJsonValidationErrors('subject_ids');
+        foreach ([['posts',$community],['posts',$archive],['posts',$reset],['videos',$live]] as [$scope,$excluded]) {
+            $this->patchJson('/desktop/taxonomy/'.$term->id.'/assignments',['scope'=>$scope,'subject_type'=>'record','operation'=>'add','subject_ids'=>[$excluded->id]])
+                ->assertUnprocessable()->assertJsonValidationErrors('subject_ids');
+        }
+
+        $published=$this->record(['title'=>'Öffentlicher Beitrag','metadata'=>['public_section'=>'beitraege','public_published'=>true]]);
+        $editor=$this->user('Mediengestalter');$this->actingAs($editor);
+        $this->getJson('/desktop/taxonomy/'.$term->id.'/assignments?scope=posts')->assertOk()->assertJsonPath('counts.books',null);
+        $this->getJson('/desktop/taxonomy/'.$term->id.'/assignments?scope=books')->assertForbidden();
+        $this->patchJson('/desktop/taxonomy/'.$term->id.'/assignments',['scope'=>'books','subject_type'=>'product','operation'=>'remove','subject_ids'=>[$book->id]])->assertForbidden();
+        $this->patchJson('/desktop/taxonomy/'.$term->id,['name'=>'Anatomie geändert','kind'=>'topic','active'=>true])->assertForbidden();
+        $this->deleteJson('/desktop/taxonomy/'.$term->id,['confirmation'=>'DELETE'])->assertForbidden();
+        $this->patchJson('/desktop/taxonomy/'.$term->id.'/assignments',['scope'=>'posts','subject_type'=>'record','operation'=>'add','subject_ids'=>[$published->id]])->assertForbidden();
+        $this->assertDatabaseMissing('taxonomy_assignments',['taxonomy_term_id'=>$term->id,'subject_type'=>'record','subject_id'=>(string)$published->id]);
+        $this->actingAs($this->owner);app(Taxonomy::class)->sync($published,[$term->id]);$this->actingAs($editor);
+        $this->patchJson('/desktop/taxonomy/'.$term->id.'/assignments',['scope'=>'posts','subject_type'=>'record','operation'=>'replace','subject_ids'=>[]])->assertForbidden();
+        $this->assertDatabaseHas('taxonomy_assignments',['taxonomy_term_id'=>$term->id,'subject_type'=>'record','subject_id'=>(string)$published->id]);
+        $publishedOnlyTerm=TaxonomyTerm::create(['name'=>'Öffentlich','kind'=>'topic','slug'=>'public-only','active'=>true]);
+        $this->actingAs($this->owner);app(Taxonomy::class)->sync($published,[$publishedOnlyTerm->id]);$this->actingAs($editor);
+        $this->deleteJson('/desktop/taxonomy/'.$publishedOnlyTerm->id,['confirmation'=>'DELETE'])->assertForbidden();
+        $this->assertDatabaseHas('taxonomy_terms',['id'=>$publishedOnlyTerm->id]);
+
+        $shopRole=Role::create(['name'=>'Book taxonomy manager']);$shopRole->permissions()->attach(\App\Models\Permission::where('name','shop.manage')->firstOrFail());
+        $shopUser=$this->user();$shopUser->roles()->attach($shopRole);$this->actingAs($shopUser);
+        $this->getJson('/desktop/taxonomy/'.$term->id.'/assignments?scope=books')->assertOk()->assertJsonPath('counts.books',1)->assertJsonPath('counts.posts',null)->assertJsonPath('counts.videos',null);
+        $this->getJson('/desktop/taxonomy/'.$term->id.'/assignments?scope=posts')->assertForbidden();
     }
     public function test_manual_editor_sanitizes_html_and_preserves_metadata(): void
     {

@@ -33,6 +33,8 @@ return [
     'discover_videos'=>'Discover videos','discover_beitraege'=>'Discover articles','discover_buecher'=>'Discover all books','discover_podcast'=>'Listen now','discover_community'=>'Join now','discover_live'=>'Discover livestreams','discover_ueber-uns'=>'Learn more','discover_unsere-mission'=>'Discover our mission',
     'featured_videos'=>'FEATURED VIDEO','featured_beitraege'=>'FEATURED ARTICLE','featured_buecher'=>'RECOMMENDED BOOK','featured_podcast'=>'FEATURED PODCAST','featured_live'=>'NEXT LIVESTREAM','featured_ueber-uns'=>'WELCOME','featured_unsere-mission'=>'OUR MISSION',
     'all_beitraege'=>'All articles','all_buecher'=>'All books','all_podcast'=>'All podcasts','all_community'=>'All posts',
+    'taxonomy_eyebrow'=>'TOPIC WORLDS','categories'=>'Categories','explore_videos_by_topic'=>'Discover videos by topic','explore_beitraege_by_topic'=>'Discover articles by topic','explore_buecher_by_topic'=>'Discover books by topic','home_topics_title'=>'Topics that matter to you','home_topics_intro'=>'Choose a topic, then choose the section. Videos, articles and books always remain separate.','home_topics_all'=>'Discover all topics',
+    'section_item_count_videos'=>'{1} :count video|[2,*] :count videos','section_item_count_beitraege'=>'{1} :count article|[2,*] :count articles','section_item_count_buecher'=>'{1} :count book|[2,*] :count books',
     'filters_videos'=>['Sermons','Testimonies','Bible study','Family & daily life','Inspiration','Questions & answers'],
     'filters_beitraege'=>['Faith','Family','Personal growth','Bible','Hope','Society'],
     'filters_buecher'=>['Faith','Family','Bible study','Biographies','E-books & PDFs'],

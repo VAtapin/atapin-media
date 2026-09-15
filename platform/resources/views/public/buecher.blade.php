@@ -4,7 +4,9 @@
 @include('public.hero')<div class="public-wide">
 <section class="public-panel public-book-poll">
 @include('public.poll')</section>
-@include('public.filters')<div class="public-books-overview">
+@include('public.filters')
+@include('public.taxonomy-browser')
+<div class="public-books-overview">
 <div class="public-books-main">
 <div class="public-books-top">
 @include('public.cards',['heading'=>__('public.book_recommendation'),'cards'=>$items->take(3),'style'=>'book','emptyUrl'=>'/buecher/vorschau'])

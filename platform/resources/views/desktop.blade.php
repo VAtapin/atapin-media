@@ -40,6 +40,12 @@ $workspaceLabels = array_replace(__('workspaces'), [
     'task_recurrence_interval'=>__('ui.task_recurrence_interval'), 'task_recurrence_unit'=>__('ui.task_recurrence_unit'), 'task_recurrence_until'=>__('ui.task_recurrence_until'), 'task_recurrence_day'=>__('ui.task_recurrence_day'), 'task_recurrence_week'=>__('ui.task_recurrence_week'), 'task_recurrence_month'=>__('ui.task_recurrence_month'), 'further_settings'=>__('ui.further_settings'),
     'view_board'=>__('ui.view_board'), 'view_list'=>__('ui.view_list'),
     'recurrence'=>__('ui.task_recurrence'), 'recurrence_interval'=>__('ui.task_recurrence_interval'), 'recurrence_unit'=>__('ui.task_recurrence_unit'), 'recurrence_until'=>__('ui.task_recurrence_until'),
+    'taxonomy_assignment_title'=>__('ui.taxonomy_assignment_title'), 'taxonomy_assignment_hint'=>__('ui.taxonomy_assignment_hint'),
+    'taxonomy_assignment_filter'=>__('ui.taxonomy_assignment_filter'), 'taxonomy_assigned_only'=>__('ui.taxonomy_assigned_only'), 'taxonomy_unassigned_only'=>__('ui.taxonomy_unassigned_only'),
+    'taxonomy_assigned'=>__('ui.taxonomy_assigned'), 'taxonomy_not_assigned'=>__('ui.taxonomy_not_assigned'), 'taxonomy_select_page'=>__('ui.taxonomy_select_page'),
+    'taxonomy_add_selected'=>__('ui.taxonomy_add_selected'), 'taxonomy_remove_selected'=>__('ui.taxonomy_remove_selected'),
+    'taxonomy_scope_posts'=>__('ui.taxonomy_scope_posts'), 'taxonomy_scope_videos'=>__('ui.taxonomy_scope_videos'), 'taxonomy_scope_books'=>__('ui.taxonomy_scope_books'),
+    'taxonomy_assignment_selection_required'=>__('ui.taxonomy_assignment_selection_required'), 'taxonomy_editor_hint'=>__('ui.taxonomy_editor_hint'),
     'states'=>array_replace(__('workspaces.states'), ['planned'=>__('ui.task_status_planned')]),
 ]);
 @endphp
@@ -51,14 +57,14 @@ $workspaceLabels = array_replace(__('workspaces'), [
     <title>Desktop · {{ config('platform.brand') }}</title>
     <link rel="icon" href="/favicon.png"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/brand/owner/app-icon.png"><meta name="theme-color" content="#8b6a3d"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=4"><link rel="stylesheet" href="/assets/desktop-windows.css?v=5"><link rel="stylesheet" href="/assets/desktop-settings.css?v=6">
     <link rel="stylesheet" href="/assets/desktop-app.css?v=3"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=12"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=3"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=4"><link rel="stylesheet" href="/assets/desktop-community.css?v=3"><link rel="stylesheet" href="/assets/desktop-publishing.css?v=4">
-    <link rel="stylesheet" href="/assets/desktop-workspaces.css?v=14">
+    <link rel="stylesheet" href="/assets/desktop-workspaces.css?v=15">
     <link rel="stylesheet" href="/assets/desktop-overview.css?v=2">
     <script>window.desktopWorkspaceLabels=@json($workspaceLabels); window.desktopBookReviewLabels=@json(__('book-reviews')); window.desktopAiLabels=@json(__('ai_dashboard'));</script>
     <script src="/assets/desktop-workspaces.js?v=12" defer></script>
     <script src="/assets/public-pwa.js?v=1" defer></script>
     <script src="/assets/desktop-workspace-content.js?v=7" defer></script>
     <script src="/assets/desktop-ai-dashboard.js?v=2" defer></script>
-    <script src="/assets/desktop-catalogs.js?v=7" defer></script>
+    <script src="/assets/desktop-catalogs.js?v=8" defer></script>
     <script src="/assets/desktop-subscriber-import.js?v=1" defer></script>
     <script src="/assets/desktop-ai-proposal.js?v=1" defer></script>
     <script src="/assets/desktop-migration-wizard.js?v=1" defer></script>
@@ -72,7 +78,7 @@ $workspaceLabels = array_replace(__('workspaces'), [
     <script src="/assets/desktop-publishing-preview.js?v=2" defer></script>
     <script src="/assets/desktop-community-sync.js?v=1" defer></script>
     <script src="/assets/desktop-workspace-operations.js?v=7" defer></script>
-    <script src="/assets/desktop-editor-workflow.js?v=6" defer></script>
+    <script src="/assets/desktop-editor-workflow.js?v=7" defer></script>
     <script src="/assets/desktop-shortcuts.js?v=3" defer></script>
     <link rel="stylesheet" href="/assets/desktop-import-workflow.css?v=3">
     <script src="/assets/desktop-os.js?v=20" defer></script><script src="/assets/settings-tabs.js?v=10" defer></script><script src="/assets/desktop-media-library.js?v=15" defer></script><script src="/assets/desktop-import-center.js?v=12" defer></script><script src="/assets/desktop-live-studio.js?v=8" defer></script><script src="/assets/desktop-publishing.js?v=6" defer></script>

@@ -11,6 +11,8 @@ Route::middleware('auth')->group(function(){
     Route::get('/desktop/workspaces/{app}',DesktopWorkspaceController::class)->middleware('can:desktop.view');
     Route::get('/desktop/lookups',DesktopLookupController::class)->middleware('can:desktop.view');
     Route::get('/desktop/overview',\App\Http\Controllers\DesktopOverviewController::class)->middleware('can:desktop.view');
+    Route::get('/desktop/taxonomy/{term}/assignments',[TaxonomyController::class,'assignments']);
+    Route::patch('/desktop/taxonomy/{term}/assignments',[TaxonomyController::class,'updateAssignments']);
     Route::get('/desktop/migration',\App\Http\Controllers\MigrationWorkspaceController::class)->middleware(['can:desktop.view','can:imports.manage']);
     Route::get('/desktop/publishing/preview',\App\Http\Controllers\PublishingPreviewController::class)->middleware('can:content.publish');
     Route::get('/desktop/live/{record}/monitor',\App\Http\Controllers\LiveMonitorController::class)->middleware('can:content.publish');

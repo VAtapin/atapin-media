@@ -33,6 +33,8 @@ return [
     'discover_videos'=>'Jetzt Videos entdecken','discover_beitraege'=>'Beiträge entdecken','discover_buecher'=>'Alle Bücher entdecken','discover_podcast'=>'Jetzt reinhören','discover_community'=>'Jetzt mitmachen','discover_live'=>'Livestreams entdecken','discover_ueber-uns'=>'Mehr über uns','discover_unsere-mission'=>'Unsere Mission entdecken',
     'featured_videos'=>'FEATURED VIDEO','featured_beitraege'=>'FEATURED BEITRAG','featured_buecher'=>'BUCH-EMPFEHLUNG','featured_podcast'=>'FEATURED PODCAST','featured_live'=>'NÄCHSTER LIVESTREAM','featured_ueber-uns'=>'WILLKOMMEN','featured_unsere-mission'=>'UNSERE MISSION',
     'all_beitraege'=>'Alle Beiträge','all_buecher'=>'Alle Bücher','all_podcast'=>'Alle Podcasts','all_community'=>'Alle Beiträge',
+    'taxonomy_eyebrow'=>'THEMENWELTEN','categories'=>'Kategorien','explore_videos_by_topic'=>'Videos nach Themen entdecken','explore_beitraege_by_topic'=>'Beiträge nach Themen entdecken','explore_buecher_by_topic'=>'Bücher nach Themen entdecken','home_topics_title'=>'Themen, die dich bewegen','home_topics_intro'=>'Wähle zuerst ein Thema und dann den gewünschten Bereich. Videos, Beiträge und Bücher bleiben dabei getrennt.','home_topics_all'=>'Alle Themen entdecken',
+    'section_item_count_videos'=>'{1} :count Video|[2,*] :count Videos','section_item_count_beitraege'=>'{1} :count Beitrag|[2,*] :count Beiträge','section_item_count_buecher'=>'{1} :count Buch|[2,*] :count Bücher',
     'filters_videos'=>['Predigten','Zeugnisse','Bibelstudium','Familie & Alltag','Impulse','Fragen & Antworten'],
     'filters_beitraege'=>['Glaube','Familie','Persönliche Entwicklung','Bibel','Hoffnung','Gesellschaft'],
     'filters_buecher'=>['Glaube','Familie','Bibelstudium','Biografien','E-Books & PDFs'],

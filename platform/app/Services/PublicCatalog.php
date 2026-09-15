@@ -7,15 +7,18 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class PublicCatalog
 {
-    public function __construct(private PublicContent $content,private PublicBooks $books,private PublicParticipation $participation,private PublicCommunityModeration $communityModeration) {}
+    public function __construct(private PublicContent $content,private PublicBooks $books,private PublicParticipation $participation,private PublicCommunityModeration $communityModeration,private PublicTaxonomy $taxonomy) {}
     public function listing(Request $request,string $section): array
     {
         if($section==='live')$this->content->expireScheduledLives();
-        $data=$request->validate(['q'=>'nullable|string|max:120','tag'=>'nullable|string|max:100','sort'=>'nullable|in:latest,oldest,popular','series'=>'nullable|integer|min:1','page'=>'nullable|integer|min:1|max:100000']);
+        $data=$request->validate(['q'=>'nullable|string|max:120','tag'=>'nullable|string|max:100','taxonomy'=>'nullable|string|max:180','sort'=>'nullable|in:latest,oldest,popular','series'=>'nullable|integer|min:1','page'=>'nullable|integer|min:1|max:100000']);
         $query=$section==='buecher'?$this->books->query():$this->content->withViewCounts($section==='search'?$this->content->query()->whereIn('kind',['video','short','post','poll']):$this->content->forSection($section));
         if($data['q']??'')$query->where(fn($q)=>$q->where('title','like','%'.$data['q'].'%')->orWhere($section==='buecher'?'description':'body','like','%'.$data['q'].'%'));
         $tagFilter = trim((string) ($data['tag'] ?? ''));
-        if($tagFilter){
+        $taxonomyFilter = $this->taxonomy->resolve($data['taxonomy'] ?? null);
+        if (($data['taxonomy'] ?? '') !== '' && ! $taxonomyFilter) abort(404);
+        if ($taxonomyFilter) $this->taxonomy->constrain($query, $section, $taxonomyFilter);
+        if($tagFilter && ! $taxonomyFilter){
             if($section==='buecher')$query->where(fn($q)=>$q->whereJsonContains('metadata->tags',$data['tag'])->orWhere('title','like','%'.$data['tag'].'%')->orWhere('description','like','%'.$data['tag'].'%'));
         }
         if(($data['series']??null)&&$section!=='buecher'){
@@ -27,7 +30,7 @@ class PublicCatalog
         $query->orderBy('created_at',$sort==='oldest'?'asc':'desc')->orderByDesc('id');
         $mapper=$section==='buecher'?$this->books->card(...):$this->content->card(...);
         $perPage=$section==='beitraege'?9:8;
-        if($tagFilter&&$section!=='buecher'){
+        if($tagFilter&&!$taxonomyFilter&&$section!=='buecher'){
             $tagged=$query->get()->filter(fn($record)=>$this->hasTag($record,$tagFilter))->values();
             $page=new LengthAwarePaginator($tagged->forPage($request->integer('page',1),$perPage)->values(),$tagged->count(),$perPage,$request->integer('page',1),['path'=>$request->url(),'query'=>$request->query()]);
         }else $page=$query->paginate($perPage)->withQueryString();
@@ -49,9 +52,12 @@ class PublicCatalog
         $resumeState=$request->user()?PublicContentState::where('user_id',$request->user()->id)->where('subject_type','record')->where('action','progress')->whereIn('subject_id',$this->content->forSection('podcast')->select('id'))->latest('updated_at')->first():null;
         $resumeRecord=$resumeState?$this->content->forSection('podcast')->find($resumeState->subject_id):null;
         $sessionId=$request->hasSession()?$request->session()->getId():null;
+        $popularQuery=$section==='buecher'?$this->books->query()->latest():($section==='live'?$this->content->forSection('live')->where('metadata->live_status','ended')->latest():$this->content->withViewCounts($this->content->forSection($section))->orderByDesc('public_view_count')->latest()->orderByDesc('id'));
+        if($taxonomyFilter)$this->taxonomy->constrain($popularQuery,$section,$taxonomyFilter);
+        $taxonomyFilters=$this->taxonomy->filters($section);
         return ['items'=>$items,'featured'=>$featured,'readingBooks'=>$readingBooks,'resume'=>$resumeRecord?[...$this->content->card($resumeRecord),'position'=>$resumeState->value['position']??0]:null,
-            'popular'=>($section==='buecher'?$this->books->query()->latest():($section==='live'?$this->content->forSection('live')->where('metadata->live_status','ended')->latest():$this->content->withViewCounts($this->content->forSection($section))->orderByDesc('public_view_count')->latest()->orderByDesc('id')))->limit($section==='beitraege'?6:5)->get()->map($mapper),
-            'topics'=>$this->topics($section),'series'=>$this->series($section),
+            'popular'=>$popularQuery->limit($section==='beitraege'?6:5)->get()->map($mapper),
+            'topics'=>$this->topics($section),'taxonomyFilters'=>$taxonomyFilters,'selectedTaxonomy'=>$taxonomyFilter,'series'=>$this->series($section),
             'record'=>$record,'assets'=>$record?$this->content->assets($record):collect(),
             'comments'=>$record?$this->content->childrenForViewer($record,'comment',$request->user(),$sessionId)->latest()->paginate(20,['*'],'comments_page')->withQueryString()->fragment('comments'):collect(),
             'chat'=>$record?$this->content->childrenForViewer($record,'live_chat',$request->user(),$sessionId)->latest()->limit(30)->get()->reverse():collect(),

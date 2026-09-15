@@ -4,7 +4,9 @@
 
 @include('public.hero')
 <div class="public-wide">
-@include('public.filters')<div class="public-video-overview">
+@include('public.filters')
+@include('public.taxonomy-browser')
+<div class="public-video-overview">
 <div>
 @include('public.cards',['heading'=>__('public.latest_videos'),'cards'=>$items,'paginator'=>$items,'style'=>'video','panelClass'=>'public-video-grid','listingUrl'=>'/videos','emptyUrl'=>'/videos/vorschau'])</div>
 <aside>

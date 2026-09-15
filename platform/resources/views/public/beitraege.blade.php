@@ -3,7 +3,9 @@
 @section('content')
 
 @include('public.hero')<div class="public-wide">
-@include('public.filters')<div class="public-post-overview">
+@include('public.filters')
+@include('public.taxonomy-browser')
+<div class="public-post-overview">
 <div>
 @include('public.cards',['heading'=>__('public.latest_articles'),'cards'=>$items,'paginator'=>$items,'style'=>'post','panelClass'=>'public-post-grid','listingUrl'=>'/beitraege','emptyUrl'=>'/beitraege/vorschau'])</div>
 <aside>

@@ -3,7 +3,7 @@ namespace App\Http\Controllers;
 use App\Models\Media;
 use App\Models\SourceRecord;
 use App\Services\PublicContent;
-use App\Services\{PublicCatalog,PublicBooks};
+use App\Services\{PublicCatalog,PublicBooks,PublicTaxonomy};
 use App\Services\PublicViewCounter;
 use Illuminate\Http\Request;
 
@@ -14,7 +14,7 @@ class PublicWebsiteController extends Controller
         return ['siteName'=>app(\App\Services\Settings::class)->get('site_name',config('platform.brand')),
             'description'=>__('public.hero_intro'),'heroImage'=>config('public_ui.hero_image')];
     }
-    public function home(PublicContent $content)
+    public function home(PublicContent $content, PublicTaxonomy $taxonomy)
     {
         $videos=$content->withViewCounts($content->forSection('videos'))->latest()->limit(3)->get()->map($content->card(...));
         $articles=$content->forSection('beitraege')->latest()->limit(3)->get()->map($content->card(...));
@@ -23,7 +23,7 @@ class PublicWebsiteController extends Controller
         $featuredRecord=$content->homepageVideos()->latest()->orderByDesc('id')->first()??$content->forSection('videos')->latest()->orderByDesc('id')->first();
         return view('public.home',[...$this->shared(),'videos'=>$videos,'articles'=>$articles,
             'featured'=>$featuredRecord?$content->card($featuredRecord):null,'book'=>$book?$books->card($book):null,
-            'live'=>$live?$content->card($live):null]);
+            'live'=>$live?$content->card($live):null,'homeTopics'=>$taxonomy->homeTopics()]);
     }
     public function recordView(Request $request, SourceRecord $record, PublicContent $content, PublicViewCounter $counter)
     {
