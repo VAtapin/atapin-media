@@ -40,15 +40,15 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Desktop · {{ config('platform.brand') }}</title>
-    <link rel="icon" href="/favicon.png"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/brand/owner/app-icon.png"><meta name="theme-color" content="#8b6a3d"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=4"><link rel="stylesheet" href="/assets/desktop-windows.css?v=3"><link rel="stylesheet" href="/assets/desktop-settings.css?v=3">
+    <link rel="icon" href="/favicon.png"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/brand/owner/app-icon.png"><meta name="theme-color" content="#8b6a3d"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=4"><link rel="stylesheet" href="/assets/desktop-windows.css?v=4"><link rel="stylesheet" href="/assets/desktop-settings.css?v=3">
     <link rel="stylesheet" href="/assets/desktop-app.css?v=2"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=11"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=3"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=3"><link rel="stylesheet" href="/assets/desktop-community.css?v=3"><link rel="stylesheet" href="/assets/desktop-publishing.css?v=4">
-    <link rel="stylesheet" href="/assets/desktop-workspaces.css?v=6">
+    <link rel="stylesheet" href="/assets/desktop-workspaces.css?v=8">
     <link rel="stylesheet" href="/assets/desktop-overview.css?v=2">
     <script>window.desktopWorkspaceLabels=@json(__('workspaces')); window.desktopAiLabels=@json(__('ai_dashboard'));</script>
     <script src="/assets/desktop-workspaces.js?v=7" defer></script>
     <script src="/assets/public-pwa.js?v=1" defer></script>
     <script src="/assets/desktop-workspace-content.js?v=4" defer></script>
-    <script src="/assets/desktop-ai-dashboard.js?v=1" defer></script>
+    <script src="/assets/desktop-ai-dashboard.js?v=2" defer></script>
     <script src="/assets/desktop-catalogs.js?v=3" defer></script>
     <script src="/assets/desktop-subscriber-import.js?v=1" defer></script>
     <script src="/assets/desktop-ai-proposal.js?v=1" defer></script>
@@ -213,6 +213,7 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <button class="os-start-button" type="button" data-start-button aria-expanded="false"><img src="/assets/brand/owner/logo-mark.png" alt=""><span>Start</span></button>
     <div class="os-running-apps" data-running-apps></div>
     <button class="os-close-all" type="button" data-close-all title="{{ __('ui.close_all_windows') }}" aria-label="{{ __('ui.close_all_windows') }}"><b aria-hidden="true">×</b><span>{{ __('ui.close_all_windows') }}</span></button>
+    <button class="os-ai-chat" type="button" data-ai-chat title="{{ __('ai_dashboard.request') }}" aria-label="{{ __('ai_dashboard.request') }}">✦</button>
     <time data-clock></time>
 </footer>
 </body>
