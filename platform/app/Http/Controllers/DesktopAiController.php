@@ -22,8 +22,8 @@ class DesktopAiController extends Controller
         if(!empty($data['status']))$query->where('status',$data['status']);
         if(!empty($data['purpose']))$query->where('purpose',$data['purpose']);
         $base=DesktopAiRequest::where('user_id',$request->user()->id);$today=(clone $base)->whereDate('created_at',now()->toDateString());
-        $stats=['total'=>(clone $base)->count(),'today'=>$today->count(),'completed'=>(clone $base)->where('status','completed')->count(),'failed'=>(clone $base)->where('status','failed')->count(),'active'=>(clone $base)->whereIn('status',['queued','processing'])->count(),'tokens'=>(int)((clone $base)->sum('total_tokens')),'cost_micros'=>(clone $base)->sum('estimated_cost_micros'),'cost_known'=>(clone $base)->whereNotNull('estimated_cost_micros')->exists()];
-        return response()->json(['requests'=>$query->latest()->paginate(20)->through(function($entry){$entry->setAttribute('proposal_version',$entry->proposalVersion());return $entry;}),'stats'=>$stats,'knowledge'=>['entries'=>count(app(\App\Services\AdminKnowledgeBase::class)->entries())],'available'=>app(ContentShortDescriptions::class)->available(),'model'=>app(Settings::class)->get('ai_model')]);
+        $stats=['total'=>(clone $base)->count(),'today'=>$today->count(),'completed'=>(clone $base)->where('status','completed')->count(),'failed'=>(clone $base)->where('status','failed')->count(),'active'=>(clone $base)->whereIn('status',['queued','processing'])->count(),'tokens'=>(int)((clone $base)->sum('total_tokens')),'cost_micros'=>null,'cost_known'=>false];
+        return response()->json(['requests'=>$query->latest()->paginate(20)->through(function($entry){$entry->setAttribute('proposal_version',$entry->proposalVersion());$entry->setAttribute('estimated_cost_micros',null);return $entry;}),'stats'=>$stats,'knowledge'=>['entries'=>count(app(\App\Services\AdminKnowledgeBase::class)->entries())],'available'=>app(ContentShortDescriptions::class)->available(),'model'=>app(Settings::class)->get('ai_model')]);
     }
     public function store(Request $request, DesktopAi $service)
     {
