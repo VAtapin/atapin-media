@@ -40,7 +40,7 @@
 - Video catalog refinement: card columns are compact enough for three videos in the split view, card/list switching reuses the loaded page without a second request, list thumbnails no longer overlap text, and available local video files can play inline from the catalog.
 - Content library editor flow: Videos, Beiträge and Podcast catalogs now use the full window without a right-hand editor; selecting an item, creating new content or opening series launches a separate editor window. Generic CRUD catalogs keep the same separate-window pattern, and embedded Media Library content uses the same editor flow.
 - KI-Dashboard: the former editable AI request CRUD is replaced by a read-only usage dashboard with request/status/token metrics, searchable history, a top-level AI request form and a safe admin knowledge-base assistant covering current Media Desktop windows and workflows. OpenAI Responses usage is stored per admin request; token facts are kept without manually entered tariff values.
-- PDF- и KI-интерфейс: загрузка книги запускает анализ в фоне, окно можно закрыть, по завершении появляется уведомление с переходом к проверке; во время анализа поля недоступны для пустого сохранения, удаление карточек получает явную остановку события. Окно помощника называется «Hilfe», содержит одну кнопку закрытия и видимую «Senden»; лимиты и ручные поля цен удалены из настроек.
+- PDF- и KI-интерфейс: загрузка книги запускает анализ в фоне, окно можно закрыть, по завершении появляется уведомление с переходом к проверке; во время анализа поля недоступны для пустого сохранения, удаление карточек получает явную остановку события. Окно помощника называется «Hilfe», содержит одну кнопку закрытия и контрастную видимую «Senden» даже в глобальном модальном окне; лимиты и ручные поля цен удалены из настроек.
 
 ## Важные решения
 
@@ -91,6 +91,7 @@
 - Imported text structure review: node --check platform/public/assets/desktop-content-assignment.js and git diff --check passed. Laravel Feature/Blade/browser checks were not run because PHP 8.4 and a local preview server are unavailable in this Windows session.
 - Public topic filters: git diff --check passed. Public Laravel Feature/Blade checks were not run because PHP 8.4 is unavailable in this Windows session.
 - Public overview refinement: `git diff --check` passed. PHP feature tests, Blade compilation and browser screenshots were not run because PHP 8.4 and a local preview server are unavailable in this Windows session.
+- Help dialog contrast: `node --check platform/public/assets/desktop-ai-dashboard.js` and `git diff --check` passed. PHP/Blade/browser checks were not run because PHP 8.4 and a local preview server are unavailable in this Windows session.
 
 ## Что рекомендуется следующим
 
@@ -103,7 +104,7 @@
 
 ## Последний связанный commit
 
-- Текущий функциональный блок: `a1ab189` — Hide manual AI cost estimates. Branch/upstream: main → origin/main.
+- Текущий функциональный блок: `91ae83d` — Fix help dialog button contrast. Branch/upstream: main → origin/main.
 
 - Предыдущий функциональный блок: `034b2cd` — Turn Publishing into external registry.
 
