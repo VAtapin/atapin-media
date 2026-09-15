@@ -96,7 +96,7 @@
 
 ## Последний связанный commit
 
-- Текущий функциональный блок: `8c61f79` — Expand public content overviews and about page. Branch/upstream: main → origin/main.
+- Текущий функциональный блок: `6d6ed54` — Fix PDF analysis parse error. Branch/upstream: main → origin/main.
 
 - Предыдущий функциональный блок: `034b2cd` — Turn Publishing into external registry.
 
