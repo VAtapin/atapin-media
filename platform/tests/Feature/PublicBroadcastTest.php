@@ -4,6 +4,7 @@ use App\Models\{SourceRecord,Media,User};
 use App\Services\{PublicBroadcast,Settings};
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Carbon;
 use Tests\TestCase;
 class PublicBroadcastTest extends TestCase
@@ -134,9 +135,9 @@ class PublicBroadcastTest extends TestCase
     }
     public function test_completed_recordings_are_moved_to_public_media_once_and_linked(): void
     {
-        Storage::fake('live-recordings');$event=$this->event();$path='live-'.$event->id;
+        Storage::fake('live-recordings');Queue::fake();$event=$this->event();$path='live-'.$event->id;
         Storage::disk('live-recordings')->put($path.'/segment.mp4','completed recording');$file=Storage::disk('live-recordings')->path($path.'/segment.mp4');
-        $broadcast=app(PublicBroadcast::class);$broadcast->recording($path,$file);$broadcast->recording($path,$file);
+        $broadcast=app(PublicBroadcast::class);$broadcast->recording($path,$file);$broadcast->recording($path,$file);Queue::assertPushed(\App\Jobs\ProbeMedia::class);
         $this->assertSame(1,Media::count());$this->assertSame([Media::first()->id],$event->fresh()->metadata['media_ids']);$this->assertFileDoesNotExist($file);
         $this->assertSame('media-canonical',Media::first()->disk);
         $this->assertFileExists(Storage::disk('media-canonical')->path(Media::first()->path));

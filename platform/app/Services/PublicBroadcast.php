@@ -88,17 +88,28 @@ class PublicBroadcast
             if(str_starts_with($relative,$path.'/') && Media::where('source','live')->where('source_id',hash('sha256',$relative))->exists())return;
         }
         $resolved=\App\Services\Importing\ImportPath::resolve($root,$file);
-        if(!is_file($resolved)||is_link($file)||strtolower(pathinfo($resolved,PATHINFO_EXTENSION))!=='mp4')throw new \RuntimeException('Invalid completed recording.');
+        if(!is_file($resolved)||(is_link($file)||is_link($resolved))||strtolower(pathinfo($resolved,PATHINFO_EXTENSION))!=='mp4')throw new \RuntimeException('Invalid completed recording.');
         $relative=str_replace('\\','/',substr($resolved,strlen(rtrim(realpath($root),'/\\'))+1));
         if(!str_starts_with($relative,$path.'/'))throw new \RuntimeException('Recording belongs to another stream.');
-        $stored=app(CanonicalMediaStorage::class)->storePath($resolved,'video/mp4');
-        $media = DB::transaction(function()use($record,$stored,$relative){
-            $record=SourceRecord::lockForUpdate()->findOrFail($record->id);
-            $media=app(\App\Services\Importing\ImportedMediaRegistry::class)->register(['source'=>'live','source_id'=>hash('sha256',$relative),'disk'=>$stored['disk'],'path'=>$stored['path'],'sha256'=>$stored['sha256'],'kind'=>'video','mime'=>'video/mp4','bytes'=>$stored['bytes'],'title'=>$record->title,'original_name'=>$stored['filename'],'status'=>'unsorted','metadata'=>['live_record_id'=>$record->id]]);
-            $record->update(['metadata'=>[...$record->metadata,'media_ids'=>array_values(array_unique([...($record->metadata['media_ids']??[]),$media->id]))]]);
-            return $media;
-        });
-        unlink($resolved);
+        $prepared=app(LiveRecordingRemuxer::class)->prepare($resolved);
+        $source=$prepared['path'];
+        try {
+            $stored=app(CanonicalMediaStorage::class)->storePath($source,'video/mp4');
+            $media = DB::transaction(function()use($record,$stored,$relative,$prepared){
+                $record=SourceRecord::lockForUpdate()->findOrFail($record->id);
+                $media=app(\App\Services\Importing\ImportedMediaRegistry::class)->register(['source'=>'live','source_id'=>hash('sha256',$relative),'disk'=>$stored['disk'],'path'=>$stored['path'],'sha256'=>$stored['sha256'],'kind'=>'video','mime'=>'video/mp4','bytes'=>$stored['bytes'],'title'=>$record->title,'original_name'=>$stored['filename'],'status'=>'unsorted','metadata'=>['live_record_id'=>$record->id,'live_remux_status'=>$prepared['status']]]);
+                $record->update(['metadata'=>[...$record->metadata,'media_ids'=>array_values(array_unique([...($record->metadata['media_ids']??[]),$media->id]))]]);
+                return $media;
+            });
+            dispatch(new \App\Jobs\ProbeMedia($media->id))->afterCommit();
+        } finally {
+            if ($source!==$resolved && is_file($source)) @unlink($source);
+        }
+        if (is_file($resolved)) @unlink($resolved);
+    }
+    public function queueRecording(string $path,string $file): void
+    {
+        dispatch(new \App\Jobs\ProcessLiveRecording($path,$file));
     }
     public function configuration(): string
     {

@@ -8,7 +8,7 @@ $broadcast=$app->make(App\Services\PublicBroadcast::class);
 try {
     $path=getenv('MTX_PATH')?:'';
     if(($argv[1]??'')==='browser')$app->make(App\Services\BrowserLiveRelay::class)->run($path);
-    elseif(($argv[1]??'')==='recording')$broadcast->recording($path,getenv('MTX_SEGMENT_PATH')?:'');
+    elseif(($argv[1]??'')==='recording')$broadcast->queueRecording($path,getenv('MTX_SEGMENT_PATH')?:'');
     elseif(in_array($argv[1]??'',['ready','ended'],true)) {
         $record = $broadcast->record($path);
         $broadcast->signal($path,$argv[1]==='ready');
