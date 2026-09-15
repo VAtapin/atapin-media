@@ -70,7 +70,7 @@ class DesktopWorkspacesTest extends TestCase
     {
         app(Settings::class)->update(['system_timezone'=>'Europe/Berlin']);$record=$this->record();
         $this->postJson('/desktop/planning',['record_id'=>$record->id,'publish_at'=>now()->addDays(10)->format('Y-m-d').'T10:30','providers'=>['website']])->assertOk();
-        $schedule=PublicationSchedule::firstOrFail();$date=now()->addDays(10)->toDateString();$this->getJson('/desktop/planning?start='.$date.'&end='.$date)->assertOk()->assertJsonPath('data.0.time','10:30')->assertJsonPath('timezone','Europe/Berlin');
+        $schedule=PublicationSchedule::firstOrFail();$date=now()->addDays(10)->toDateString();$this->getJson('/desktop/planning?start='.$date.'&end='.$date)->assertOk()->assertJsonPath('data.0.time','10:30')->assertJsonPath('data.0.type','publication')->assertJsonPath('timezone','Europe/Berlin')->assertJsonPath('limited',false);
         $this->actingAs($this->user());$this->getJson('/desktop/planning?start='.$date.'&end='.$date)->assertForbidden();
     }
     public function test_pdf_editions_are_real_private_files_and_paid_assets_stay_hidden(): void
