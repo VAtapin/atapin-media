@@ -15,7 +15,7 @@
 - Редакторы Beiträge/Videos и Media Library открывают рабочую форму первой: длинный дубль текста/предпросмотра убран сверху, сведения об источнике и файлах свернуты ниже, селекты собраны в адаптивную сетку, темы остаются у основных полей. `Mit KI einordnen` сохранена с пояснением. У привязанного файла убрана отдельная кнопка `Ersetzen`; выбор существующего материала теперь не загружает полный архив и требует адресный поиск от двух символов.
 - Сохранённые импорт-версии показывают дату и удаляются по одной красным крестом после подтверждения. Удаление требует `content.edit` (для опубликованной записи также `content.publish`), записывается в audit и не меняет текущий `SourceRecord` или оригинальные медиафайлы.
 - Podcast создаётся и редактируется inline поверх существующих `SourceRecord`, `Media`, assignments/assets. Поддержаны audio/video podcast, cover/file, episode/season, историческая дата публикации и явный переход к Publishing для будущего расписания.
-- Live Studio имеет явные OBS и Browser modes, responsive 30/70 layout, существующий Browser Studio/WHIP/recording pipeline и связанную OBS-Hilfe. Неподдерживаемая фиктивная Facebook Live-трансляция не добавлялась.
+- Live Studio имеет явные OBS и Browser modes, responsive 30/70 layout, существующий Browser Studio/WHIP/recording pipeline и связанную OBS-Hilfe. В Browser mode превью уменьшено до компактной панели и по кнопке открывается отдельным окном; устройства, изображение/экран, аудиозапись и трансляция сгруппированы, запуск выделен красным. Неподдерживаемая фиктивная Facebook Live-трансляция не добавлялась.
 - Настройки разделены по назначению: KI cover-настройки находятся в `KI → Bilder & Cover`, а `Website & Autor` содержит данные автора и website sayings.
 - Stripe получил отдельную Test/Live-конфигурацию, encrypted secrets, точный webhook URL, read-only `/v1/account` check и расширенные Checkout metadata для цифровых PDF. Подписанный webhook, amount/currency checks, refund и entitlement flow сохранены. Физическая доставка не добавлена, потому что текущий каталог продаёт цифровые файлы.
 - Meta OAuth реализован через App ID/Secret, state, short-to-long token exchange, обязательные scopes, выбор Facebook Page и связанный Instagram professional account. Page token хранится encrypted один раз; check проверяет app/page permissions и Instagram, disconnect удаляет credentials.
@@ -32,6 +32,7 @@
 - Rich-text HTML при сохранении и публичном выводе проходит общий `RichContent` sanitizer: разрешены редакционные заголовки, списки, цитаты, таблицы, безопасные ссылки и ограниченное выравнивание. Скрипты, event-атрибуты, iframe и произвольные стили не допускаются. Jodit подключён как локальный статический vendor asset с MIT license; Composer/npm dependencies и схема БД не менялись.
 - Обложка категории на главной выводится только из публичного canonical image storage; private media-preview URL не попадает в публичную страницу. Если обложка не загружена, используется нейтральный синий фон. При единственной категории её темы располагаются рядом с изображением на desktop и под ним на mobile.
 - Удаление импорт-версии касается только выбранной строки snapshot. Следующий повторный импорт того же источника может создать эту версию заново; подавление повторного импорта удалённых snapshot не добавлялось без отдельного решения по provenance.
+- Отдельное окно Browser Studio показывает беззвучную локальную копию canvas, без второго публичного плеера или отдельной передачи. Поле WebRTC hostname подставляет hostname текущей страницы, если серверное значение пусто, и объясняет требуемый формат; недоступность защищённого MediaMTX API показана отдельно от поля.
 
 ## Известные ограничения
 
@@ -42,16 +43,19 @@
 - Вставка изображений непосредственно в rich-text пока отключена: её следует добавить отдельным блоком через защищённую Media Library и проверку public media URLs; arbitrary URL/base64 images не допускаются.
 - Старый тест `DesktopWorkspacesTest::test_calendar_uses_local_time_and_respects_access` после перехода локальной даты воспроизводимо получает `null` вместо `10:30`; он не связан с taxonomy, но требует отдельной стабилизации календарного теста/границы timezone.
 - Полный Playwright-сценарий приложения локально не завершился: Chrome/Edge не переходили на `127.0.0.1` из этой среды, хотя тестовый PHP-сервер отвечал. Сквозные проверки остаются в CI; изолированные браузерные проверки этого блока прошли.
+- Состояние MediaMTX API и одноразовой конфигурации на production не подтверждено; надпись `Server-API nicht erreichbar` требует проверки Live-сервера и его защищённого локального API на Plesk, а не только ввода hostname.
 
 ## Проверки
 
 - Полный локальный PHP suite на PHP 8.4 / SQLite без указанного старого календарного теста: **459 tests, 3716 assertions — passed**. Этот тест не заявлен как прошедший.
 - Изолированные Chrome browser checks: форма Beiträge/Media Library и сетка селектов на `1672 × 941` и `390 × 844`, положение Jodit/taxonomy/действий с файлами, адресный поиск и индивидуальное удаление импорт-версий — passed. Сквозные проверки обновлены в CI, но локально не прошли по ограничению браузерного localhost.
 - PHP/Node syntax затронутых файлов, Blade `view:cache`, routes `route:cache` — passed; generated caches очищены. Composer audit и npm build не требуются: manifest dependencies не менялись.
+- Для Browser Studio изолированный Edge browser check на `1672 × 941` и `390 × 844` прошёл: группы, размеры превью, компактная красная кнопка, отдельное окно с локальным canvas-потоком, hostname/help и отсутствие horizontal overflow. PHP/Node syntax и Blade `view:cache` прошли, compiled views очищены. PHP Feature/реальный MediaMTX transport для этого блока локально не запускались: установленный PHP 8.4 не имеет `pdo_sqlite`, а pinned MediaMTX binary здесь отсутствует; проверка Browser Studio добавлена в CI.
 
 ## Что рекомендуется следующим
 
-- Получить Desktop/Import commit на production, очистить cached routes и compiled Blade views; затем выполнить документированный `platform:check`. Migrations, Composer и Node build для этого блока не нужны.
+- Применить Live Studio UI commit на production обычным `git pull --ff-only` и очистить compiled Blade views; после фактического deployment выполнить документированный `platform:check`. Migrations, Composer и Node build для UI-блока не нужны.
+- Проверить состояние MediaMTX и защищённого API на Plesk перед Browser broadcast; после подтверждения одноразовой серверной настройки указать публичный DNS hostname (для текущего домена `mannavomhimmel.de`) без протокола и порта и пройти реальный smoke-test трансляции.
 - При следующем запуске CI проверить обновлённые сквозные браузерные сценарии на штатном Linux/Chromium окружении.
 - Отдельно спроектировать защищённый выбор изображений из Media Library для Jodit, если изображения в тексте нужны владельцу.
 - В настройках по очереди сохранить app credentials и пройти реальные OAuth/API checks Meta, YouTube, X, Telegram и Stripe test mode. Секреты в чат не присылать.
@@ -59,5 +63,5 @@
 
 ## Последний связанный commit
 
-- Текущий функциональный блок: этот commit — `Streamline desktop content editing and import versions`. Branch/upstream: `main` → `origin/main`.
-- Предыдущий функциональный commit: `70cde4a` — `Show category covers with grouped home topics`.
+- Текущий функциональный блок: этот commit — `Compact Browser Studio controls and preview`. Branch/upstream: `main` → `origin/main`.
+- Предыдущий функциональный commit: `89d2272` — `Streamline desktop content editing and import versions`.

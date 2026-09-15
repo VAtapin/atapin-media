@@ -155,6 +155,7 @@ jobs:
           touch /tmp/desktop-workspaces-live-ci.sqlite
           php artisan migrate --force
           php tests/browser-live-fixture.php
+          timeout 90 node tests/browser-live-layout-browser.mjs
           timeout 150 node tests/browser-live-browser.mjs
         env:
           APP_ENV: testing
