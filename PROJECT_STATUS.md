@@ -65,6 +65,8 @@
 
 ## Проверки
 
+- PHP 8.4 compatibility: исправлен запрещённый в PHP 8.4 непарентезированный вложенный ternary в `OpenAiProvider`; `php -l` и полный `DesktopWorkspacesTest` проходят в локальном PHP 8.4.25 / SQLite.
+
 - Catalog deletion actions: shared CRUD editors now expose a confirmation-protected Delete action for projects, books and topics/categories; related tasks/materials/files remain intact where deletion is supported. node --check desktop-workspaces.js and git diff --check passed; Laravel tests remain unavailable because PHP 8.4 is not installed in this Windows session.
 
 - Current catalog redesign и исправление PDF intake job: node --check для desktop-workspaces.js, desktop-catalogs.js и desktop-os.js, а также git diff --check прошли. Исправлен production ParseError в AnalyzeBookPdf::state(), вызванный несогласованными скобками в обновлении metadata. Feature/Blade/route checks не запущены из-за отсутствия PHP 8.4 и локального preview-сервера; добавленный test покрывает project/topic image upload и queued PDF intake.
@@ -104,7 +106,9 @@
 
 ## Последний связанный commit
 
-- Текущий функциональный блок: `91ae83d` — Fix help dialog button contrast. Branch/upstream: main → origin/main.
+- Текущий функциональный блок: этот commit — Fix PHP 8.4 AI provider syntax. Branch/upstream: main → origin/main.
+
+- Предыдущий функциональный блок: `91ae83d` — Fix help dialog button contrast. Branch/upstream: main → origin/main.
 
 - Предыдущий функциональный блок: `034b2cd` — Turn Publishing into external registry.
 
