@@ -37,6 +37,7 @@
 - Video catalog cleanup: the Videos window now has separated primary/advanced filters and actions, a persistent cards/list switch, and card thumbnails from linked media covers; the existing post/podcast table mode remains unchanged.
 - Video catalog refinement: card columns are compact enough for three videos in the split view, card/list switching reuses the loaded page without a second request, list thumbnails no longer overlap text, and available local video files can play inline from the catalog.
 - Content library editor flow: Videos, Beiträge and Podcast catalogs now use the full window without a right-hand editor; selecting an item, creating new content or opening series launches a separate editor window. Generic CRUD catalogs keep the same separate-window pattern, and embedded Media Library content uses the same editor flow.
+- KI-Dashboard: the former editable AI request CRUD is replaced by a read-only usage dashboard with request/status/token metrics, searchable history, a top-level AI request form and a safe admin knowledge-base assistant covering current Media Desktop windows and workflows. OpenAI Responses usage is stored per admin request; estimated costs are shown only when input/output prices are configured in KI settings.
 
 ## Важные решения
 

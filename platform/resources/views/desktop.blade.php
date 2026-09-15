@@ -15,7 +15,7 @@ $programs = [
     ['id'=>'topics','name'=>'Themen & Kategorien','icon'=>'Bilder'],
     ['id'=>'publishing','name'=>'Publishing','icon'=>'Publishing'],
     ['id'=>'shop','name'=>'Shop & Verkäufe','icon'=>'Dateien'],
-    ['id'=>'ai-assistant','name'=>'KI-Assistent','icon'=>'KI-Assistent'],
+    ['id'=>'ai-assistant','name'=>'KI-Dashboard','icon'=>'KI-Assistent'],
     ['id'=>'analytics','name'=>'Analytics','icon'=>'Analytics'],
     ['id'=>'imports','name'=>'Import Center','icon'=>'ImportCenter'],
     ['id'=>'integrations','name'=>'Integrationen','icon'=>'Integrationen'],
@@ -44,10 +44,11 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <link rel="stylesheet" href="/assets/desktop-app.css?v=2"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=11"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=3"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=3"><link rel="stylesheet" href="/assets/desktop-community.css?v=3"><link rel="stylesheet" href="/assets/desktop-publishing.css?v=4">
     <link rel="stylesheet" href="/assets/desktop-workspaces.css?v=6">
     <link rel="stylesheet" href="/assets/desktop-overview.css?v=2">
-    <script>window.desktopWorkspaceLabels=@json(__('workspaces'));</script>
+    <script>window.desktopWorkspaceLabels=@json(__('workspaces')); window.desktopAiLabels=@json(__('ai_dashboard'));</script>
     <script src="/assets/desktop-workspaces.js?v=6" defer></script>
     <script src="/assets/public-pwa.js?v=1" defer></script>
     <script src="/assets/desktop-workspace-content.js?v=4" defer></script>
+    <script src="/assets/desktop-ai-dashboard.js?v=1" defer></script>
     <script src="/assets/desktop-catalogs.js?v=2" defer></script>
     <script src="/assets/desktop-subscriber-import.js?v=1" defer></script>
     <script src="/assets/desktop-ai-proposal.js?v=1" defer></script>

@@ -65,6 +65,8 @@
                 <label class="desktop-settings-check"><input type="checkbox" name="ai_auto_classify" value="1" @checked(old('ai_auto_classify',$settings['ai_auto_classify'] ?? true))><span>{{ __('imports.ai_auto') }}</span></label>
                 <label class="desktop-settings-check"><input type="checkbox" name="ai_chat_enabled" value="1" @checked($settings['ai_chat_enabled']??false)><span>{{ __('public.ai_chat_enable') }}</span></label>
                 <label>{{ __('public.ai_chat_daily_limit') }}<input type="number" name="ai_chat_daily_limit" min="0" max="1000" value="{{ $settings['ai_chat_daily_limit']??20 }}"></label>
+                <div class="desktop-settings-grid two"><label>{{ __('ui.ai_input_price') }}<input type="number" name="ai_input_price_per_million_usd" min="0" max="100000" step="0.000001" value="{{ $settings['ai_input_price_per_million_usd']??'' }}"></label><label>{{ __('ui.ai_output_price') }}<input type="number" name="ai_output_price_per_million_usd" min="0" max="100000" step="0.000001" value="{{ $settings['ai_output_price_per_million_usd']??'' }}"></label></div>
+                <small>{{ __('ui.ai_price_hint') }}</small>
                 <label class="desktop-settings-check"><input type="checkbox" name="ai_enabled" value="1" @checked(old('ai_enabled',$settings['ai_enabled'] ?? false))><span>{{ __('ui.enable_ai') }}</span></label><div class="desktop-settings-actions"><button class="desktop-settings-primary" data-settings-save>{{ __('ui.save') }}</button></div>
             </form>
         </section>

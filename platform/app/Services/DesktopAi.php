@@ -27,6 +27,14 @@ class DesktopAi
     {
         if (!app(ContentShortDescriptions::class)->available()) throw new \RuntimeException('AI disabled.');
         $record = $entry->record;$product=$entry->product;
+        if ($entry->purpose === 'admin_help') {
+            return app(\App\Contracts\AiProviderInterface::class)->suggest([
+                'purpose'=>'admin_help',
+                'question'=>$entry->question,
+                'locale'=>$entry->context['locale']??app()->getLocale(),
+                'knowledge_base'=>app(AdminKnowledgeBase::class)->context($entry->question),
+            ]);
+        }
         if($entry->source_version&&!$record&&!$product)throw new \RuntimeException('Source no longer exists.');
         if($entry->source_record_id&&!$record)throw new \RuntimeException('Source unavailable.');
         if($entry->product_id&&!$product)throw new \RuntimeException('Book unavailable.');

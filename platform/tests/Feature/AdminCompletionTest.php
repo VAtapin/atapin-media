@@ -164,6 +164,16 @@ class AdminCompletionTest extends TestCase
         $this->postJson('/desktop/assistant/'.$entry->id.'/apply')->assertOk();$this->assertSame('Manually adjusted',$record->fresh()->title);
         $this->patchJson('/desktop/assistant/'.$entry->id,['proposal'=>$proposal,'proposal_version'=>$new])->assertConflict();
     }
+    public function test_ai_dashboard_exposes_read_only_usage_and_admin_help_uses_the_knowledge_base(): void
+    {
+        app(Settings::class)->update(['ai_enabled'=>true,'ai_provider'=>'openai','ai_model'=>'test-model','ai_input_price_per_million_usd'=>1.0,'ai_output_price_per_million_usd'=>2.0]);app(Settings::class)->updateSecrets(['ai_api_key'=>'test-not-real']);
+        DesktopAiRequest::create(['user_id'=>$this->owner->id,'purpose'=>'structure','question'=>'Format imported text','status'=>'failed','answer'=>null]);
+        $this->getJson('/desktop/assistant')->assertOk()->assertJsonPath('stats.total',1)->assertJsonPath('stats.failed',1)->assertJsonPath('knowledge.entries',19);
+        $id=$this->postJson('/desktop/assistant',['purpose'=>'admin_help','question'=>'Wie veröffentliche ich einen Beitrag?'])->assertAccepted()->json('id');
+        Http::fake(['api.openai.com/*'=>Http::response(['status'=>'completed','usage'=>['input_tokens'=>1000,'output_tokens'=>500,'total_tokens'=>1500],'output'=>[['content'=>[['type'=>'output_text','text'=>json_encode(['answer'=>'Öffne Beiträge und starte die Veröffentlichung am Material.','title'=>'','short_description'=>'','seo_title'=>'','seo_description'=>'','social_text'=>''])]]]]])]);
+        (new \App\Jobs\AnswerDesktopAi($id))->handle(app(DesktopAi::class));
+        $entry=DesktopAiRequest::findOrFail($id);$this->assertSame('completed',$entry->status);$this->assertSame(1500,$entry->total_tokens);$this->assertSame(2,$entry->estimated_cost_micros);Http::assertSent(fn($r)=>str_contains($r['input'],'Publishing')&&str_contains($r['input'],'knowledge_base'));
+    }
     public function test_poll_admin_counts_multiple_and_legacy_votes_without_returning_voters(): void
     {
         $id=$this->postJson('/desktop/polls',$this->pollData(['multiple'=>true]))->assertOk()->json('id');

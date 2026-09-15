@@ -28,7 +28,7 @@ return [
     'desktop_density' => 'Abstand und Größe', 'desktop_density_comfortable' => 'Komfortabel', 'desktop_density_compact' => 'Kompakt',
     'desktop_shortcut_layout' => 'Anordnung der Verknüpfungen', 'desktop_shortcut_layout_free' => 'Frei verschiebbar', 'desktop_shortcut_layout_grid' => 'Am Raster ausrichten',
     'desktop_effects' => 'Visuelle Desktop-Effekte aktivieren', 'reset_standard_wallpaper' => 'Standardhintergrund wiederherstellen',
-    'ai_hint' => 'Anbieter, Modell und Zugriff für die KI-Funktionen.', 'provider' => 'Anbieter', 'model' => 'Modell', 'api_key' => 'API-Schlüssel',
+    'ai_hint' => 'Anbieter, Modell und Zugriff für die KI-Funktionen.', 'provider' => 'Anbieter', 'model' => 'Modell', 'api_key' => 'API-Schlüssel', 'ai_input_price' => 'Preis Eingabe / 1 Mio. Token (USD)', 'ai_output_price' => 'Preis Ausgabe / 1 Mio. Token (USD)', 'ai_price_hint' => 'Optional: Preise aus dem Vertrag des KI-Anbieters eintragen. Erst dann berechnet das Dashboard Kosten.',
     'secret_saved' => 'Gespeichert', 'leave_empty_to_keep' => 'Leer lassen, um den gespeicherten Wert beizubehalten', 'enable_ai' => 'KI-Funktionen aktivieren',
     'social_hint' => 'Konten und Zugangsdaten für veröffentlichte Kanäle. Zugangsdaten werden verschlüsselt gespeichert.',
     'publishing_hint' => 'Vorgaben für neue Veröffentlichungen und automatisierte Abläufe.', 'default_visibility' => 'Standard-Sichtbarkeit', 'default_timezone' => 'Standard-Zeitzone',

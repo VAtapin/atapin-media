@@ -21,7 +21,10 @@ class AnswerDesktopAi implements ShouldQueue
             if (!User::find($entry->user_id)?->hasPermission('content.edit')) throw new \RuntimeException('Permission revoked.');
             if ($entry->product_id && !User::find($entry->user_id)?->hasPermission('shop.manage')) throw new \RuntimeException('Book permission revoked.');
             $result = $service->answer($entry);
+            $usage = $result['_usage'] ?? [];
+            unset($result['_usage']);
             $entry->update(['status'=>'completed','answer'=>mb_substr($result['answer'],0,10000),'proposal'=>$result]);
+            app(\App\Services\AiUsage::class)->record($entry, is_array($usage) ? $usage : []);
             if ($entry->purpose === 'structure') app(ContentStructureReview::class)->apply($entry);
         } catch (\Throwable) {
             if ($entry->purpose === 'structure') app(ContentStructureReview::class)->markFailed($entry);
