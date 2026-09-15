@@ -63,6 +63,12 @@ class DesktopWorkspacesTest extends TestCase
         (new \App\Jobs\AnalyzeBookPdf($product->id,$media->id,$this->owner->id))->handle($analyzer,app(\App\Services\BookCatalog::class));
         $this->assertNotNull(Media::find($media->id));$this->assertSame('failed',$product->fresh()->metadata['book_pdf_ai']['status']);$this->assertSame('PDF contains no selectable text.',$product->fresh()->metadata['book_pdf_ai']['error']);
     }
+    public function test_pdf_analyzer_reports_missing_text_extractor(): void
+    {
+        config(['platform.media_pdftotext_binary'=>'atapin-missing-pdftotext']);
+        $this->expectException(\RuntimeException::class);$this->expectExceptionMessage('pdftotext is not installed');
+        app(\App\Services\BookPdfAnalyzer::class)->extract($this->pdf());
+    }
     public function test_pdf_analysis_keeps_extracted_text_when_ai_fails(): void
     {
         $product=$this->product(['contents'=>null,'metadata'=>['book_pdf_ai'=>['status'=>'queued']]]);$media=$this->pdf();$analyzer=\Mockery::mock(\App\Services\BookPdfAnalyzer::class);$analyzer->shouldReceive('extract')->once()->andReturn('Aus dem PDF erkannter Text.');$analyzer->shouldReceive('analyze')->once()->andThrow(new \RuntimeException('AI is not configured.'));
