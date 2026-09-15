@@ -10,7 +10,14 @@ if (App\Models\SourceRecord::where('source','public-visual-fixture')->exists()) 
     throw new RuntimeException('Fixture already exists; use a new isolated database.');
 }
 $paths=[];
-$category=App\Models\TaxonomyTerm::create(['kind'=>'category','name'=>'Glaube & Leben','slug'=>'glaube-leben','active'=>true]);
+$coverBytes=file_get_contents(public_path('assets/brand/owner/desktop/wallpapers/manna-mountains.png'));
+$coverPath=hash('sha256',$coverBytes).'.png';
+Illuminate\Support\Facades\Storage::disk('media-canonical')->put($coverPath,$coverBytes);
+$cover=App\Models\Media::create(['title'=>'Isoliertes Kategoriebild','original_name'=>'manna-mountains.png',
+    'kind'=>'image','mime'=>'image/png','bytes'=>strlen($coverBytes),'disk'=>'media-canonical','path'=>$coverPath,
+    'source'=>'public-visual-fixture','source_id'=>'category-cover']);
+$category=App\Models\TaxonomyTerm::create(['kind'=>'category','name'=>'Glaube & Leben','slug'=>'glaube-leben',
+    'active'=>true,'cover_media_id'=>$cover->id]);
 $topics=[
     App\Models\TaxonomyTerm::create(['kind'=>'topic','name'=>'Gebet','slug'=>'gebet','parent_id'=>$category->id,'active'=>true]),
     App\Models\TaxonomyTerm::create(['kind'=>'topic','name'=>'Hoffnung im Alltag','slug'=>'hoffnung-im-alltag','parent_id'=>$category->id,'active'=>true]),

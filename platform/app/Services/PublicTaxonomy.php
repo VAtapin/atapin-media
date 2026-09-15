@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\TaxonomyTerm;
+use App\Models\{Media, TaxonomyTerm};
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -69,26 +69,49 @@ class PublicTaxonomy
             fn (array $row) => $row['kind'] === 'topic',
         ));
 
-        return array_map(function (array $row) {
+        $topics = array_slice($topics, 0, max(1, $limit));
+        $categories = [];
+        foreach ($topics as $topic) $categories[$topic['id']] = $this->categoryForTopic($terms, (int) $topic['id']);
+        $coverIds = collect($categories)->filter()->pluck('cover_media_id')->filter()->unique()->all();
+        $covers = Media::visibleLibrary()->where('kind', 'image')->whereIn('id', $coverIds)->get()->keyBy('id');
+
+        return array_map(function (array $row) use ($categories, $covers) {
             $sections = [];
             foreach (self::HOME_SECTIONS as $section) $sections[$section] = $row['sections'][$section] ?? [
                 'count' => 0,
                 'url' => route('public.'.$section, ['taxonomy' => $row['slug']]),
             ];
+            $category = $categories[$row['id']];
             return [
                 'id' => $row['id'],
                 'slug' => $row['slug'],
                 'name' => $row['name'],
-                'parent_name' => $row['parent_name'],
+                'category_id' => $category?->id,
+                'category_name' => $category?->name,
+                'category_cover_url' => $category?->cover_media_id ? $covers->get($category->cover_media_id)?->publicUrl() : null,
                 'total' => $row['count'],
                 'sections' => $sections,
             ];
-        }, array_slice($topics, 0, max(1, $limit)));
+        }, $topics);
+    }
+
+    private function categoryForTopic(Collection $terms, int $topicId): ?TaxonomyTerm
+    {
+        $parentId = $terms->get($topicId)?->parent_id;
+        $seen = [];
+        while ($parentId && ! isset($seen[$parentId])) {
+            $seen[$parentId] = true;
+            $parent = $terms->get((int) $parentId);
+            if (! $parent) break;
+            if ($parent->kind === 'category') return $parent;
+            $parentId = $parent->parent_id;
+        }
+        return null;
     }
 
     private function activeTerms(): Collection
     {
-        return TaxonomyTerm::where('active', true)->orderBy('name')->get(['id', 'parent_id', 'name', 'slug', 'kind'])->keyBy('id');
+        return TaxonomyTerm::where('active', true)->orderBy('name')->get(['id', 'parent_id', 'name', 'slug', 'kind', 'cover_media_id'])->keyBy('id');
     }
 
     private function assignedSubjects(string $section, array $termIds): array

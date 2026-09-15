@@ -4,7 +4,8 @@ import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 
-const server=spawn(process.env.PHP_BINARY||'php',['-S','127.0.0.1:8795','-t','.','../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php'],{cwd:'public',stdio:'pipe'});
+const base='http://127.0.0.1:8795';
+const server=spawn(process.env.PHP_BINARY||'php',['-S','127.0.0.1:8795','-t','.','../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php'],{cwd:'public',stdio:'pipe',env:{...process.env,APP_URL:base}});
 let output='',browser;
 server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>output+=data);
 const detail=JSON.parse(process.env.PUBLIC_DETAIL_ROUTES||'{}');
@@ -38,9 +39,14 @@ try {
       assert(await page.locator('.public-header').isVisible(),route);
       assert.equal(await page.locator('main').count(),1,route);
       if(route==='/'&&await page.locator('[data-public-home-topics]').count()){
-        const cards=page.locator('.public-home-topic-card');
-        assert.equal(await cards.count(),2,'Home displays the two topic cards, not their parent category');
-        assert.equal(await cards.filter({has:page.getByRole('heading',{name:'Glaube & Leben',exact:true})}).count(),0,'Parent category rendered as a home topic card');
+        const categories=page.locator('.public-home-category-card'),topics=page.locator('.public-home-topic-card');
+        assert.equal(await categories.count(),1,'Home groups the two topics under one category');
+        assert.equal(await topics.count(),2,'Home displays both topics');
+        assert.equal(await page.locator('.public-home-category-cover').count(),1,'Home shows the category cover');
+        await page.locator('.public-home-category-cover img').scrollIntoViewIfNeeded();
+        await page.waitForFunction(()=>{const image=document.querySelector('.public-home-category-cover img');return image?.complete&&image.naturalWidth>0;});
+        assert.equal(await page.locator('.public-home-topics-heading').count(),0,'Home has no decorative headings or explanatory text');
+        assert(await categories.first().getByText('Glaube & Leben',{exact:true}).isVisible(),'Category name is visible');
         for(const link of await page.locator('.public-home-topic-card nav a').evaluateAll(nodes=>nodes.map(node=>new URL(node.href).pathname+new URL(node.href).search))){
           assert.match(link,/^\/(videos|beitraege|buecher)\?taxonomy=/,'Home topic links must open one explicit content section');
         }
