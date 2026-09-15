@@ -4,6 +4,15 @@
 @include('public.hero',['section'=>$section,'featured'=>null,'assets'=>collect(),'record'=>null,'poll'=>null])
 @endif
 <div class="public-page">
+@if($section==='ueber-uns')
+<section class="public-about-page" id="about-content">
+<div class="public-about-lead public-panel"><p class="public-eyebrow">{{ __('public.about_eyebrow') }}</p><h2>{{ __('public.about_intro_title') }}</h2><p>{{ __('public.about_intro') }}</p></div>
+@if(!empty($document))<div class="public-about-custom public-panel"><div class="public-document">{{ $document }}</div></div>@endif
+<div class="public-about-story public-panel"><p class="public-eyebrow">{{ __('public.about_story_eyebrow') }}</p><h2>{{ __('public.about_story_title') }}</h2><p>{{ __('public.about_story') }}</p></div>
+<div class="public-about-values"><div class="public-panel-heading"><h2>{{ __('public.about_values_title') }}</h2></div><div class="public-about-value-grid">@foreach(__('public.about_values') as $value)<article class="public-panel"><span class="public-about-value-mark" aria-hidden="true">◇</span><h3>{{ $value['title'] }}</h3><p>{{ $value['text'] }}</p></article>@endforeach</div></div>
+<div class="public-about-invitation public-panel"><h2>{{ __('public.about_invitation_title') }}</h2><p>{{ __('public.about_invitation') }}</p><nav class="public-hero-actions"><a class="public-button" href="/videos">{{ __('public.about_explore_videos') }} →</a><a class="public-button public-button-secondary" href="/beitraege">{{ __('public.about_explore_articles') }} →</a><a class="public-button public-button-secondary" href="/kontakt">{{ __('public.contact') }} →</a></nav></div>
+</section>
+@else
 @if(!in_array($section,['ueber-uns','unsere-mission'],true))<h1>{{ __('public.section_'.$section) }}</h1>@endif
 @if(in_array($section,['videos','beitraege','search']))
 <form class="public-catalog-search" method="get"><label for="catalog-q">{{ __('ui.search') }}</label><input id="catalog-q" type="search" name="q" maxlength="120" value="{{ request('q') }}"><button class="public-button">{{ __('ui.search') }}</button></form>
@@ -23,6 +32,7 @@
 @if(!empty($contactEmail))<p><a href="mailto:{{ $contactEmail }}">{{ $contactEmail }}</a></p>@endif
 @elseif(!empty($document))<div class="public-document">{{ $document }}</div>
 @else<p class="public-empty">{{ __('public.section_pending') }}</p>@endif
-@if(in_array($section,['ueber-uns','unsere-mission']))<nav class="public-hero-actions"><a class="public-button" href="{{ $section==='ueber-uns'?'/unsere-mission':'/ueber-uns' }}">{{ __('public.section_'.($section==='ueber-uns'?'unsere-mission':'ueber-uns')) }} →</a><a class="public-button public-button-secondary" href="/kontakt">{{ __('public.contact') }} →</a></nav>@endif
+@if(in_array($section,['unsere-mission']))<nav class="public-hero-actions"><a class="public-button" href="/ueber-uns">{{ __('public.section_ueber-uns') }} →</a><a class="public-button public-button-secondary" href="/kontakt">{{ __('public.contact') }} →</a></nav>@endif
+@endif
 </div>
 @endsection

@@ -11,7 +11,8 @@
 @include('public.cards',['heading'=>__('public.popular_videos'),'cards'=>$popular,'style'=>'video','panelClass'=>'public-ranked','listingUrl'=>'/videos?sort=popular'])</aside>
 <aside class="public-right-sidebar">
 @include('public.live-widget')
-@include('public.quote')</aside>
+@include('public.quote')
+@include('public.topics')</aside>
 <div class="public-overview-series">
 @include('public.series')</div>
 </div>

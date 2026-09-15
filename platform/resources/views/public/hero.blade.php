@@ -54,6 +54,8 @@ $emptyHint=match($section){
 </div>
 <span class="public-play" aria-label="{{ __('public.play') }}">▶</span>
 </a>
+@elseif($section==='ueber-uns')
+<div class="public-about-hero-note"><span class="public-feature-label">{{ __('public.about_eyebrow') }}</span><h2>{{ __('public.about_intro_title') }}</h2><p>{{ __('public.about_intro') }}</p><a class="public-feature-link" href="#about-content">{{ __('public.about_explore_articles') }} →</a></div>
 @elseif($section==='community')
 @include('public.poll',['poll'=>$poll])
 @elseif($section==='live' && ($record?->metadata['live_stream_enabled']??false) && ($record?->metadata['live_status']??null)==='live')

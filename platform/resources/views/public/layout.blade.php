@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/assets/fonts/fonts.css">
 <link rel="stylesheet" href="/assets/brand/ui-kit.css">
 <link rel="stylesheet" href="/assets/public.css">
-<link rel="stylesheet" href="/assets/public-pages.css?v=22">
+<link rel="stylesheet" href="/assets/public-pages.css?v=23">
 <script src="/assets/public.js?v=15" defer>
 </script>
 <script src="/assets/public-pwa.js?v=1" defer></script>

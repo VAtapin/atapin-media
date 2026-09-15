@@ -37,6 +37,13 @@ class PublicPagesTest extends TestCase
         $live=$this->record('video',['public_section'=>'live','live_status'=>'ended']);
         $this->get('/live?event='.$live->id)->assertOk()->assertSee('public-header-detail',false)->assertDontSee('public-overview-hero',false);
     }
+    public function test_about_page_and_catalog_density_use_real_public_sections(): void
+    {
+        for($i=1;$i<=10;$i++)$this->record('post',['title'=>'Public article '.$i]);
+        $response=$this->get('/beitraege');
+        $response->assertOk()->assertViewHas('items',fn($items)=>$items->perPage()===9)->assertViewHas('popular',fn($items)=>$items->count()===6);
+        $this->get('/ueber-uns')->assertOk()->assertSee(__('public.about_values_title'))->assertSee('public-about-value-grid',false);
+    }
     public function test_live_success_feedback_is_placed_in_chat_and_marked_for_auto_dismissal(): void
     {
         $live=$this->record('video',['public_section'=>'live','live_status'=>'ended']);

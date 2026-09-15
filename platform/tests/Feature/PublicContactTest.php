@@ -9,7 +9,7 @@ class PublicContactTest extends TestCase
     use RefreshDatabase;
     public function test_information_pages_use_localized_database_content_and_keep_empty_states(): void
     {
-        $this->get('/ueber-uns')->assertOk()->assertSee(__('public.section_pending'));
+        $this->get('/ueber-uns')->assertOk()->assertSee(__('public.about_intro_title'))->assertSee('public-about-page',false);
         app(Settings::class)->update(['legal_documents'=>['de'=>['about_text'=>'<p>Database about</p>','mission_text'=>'<p>Database mission</p>']]]);
         $this->get('/ueber-uns')->assertOk()->assertSee('Database about');
         $this->get('/unsere-mission')->assertOk()->assertSee('Database mission');

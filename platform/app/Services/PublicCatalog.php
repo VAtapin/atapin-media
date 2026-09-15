@@ -26,7 +26,7 @@ class PublicCatalog
         if($sort==='popular'&&$section!=='buecher')$query->orderByDesc('public_view_count');
         $query->orderBy('created_at',$sort==='oldest'?'asc':'desc')->orderByDesc('id');
         $mapper=$section==='buecher'?$this->books->card(...):$this->content->card(...);
-        $perPage=$section==='beitraege'?6:8;
+        $perPage=$section==='beitraege'?9:8;
         if($tagFilter&&$section!=='buecher'){
             $tagged=$query->get()->filter(fn($record)=>$this->hasTag($record,$tagFilter))->values();
             $page=new LengthAwarePaginator($tagged->forPage($request->integer('page',1),$perPage)->values(),$tagged->count(),$perPage,$request->integer('page',1),['path'=>$request->url(),'query'=>$request->query()]);
@@ -50,7 +50,7 @@ class PublicCatalog
         $resumeRecord=$resumeState?$this->content->forSection('podcast')->find($resumeState->subject_id):null;
         $sessionId=$request->hasSession()?$request->session()->getId():null;
         return ['items'=>$items,'featured'=>$featured,'readingBooks'=>$readingBooks,'resume'=>$resumeRecord?[...$this->content->card($resumeRecord),'position'=>$resumeState->value['position']??0]:null,
-            'popular'=>($section==='buecher'?$this->books->query()->latest():($section==='live'?$this->content->forSection('live')->where('metadata->live_status','ended')->latest():$this->content->withViewCounts($this->content->forSection($section))->orderByDesc('public_view_count')->latest()->orderByDesc('id')))->limit(5)->get()->map($mapper),
+            'popular'=>($section==='buecher'?$this->books->query()->latest():($section==='live'?$this->content->forSection('live')->where('metadata->live_status','ended')->latest():$this->content->withViewCounts($this->content->forSection($section))->orderByDesc('public_view_count')->latest()->orderByDesc('id')))->limit($section==='beitraege'?6:5)->get()->map($mapper),
             'topics'=>$this->topics($section),'series'=>$this->series($section),
             'record'=>$record,'assets'=>$record?$this->content->assets($record):collect(),
             'comments'=>$record?$this->content->childrenForViewer($record,'comment',$request->user(),$sessionId)->latest()->paginate(20,['*'],'comments_page')->withQueryString()->fragment('comments'):collect(),
