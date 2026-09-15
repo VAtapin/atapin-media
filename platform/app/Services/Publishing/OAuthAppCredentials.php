@@ -13,8 +13,8 @@ final class OAuthAppCredentials
     public function get(string $provider): array
     {
         return [
-            'client_id' => (string) ($this->settings->secret('oauth_'.$provider.'_client_id') ?? ''),
-            'client_secret' => (string) ($this->settings->secret('oauth_'.$provider.'_client_secret') ?? ''),
+            'client_id' => trim((string) ($this->settings->secret('oauth_'.$provider.'_client_id') ?? '')),
+            'client_secret' => trim((string) ($this->settings->secret('oauth_'.$provider.'_client_secret') ?? '')),
         ];
     }
 
@@ -28,8 +28,8 @@ final class OAuthAppCredentials
     {
         $values = [];
         foreach (['client_id', 'client_secret'] as $key) {
-            if (is_string($credentials[$key] ?? null) && $credentials[$key] !== '') {
-                $values['oauth_'.$provider.'_'.$key] = $credentials[$key];
+            if (is_string($credentials[$key] ?? null) && trim($credentials[$key]) !== '') {
+                $values['oauth_'.$provider.'_'.$key] = trim($credentials[$key]);
             }
         }
         if ($values) $this->settings->updateSecrets($values);

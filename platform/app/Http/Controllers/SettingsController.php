@@ -47,7 +47,16 @@ class SettingsController extends Controller
         $values = $request->validate($rules);
         if ($section === 'social') {
             app(\App\Services\Publishing\SocialConnections::class)->save($values, $settings);
-            if ($request->expectsJson()) return response()->json(['status' => 'saved', 'section' => $section, 'provider' => $values['provider']]);
+            if ($request->expectsJson()) {
+                $provider = $values['provider'];
+                $editor = app(\App\Services\Publishing\SocialConnections::class)->editor()[$provider];
+                return response()->json(['status' => 'saved', 'section' => $section, 'provider' => $provider,
+                    'connection_status' => $editor['status'], 'connection_status_label' => $editor['status_label'],
+                    'oauth_configured' => $editor['oauth_configured'],
+                    'oauth_client_id_saved' => $editor['oauth_client_id_saved'],
+                    'oauth_client_secret_saved' => $editor['oauth_client_secret_saved'],
+                    'oauth_client_secret_required' => $editor['oauth_client_secret_required']]);
+            }
             return back()->with('status', __('ui.saved'))->with('saved_section', $section);
         }
         if($section==='media_appearance') {
