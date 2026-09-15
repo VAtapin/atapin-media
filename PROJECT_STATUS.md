@@ -47,7 +47,7 @@
 
 ## Проверки
 
-- Для текущей правки `node --check` новых calendar/poll scripts и `git diff --check` прошли. Добавлены Feature-проверки staff vote и новой poll markup, а browser scenario проверяет month/week/list, семь дней недели и реальные проект/задачу. Локальный PHP 8.4 и Playwright в этой Windows-сессии недоступны из-за Application Control/отсутствующей browser dependency; полное выполнение этих тестов оставлено существующему CI.
+- Для текущей правки `node --check` новых calendar/poll scripts и `git diff --check` прошли. Добавлены Feature-проверки staff vote и новой poll markup, а browser scenario проверяет month/week/list, семь дней недели и реальные проект/задачу. GitHub CI run 34944703711 подтвердил PHP/shell syntax и полный SQLite feature suite; повторный MySQL suite завершился ошибкой до browser steps, но публичный GitHub не открыл текстовый job log без авторизации. Локальный PHP 8.4 и Playwright в этой Windows-сессии недоступны из-за Application Control/отсутствующей browser dependency.
 - Полный локальный suite PHP 8.4.25 / SQLite: **387 tests / 2906 assertions passed**. После последних Live изменений targeted BrowserLiveTest/PublicBroadcastTest: **22 passed**. New tests cover loopback/control auth, user/record/protocol/expiry/RBAC, confirmation/publication, encrypted WHIP resource/no secret exposure, input conflict, actual TLS OBS kick route, unpublished idempotent Podcast original usage, unsafe host rejection and private operational health endpoint. Generated default/browser configurations validated by actual MediaMTX 1.21.0.
 - Syntax затронутых PHP/JS passed; Blade view:cache и route:cache passed, локальные caches очищены. Dependencies не изменялись; Composer audit/Node production build не требовались.
 - Edge 1672×941 / 390×844: existing native-workspaces CRUD/Board/editor/series/inbox и admin-completion widgets/checklist/polls/private preview/document queue passed. Новый admin-review browser: timed task, dirty-safe manually edited AI apply, eight migration steps, unpublished review acceptance, Review filter/table/date, saved widget width and actual drag reorder passed. Desktop/mobile screenshots просмотрены; synthetic SQLite, без API/писем и без JS ошибок/HTTP >=400.
@@ -63,5 +63,5 @@
 ## Последний связанный commit
 
 - Предшествующий функциональный commit: `90d6b26` — Complete admin workflows and PWA foundation.
-- Последний связанный commit: `55a73fd` — Expand admin installation diagnostics. Branch/upstream: main → origin/main.
+- Последний функциональный commit: `1fe9375` — Redesign calendar and fix staff poll voting. Branch/upstream: main → origin/main.
 
