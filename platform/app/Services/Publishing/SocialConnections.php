@@ -34,11 +34,33 @@ class SocialConnections
 
     public function editor(): array
     {
-        return collect(self::definitions())->map(function ($definition, $provider) {
+        $connections = app(ConnectionStore::class);
+        $oauth = app(OAuthAppCredentials::class);
+
+        return collect(self::definitions())->map(function ($definition, $provider) use ($connections, $oauth) {
             $labels = [];
             foreach ($definition['fields'] as $field) $labels[$field] = __('social.'.$provider.'.'.$field);
+            $connection = $connections->connection($provider);
+            $connected = $connections->connected($provider);
+            $oauthCredentials = isset($definition['oauth']) ? $oauth->get($provider) : [];
+            $oauthSecretRequired = $provider !== 'x';
+            $oauthConfigured = isset($definition['oauth']) && $oauth->configured($provider, $oauthSecretRequired);
+            $hasConfiguration = isset($definition['oauth']) ? $oauthConfigured : collect($connection)
+                ->except(['provider', 'configured_at', 'revoked_at'])
+                ->contains(fn ($value) => $value !== null && $value !== '' && $value !== false);
+            $status = $connected ? 'connected' : (! empty($connection['revoked_at']) ? 'expired' : ($hasConfiguration ? 'configured' : 'not_configured'));
+
             return [...$definition, 'labels' => $labels, 'hint' => __('social.'.$provider.'.hint'),
-                'oauth_url' => isset($definition['oauth']) ? route($definition['oauth']) : null];
+                'oauth_url' => isset($definition['oauth']) ? route($definition['oauth']) : null,
+                'oauth_redirect_uri' => isset($definition['oauth']) ? route('desktop.publishing.'.$provider.'.callback') : null,
+                'oauth_configured' => $oauthConfigured,
+                'oauth_client_id_saved' => ($oauthCredentials['client_id'] ?? '') !== '',
+                'oauth_client_secret_saved' => ($oauthCredentials['client_secret'] ?? '') !== '',
+                'oauth_client_secret_required' => $oauthSecretRequired,
+                'connected' => $connected,
+                'status' => $status,
+                'status_label' => __('social.status_'.$status),
+            ];
         })->all();
     }
 
@@ -68,6 +90,11 @@ class SocialConnections
                 $rules[$key] = $hasToken ? 'nullable|string|max:4000' : 'required|string|max:4000';
             }
             if ($provider === 'telegram' && $request->boolean('mini_app_enabled')) $rules['bot_username'][0] = 'required';
+        }
+        if (in_array($provider, ['youtube', 'x'], true)) {
+            $stored = app(OAuthAppCredentials::class)->get($provider);
+            $rules['oauth_client_id'] = [Rule::requiredIf(($stored['client_id'] ?? '') === ''), 'nullable', 'string', 'max:4000'];
+            $rules['oauth_client_secret'] = [Rule::requiredIf($provider === 'youtube' && ($stored['client_secret'] ?? '') === ''), 'nullable', 'string', 'max:4000'];
         }
         return $rules;
     }

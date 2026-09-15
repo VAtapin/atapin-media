@@ -1,4 +1,5 @@
-<section class="desktop-settings" data-settings-app data-settings-direct data-active-section="desktop_design" data-connection-saved="{{ __('social.setup_saved') }}">
+@php($settingsNotice = session('desktop_error') ?: session('status'))
+<section class="desktop-settings" data-settings-app data-settings-direct data-active-section="{{ session('saved_section', 'desktop_design') }}" data-connection-saved="{{ __('social.setup_saved') }}" data-connection-copied="{{ __('social.copied') }}" data-connection-copy-failed="{{ __('social.copy_failed') }}" data-connection-requires-save="{{ __('social.connect_requires_save') }}">
     <aside class="desktop-settings-nav" aria-label="{{ __('ui.settings') }}">
         <button type="button" data-settings-tab="profile"><span aria-hidden="true">●</span>Mein Profil</button>
         @can('settings.manage')
@@ -23,7 +24,7 @@
 
     <div class="desktop-settings-workspace">
         @can('settings.manage')@include('desktop.media-appearance')@endcan
-        <div class="desktop-settings-notice" data-settings-notice hidden role="status"></div>
+        <div class="desktop-settings-notice {{ session('desktop_error') ? 'error' : 'success' }}" data-settings-notice @if(!$settingsNotice) hidden @endif role="status">{{ $settingsNotice }}</div>
 
         <section class="desktop-settings-panel" data-settings-panel="profile" hidden>
             <header class="desktop-settings-heading"><div><span>Konto</span><h2>Mein Profil</h2><p>Persönliche Angaben und Links. Diese Daten sind unabhängig von den offiziellen Kanälen des Projekts.</p></div></header>
@@ -76,7 +77,10 @@
             @php($socialConnections = $settings['social_connections'] ?? [])
             @php($socialEditor = app(\App\Services\Publishing\SocialConnections::class)->editor())
             <div class="desktop-settings-connection-list" data-connection-list="social">
-                @forelse($socialConnections as $connection)<button type="button" class="desktop-settings-connection" data-connection-open="social" data-provider="{{ $connection['provider'] }}" data-public-url="{{ $connection['public_url'] ?? '' }}" data-external-id="{{ $connection['external_id'] ?? '' }}" data-bot-username="{{ $connection['bot_username'] ?? '' }}" data-mini-app-enabled="{{ !empty($connection['mini_app_enabled']) ? '1' : '0' }}"><strong>{{ $socialEditor[$connection['provider']]['label'] ?? ucfirst($connection['provider']) }}</strong><span>{{ $connection['public_url'] ?? __('social.setup_saved') }}</span></button>@empty<p class="desktop-settings-empty">Noch kein soziales Netzwerk verbunden.</p>@endforelse
+                @forelse($socialConnections as $connection)
+                @php($connectionEditor = $socialEditor[$connection['provider']] ?? null)
+                <button type="button" class="desktop-settings-connection" data-connection-open="social" data-provider="{{ $connection['provider'] }}" data-public-url="{{ $connection['public_url'] ?? '' }}" data-external-id="{{ $connection['external_id'] ?? '' }}" data-bot-username="{{ $connection['bot_username'] ?? '' }}" data-mini-app-enabled="{{ !empty($connection['mini_app_enabled']) ? '1' : '0' }}"><strong>{{ $connectionEditor['label'] ?? ucfirst($connection['provider']) }}</strong><span>{{ $connectionEditor['status_label'] ?? __('social.status_not_configured') }}</span></button>
+                @empty<p class="desktop-settings-empty">Noch kein soziales Netzwerk eingerichtet.</p>@endforelse
             </div>
             <button type="button" class="desktop-settings-secondary desktop-settings-add" data-connection-add="social">Soziales Netzwerk hinzufügen</button>
             <form class="desktop-settings-form desktop-settings-connection-form" data-connection-form="social" data-social-definitions='@json($socialEditor)' method="post" action="{{ route('settings') }}" hidden>@csrf @method('PUT')<input type="hidden" name="section" value="social"><input type="hidden" name="provider" value="youtube">
@@ -86,6 +90,7 @@
                     <label data-provider-field="external_id"><span data-provider-label></span><input name="external_id" maxlength="255"></label>
                 </div>
                 <p data-connection-hint></p>
+                <label data-connection-redirect hidden><span>{{ __('social.redirect_uri') }}</span><div class="desktop-settings-copy"><input data-connection-redirect-uri readonly><button type="button" class="desktop-settings-secondary" data-connection-copy>{{ __('social.copy') }}</button></div><small>{{ __('social.redirect_uri_hint') }}</small></label>
                 <div class="desktop-settings-grid two">
                     <label data-provider-field="api_key"><span data-provider-label></span><input name="api_key" type="password" autocomplete="new-password" maxlength="4000" placeholder="{{ __('social.keep_secret') }}"></label>
                     <label data-provider-field="access_token"><span data-provider-label></span><input name="access_token" type="password" autocomplete="new-password" maxlength="4000" placeholder="{{ __('social.keep_secret') }}"></label>
@@ -94,7 +99,7 @@
                     <label data-provider-field="bot_username"><span data-provider-label></span><input name="bot_username" maxlength="32" pattern="[a-zA-Z][a-zA-Z0-9_]{4,31}"></label>
                     <div data-provider-field="mini_app_enabled"><label><input type="hidden" name="mini_app_enabled" value="0"><input type="checkbox" name="mini_app_enabled" value="1"><span data-provider-label></span></label><p>{{ __('social.mini_app_entry') }}: <a href="{{ route('home') }}" target="_blank" rel="noopener">{{ route('home') }}</a></p></div>
                 </div>
-                <div class="desktop-settings-actions"><a class="desktop-settings-secondary" data-connection-oauth hidden>{{ __('social.connect_oauth') }}</a><button class="desktop-settings-primary" data-settings-save>{{ __('ui.save') }}</button></div>
+                <div class="desktop-settings-actions"><a class="desktop-settings-secondary" data-connection-oauth hidden aria-disabled="true">{{ __('social.connect_oauth') }}</a><button class="desktop-settings-primary" data-settings-save>{{ __('ui.save') }}</button></div>
             </form>
         </section>
         @endcan

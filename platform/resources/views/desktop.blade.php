@@ -40,7 +40,7 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Desktop · {{ config('platform.brand') }}</title>
-    <link rel="icon" href="/favicon.png"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/brand/owner/app-icon.png"><meta name="theme-color" content="#8b6a3d"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=4"><link rel="stylesheet" href="/assets/desktop-windows.css?v=5"><link rel="stylesheet" href="/assets/desktop-settings.css?v=3">
+    <link rel="icon" href="/favicon.png"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/brand/owner/app-icon.png"><meta name="theme-color" content="#8b6a3d"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=4"><link rel="stylesheet" href="/assets/desktop-windows.css?v=5"><link rel="stylesheet" href="/assets/desktop-settings.css?v=4">
     <link rel="stylesheet" href="/assets/desktop-app.css?v=3"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=11"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=3"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=3"><link rel="stylesheet" href="/assets/desktop-community.css?v=3"><link rel="stylesheet" href="/assets/desktop-publishing.css?v=4">
     <link rel="stylesheet" href="/assets/desktop-workspaces.css?v=10">
     <link rel="stylesheet" href="/assets/desktop-overview.css?v=2">
@@ -66,7 +66,7 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <script src="/assets/desktop-editor-workflow.js?v=5" defer></script>
     <script src="/assets/desktop-shortcuts.js?v=3" defer></script>
     <link rel="stylesheet" href="/assets/desktop-import-workflow.css?v=3">
-    <script src="/assets/desktop-os.js?v=20" defer></script><script src="/assets/settings-tabs.js?v=7" defer></script><script src="/assets/desktop-media-library.js?v=15" defer></script><script src="/assets/desktop-import-center.js?v=12" defer></script><script src="/assets/desktop-live-studio.js?v=6" defer></script><script src="/assets/desktop-publishing.js?v=5" defer></script>
+    <script src="/assets/desktop-os.js?v=20" defer></script><script src="/assets/settings-tabs.js?v=8" defer></script><script src="/assets/desktop-media-library.js?v=15" defer></script><script src="/assets/desktop-import-center.js?v=12" defer></script><script src="/assets/desktop-live-studio.js?v=6" defer></script><script src="/assets/desktop-publishing.js?v=5" defer></script>
 </head>
 <body class="os-body">
 <main class="os-desktop" data-desktop data-storage-key="atapin.desktop.{{ auth()->id() }}.v1"
