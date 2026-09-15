@@ -1,0 +1,28 @@
+.desktop-workspace .jodit-container,
+.desktop-settings .jodit-container,
+.content-assignment .jodit-container {
+    border-color: #c9d8e6;
+    border-radius: 8px;
+    color: #153a61;
+    font-family: Inter, Arial, sans-serif;
+}
+.desktop-workspace .jodit-toolbar__box,
+.desktop-settings .jodit-toolbar__box,
+.content-assignment .jodit-toolbar__box {
+    border-radius: 8px 8px 0 0;
+    background: #f7fafc;
+}
+.desktop-workspace .jodit-wysiwyg,
+.desktop-settings .jodit-wysiwyg,
+.content-assignment .jodit-wysiwyg {
+    color: #153a61;
+    font: 13px/1.6 Inter, Arial, sans-serif;
+}
+.desktop-settings-editor .jodit-container { margin-top: 5px; }
+.workspace-rich-field,
+.podcast-field-wide:has(textarea[data-rich-text]) { min-width: 0; }
+@media (max-width: 700px) {
+    .desktop-workspace .jodit-container,
+    .desktop-settings .jodit-container,
+    .content-assignment .jodit-container { min-width: 0; }
+}

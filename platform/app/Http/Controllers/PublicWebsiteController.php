@@ -51,7 +51,7 @@ class PublicWebsiteController extends Controller
         $request->validate(['book'=>'nullable|integer|min:1']);
         $orderBook=$request->filled('book')?app(PublicBooks::class)->query()->findOrFail($request->integer('book')):null;
         return view('public.section',[...$this->shared(),'section'=>$section,'orderBook'=>$orderBook,'items'=>$page->through($content->card(...)),
-            'document'=>trim(strip_tags(str_replace(['</p>','<br>','<br/>','</li>'],"\n",$document))), 'contactEmail'=>$settings->get('contact_email','')]);
+            'document'=>$document, 'contactEmail'=>$settings->get('contact_email','')]);
     }
     public function detail(Request $request,string $slug,PublicContent $content)
     {

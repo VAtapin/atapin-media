@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="/assets/fonts/fonts.css">
 <link rel="stylesheet" href="/assets/brand/ui-kit.css">
 <link rel="stylesheet" href="/assets/public.css">
+<link rel="stylesheet" href="/assets/public-rich-content.css?v=1">
 <link rel="stylesheet" href="/assets/public-pages.css?v=24">
 <link rel="icon" href="/favicon.png">
 <script src="/assets/public.js?v=13" defer>
@@ -47,7 +48,7 @@
 <span class="public-book-label">{{ __('public.book') }}</span>
 <h3>{{ $book['title'] }}</h3>
 <p>{{ $book['subtitle']??'' }}</p>
-<p class="public-book-description">{{ $book['description']??'' }}</p>
+<div class="public-book-description public-document">@include('public.rich-content',['content'=>$book['description_html']??''])</div>
 @if(!empty($book['price']))<strong>{{ $book['price'] }}</strong>
 @endif<a class="public-button" href="{{ $book['url'] }}">{{ __('public.view_now') }} →</a>
 </div>

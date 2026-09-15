@@ -24,9 +24,13 @@ try {
       if(target==='/desktop/books/1')return Response.json({product:book,assets:[]});
       if(target.startsWith('/desktop/books?'))return Response.json({data:[book],current_page:1,last_page:1,total:1});
       if(target==='/desktop/books'&&method==='POST')return Response.json({id:2,title:'Schnelles Buch'},{status:201});
+      if(target==='/desktop/books/1'&&method==='PATCH')return Response.json({id:1,status:'saved'});
       throw new Error('Unexpected request '+method+' '+target);
     };
   `});
+  await page.addStyleTag({path:path.join(here,'../public/vendor/jodit/4.13.9/jodit.min.css')});
+  await page.addScriptTag({path:path.join(here,'../public/vendor/jodit/4.13.9/jodit.min.js')});
+  await page.addScriptTag({path:path.join(here,'../public/assets/desktop-rich-text.js')});
   await page.addScriptTag({path:path.join(here,'../public/assets/desktop-workspaces.js')});
   await page.addScriptTag({path:path.join(here,'../public/assets/desktop-catalogs.js')});
   await page.addStyleTag({path:path.join(here,'../public/assets/desktop-workspaces.css')});
@@ -55,8 +59,18 @@ try {
     assert.equal(await form.locator(`:scope > label [name="${name}"]`).count(),1,`${name} must stay in the main editor`);
   const more = form.locator('[data-book-more-settings]');
   assert.equal(await more.evaluate(node => node.open),false);
-  for(const name of ['subtitle','edition_text','publication_date','tags','seo_title','seo_description','project_id','taxonomy_term_ids','external_shop_url'])
+  for(const name of ['subtitle','edition_text','publication_date','tags','seo_title','seo_description','project_id','external_shop_url'])
     assert.equal(await more.locator(`[name="${name}"]`).count(),1,`${name} must be under More settings`);
+  assert.equal(await form.locator('[name="taxonomy_term_ids"]').count(),1,'taxonomy choice must stay in the main editor');
+  await form.locator('[name="description"][data-rich-text-ready="true"]').waitFor({state:'attached'});
+  assert.equal(await form.locator('.jodit-container').count(),3,'description, contents and edition text use Jodit');
+  await more.locator('summary').click();
+  assert((await more.locator('.jodit-container').evaluate(node=>node.getBoundingClientRect().width))>200,'edition editor becomes visible when More settings opens');
+  await form.evaluate(node=>window.DesktopRichText.setValue(node.elements.description,'<p><strong>Formatierter Text</strong></p>'));
+  await form.locator('button[type="submit"]').first().click();
+  await page.waitForFunction(()=>window.__requests.some(request=>request.target==='/desktop/books/1'&&request.method==='PATCH'));
+  const richSave=await page.evaluate(()=>window.__requests.find(request=>request.target==='/desktop/books/1'&&request.method==='PATCH'));
+  assert.match(richSave.body.description,/<strong>Formatierter Text<\/strong>/);
   assert.equal((await form.evaluate(node => getComputedStyle(node).gridTemplateColumns)).trim().split(/\s+/).length,2);
 
   await root.locator('[data-book-pdf-intake]').click();

@@ -25,7 +25,7 @@ class PdfEditions
         abort_if(mb_strlen($body??'')>200000,422);
         $options=new \Dompdf\Options(['isRemoteEnabled'=>false,'isPhpEnabled'=>false,'isJavascriptEnabled'=>false,'defaultFont'=>'DejaVu Sans','chroot'=>storage_path('app')]);
         $pdf=new \Dompdf\Dompdf($options);
-        $pdf->loadHtml('<!doctype html><html><meta charset="utf-8"><style>body{font:12px DejaVu Sans;line-height:1.6}h1{font-size:24px}footer{color:#666}</style><h1>'.e($subject->title).'</h1><p>'.e($subject->author??($subject->metadata['author']??'')).'</p><div>'.nl2br(e(strip_tags($body??''))).'</div><footer>'.e(app(Settings::class)->get('site_name',config('platform.brand'))).'</footer></html>','UTF-8');
+        $pdf->loadHtml('<!doctype html><html><meta charset="utf-8"><style>body{font:12px DejaVu Sans;line-height:1.6}h1{font-size:24px}h2{font-size:18px}h3{font-size:15px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #bbb;padding:5px}footer{color:#666}</style><h1>'.e($subject->title).'</h1><p>'.e($subject->author??($subject->metadata['author']??'')).'</p><div>'.app(RichContent::class)->render($body??'').'</div><footer>'.e(app(Settings::class)->get('site_name',config('platform.brand'))).'</footer></html>','UTF-8');
         $pdf->setPaper('A4');$pdf->render();return $pdf->output();
     }
 }

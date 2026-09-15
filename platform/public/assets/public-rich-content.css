@@ -1,0 +1,35 @@
+.public-document {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.public-document > :first-child { margin-top: 0; }
+.public-document > :last-child { margin-bottom: 0; }
+.public-document blockquote {
+    margin: 1.2em 0;
+    padding: .1em 0 .1em 1.1em;
+    border-left: 3px solid #b57a1f;
+    color: #496381;
+}
+.public-document table {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+}
+.public-document th,
+.public-document td {
+    padding: 8px 10px;
+    border: 1px solid #ccd7e3;
+    text-align: left;
+}
+.public-document hr {
+    border: 0;
+    border-top: 1px solid #d7e0e8;
+}
+.public-book-description.public-document {
+    max-height: 8em;
+    margin: 0 0 12px;
+    overflow: hidden;
+}

@@ -369,6 +369,27 @@ class DesktopWorkspacesTest extends TestCase
         $this->get(app(PublicBooks::class)->card($product)['url'])->assertOk()->assertSee('Public table of contents')->assertDontSee('PRIVATE FULL BOOK BODY');$this->getJson('/desktop/books/'.$product->id)->assertJsonPath('product.metadata.edition_text','PRIVATE FULL BOOK BODY');
         $before=app(PdfEditions::class)->version($product);$product->update(['metadata'=>['edition_text'=>'Changed private edition']]);$this->assertNotSame($before,app(PdfEditions::class)->version($product));
     }
+    public function test_book_rich_text_is_sanitized_and_rendered_as_markup(): void
+    {
+        $product=app(\App\Services\BookCatalog::class)->save([
+            'title'=>'Formatted book','description'=>'<h2 onclick="bad()">Kapitel</h2><p style="text-align: center; background: url(javascript:bad())">Formatierter Text</p><script>alert(1)</script>',
+            'contents'=>'<table><tr><th scope="col">Teil</th><td colspan="2" onmouseover="bad()">Eins</td></tr></table>',
+            'edition_text'=>'<p><strong>Private edition</strong></p><iframe src="https://example.test"></iframe>',
+            'price_cents'=>0,'currency'=>'EUR','status'=>'active',
+        ]);
+        $this->assertStringContainsString('<h2>Kapitel</h2>',$product->description);
+        $this->assertStringContainsString('text-align: center',$product->description);
+        $this->assertStringNotContainsString('onclick',$product->description);
+        $this->assertStringNotContainsString('javascript:',$product->description);
+        $this->assertStringContainsString('<table>',$product->contents);
+        $this->assertStringNotContainsString('onmouseover',$product->contents);
+        $this->assertStringNotContainsString('iframe',$product->metadata['edition_text']);
+        $this->get(app(PublicBooks::class)->card($product)['url'])->assertOk()
+            ->assertSee('<h2>Kapitel</h2>',false)->assertSee('<table>',false)
+            ->assertDontSee('&lt;h2&gt;',false)->assertDontSee('alert(1)');
+        $this->get('/')->assertOk()->assertSee('<h2>Kapitel</h2>',false)->assertSee('Formatierter Text')->assertDontSee('&lt;h2&gt;',false);
+        $this->assertStringStartsWith('%PDF-',app(PdfEditions::class)->render($product));
+    }
     public function test_checkout_rejects_archived_complete_asset_and_hides_buy_button(): void
     {
         $this->stripe();$product=$this->product();$media=$this->pdf();app(\App\Services\BookCatalog::class)->attach($product,$media,'full');$media->update(['archived_at'=>now()]);$this->postJson('/buecher/'.$product->id.'/checkout')->assertUnprocessable();$this->assertDatabaseCount('sales',0);$this->get(app(PublicBooks::class)->card($product)['url'])->assertOk()->assertDontSee(__('workspaces.buy'));

@@ -11,6 +11,7 @@
 - Public Website показывает на главной одну горизонтальную полосу тем с отдельными ссылками и счётчиками Videos/Beiträge/Bücher. Каталоги имеют data-driven категории и темы; выбор родительской категории рекурсивно включает материалы дочерних тем, но всегда остаётся внутри текущего типа контента. Legacy `?tag=` сохранён как отдельный metadata-фильтр.
 - Задачи поддерживают состояния `open/planned/working/waiting/done`, приоритеты, сроки, проект, ответственного, checklist/tags и повторение `once/daily/weekly/monthly/custom`. Повторы вычисляются из одной задачи без создания дубликатов. Доска и список сохранены; календарь показывает задачи, публикации и Live и открывает точную исходную запись.
 - Книги/PDF имеют title-first intake, inline editor, queued PDF analysis/generation, private originals, sample/full attachments и Stripe-entitlements. Рецензии перенесены в native Desktop-диалог с фильтрами, пагинацией и approve/reject; legacy `book-admin` UI удалён, старый маршрут безопасно перенаправляет в Bücher & PDF.
+- Jodit Editor 4.13.9 размещён локально и используется для `Beschreibung`, `Inhaltsverzeichnis`, текста полной PDF-редакции, длинных текстов Beiträge/Videos/Podcast и страниц `Website & Autor` (Impressum, Datenschutz, редакционные сведения, Über uns, Mission, правила Community). Самодельные rich-text панели заменены. Публичные книги, материалы, homepage book feature и информационные страницы отображают безопасную HTML-разметку вместо буквальных тегов; короткие карточки книг используют plain-text excerpt. PDF-генератор сохраняет разрешённое оформление текста.
 - Podcast создаётся и редактируется inline поверх существующих `SourceRecord`, `Media`, assignments/assets. Поддержаны audio/video podcast, cover/file, episode/season, историческая дата публикации и явный переход к Publishing для будущего расписания.
 - Live Studio имеет явные OBS и Browser modes, responsive 30/70 layout, существующий Browser Studio/WHIP/recording pipeline и связанную OBS-Hilfe. Неподдерживаемая фиктивная Facebook Live-трансляция не добавлялась.
 - Настройки разделены по назначению: KI cover-настройки находятся в `KI → Bilder & Cover`, а `Website & Autor` содержит данные автора и website sayings.
@@ -26,6 +27,7 @@
 - Будущая публикация Podcast выполняется через Publishing; поле даты в Podcast хранит фактическую/историческую дату, а не создаёт скрытый scheduler.
 - OAuth app configuration отделена от подключённого аккаунта. Секреты не возвращаются в браузер и не записываются в открытые settings/logs.
 - Taxonomy assignments используют существующие canonical subject types `record` и `product`; новых migrations и изменений Composer/npm dependencies в этом блоке нет.
+- Rich-text HTML при сохранении и публичном выводе проходит общий `RichContent` sanitizer: разрешены редакционные заголовки, списки, цитаты, таблицы, безопасные ссылки и ограниченное выравнивание. Скрипты, event-атрибуты, iframe и произвольные стили не допускаются. Jodit подключён как локальный статический vendor asset с MIT license; Composer/npm dependencies и схема БД не менялись.
 
 ## Известные ограничения
 
@@ -33,24 +35,25 @@
 - TikTok и LinkedIn пока остаются profile-only, без фиктивного publishing API.
 - Production deployment и post-deployment smoke-test агентом не выполнялись.
 - Перед production migration обязателен backup базы данных.
+- Вставка изображений непосредственно в rich-text пока отключена: её следует добавить отдельным блоком через защищённую Media Library и проверку public media URLs; arbitrary URL/base64 images не допускаются.
 - Старый тест `DesktopWorkspacesTest::test_calendar_uses_local_time_and_respects_access` после перехода локальной даты воспроизводимо получает `null` вместо `10:30`; он не связан с taxonomy, но требует отдельной стабилизации календарного теста/границы timezone.
 
 ## Проверки
 
-- Taxonomy targeted suite: **8 tests, 133 assertions — passed**.
-- Полный локальный suite без указанного старого календарного теста на PHP 8.4.25 / SQLite: **455 tests, 3656 assertions — passed**. Полный запуск с ним: **456 tests, 3659 assertions, 1 failure** в старой проверке локального времени.
-- PHP syntax: **14 изменённых/новых PHP-файлов — passed**. Node syntax: **4 изменённых JS/MJS-файла — passed**.
-- Blade `view:cache` и Laravel `route:cache` — passed; generated caches после проверки очищены.
-- Edge browser: полный Media Desktop workflow с массовой привязкой прошёл; public taxonomy проверена на `1672 × 941` и `390 × 844`, ссылки не смешивают разделы и horizontal overflow отсутствует.
-- `git diff --check` и содержательный diff проверяются перед commit. Dependencies не менялись, поэтому Composer audit и npm build не требуются.
+- Полный локальный PHP suite без указанного старого календарного теста на PHP 8.4.25 / SQLite: **458 tests, 3694 assertions — passed**. Известный календарный тест исключён из этого запуска, не заявлен как прошедший.
+- После расширения rich-text вывода на homepage book feature и правила Community затронутый suite: **66 tests, 569 assertions — passed**.
+- PHP syntax изменённых файлов, Node syntax изменённых JS/MJS-файлов и Blade `view:cache` — passed; generated view cache очищен.
+- Edge browser: Books inline editor показывает три экземпляра Jodit и сохраняет форматированный HTML; отдельный rich-text сценарий проверил редактор статьи, переключение локалей страниц и отправку форматированного текста — passed.
+- `git diff --check`, `git diff --stat` и содержательный diff проверяются перед commit. Composer audit и npm build не требуются: manifest dependencies не менялись.
 
 ## Что рекомендуется следующим
 
-- Получить taxonomy commit на production, очистить routes/views и выполнить `platform:check`; migrations, Composer и Node build для этого блока не нужны.
+- Получить rich-text commit на production, очистить compiled Blade views и выполнить `platform:check`; migrations, Composer и Node build для этого блока не нужны.
+- Отдельно спроектировать защищённый выбор изображений из Media Library для Jodit, если изображения в тексте нужны владельцу.
 - В настройках по очереди сохранить app credentials и пройти реальные OAuth/API checks Meta, YouTube, X, Telegram и Stripe test mode. Секреты в чат не присылать.
 - Выполнить production smoke-test задач/календаря, книг/рецензий, Podcast/Live и `platform:check`.
 
 ## Последний связанный commit
 
-- Текущий функциональный блок: этот commit — `Add hierarchical taxonomy discovery`. Branch/upstream: `main` → `origin/main`.
-- Предыдущий функциональный commit: `15faed1` — `Fix workspace delete actions`.
+- Текущий функциональный блок: этот commit — `Add safe Jodit rich text editing`. Branch/upstream: `main` → `origin/main`.
+- Предыдущий функциональный commit: `ce8a8f8` — `Add hierarchical taxonomy discovery`.

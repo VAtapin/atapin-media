@@ -19,7 +19,7 @@
   const field = (name, type = 'text', value = '', options = []) => {
     const label = el('label', t(name)); let input;
     if (type === 'select') { input = el('select'); for (const v of options) { const pair = Array.isArray(v) ? v : [v, t(v)]; input.add(new Option(pair[1], pair[0])); } }
-    else if (type === 'textarea') { input = el('textarea'); input.rows = 5; input.maxLength = 100000; }
+    else if (type === 'textarea' || type === 'richtext') { input = el('textarea'); input.rows = 5; input.maxLength = 100000; if (type === 'richtext') { input.dataset.richText = ''; label.classList.add('workspace-rich-field'); } }
     else { input = el('input'); input.type = type; }
     input.name = name; if (type === 'checkbox') input.checked = !!value; else input.value = type === 'date' && value ? String(value).slice(0, 10) : Array.isArray(value) ? value.join(', ') : value ?? '';
     if (type === 'datetime-local' && value) { const date = new Date(value); if (!Number.isNaN(date.getTime())) input.value = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16); }
@@ -39,7 +39,7 @@
     select.addEventListener('change', () => { chosen.clear(); for (const option of select.selectedOptions) if (option.value) chosen.add(option.value); });
     search.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => load().catch(() => {}), 250); }); await load(); select.disabled = false; return select;
   };
-  const formData = form => { const data = {}; for (const input of form.elements) { if (!input.name || input.disabled) continue; data[input.name] = input.type === 'checkbox' ? input.checked : input.multiple ? [...input.selectedOptions].map(o => o.value) : input.type === 'datetime-local' && input.value ? new Date(input.value).toISOString() : input.value || null; } return data; };
+  const formData = form => { window.DesktopRichText?.sync(form); const data = {}; for (const input of form.elements) { if (!input.name || input.disabled) continue; data[input.name] = input.type === 'checkbox' ? input.checked : input.multiple ? [...input.selectedOptions].map(o => o.value) : input.type === 'datetime-local' && input.value ? new Date(input.value).toISOString() : input.value || null; } return data; };
   const open = (app, row) => { if (row) pending.set(app, row); document.querySelector(`.os-start-menu [data-open-app="${CSS.escape(app)}"]`)?.click(); const api = controllers.get(app); if (row && api?.root.isConnected) { pending.delete(app); run(api.root, () => api.edit(row)); } };
   const openQuick = (app, initial = {}) => { const api = controllers.get(app); if (api?.root.isConnected) { run(api.root, () => api.quickCreate(initial)); return; } pendingQuick.set(app, initial); document.querySelector(`.os-start-menu [data-open-app="${CSS.escape(app)}"]`)?.click(); };
   const openSeparate = (app, row = {}) => { pending.set(app, row); const win = window.openDesktopProgram?.(app, {forceNew:true}); if (!win) document.querySelector(`.os-start-menu [data-open-app="${CSS.escape(app)}"]`)?.click(); return win; };

@@ -109,16 +109,17 @@ class SettingsController extends Controller
         if ($section === 'system' && !empty($values['legal_locale'])) {
             $documents = $settings->get('legal_documents', []);
             $documents[$values['legal_locale']] = array_filter([
-                'impressum' => $this->sanitizeLegalMarkup($values['impressum'] ?? ''),
-                'privacy_policy' => $this->sanitizeLegalMarkup($values['privacy_policy'] ?? ''),
-                'editorial_policy' => $this->sanitizeLegalMarkup($values['editorial_policy'] ?? ''),
-                'about_text' => $this->sanitizeLegalMarkup(array_key_exists('about_text',$values)?$values['about_text']:($documents[$values['legal_locale']]['about_text']??'')),
-                'mission_text' => $this->sanitizeLegalMarkup(array_key_exists('mission_text',$values)?$values['mission_text']:($documents[$values['legal_locale']]['mission_text']??'')),
+                'impressum' => app(\App\Services\RichContent::class)->sanitize($values['impressum'] ?? ''),
+                'privacy_policy' => app(\App\Services\RichContent::class)->sanitize($values['privacy_policy'] ?? ''),
+                'editorial_policy' => app(\App\Services\RichContent::class)->sanitize($values['editorial_policy'] ?? ''),
+                'about_text' => app(\App\Services\RichContent::class)->sanitize(array_key_exists('about_text',$values)?$values['about_text']:($documents[$values['legal_locale']]['about_text']??'')),
+                'mission_text' => app(\App\Services\RichContent::class)->sanitize(array_key_exists('mission_text',$values)?$values['mission_text']:($documents[$values['legal_locale']]['mission_text']??'')),
             ]);
             $values['legal_documents'] = $documents;
             unset($values['legal_locale'], $values['impressum'], $values['privacy_policy'], $values['editorial_policy']);
             unset($values['about_text'],$values['mission_text']);
         }
+        if($section==='system'&&array_key_exists('community_guidelines',$values))$values['community_guidelines']=app(\App\Services\RichContent::class)->sanitize($values['community_guidelines']);
         $secretKeys = ['ai_api_key'];
         $secrets = array_intersect_key($values, array_flip($secretKeys));
         $values = array_diff_key($values, array_flip($secretKeys));
@@ -138,33 +139,6 @@ class SettingsController extends Controller
         $stripe=$payments->testConnection();
         if($stripe['status']==='error')return response()->json(['message'=>__('stripe.test_failed'),'errors'=>['stripe'=>[__('stripe.test_failed')]],'stripe'=>$stripe],422);
         return response()->json(['status'=>'tested','stripe'=>$stripe]);
-    }
-    private function sanitizeLegalMarkup(?string $markup): string
-    {
-        if (!is_string($markup) || trim($markup) === '') return '';
-        $document = new \DOMDocument('1.0', 'UTF-8');
-        $previous = libxml_use_internal_errors(true);
-        $document->loadHTML('<div id="legal-content">'.$markup.'</div>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-        libxml_clear_errors(); libxml_use_internal_errors($previous);
-        $container = $document->getElementById('legal-content');
-        if (!$container) return '';
-        $this->cleanLegalNodes($container);
-        return trim(implode('', array_map(fn ($node) => $document->saveHTML($node), iterator_to_array($container->childNodes))));
-    }
-    private function cleanLegalNodes(\DOMNode $node): void
-    {
-        $allowed = ['p', 'br', 'strong', 'b', 'em', 'i', 'ul', 'ol', 'li'];
-        foreach (iterator_to_array($node->childNodes) as $child) {
-            if (!$child instanceof \DOMElement) continue;
-            $tag = strtolower($child->tagName);
-            if (in_array($tag, ['script', 'style'], true)) { $node->removeChild($child); continue; }
-            if (!in_array($tag, $allowed, true)) {
-                while ($child->firstChild) $node->insertBefore($child->firstChild, $child);
-                $node->removeChild($child); continue;
-            }
-            while ($child->hasAttributes()) $child->removeAttributeNode($child->attributes->item(0));
-            $this->cleanLegalNodes($child);
-        }
     }
     public function storeRole(Request $request, \App\Services\Audit $audit)
     {

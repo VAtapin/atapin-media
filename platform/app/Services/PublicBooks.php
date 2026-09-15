@@ -21,8 +21,9 @@ class PublicBooks
     public function card(Product $book): array
     {
         $cover=$this->assets($book)->first(fn($media)=>$media->kind==='image');
-        return ['id'=>$book->id,'title'=>$book->title,'excerpt'=>Str::limit($book->description??'',140),'author'=>$book->author??'','meta'=>$book->isbn??'',
-            'description'=>$book->description??'',
+        $description=trim(preg_replace('/\s+/u',' ',strip_tags((string)$book->description))??'');
+        return ['id'=>$book->id,'title'=>$book->title,'excerpt'=>Str::limit($description,140),'author'=>$book->author??'','meta'=>$book->isbn??'',
+            'description'=>$description,'description_html'=>$book->description??'',
             'price'=>$book->price_cents===null?null:number_format($book->price_cents/100,2,',','.').' '.$book->currency,
             'url'=>route('public.book',['slug'=>Str::slug($book->title).'-'.$book->id]),
             'image'=>$cover?route('public.book-media',[$book,$cover]):null,'tags'=>$book->metadata['tags']??[]];

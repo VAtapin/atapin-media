@@ -20,6 +20,7 @@ class BookCatalog
         return DB::transaction(function () use ($data,$product) {
             $product = $product ? Product::lockForUpdate()->findOrFail($product->id) : new Product;
             $terms = $data['taxonomy_term_ids'] ?? null; unset($data['taxonomy_term_ids']);
+            foreach(['description','contents','edition_text'] as $key)if(array_key_exists($key,$data))$data[$key]=app(RichContent::class)->sanitize((string)($data[$key]??''));
             foreach(['subtitle','seo_title','seo_description','publication_date','tags'] as $key)if(array_key_exists($key,$data)){$product->metadata=[...($product->metadata??[]),$key=>$data[$key]];unset($data[$key]);}
             if(array_key_exists('edition_text',$data)){$product->metadata=[...($product->metadata??[]),'edition_text'=>$data['edition_text']];unset($data['edition_text']);}
             if(array_key_exists('external_shop_url',$data)) { $product->metadata=[...($product->metadata??[]),'external_shop_url'=>$data['external_shop_url']]; unset($data['external_shop_url']); }

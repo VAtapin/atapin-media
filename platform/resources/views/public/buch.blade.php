@@ -30,10 +30,10 @@
 @endforeach</div>
 <div id="panel-description" role="tabpanel" aria-labelledby="tab-description">
 <h2>{{ __('public.description') }}</h2>
-<div class="public-document">{{ $bookRecord?->description??__('public.no_data') }}</div>
+<div class="public-document">@include('public.rich-content',['content'=>$bookRecord?->description,'empty'=>__('public.no_data')])</div>
 </div>
 <div id="panel-contents" role="tabpanel" aria-labelledby="tab-contents" hidden>
-@if($bookRecord?->contents)<div class="public-document">{{ $bookRecord->contents }}</div>@else @include('public.empty') @endif</div>
+@if($bookRecord?->contents)<div class="public-document">@include('public.rich-content',['content'=>$bookRecord->contents])</div>@else @include('public.empty') @endif</div>
 <div id="panel-reviews" role="tabpanel" aria-labelledby="tab-reviews" hidden>
 @forelse($reviews as $review)<article><strong>{{ $review->user?->name }} · {{ $review->rating }}/5</strong><p>{{ $review->body }}</p></article>@empty @include('public.empty') @endforelse
 @if($reviews instanceof \Illuminate\Contracts\Pagination\LengthAwarePaginator){{ $reviews->links() }}@endif

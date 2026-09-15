@@ -58,13 +58,17 @@ $workspaceLabels = array_replace(__('workspaces'), [
     <link rel="icon" href="/favicon.png"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/brand/owner/app-icon.png"><meta name="theme-color" content="#8b6a3d"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=4"><link rel="stylesheet" href="/assets/desktop-windows.css?v=5"><link rel="stylesheet" href="/assets/desktop-settings.css?v=6">
     <link rel="stylesheet" href="/assets/desktop-app.css?v=3"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=12"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=3"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=4"><link rel="stylesheet" href="/assets/desktop-community.css?v=3"><link rel="stylesheet" href="/assets/desktop-publishing.css?v=4">
     <link rel="stylesheet" href="/assets/desktop-workspaces.css?v=15">
+    <link rel="stylesheet" href="/vendor/jodit/4.13.9/jodit.min.css?v=4.13.9">
+    <link rel="stylesheet" href="/assets/desktop-rich-text.css?v=1">
     <link rel="stylesheet" href="/assets/desktop-overview.css?v=2">
     <script>window.desktopWorkspaceLabels=@json($workspaceLabels); window.desktopBookReviewLabels=@json(__('book-reviews')); window.desktopAiLabels=@json(__('ai_dashboard'));</script>
-    <script src="/assets/desktop-workspaces.js?v=12" defer></script>
+    <script src="/vendor/jodit/4.13.9/jodit.min.js?v=4.13.9" defer></script>
+    <script src="/assets/desktop-rich-text.js?v=1" defer></script>
+    <script src="/assets/desktop-workspaces.js?v=13" defer></script>
     <script src="/assets/public-pwa.js?v=1" defer></script>
-    <script src="/assets/desktop-workspace-content.js?v=7" defer></script>
+    <script src="/assets/desktop-workspace-content.js?v=8" defer></script>
     <script src="/assets/desktop-ai-dashboard.js?v=2" defer></script>
-    <script src="/assets/desktop-catalogs.js?v=8" defer></script>
+    <script src="/assets/desktop-catalogs.js?v=9" defer></script>
     <script src="/assets/desktop-subscriber-import.js?v=1" defer></script>
     <script src="/assets/desktop-ai-proposal.js?v=1" defer></script>
     <script src="/assets/desktop-migration-wizard.js?v=1" defer></script>
@@ -78,10 +82,10 @@ $workspaceLabels = array_replace(__('workspaces'), [
     <script src="/assets/desktop-publishing-preview.js?v=2" defer></script>
     <script src="/assets/desktop-community-sync.js?v=1" defer></script>
     <script src="/assets/desktop-workspace-operations.js?v=7" defer></script>
-    <script src="/assets/desktop-editor-workflow.js?v=7" defer></script>
+    <script src="/assets/desktop-editor-workflow.js?v=8" defer></script>
     <script src="/assets/desktop-shortcuts.js?v=3" defer></script>
     <link rel="stylesheet" href="/assets/desktop-import-workflow.css?v=3">
-    <script src="/assets/desktop-os.js?v=20" defer></script><script src="/assets/settings-tabs.js?v=10" defer></script><script src="/assets/desktop-media-library.js?v=15" defer></script><script src="/assets/desktop-import-center.js?v=12" defer></script><script src="/assets/desktop-live-studio.js?v=8" defer></script><script src="/assets/desktop-publishing.js?v=6" defer></script>
+    <script src="/assets/desktop-os.js?v=20" defer></script><script src="/assets/settings-tabs.js?v=11" defer></script><script src="/assets/desktop-media-library.js?v=15" defer></script><script src="/assets/desktop-import-center.js?v=12" defer></script><script src="/assets/desktop-live-studio.js?v=8" defer></script><script src="/assets/desktop-publishing.js?v=6" defer></script>
 </head>
 <body class="os-body">
 <main class="os-desktop" data-desktop data-storage-key="atapin.desktop.{{ auth()->id() }}.v1"

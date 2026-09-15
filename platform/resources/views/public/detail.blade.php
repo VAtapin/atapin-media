@@ -7,5 +7,5 @@
 @elseif($asset->kind==='image')<img src="{{ $asset->publicUrl() ?? route('public.media',[$record,$asset]) }}" alt="" loading="lazy">
 @elseif($asset->kind==='audio')<audio controls preload="metadata" src="{{ $asset->publicUrl() ?? route('public.media',[$record,$asset]) }}"></audio>@endif
 @endforeach
-<div class="public-document">{{ $record->body }}</div></article>
+<div class="public-document">@include('public.content-body')</div></article>
 @endsection

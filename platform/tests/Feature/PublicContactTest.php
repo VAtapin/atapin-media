@@ -11,8 +11,8 @@ class PublicContactTest extends TestCase
     {
         $this->get('/ueber-uns')->assertOk()->assertSee(__('public.about_intro_title'))->assertSee('public-about-page',false);
         app(Settings::class)->update(['legal_documents'=>['de'=>['about_text'=>'<p>Database about</p>','mission_text'=>'<p>Database mission</p>']]]);
-        $this->get('/ueber-uns')->assertOk()->assertSee('Database about');
-        $this->get('/unsere-mission')->assertOk()->assertSee('Database mission');
+        $this->get('/ueber-uns')->assertOk()->assertSee('<p>Database about</p>',false)->assertDontSee('&lt;p&gt;',false);
+        $this->get('/unsere-mission')->assertOk()->assertSee('<p>Database mission</p>',false);
     }
     public function test_contact_form_saves_an_enquiry_without_publishing_private_details(): void
     {
@@ -38,5 +38,21 @@ class PublicContactTest extends TestCase
         $this->putJson('/desktop/settings',[...$data,'about_text'=>''])->assertOk();
         $this->get('/ueber-uns')->assertDontSee('About edited');
         $this->getJson('/desktop/contact-messages')->assertOk()->assertJsonPath('total',0);
+    }
+    public function test_information_page_editor_preserves_safe_word_like_formatting(): void
+    {
+        app(Access::class)->seed();$owner=User::factory()->create();$owner->roles()->attach(Role::where('name','Owner')->firstOrFail());$this->actingAs($owner);
+        $this->putJson('/desktop/settings',[
+            'section'=>'system','site_name'=>'Test site','system_locale'=>'de','system_timezone'=>'Europe/Berlin','legal_locale'=>'de',
+            'about_text'=>'<h2>Über uns</h2><p style="text-align: right; color: red">Text</p><table><tr><td>Erster</td></tr></table><script>alert(1)</script>',
+            'community_guidelines'=>'<h2>Gemeinschaft</h2><p>Bitte freundlich bleiben</p><script>bad()</script>',
+        ])->assertOk();
+        $stored=app(Settings::class)->get('legal_documents')['de']['about_text'];
+        $this->assertStringContainsString('<h2>Über uns</h2>',$stored);
+        $this->assertStringContainsString('text-align: right',$stored);
+        $this->assertStringNotContainsString('color: red',$stored);
+        $this->get('/ueber-uns')->assertOk()->assertSee('<h2>Über uns</h2>',false)->assertSee('<table>',false)
+            ->assertDontSee('&lt;h2&gt;',false)->assertDontSee('alert(1)');
+        $this->get('/community')->assertOk()->assertSee('<h2>Gemeinschaft</h2>',false)->assertDontSee('bad()');
     }
 }

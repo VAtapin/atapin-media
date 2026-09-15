@@ -283,7 +283,7 @@
   const bookConfig = {
     url:'/desktop/books', newLabel:'new_book', inlineEdit:true, statuses:['draft','active','archived'],
     quickCreate:{fields:[['title']],transform:data=>bookData({...data,currency:'EUR',status:'draft'})},
-    fields:[['title'],['subtitle'],['description','textarea'],['author'],['contents','textarea'],['edition_text','textarea'],['isbn'],['language','select',['de','en'],'de'],['page_count','number'],['publication_date','date'],['tags'],['seo_title'],['seo_description','textarea'],['price','number',[],0],['currency','select',['EUR','USD','CHF','GBP'],'EUR'],['status','select',['draft','active','archived'],'draft'],['project_id','select'],['taxonomy_term_ids','select'],['external_shop_url','url']],
+    fields:[['title'],['subtitle'],['description','richtext'],['author'],['contents','richtext'],['edition_text','richtext'],['isbn'],['language','select',['de','en'],'de'],['page_count','number'],['publication_date','date'],['tags'],['seo_title'],['seo_description','textarea'],['price','number',[],0],['currency','select',['EUR','USD','CHF','GBP'],'EUR'],['status','select',['draft','active','archived'],'draft'],['project_id','select'],['taxonomy_term_ids','select'],['external_shop_url','url']],
     lookups:{project_id:'projects',taxonomy_term_ids:'terms'}, multiple:['taxonomy_term_ids'], transform:bookData,
     detail:async row => { const data = await request('/desktop/books/' + row.id); return {...data.product, price:data.product.price_cents === null || data.product.price_cents === undefined ? '' : (Number(data.product.price_cents) / 100).toFixed(2), assets:data.assets}; }, extra:bookExtra,
     intake:async (editor, row, root, load, edit) => {

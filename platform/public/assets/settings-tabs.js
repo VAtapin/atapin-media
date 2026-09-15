@@ -296,27 +296,26 @@
     let legalDocuments = {};
     if (legalLocale) {
       try { legalDocuments = JSON.parse(legalLocale.dataset.legalDocuments || '{}'); } catch (_) {}
-      const renderLegal = () => app.querySelectorAll('[data-rich-editor]').forEach(editor => {
-        const value = legalDocuments[legalLocale.value]?.[editor.dataset.richEditor] || '';
-        editor.innerHTML = value;
-        editor.nextElementSibling.value = value;
-      });
-      legalLocale.addEventListener('change', renderLegal);
-      app.querySelectorAll('[data-rich-editor]').forEach(editor => editor.addEventListener('input', () => {
-        legalDocuments[legalLocale.value] ||= {};
-        legalDocuments[legalLocale.value][editor.dataset.richEditor] = editor.innerHTML;
-        editor.nextElementSibling.value = editor.innerHTML;
+      const editors = [...app.querySelectorAll('[data-legal-editor]')];
+      let activeLegalLocale = legalLocale.value, renderingLegal = false;
+      const rememberLegal = () => {
+        legalDocuments[activeLegalLocale] ||= {};
+        window.DesktopRichText?.sync(app);
+        editors.forEach(editor => legalDocuments[activeLegalLocale][editor.name] = editor.value);
+      };
+      const renderLegal = () => {
+        renderingLegal = true;
+        editors.forEach(editor => window.DesktopRichText?.setValue(editor, legalDocuments[activeLegalLocale]?.[editor.name] || ''));
+        renderingLegal = false;
+      };
+      legalLocale.addEventListener('change', () => { rememberLegal(); activeLegalLocale = legalLocale.value; renderLegal(); });
+      editors.forEach(editor => editor.addEventListener('input', () => {
+        if (renderingLegal) return;
+        legalDocuments[activeLegalLocale] ||= {};
+        legalDocuments[activeLegalLocale][editor.name] = editor.value;
       }));
-      app.querySelectorAll('[data-editor-command]').forEach(button => {
-        button.addEventListener('mousedown', event => event.preventDefault());
-        button.addEventListener('click', () => {
-          const editor = button.closest('label').querySelector('[data-rich-editor]');
-          editor.focus();
-          document.execCommand(button.dataset.editorCommand, false);
-          editor.dispatchEvent(new Event('input', { bubbles:true }));
-        });
-      });
       renderLegal();
+      window.DesktopRichText?.attachAll(app);
     }
 
     const scale = app.querySelector('[data-ui-scale]');
@@ -352,6 +351,7 @@
       submitting = true;
       notice && (notice.hidden = true);
       try {
+        window.DesktopRichText?.sync(form);
         const response = await fetch(form.action, {
           method:'POST',
           credentials:'same-origin',
@@ -433,8 +433,9 @@
         }
         if (payload.section === 'integrations' && payload.provider === 'stripe') updateStripe(payload.stripe);
         if (legalLocale && form.querySelector('[name="section"]')?.value === 'system') {
-          legalDocuments[legalLocale.value] = Object.fromEntries([...form.querySelectorAll('[data-rich-editor]')]
-            .map(editor => [editor.dataset.richEditor, editor.innerHTML]));
+          window.DesktopRichText?.sync(form);
+          legalDocuments[legalLocale.value] = Object.fromEntries([...form.querySelectorAll('[data-legal-editor]')]
+            .map(editor => [editor.name, editor.value]));
           legalLocale.dataset.legalDocuments = JSON.stringify(legalDocuments);
         }
         if (form.matches('[data-profile-form]')) {

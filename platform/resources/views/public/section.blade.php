@@ -7,7 +7,7 @@
 @if($section==='ueber-uns')
 <section class="public-about-page" id="about-content">
 <div class="public-about-lead public-panel"><p class="public-eyebrow">{{ __('public.about_eyebrow') }}</p><h2>{{ __('public.about_intro_title') }}</h2><p>{{ __('public.about_intro') }}</p></div>
-@if(!empty($document))<div class="public-about-custom public-panel"><div class="public-document">{{ $document }}</div></div>@endif
+@if(!empty($document))<div class="public-about-custom public-panel"><div class="public-document">@include('public.rich-content',['content'=>$document])</div></div>@endif
 <div class="public-about-story public-panel"><p class="public-eyebrow">{{ __('public.about_story_eyebrow') }}</p><h2>{{ __('public.about_story_title') }}</h2><p>{{ __('public.about_story') }}</p></div>
 <div class="public-about-values"><div class="public-panel-heading"><h2>{{ __('public.about_values_title') }}</h2></div><div class="public-about-value-grid">@foreach(__('public.about_values') as $value)<article class="public-panel"><span class="public-about-value-mark" aria-hidden="true">◇</span><h3>{{ $value['title'] }}</h3><p>{{ $value['text'] }}</p></article>@endforeach</div></div>
 <div class="public-about-invitation public-panel"><h2>{{ __('public.about_invitation_title') }}</h2><p>{{ __('public.about_invitation') }}</p><nav class="public-hero-actions"><a class="public-button" href="/videos">{{ __('public.about_explore_videos') }} →</a><a class="public-button public-button-secondary" href="/beitraege">{{ __('public.about_explore_articles') }} →</a><a class="public-button public-button-secondary" href="/kontakt">{{ __('public.contact') }} →</a></nav></div>
@@ -30,7 +30,7 @@
 <button class="public-button">{{ __('public.send') }} →</button>
 </form>
 @if(!empty($contactEmail))<p><a href="mailto:{{ $contactEmail }}">{{ $contactEmail }}</a></p>@endif
-@elseif(!empty($document))<div class="public-document">{{ $document }}</div>
+@elseif(!empty($document))<div class="public-document">@include('public.rich-content',['content'=>$document])</div>
 @else<p class="public-empty">{{ __('public.section_pending') }}</p>@endif
 @if(in_array($section,['unsere-mission']))<nav class="public-hero-actions"><a class="public-button" href="/ueber-uns">{{ __('public.section_ueber-uns') }} →</a><a class="public-button public-button-secondary" href="/kontakt">{{ __('public.contact') }} →</a></nav>@endif
 @endif
