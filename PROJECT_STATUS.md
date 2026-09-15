@@ -67,5 +67,5 @@
 ## Последний связанный commit
 
 - Предшествующий функциональный commit: `90d6b26` — Complete admin workflows and PWA foundation.
-- Последний функциональный commit: `1fe9375` — Redesign calendar and fix staff poll voting. Branch/upstream: main → origin/main.
+- Последний функциональный commit: `c2f1231` — Remux completed Live recordings. Branch/upstream: main → origin/main.
 
