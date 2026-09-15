@@ -30,7 +30,7 @@
 - Public overview refinement: Beiträge показывают девять новых карточек в сетке 3×3 и шесть популярных материалов; Videos получили блок актуальных тем в правой колонке. `/ueber-uns` теперь содержит полноценную локализованную страницу о платформе с hero, историей, ценностями и CTA, сохраняя настроенный текст из админки.
 - Mobile Beiträge cards keep their two-column grid but switch each card to image-above-text, with a readable 4:5 preview and wider title/excerpt area; desktop card layout is unchanged. Video details keep a wide shell while contained portrait playback gets a blurred poster backdrop; public-pages stylesheet cache version is v19.
 - Public article image containers keep full `contain` rendering and use a very light, translucent, softly blurred color backdrop derived from the same image; the neutral background remains dominant.
-- Live Studio: existing events/OBS credentials/poster и монитор сохранены; добавлен отдельный Browser-Studio mode с camera/mic, screen/window, contained PNG/JPEG/WebP scenes, PiP/title, gains/meter и actual outbound bitrate/frame stats. Explicit WHIP start/stop через protected Laravel bridge, owned encrypted sessions/lease и foreground FFmpeg normalization H264/Opus → H264/AAC используют existing HLS/recording/output pipeline. Подготовка не транслирует; active session/recording блокируют event/window close. Local mono WAV podcast recording/download/resumable upload и idempotent unpublished Podcast draft используют existing Media/SourceRecord, без параллельного каталога. Settings-only server configuration validates candidate/backups/loopback API auth and invokes existing subscription-user start script; live.manage confirmed OBS disconnect disables reconnect. Обычный старт/стоп encoder остаётся в OBS. Public preview отключается при browser capture против эха. Telegram announcements/Mini App unchanged.
+- Live Studio: existing events/OBS credentials/poster и монитор сохранены; добавлен отдельный Browser-Studio mode с camera/mic, screen/window, contained PNG/JPEG/WebP scenes, PiP/title, gains/meter и actual outbound bitrate/frame stats. Explicit WHIP start/stop через protected Laravel bridge, owned encrypted sessions/lease и foreground FFmpeg normalization H264/Opus → H264/AAC используют existing HLS/recording/output pipeline. Подготовка не транслирует; active session/recording блокируют event/window close. Local mono WAV podcast recording/download/resumable upload и idempotent unpublished Podcast draft используют existing Media/SourceRecord, без параллельного каталога. Settings-only server configuration validates candidate/backups/loopback API auth and invokes existing subscription-user start script; live.manage confirmed OBS disconnect disables reconnect. Кнопка OBS/Live-Hilfe открывает штатное Help-окно с конкретным OBS, Kalender и Browser workflow. Обычный старт/стоп encoder остаётся в OBS. Public preview отключается при browser capture против эха. Telegram announcements/Mini App unchanged.
 - Live recording processing: MediaMTX completion callbacks enqueue unique jobs; each fMP4 segment is losslessly remuxed to seekable MP4 with `faststart` before canonical registration, with a safe original-segment fallback when FFmpeg fails. Segments remain separate and are not merged.
 - Admin completion: video inventory exposes duration/size/processing facts and bounded filters/sorting/exclusions; provider covers/hashtags, destination preview and schedule states are visible. HTTPS URL/RSS/Atom imports retain a private provenance original and create sanitized unpublished drafts; subscriber CSV imports are resumable and never activate, re-consent or email unverified contacts. AI prioritization uses bounded permission-scoped facts and never mutates content automatically.
 - PWA/operations: public and Desktop layouts expose an installable manifest, offline static shell and Apple touch icon. Settings staff have a private operational health endpoint containing runtime, database, storage capacity, cache, search, owner, queue and scheduler/worker heartbeat facts without secrets. `platform:check` uses the same report; the documented Plesk cron entry point records successful scheduler/queue heartbeats.
@@ -64,6 +64,8 @@
 - Existing homepage header overflow на 820 px не затрагивался. 100% pixel match всего проекта не заявляется; screenshots новых проектов и публичной книги desktop/mobile просмотрены.
 
 ## Проверки
+
+- Live Studio OBS/Browser help: `node --check platform/public/assets/desktop-live-studio.js`, `node --check platform/tests/browser-live-browser.mjs` и `git diff --check` прошли. Real MediaMTX browser scenario расширен проверкой открытия, содержимого и закрытия Help-окна, но локально не запускался: в этой Windows-сессии отсутствуют PHP 8.4, Playwright и MediaMTX; сценарий остаётся в pinned CI job.
 
 - Catalog deletion actions: shared CRUD editors now expose a confirmation-protected Delete action for projects, books and topics/categories; related tasks/materials/files remain intact where deletion is supported. node --check desktop-workspaces.js and git diff --check passed; Laravel tests remain unavailable because PHP 8.4 is not installed in this Windows session.
 
@@ -104,7 +106,9 @@
 
 ## Последний связанный commit
 
-- Текущий функциональный блок: `91ae83d` — Fix help dialog button contrast. Branch/upstream: main → origin/main.
+- Текущий функциональный блок: Live Studio OBS/Browser Help wiring в этом changeset; базовый commit `6db1a6`. Отдельная integration branch указывается в итоговом отчёте.
+
+- Предыдущий функциональный блок: `91ae83d` — Fix help dialog button contrast. Branch/upstream: main → origin/main.
 
 - Предыдущий функциональный блок: `034b2cd` — Turn Publishing into external registry.
 

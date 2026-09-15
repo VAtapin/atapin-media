@@ -223,7 +223,7 @@
     posterDrop?.addEventListener('dragleave', event => { if (!posterDrop.contains(event.relatedTarget)) posterDrop.classList.remove('is-dragging'); });
     posterDrop?.addEventListener('drop', event => { event.preventDefault(); posterDrop.classList.remove('is-dragging'); selectPosterFile(event.dataTransfer.files?.[0]); });
     preview.addEventListener('click', () => window.open(preview.dataset.url, '_blank', 'noopener'));
-    root.querySelector('[data-live-help]').addEventListener('click', () => document.querySelector('[data-open-app="help-live-studio"]')?.click());
+    root.querySelector('[data-live-help]').addEventListener('click', () => root.closest('.os-window')?.querySelector('[data-window-action="help"]')?.click());
     events.addEventListener('click', event => { const button = event.target.closest('[data-live-event]'); if (button) loadEvent(button.dataset.liveEvent); });
     currentEvents.addEventListener('click', event => { const button = event.target.closest('[data-live-event]'); if (button) loadEvent(button.dataset.liveEvent); });
     form.addEventListener('submit', async event => {
