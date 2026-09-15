@@ -81,5 +81,5 @@
 ## Последний связанный commit
 
 - Предшествующий функциональный commit: `90d6b26` — Complete admin workflows and PWA foundation.
-- Последний функциональный commit: текущая переработка окна Videos (commit будет создан после проверок). Branch/upstream: main → origin/main.
+- Последний функциональный commit: `0c82f59` — Simplify video library views. Branch/upstream: main → origin/main.
 
