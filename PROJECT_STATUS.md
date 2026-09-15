@@ -103,7 +103,7 @@
 
 ## Последний связанный commit
 
-- Текущий функциональный блок: `ede0aeb` — Make PDF text extractor failure actionable. Branch/upstream: main → origin/main.
+- Текущий функциональный блок: `7028e3d` — Make AI and PDF workflows background friendly. Branch/upstream: main → origin/main.
 
 - Предыдущий функциональный блок: `034b2cd` — Turn Publishing into external registry.
 
