@@ -34,6 +34,7 @@
 - Analytics chart refinement: the selected date range now includes explicit zero-activity days, the main activity line uses a smooth curve with real peaks and drops, and a clickable daily heatmap makes quiet/active periods visible at a glance.
 - Video catalog cleanup: the Videos window now has separated primary/advanced filters and actions, a persistent cards/list switch, and card thumbnails from linked media covers; the existing post/podcast table mode remains unchanged.
 - Video catalog refinement: card columns are compact enough for three videos in the split view, card/list switching reuses the loaded page without a second request, list thumbnails no longer overlap text, and available local video files can play inline from the catalog.
+- Content library editor flow: Videos, Beiträge and Podcast catalogs now use the full window without a right-hand editor; selecting an item, creating new content or opening series launches a separate editor window. Generic CRUD catalogs keep the same separate-window pattern, and embedded Media Library content uses the same editor flow.
 
 ## Важные решения
 
@@ -75,6 +76,7 @@
 - Analytics chart refinement: `node --check platform/public/assets/desktop-workspace-operations.js` and `git diff --check` passed again after adding zero-day interpolation, curve smoothing and heatmap rendering. PHP/Blade/browser checks remain unavailable in this Windows session.
 - Video catalog cleanup: `node --check` for `desktop-content-library.js` and `desktop-content-columns.js`, plus `git diff --check`, passed. PHP/Blade/browser checks were not run because PHP 8.4 and a local preview server are unavailable in this Windows session.
 - Video catalog refinement: `node --check` for `desktop-content-library.js` and `desktop-content-columns.js`, plus `git diff --check`, passed. PHP/Blade/browser checks remain unavailable because PHP 8.4 and a local preview server are not installed in this Windows session.
+- Content library editor flow: `node --check` for changed content/editor/OS scripts and browser scenarios, plus `git diff --check`, passed. PHP/Blade/browser execution was not available because PHP 8.4 and a local preview server are not installed in this Windows session.
 
 - Imported text structure review: node --check platform/public/assets/desktop-content-assignment.js and git diff --check passed. Laravel Feature/Blade/browser checks were not run because PHP 8.4 and a local preview server are unavailable in this Windows session.
 - Public topic filters: git diff --check passed. Public Laravel Feature/Blade checks were not run because PHP 8.4 is unavailable in this Windows session.

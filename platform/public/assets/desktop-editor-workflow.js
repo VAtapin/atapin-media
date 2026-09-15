@@ -33,6 +33,10 @@
   };
   document.addEventListener('click',async event=>{
     const create=event.target.closest('[data-content-new]'),series=event.target.closest('[data-content-series]');const root=(create||series)?.closest('[data-content-library]');if(!root)return;
+    if (root.dataset.contentEditor !== 'true') {
+      window.openContentEditor?.(root.dataset.section, '', series ? 'series' : 'new');
+      return;
+    }
     if(series){const details=root.querySelector('[data-content-details]');if(details.dataset.dirty==='true'&&!window.confirm(window.desktopImportLabels.discard_edits))return;const host=el('div',undefined,'workspace-inline');details.replaceChildren(host);await W.mount(host,'series');return;}
     const details=root.querySelector('[data-content-details]');if(details.dataset.dirty==='true'&&!window.confirm(window.desktopImportLabels.discard_edits))return;
     const form=el('form');form.className='content-assignment';form.append(el('h2',t('new')),field('title'),field('body','textarea'));form.elements.title.required=true;form.elements.body.maxLength=100000;const save=el('button',t('save'),'desktop-button');form.append(save);details.replaceChildren(form);form.addEventListener('submit',async e=>{e.preventDefault();save.disabled=true;try{const section=root.dataset.section;const result=await request('/desktop/content',{...formDataSafe(form),kind:section==='posts'?'post':'video',public_section:section==='posts'?'beitraege':section==='podcast'?'podcast':'videos',status:'unsorted'},'POST');document.dispatchEvent(new Event('desktop-media-changed'));delete details.dataset.dirty;root.dispatchEvent(new CustomEvent('local-content-open',{detail:{url:result.detail_url}}));}catch(error){details.append(el('p',error.message));}finally{save.disabled=false;}});

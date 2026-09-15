@@ -20,8 +20,8 @@ try {
   await page.goto(base+'/desktop?open=settings');
   await page.locator('.os-window [data-settings-tab="media_appearance"]').click();
   const settings=page.locator('.os-window [data-settings-panel="media_appearance"]');assert(await settings.locator('[name=cover_style_prompt]').isVisible());assert(await settings.locator('[name=public_author_photo]').count());
-  await page.goto(base+'/desktop?open=podcast');await page.locator('.os-window [data-content-list]').getByText('Podcast Browser',{exact:true}).click();
-  await page.waitForSelector('.os-window [data-prepare-media=podcast]');assert(await page.locator('.os-window [name=short_description]').isVisible());
+  await page.goto(base+'/desktop?open=podcast');await page.locator('.os-window[data-app-id=podcast] [data-content-list]').getByText('Podcast Browser',{exact:true}).click();
+  await page.waitForSelector('.os-window[data-app-id^="podcast-"] [data-prepare-media=podcast]');assert(await page.locator('.os-window[data-app-id^="podcast-"] [name=short_description]').isVisible());
   page=await browser.newPage({viewport:{width:1672,height:941}});page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(10000);
   await page.goto(base+'/login');await page.locator('[name=email]').fill('viewer@example.com');await page.locator('[name=password]').fill('kurz5');await page.locator('form button').click();await page.waitForURL('**/konto');
   await page.goto(base+fixture.url);await page.evaluate(()=>{window.testPlayer=document.querySelector('video');window.testMarker='same-document';});

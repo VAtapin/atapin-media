@@ -439,6 +439,11 @@
         const content = document.querySelector('#content-library-app-template')?.content.firstElementChild.cloneNode(true);
         if (content) {
           content.dataset.section = baseAppId;
+          if (options.contentEditor) {
+            content.dataset.contentEditor = 'true';
+            content.dataset.contentEditorMode = options.contentEditorMode || 'detail';
+            if (options.contentUrl) content.dataset.contentEditorUrl = options.contentUrl;
+          }
           windowElement.querySelector('.os-window-content').append(content);
           window.initializeContentLibrary?.(content);
         }

@@ -16,6 +16,13 @@
     while (size >= 1024 && unit < units.length - 1) { size /= 1024; unit++; }
     return `${new Intl.NumberFormat('de-DE', {maximumFractionDigits: unit ? 1 : 0}).format(size)} ${units[unit]}`;
   };
+  const openContentEditor = (section, url = '', mode = 'detail') => window.openDesktopProgram?.(section || 'videos', {
+    forceNew: true,
+    contentEditor: true,
+    contentEditorMode: mode,
+    ...(url ? {contentUrl: url} : {}),
+  });
+  window.openContentEditor = openContentEditor;
   window.initializeContentLibrary = root => {
     if (!root || root.dataset.initialized) return;
     root.dataset.initialized = 'true';
@@ -26,6 +33,7 @@
     const summary = root.querySelector('[data-content-summary]');
     const pagination = root.querySelector('[data-content-pagination]');
     const section = root.dataset.section || '';
+    const editorMode = root.dataset.contentEditor === 'true';
     const heading = root.querySelector('[data-content-heading]');
     const intro = root.querySelector('[data-content-intro]');
     const viewButtons = [...root.querySelectorAll('[data-content-view]')];
@@ -41,7 +49,7 @@
     }
     const scopeToggle=document.createElement('button');
     scopeToggle.type='button'; scopeToggle.className='desktop-button'; scopeToggle.dataset.contentScope='';
-    if(section){
+    if(section && !editorMode){
       (root.querySelector('[data-content-advanced-fields]') || form).append(scopeToggle);
       const updateScope=()=>{
         const allowed=sectionKinds[section]||[];
@@ -83,8 +91,8 @@
         const duration = item.video_duration ? formatDuration(item.video_duration) : '';
         const bytes = item.video_bytes ? formatBytes(item.video_bytes) : '';
         const technical = [duration, bytes].filter(Boolean).join(' · ');
-        if (section === 'videos' && view === 'cards') return `<li><article class="content-video-card">${videoVisual(item, 'content-video-card-visual')}<button type="button" class="content-video-card-open" data-content-detail="${escape(item.detail_url)}"><span class="content-video-card-body"><strong>${escape(item.title)}</strong><small>${escape(text[`kind_${item.kind}`] || item.kind)}${item.source ? ` · ${escape(item.source)}` : ''}</small>${item.body ? `<span class="content-video-card-description">${escape(item.body)}</span>` : ''}<span class="content-list-badges">${publication}${homepage}</span><span class="content-video-card-meta">${technical ? `${escape(technical)} · ` : ''}${escape(text[item.status] || item.status)}</span></span></button></article></li>`;
-        if (section === 'videos') return `<li><article class="media-library-item content-video-list-item">${videoVisual(item, 'content-video-list-visual')}<button type="button" class="content-video-list-open" data-content-detail="${escape(item.detail_url)}"><span class="media-library-item-main"><strong>${escape(item.title)}</strong><small>${escape(text[`kind_${item.kind}`] || item.kind)} · ${escape(item.source)}${technical ? ` · ${escape(technical)}` : ''} · ${escape(item.body)}</small><span class="content-list-badges">${publication}${homepage}</span></span></button><span class="media-library-status">${escape(text[item.status] || item.status)}</span></article></li>`;
+        if (section === 'videos' && view === 'cards') return `<li><article class="content-video-card" data-content-detail="${escape(item.detail_url)}">${videoVisual(item, 'content-video-card-visual')}<button type="button" class="content-video-card-open" data-content-detail="${escape(item.detail_url)}"><span class="content-video-card-body"><strong>${escape(item.title)}</strong><small>${escape(text[`kind_${item.kind}`] || item.kind)}${item.source ? ` · ${escape(item.source)}` : ''}</small>${item.body ? `<span class="content-video-card-description">${escape(item.body)}</span>` : ''}<span class="content-list-badges">${publication}${homepage}</span><span class="content-video-card-meta">${technical ? `${escape(technical)} · ` : ''}${escape(text[item.status] || item.status)}</span></span></button></article></li>`;
+        if (section === 'videos') return `<li><article class="media-library-item content-video-list-item" data-content-detail="${escape(item.detail_url)}">${videoVisual(item, 'content-video-list-visual')}<button type="button" class="content-video-list-open" data-content-detail="${escape(item.detail_url)}"><span class="media-library-item-main"><strong>${escape(item.title)}</strong><small>${escape(text[`kind_${item.kind}`] || item.kind)} · ${escape(item.source)}${technical ? ` · ${escape(technical)}` : ''} · ${escape(item.body)}</small><span class="content-list-badges">${publication}${homepage}</span></span></button><span class="media-library-status">${escape(text[item.status] || item.status)}</span></article></li>`;
         return `<li><button type="button" class="media-library-item" data-content-detail="${escape(item.detail_url)}"><span class="media-library-item-main"><strong>${escape(item.title)}</strong><small>${escape(text[`kind_${item.kind}`] || item.kind)} · ${escape(item.source)} · ${escape(item.body)}</small><span class="content-list-badges">${publication}${homepage}</span></span><span class="media-library-status">${escape(text[item.status] || item.status)}</span></button></li>`;
       }).join('') : `<li class="media-library-empty">${escape(text.empty)}</li>`;
       list.innerHTML = section === 'videos' && view === 'cards' ? `<div class="content-video-card-grid">${renderList()}</div>` : renderList();
@@ -154,6 +162,10 @@
       }
       const url = event.detail?.url || event.target.closest('[data-content-detail]')?.dataset.contentDetail;
       if (!url) return;
+      if (!editorMode) {
+        openContentEditor(section, url);
+        return;
+      }
       if (details.dataset.dirty === 'true' && !window.confirm(text.discard_edits)) return;
       delete details.dataset.dirty;
       const generation = ++detailGeneration;
@@ -189,6 +201,14 @@
     pagination.addEventListener('click', event => { const button = event.target.closest('[data-content-page]'); if (button) load(Number(button.dataset.contentPage)); });
     const changed = () => { if (!root.isConnected) { document.removeEventListener('desktop-media-changed',changed); return; } load(page); };
     document.addEventListener('desktop-media-changed', changed);
-    load();
+    root.classList.toggle('is-content-editor', editorMode);
+    if (editorMode) {
+      const mode = root.dataset.contentEditorMode || 'detail';
+      if (mode === 'new' || mode === 'series') {
+        root.querySelector(mode === 'series' ? '[data-content-series]' : '[data-content-new]')?.click();
+      } else if (root.dataset.contentEditorUrl) {
+        root.dispatchEvent(new CustomEvent('local-content-open', {detail:{url:root.dataset.contentEditorUrl}}));
+      }
+    } else load();
   };
 })();
