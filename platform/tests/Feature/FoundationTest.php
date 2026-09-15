@@ -171,7 +171,7 @@ class FoundationTest extends TestCase
         $this->get('/desktop/shop')->assertStatus(405);
         $desktop = $this->get('/desktop')->assertOk();
         foreach (['Videos','Beiträge','Bücher & PDF','Podcast','Live Studio','Media Library','Projekte','Aufgaben','Kalender','Community','Newsletter','Themen & Kategorien','Publishing','Shop & Verkäufe','KI-Assistent','Analytics','Import Center','Integrationen','Einstellungen'] as $name) $desktop->assertSee($name);
-        $desktop->assertSee('desktop-settings', false)->assertSee('/assets/desktop-settings.css?v=3', false)
+        $desktop->assertSee('desktop-settings', false)->assertSee('/assets/desktop-settings.css?v=4', false)
             ->assertSee($owner->email)->assertSee('data-user-cancel', false)->assertSee('data-user-create-cancel', false)
             ->assertDontSee('/assets/app.css', false)->assertDontSee('<iframe', false);
         foreach (['Subscribers','Bilder','Audio','Dateien'] as $removedApp) $desktop->assertDontSee('data-app-name="'.$removedApp.'"', false);

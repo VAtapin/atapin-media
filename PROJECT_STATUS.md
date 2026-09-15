@@ -25,7 +25,7 @@
 - Social OAuth setup теперь не создаёт пустую YouTube/X integration: обязательные app credentials валидируются до записи, сохранённая конфигурация отделена от реально подключённого аккаунта, точный callback URI виден и копируется в Desktop, а Connect доступен только после сохранения. YouTube и X connect/callback при отсутствующей конфигурации, неверном state, отмене или provider/API error возвращают пользователя в Social Media с понятным сообщением вместо технических 503/419/422/500; безопасная техническая причина записывается в log без OAuth secrets, code, PKCE verifier и ещё не сохранённых tokens.
 - Publishing registry: отдельное окно Publishing теперь только показывает внешние публикации без Website, поддерживает фильтры по датам/платформе/статусу/поиску, карточки и список, ссылки и доступные действия активации, деактивации, повтора и удаления. Библиотека контента показывает значки внешних платформ и ссылки в деталях материала.
 - Media Library/imports: protected preview/download/Range, resumable files/folders/archives, pause/resume/stop/retry, trash/restore, SHA-256 dedupe, playlist links, checkpoints и пообъектные отчёты. Импорт сам по себе не публикует материалы. Canonical public/media/SHA-256 и прямые original MP4 URLs сохранены, документы приватны. Takeout сохраняет originals/source revisions/manual edits/trash/exclusions и сообщает неизвестные schemas. Podcast audio, frame covers и explicit AI cover/short-description используют existing background jobs. Import Center имеет восьмиэтапный permission-scoped Migration assistant с existing tools и paginated Review queue/AI actions; explicit review acceptance оставляет draft unpublished и открывает реальный editor. Personal review marks не являются доказательством импорта.
-- Imported text structure review: для YouTube/документных Beiträge, Videos и Shorts добавлена AI-проверка только структуры HTML без изменения текста, с автоматическим применением, индивидуальной кнопкой и массовым запуском по текущим фильтрам. Повторная проверка неизменённого body пропускается; stale/изменённый текст не перезаписывается.
+- Imported text structure review: для YouTube/документных Beiträge, Videos и Shorts добавлена AI-проверка только структуры HTML без изменения текста, с автоматическим применением, индивидуальной кнопкой и массовым запуском по текущим фильтрам. Запрос структуры использует стабильную версию исходного body, поэтому собственная служебная metadata очереди не делает ответ ложным stale; повторная проверка неизменённого body пропускается, а действительно изменённый текст не перезаписывается.
 - Public topic filters: счётчики и выдача используют единое нормализованное сравнение тегов, включая лишние пробелы и Unicode-варианты; фильтр больше не показывает пустую страницу при ненулевом счётчике темы.
 - Public Website: approved branding/owner assets, десять data-driven страниц, детали/каталоги/фильтры/поиск/пагинация, local video/audio, comments/reactions/newsletter/account, AJAX forms, Live HLS/heartbeat и афиша/fallback. Article covers/gallery показываются целиком и открываются в accessible lightbox. Mobile book overflow устранён; Public/Desktop CSS изолированы. Live detail chat теперь подстраивается под высоту левой колонки, а composer и KI-форма имеют отдельную компактную responsive-разметку.
 - Public overview refinement: Beiträge показывают девять новых карточек в сетке 3×3 и шесть популярных материалов; Videos получили блок актуальных тем в правой колонке. `/ueber-uns` теперь содержит полноценную локализованную страницу о платформе с hero, историей, ценностями и CTA, сохраняя настроенный текст из админки.
@@ -69,6 +69,8 @@
 - Existing homepage header overflow на 820 px не затрагивался. 100% pixel match всего проекта не заявляется; screenshots новых проектов и публичной книги desktop/mobile просмотрены.
 
 ## Проверки
+
+- Финальный локальный suite на PHP 8.4.25 / SQLite со всеми необходимыми CLI extensions и memory_limit 512M: **415 tests / 3126 assertions passed**. Отдельно подтверждены ContentStructureTest (**2 / 14**) и PublicAiChatTest (**3 / 17**); Desktop asset assertion обновлён до фактической версии settings CSS. Публичный Live KI-assistant остаётся защищённым auth/permission и лимитом 10 запросов в минуту на пользователя без отдельного application-level дневного бюджета.
 
 - Projekte/Aufgaben quick + inline workflow: локальный PHP 8.4.25 / SQLite `DesktopWorkspacesTest` — **37 tests / 264 assertions passed**; Edge E2E `desktop-workspaces-browser.mjs` и `admin-completion-browser.mjs` прошли полностью при 1672×941 с responsive screenshot 390×844. Проверены title-only defaults, calendar linkage, отсутствие второго окна, full editor, status/priority/checklist и Board. `node --check` прошёл для изменённых JS/E2E-файлов.
 
@@ -117,7 +119,9 @@
 
 ## Последний связанный commit
 
-- Текущий функциональный блок: этот commit — Harden X OAuth error flow. Branch/upstream: main → origin/main.
+- Текущий функциональный блок: этот commit — Fix AI workflow regressions. Branch/upstream: main → origin/main.
+
+- Предыдущий функциональный блок: `c51ebd6` — Harden X OAuth error flow. Branch/upstream: main → origin/main.
 
 - Предыдущий функциональный блок: `56ad4e9` — Connect Live Studio help. Branch/upstream: main → origin/main.
 

@@ -35,7 +35,7 @@ Route::get('/live/current',[\App\Http\Controllers\PublicLiveController::class,'c
 Route::get('/public/{record}/comments',[\App\Http\Controllers\PublicCommentsController::class,'index'])->name('public.comments');
 Route::post('/live/server-auth',[\App\Http\Controllers\PublicBroadcastController::class,'authenticate'])->middleware('throttle:broadcast-auth')->name('public.broadcast-auth');
 Route::post('/live/{record}/push',[\App\Http\Controllers\PublicPushController::class,'toggle'])->middleware(['auth','throttle:20,1'])->name('public.live-push');
-Route::post('/live/{record}/assistant',[\App\Http\Controllers\PublicAiChatController::class,'store'])->middleware(['auth','can:public.participate','throttle:3,1'])->name('public.ai-chat');
+Route::post('/live/{record}/assistant',[\App\Http\Controllers\PublicAiChatController::class,'store'])->middleware(['auth','can:public.participate','throttle:10,1'])->name('public.ai-chat');
 Route::get('/public/assistant/{entry}',[\App\Http\Controllers\PublicAiChatController::class,'show'])->middleware(['auth','throttle:60,1'])->name('public.ai-chat-status');
 Route::middleware('guest')->group(function () {
     Route::get('/passwort-vergessen',[\App\Http\Controllers\PublicPasswordController::class,'form'])->name('public.password-forgot');

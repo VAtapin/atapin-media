@@ -16,7 +16,12 @@ class DesktopAi
         $data['context']=[...($data['context']??[]),'locale'=>app()->getLocale()];
         $entry = DB::transaction(function () use ($user,$data,$record,$product) {
             User::whereKey($user->id)->lockForUpdate()->firstOrFail();
-            return DesktopAiRequest::create([...$data,'user_id'=>$user->id,'source_version'=>$record?app(ContentState::class)->version($record):($product?$this->bookVersion($product):null)]);
+            $sourceVersion = $record
+                ? (($data['purpose'] ?? null) === 'structure'
+                    ? app(ContentStructureReview::class)->version($record)
+                    : app(ContentState::class)->version($record))
+                : ($product ? $this->bookVersion($product) : null);
+            return DesktopAiRequest::create([...$data,'user_id'=>$user->id,'source_version'=>$sourceVersion]);
         });
         \App\Jobs\AnswerDesktopAi::dispatch($entry->id)->afterCommit();
         return $entry;
