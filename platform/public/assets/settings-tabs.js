@@ -126,7 +126,22 @@
         const hint = form.querySelector('[data-connection-hint]');
         if (hint) hint.textContent = template.hint || '';
         const oauth = form.querySelector('[data-connection-oauth]');
-        if (oauth) { oauth.hidden = !template.oauth_url; if (template.oauth_url) oauth.href = template.oauth_url; }
+        if (oauth) {
+          oauth.hidden = !template.oauth_url;
+          oauth.setAttribute('aria-disabled', String(!template.oauth_configured));
+          oauth.title = template.oauth_configured ? '' : (template.hint || app.dataset.connectionRequiresSave);
+          if (template.oauth_url && template.oauth_configured) oauth.href = template.oauth_url;
+          else oauth.removeAttribute('href');
+        }
+        const redirect = form.querySelector('[data-connection-redirect]');
+        if (redirect) {
+          redirect.hidden = !template.oauth_redirect_uri;
+          redirect.querySelector('[data-connection-redirect-uri]').value = template.oauth_redirect_uri || '';
+        }
+        const clientId = form.querySelector('[name="oauth_client_id"]');
+        const clientSecret = form.querySelector('[name="oauth_client_secret"]');
+        if (clientId && template.oauth_url) clientId.required = !template.oauth_client_id_saved;
+        if (clientSecret && template.oauth_url) clientSecret.required = Boolean(template.oauth_client_secret_required) && !template.oauth_client_secret_saved;
         const miniApp = Boolean(form.querySelector('[name="mini_app_enabled"][type="checkbox"]')?.checked);
         const identifier = form.querySelector('[name="external_id"]');
         if (identifier) identifier.required = ['facebook', 'instagram'].includes(provider) || (provider === 'telegram' && !miniApp);
@@ -165,6 +180,15 @@
     app.querySelector('[name="mini_app_enabled"][type="checkbox"]')?.addEventListener('change', event => {
       const form = event.target.closest('form');
       configureConnection(form, 'social', form.querySelector('[name="provider"]').value);
+    });
+    app.querySelector('[data-connection-copy]')?.addEventListener('click', async event => {
+      const input = event.currentTarget.closest('[data-connection-redirect]')?.querySelector('[data-connection-redirect-uri]');
+      if (!input?.value) return;
+      try {
+        if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(input.value);
+        else { input.select(); document.execCommand('copy'); }
+        showNotice(app.dataset.connectionCopied);
+      } catch (_) { showNotice(app.dataset.connectionCopyFailed, true); }
     });
     app.querySelector('[data-contact-next]')?.addEventListener('click',async event=>{
       const button=event.currentTarget;button.disabled=true;
@@ -257,6 +281,15 @@
         }
         if (payload.section === 'social') {
           const provider = payload.provider;
+          Object.assign(socialDefinitions[provider] || {}, {
+            oauth_configured: payload.oauth_configured,
+            oauth_client_id_saved: payload.oauth_client_id_saved,
+            oauth_client_secret_saved: payload.oauth_client_secret_saved,
+            oauth_client_secret_required: payload.oauth_client_secret_required,
+            status: payload.connection_status,
+            status_label: payload.connection_status_label,
+          });
+          configureConnection(form, 'social', provider);
           const list = app.querySelector('[data-connection-list="social"]');
           let button = [...list.querySelectorAll('[data-provider]')].find(item => item.dataset.provider === provider);
           if (!button) {
@@ -271,7 +304,7 @@
           button.dataset.externalId = form.querySelector('[name="external_id"]').value;
           button.dataset.botUsername = form.querySelector('[name="bot_username"]').value;
           button.dataset.miniAppEnabled = form.querySelector('[name="mini_app_enabled"][type="checkbox"]').checked ? '1' : '0';
-          button.querySelector('span').textContent = button.dataset.publicUrl || app.dataset.connectionSaved || '';
+          button.querySelector('span').textContent = payload.connection_status_label || app.dataset.connectionSaved || '';
         }
         if (legalLocale && form.querySelector('[name="section"]')?.value === 'system') {
           legalDocuments[legalLocale.value] = Object.fromEntries([...form.querySelectorAll('[data-rich-editor]')]

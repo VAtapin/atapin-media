@@ -8,7 +8,7 @@ use App\Services\Publishing\{ConnectionStore, ConnectorRegistry, PublishingServi
 use App\Services\Settings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{DB, Log};
 
 class PublishingController extends Controller
 {
@@ -153,7 +153,9 @@ class PublishingController extends Controller
 
     public function youtubeConnect(Request $request, YouTubeClient $client)
     {
-        abort_unless($client->oauthConfigured(), 503, 'YouTube OAuth is not configured in Settings → Social Media.');
+        if (! $client->oauthConfigured()) {
+            return $this->youtubeOAuthReturn(__('publishing.youtube_oauth_not_configured'), true);
+        }
         $state = bin2hex(random_bytes(24));
         $request->session()->put('publishing.youtube.oauth_state', $state);
         return redirect()->away($client->authorizeUrl($state));
@@ -163,24 +165,39 @@ class PublishingController extends Controller
     {
         $expected = $request->session()->pull('publishing.youtube.oauth_state');
         $state = $request->query('state');
-        abort_unless(is_string($expected) && $expected !== '' && is_string($state) && $state !== '' && hash_equals($expected, $state), 419);
-        if ($request->query('error')) return redirect('/desktop')->with('status', __('publishing.oauth_cancelled'));
-        $request->validate(['code' => 'required|string']);
-        $credentials = $client->exchangeCode((string) $request->query('code'));
-        $channel = $client->channel($credentials);
-        abort_unless(is_string($channel['id'] ?? null) && $channel['id'] !== '', 422, __('publishing.channel_unavailable'));
-        $social = $settings->get('social_connections', []);
-        $sameChannel = ($social['youtube']['external_id'] ?? null) === $channel['id'];
-        $social['youtube'] = array_filter([
-            'provider' => 'youtube', 'external_id' => $channel['id'] ?? null,
-            'public_url' => isset($channel['snippet']['customUrl']) ? 'https://www.youtube.com/'.$channel['snippet']['customUrl'] : 'https://www.youtube.com/channel/'.$channel['id'],
-            'configured_at' => now()->toIso8601String(),
-        ]);
-        DB::transaction(function () use ($connections, $credentials, $sameChannel, $settings, $social) {
-            $connections->saveCredentials('youtube', $credentials, ! $sameChannel);
-            $settings->update(['social_connections' => $social]);
-        });
-        return redirect('/desktop')->with('status', __('publishing.youtube_connected'));
+        if (! is_string($expected) || $expected === '' || ! is_string($state) || $state === '' || ! hash_equals($expected, $state)) {
+            Log::warning('YouTube OAuth callback rejected because its state was missing or invalid.', ['user_id' => $request->user()?->id]);
+            return $this->youtubeOAuthReturn(__('publishing.oauth_state_invalid'), true);
+        }
+        if ($request->query('error')) return $this->youtubeOAuthReturn(__('publishing.oauth_cancelled'));
+        $code = $request->query('code');
+        if (! is_string($code) || $code === '') return $this->youtubeOAuthReturn(__('publishing.youtube_connection_failed'), true);
+
+        try {
+            $credentials = $client->exchangeCode($code);
+            $channel = $client->channel($credentials);
+            if (! is_string($channel['id'] ?? null) || $channel['id'] === '') throw new \RuntimeException('YouTube returned no accessible channel.');
+            $social = $settings->get('social_connections', []);
+            $sameChannel = ($social['youtube']['external_id'] ?? null) === $channel['id'];
+            $social['youtube'] = array_filter([
+                'provider' => 'youtube', 'external_id' => $channel['id'],
+                'public_url' => isset($channel['snippet']['customUrl']) ? 'https://www.youtube.com/'.$channel['snippet']['customUrl'] : 'https://www.youtube.com/channel/'.$channel['id'],
+                'configured_at' => now()->toIso8601String(),
+            ]);
+            DB::transaction(function () use ($connections, $credentials, $sameChannel, $settings, $social) {
+                $connections->saveCredentials('youtube', $credentials, ! $sameChannel);
+                $settings->update(['social_connections' => $social]);
+            });
+        } catch (\Throwable $error) {
+            Log::warning('YouTube OAuth connection failed.', [
+                'user_id' => $request->user()?->id,
+                'error_type' => $error::class,
+                'error' => $connections->safeError($error),
+            ]);
+            return $this->youtubeOAuthReturn(__('publishing.youtube_connection_failed'), true);
+        }
+
+        return $this->youtubeOAuthReturn(__('publishing.youtube_connected'));
     }
 
     public function youtubeDisconnect(ConnectionStore $connections)
@@ -195,5 +212,10 @@ class PublishingController extends Controller
         abort_unless($record->status === 'ready', 422, 'Only ready content can be published.');
         $metadata = $record->metadata ?? [];
         abort_unless(! ($metadata['archive_data'] ?? false) && ! ($metadata['library_only'] ?? false), 422, 'Private archive content cannot be published.');
+    }
+
+    private function youtubeOAuthReturn(string $message, bool $error = false)
+    {
+        return redirect('/desktop?open=settings')->with('saved_section', 'social')->with($error ? 'desktop_error' : 'status', $message);
     }
 }

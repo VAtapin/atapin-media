@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Jobs\PublishToPlatform;
 use App\Models\{Publication, Role, SourceRecord, User};
 use App\Services\{Access, Settings};
-use App\Services\Publishing\{ConnectionStore, MediaResolver, OAuthAppCredentials, PublishingService, YouTubeClient};
+use App\Services\Publishing\{ConnectionStore, MediaResolver, OAuthAppCredentials, PublishingService, SocialConnections, YouTubeClient};
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Http;
@@ -52,7 +52,9 @@ class PublishingTest extends TestCase
     public function test_youtube_oauth_requires_admin_config_and_uses_the_configured_callback(): void
     {
         $url = route('desktop.publishing.youtube.connect');
-        $this->get($url)->assertStatus(503);
+        $this->get($url)->assertRedirect('/desktop?open=settings')
+            ->assertSessionHas('saved_section', 'social')
+            ->assertSessionHas('desktop_error', __('publishing.youtube_oauth_not_configured'));
         app(OAuthAppCredentials::class)->save('youtube', ['client_id' => 'client-id', 'client_secret' => 'client-secret']);
         $response = $this->get($url)->assertRedirect();
         parse_str((string) parse_url($response->headers->get('Location'), PHP_URL_QUERY), $query);
@@ -66,7 +68,7 @@ class PublishingTest extends TestCase
             ->assertSee(__('publishing.external_title'))
             ->assertSee(__('publishing.filters'))
             ->assertSee(__('publishing.cards'))
-            ->assertSee('desktop-publishing.css?v=3', false);
+            ->assertSee('desktop-publishing.css?v=4', false);
     }
 
     public function test_publication_registry_excludes_website_and_supports_filters(): void
@@ -223,11 +225,26 @@ class PublishingTest extends TestCase
     {
         Http::preventStrayRequests();
         $url = route('desktop.publishing.youtube.callback');
-        $this->get($url)->assertStatus(419);
-        $this->withSession(['publishing.youtube.oauth_state' => 'correct'])->get($url.'?state=wrong&code=code')->assertStatus(419);
-        $this->withSession(['publishing.youtube.oauth_state' => 'correct'])->get($url.'?state=correct&error=access_denied')->assertRedirect('/desktop');
-        $this->get($url.'?state=correct&code=code')->assertStatus(419);
+        $this->get($url)->assertRedirect('/desktop?open=settings')->assertSessionHas('desktop_error', __('publishing.oauth_state_invalid'));
+        $this->withSession(['publishing.youtube.oauth_state' => 'correct'])->get($url.'?state=wrong&code=code')->assertRedirect('/desktop?open=settings')->assertSessionHas('desktop_error', __('publishing.oauth_state_invalid'));
+        $this->withSession(['publishing.youtube.oauth_state' => 'correct'])->get($url.'?state=correct&error=access_denied')->assertRedirect('/desktop?open=settings')->assertSessionHas('status', __('publishing.oauth_cancelled'));
+        $this->get($url.'?state=correct&code=code')->assertRedirect('/desktop?open=settings')->assertSessionHas('desktop_error', __('publishing.oauth_state_invalid'));
         Http::assertNothingSent();
+    }
+
+    public function test_oauth_provider_failure_returns_to_social_settings_without_saving_a_connection(): void
+    {
+        app(OAuthAppCredentials::class)->save('youtube', ['client_id' => 'client-id', 'client_secret' => 'client-secret']);
+        Http::fake(['https://oauth2.googleapis.com/token' => Http::response(['error' => 'invalid_client'], 401)]);
+
+        $this->withSession(['publishing.youtube.oauth_state' => 'state'])
+            ->get(route('desktop.publishing.youtube.callback').'?state=state&code=code')
+            ->assertRedirect('/desktop?open=settings')
+            ->assertSessionHas('saved_section', 'social')
+            ->assertSessionHas('desktop_error', __('publishing.youtube_connection_failed'));
+
+        $this->assertSame([], app(ConnectionStore::class)->connection('youtube'));
+        $this->assertSame([], app(ConnectionStore::class)->credentials('youtube'));
     }
 
     public function test_oauth_reconnect_to_another_channel_drops_previous_stream_and_refresh_token(): void
@@ -238,11 +255,12 @@ class PublishingTest extends TestCase
             'https://oauth2.googleapis.com/token' => Http::response(['access_token' => 'new-token', 'refresh_token' => 'new-refresh']),
             'https://www.googleapis.com/youtube/v3/channels*' => Http::response(['items' => [['id' => 'new-channel', 'snippet' => ['customUrl' => '@new']]]]),
         ]);
-        $this->withSession(['publishing.youtube.oauth_state' => 'state'])->get(route('desktop.publishing.youtube.callback').'?state=state&code=code')->assertRedirect('/desktop');
+        $this->withSession(['publishing.youtube.oauth_state' => 'state'])->get(route('desktop.publishing.youtube.callback').'?state=state&code=code')->assertRedirect('/desktop?open=settings');
         $credentials = app(ConnectionStore::class)->credentials('youtube');
         $this->assertSame('new-token', $credentials['access_token']);
         $this->assertArrayNotHasKey('youtube_stream', $credentials);
         $this->assertSame('https://www.youtube.com/@new', app(ConnectionStore::class)->connection('youtube')['public_url']);
+        $this->assertSame('connected', app(SocialConnections::class)->editor()['youtube']['status']);
     }
 
     public function test_live_completion_failure_is_retried_without_creating_another_broadcast(): void
