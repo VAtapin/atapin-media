@@ -29,10 +29,9 @@ class PublicTaxonomyUiTest extends TestCase
         $taxonomy->sync($book, [$topic->id]);
 
         $home = $this->get('/')->assertOk()->assertSee('data-public-home-topics', false)
-            ->assertSee('public-home-category-cover', false)->assertSee('Medizin')->assertSee('Anatomie')
+            ->assertSee('public-taxonomy-crumbs', false)->assertSee('Medizin')->assertSee('Anatomie')
             ->assertSee($cover->publicUrl(), false)
-            ->assertDontSee(__('public.home_topics_title'))->assertDontSee(__('public.home_topics_intro'))
-            ->assertDontSee('THEMENWELTEN');
+            ->assertDontSee('public-home-topics-heading', false);
         $home->assertViewHas('homeTopics', fn (array $topics) => collect($topics)->firstWhere('id', $topic->id)['category_cover_url'] === $cover->publicUrl());
         foreach (['videos','beitraege','buecher'] as $section) {
             $home->assertSee(route('public.'.$section, ['taxonomy'=>'anatomie']), false);
@@ -40,9 +39,11 @@ class PublicTaxonomyUiTest extends TestCase
 
         foreach (['videos'=>'Anatomie Video','beitraege'=>'Anatomie Beitrag','buecher'=>'Anatomie Buch'] as $section=>$title) {
             $response = $this->get('/'.$section)->assertOk()->assertSee('data-public-taxonomy', false)
-                ->assertSee(__('public.explore_'.$section.'_by_topic'))->assertSee('Medizin')->assertSee('Anatomie');
+                ->assertSee('public-taxonomy-crumbs', false)->assertSee('Medizin')->assertSee('Anatomie')
+                ->assertSee($cover->publicUrl(), false)
+                ->assertDontSee('public-taxonomy-heading', false)->assertDontSee('public-taxonomy-group', false);
             $response->assertViewHas('taxonomyFilters', fn (array $filters) => collect($filters)->contains(
-                fn (array $term) => $term['slug']==='anatomie' && $term['count']===1
+                fn (array $term) => $term['slug']==='anatomie' && $term['count']===1 && $term['category_id']===$category->id
             ));
             $this->get('/'.$section.'?taxonomy=medizin')->assertOk()->assertSee($title)
                 ->assertSee('aria-current="page"', false);
@@ -63,6 +64,8 @@ class PublicTaxonomyUiTest extends TestCase
         $this->get('/')->assertOk()->assertSee('Private category')
             ->assertDontSee(route('media.preview', $private), false)
             ->assertViewHas('homeTopics', fn (array $topics) => collect($topics)->firstWhere('id', $topic->id)['category_cover_url'] === null);
+        $this->get('/beitraege')->assertOk()->assertDontSee(route('media.preview', $private), false)
+            ->assertViewHas('taxonomyFilters', fn (array $filters) => collect($filters)->firstWhere('id', $category->id)['cover_url'] === null);
     }
 
     private function record(string $kind, string $title): SourceRecord

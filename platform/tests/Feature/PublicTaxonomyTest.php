@@ -93,6 +93,31 @@ class PublicTaxonomyTest extends TestCase
         $this->get('/')->assertOk()->assertViewHas('homeTopics', fn (array $topics) => collect($topics)->firstWhere('id', $biomechanics->id)['total'] === 3);
     }
 
+    public function test_home_navigation_keeps_all_categories_and_topics_at_realistic_scale(): void
+    {
+        $taxonomy = app(Taxonomy::class);
+        foreach (range(1, 10) as $categoryNumber) {
+            $category = TaxonomyTerm::create(['name'=>'Category '.$categoryNumber,
+                'slug'=>'category-'.$categoryNumber,'kind'=>'category','active'=>true]);
+            foreach (range(1, 5) as $topicNumber) {
+                $topic = TaxonomyTerm::create(['name'=>'Topic '.$categoryNumber.'-'.$topicNumber,
+                    'slug'=>'topic-'.$categoryNumber.'-'.$topicNumber,'kind'=>'topic',
+                    'parent_id'=>$category->id,'active'=>true]);
+                $taxonomy->sync($this->record('post', 'Article '.$categoryNumber.'-'.$topicNumber, 'beitraege'), [$topic->id]);
+                if ($categoryNumber === 1 && $topicNumber === 1) foreach (range(2, 12) as $articleNumber) {
+                    $taxonomy->sync($this->record('post', 'Article 1-1-'.$articleNumber, 'beitraege'), [$topic->id]);
+                }
+            }
+        }
+
+        $topics = app(PublicTaxonomy::class)->homeTopics();
+        $this->assertCount(50, $topics);
+        $this->assertCount(10, collect($topics)->pluck('category_id')->unique());
+        $this->assertSame(12, collect($topics)->firstWhere('slug', 'topic-1-1')['sections']['beitraege']['count']);
+        $this->assertCount(12, app(PublicTaxonomy::class)->homeTopics(12));
+        $this->get('/')->assertOk()->assertViewHas('homeTopics', fn (array $items) => count($items) === 50);
+    }
+
     private function tree(): array
     {
         $medicine = TaxonomyTerm::create(['name' => 'Medizin', 'slug' => 'medizin', 'kind' => 'category', 'active' => true]);

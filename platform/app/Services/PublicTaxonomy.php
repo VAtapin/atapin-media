@@ -53,10 +53,22 @@ class PublicTaxonomy
         if ($terms->isEmpty()) return [];
 
         $subjects = $this->assignedSubjects($section, $terms->keys()->all());
-        return $this->summaries($terms, [$section => $subjects], $section);
+        $rows = $this->summaries($terms, [$section => $subjects], $section);
+        $coverIds = $terms->where('kind', 'category')->pluck('cover_media_id')->filter()->unique()->all();
+        $covers = Media::visibleLibrary()->where('kind', 'image')->whereIn('id', $coverIds)->get()->keyBy('id');
+
+        return array_map(function (array $row) use ($terms, $covers) {
+            $category = $row['kind'] === 'category' ? $terms->get($row['id']) : $this->categoryForTopic($terms, $row['id']);
+            return [...$row,
+                'category_id' => $category?->id,
+                'category_name' => $category?->name,
+                'cover_url' => $row['kind'] === 'category' && $category?->cover_media_id
+                    ? $covers->get($category->cover_media_id)?->publicUrl() : null,
+            ];
+        }, $rows);
     }
 
-    public function homeTopics(int $limit = 12): array
+    public function homeTopics(?int $limit = null): array
     {
         $terms = $this->activeTerms();
         if ($terms->isEmpty()) return [];
@@ -69,7 +81,7 @@ class PublicTaxonomy
             fn (array $row) => $row['kind'] === 'topic',
         ));
 
-        $topics = array_slice($topics, 0, max(1, $limit));
+        if ($limit !== null) $topics = array_slice($topics, 0, max(1, $limit));
         $categories = [];
         foreach ($topics as $topic) $categories[$topic['id']] = $this->categoryForTopic($terms, (int) $topic['id']);
         $coverIds = collect($categories)->filter()->pluck('cover_media_id')->filter()->unique()->all();

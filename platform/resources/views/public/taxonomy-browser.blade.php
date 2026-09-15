@@ -3,56 +3,58 @@
     $taxonomyCategories = $taxonomyChoices->where('kind', 'category')->values();
     $taxonomyTopics = $taxonomyChoices->where('kind', 'topic')->values();
     $activeTaxonomy = (string) (($selectedTaxonomy ?? null)?->slug ?? request('taxonomy', ''));
+    $activeTerm = $taxonomyChoices->first(fn ($term) => $activeTaxonomy === (string) $term['id'] || $activeTaxonomy === (string) $term['slug']);
+    $activeCategory = $activeTerm ? $taxonomyCategories->firstWhere('id', $activeTerm['category_id']) : null;
+    $activeTopic = ($activeTerm['kind'] ?? null) === 'topic' ? $activeTerm : null;
     $allTaxonomyUrl = route('public.'.$section, request()->except(['taxonomy', 'tag', 'page']));
 @endphp
 
 @if($taxonomyChoices->isNotEmpty())
-<section class="public-taxonomy-browser" aria-labelledby="taxonomy-heading-{{ $section }}" data-public-taxonomy>
-    <div class="public-taxonomy-heading">
-        <div>
-            <p class="public-eyebrow">{{ __('public.taxonomy_eyebrow') }}</p>
-            <h2 id="taxonomy-heading-{{ $section }}">{{ __('public.explore_'.$section.'_by_topic') }}</h2>
-        </div>
-        <a href="{{ $allTaxonomyUrl }}" @if($activeTaxonomy==='') aria-current="page" @endif>
-            {{ __('public.all_'.$section) }}
-        </a>
-    </div>
+<section class="public-taxonomy-browser" aria-label="{{ __('public.categories') }} / {{ __('public.topics') }}" data-public-taxonomy>
+    <nav class="public-taxonomy-crumbs" aria-label="{{ __('public.categories') }} / {{ __('public.topics') }}">
+        <a href="{{ $allTaxonomyUrl }}" @if($activeTaxonomy==='') aria-current="page" @endif>{{ __('public.all_'.$section) }}</a>
 
-    @if($taxonomyCategories->isNotEmpty())
-    <div class="public-taxonomy-group">
-        <h3>{{ __('public.categories') }}</h3>
-        <nav class="public-taxonomy-row" aria-label="{{ __('public.categories') }}">
-            @foreach($taxonomyCategories as $term)
-                @php($current = $activeTaxonomy === (string) $term['id'] || $activeTaxonomy === (string) $term['slug'])
-                <a href="{{ $term['url'] }}" @class(['current'=>$current]) @if($current) aria-current="page" @endif>
-                    <span class="public-taxonomy-symbol">◇</span>
-                    <span>
-                        <strong>{{ $term['name'] }}</strong>
-                        <small>{{ trans_choice('public.section_item_count_'.$section, (int) $term['count'], ['count'=>(int) $term['count']]) }}</small>
-                    </span>
-                </a>
-            @endforeach
-        </nav>
-    </div>
-    @endif
+        @if($taxonomyCategories->isNotEmpty())
+        <span class="public-taxonomy-separator" aria-hidden="true">›</span>
+        <details class="public-taxonomy-crumb">
+            <summary>
+                @if($activeCategory && $activeCategory['cover_url'])<img src="{{ $activeCategory['cover_url'] }}" alt="" loading="lazy">@endif
+                <span>{{ $activeCategory['name'] ?? __('public.categories') }}</span>
+            </summary>
+            <div class="public-taxonomy-menu public-taxonomy-menu-categories">
+                @foreach($taxonomyCategories as $term)
+                    @php($current = $activeTaxonomy === (string) $term['id'] || $activeTaxonomy === (string) $term['slug'])
+                    <a href="{{ $term['url'] }}" @if($current) aria-current="page" @endif>
+                        @if($term['cover_url'])<img src="{{ $term['cover_url'] }}" alt="" loading="lazy">@endif
+                        <span>{{ $term['name'] }}</span>
+                        <small>{{ $term['count'] }}</small>
+                    </a>
+                @endforeach
+            </div>
+        </details>
+        @endif
 
-    @if($taxonomyTopics->isNotEmpty())
-    <div class="public-taxonomy-group">
-        <h3>{{ __('public.topics') }}</h3>
-        <nav class="public-taxonomy-row public-taxonomy-row-topics" aria-label="{{ __('public.topics') }}">
-            @foreach($taxonomyTopics as $term)
-                @php($current = $activeTaxonomy === (string) $term['id'] || $activeTaxonomy === (string) $term['slug'])
-                <a href="{{ $term['url'] }}" @class(['current'=>$current]) @if($current) aria-current="page" @endif>
-                    <span>
-                        @if(!empty($term['parent_name']))<small>{{ $term['parent_name'] }}</small>@endif
-                        <strong>{{ $term['name'] }}</strong>
-                        <small>{{ trans_choice('public.section_item_count_'.$section, (int) $term['count'], ['count'=>(int) $term['count']]) }}</small>
-                    </span>
-                    <span aria-hidden="true">→</span>
-                </a>
-            @endforeach
-        </nav>
-    </div>
-    @endif
+        @if($taxonomyTopics->isNotEmpty())
+        <span class="public-taxonomy-separator" aria-hidden="true">›</span>
+        <details class="public-taxonomy-crumb">
+            <summary><span>{{ $activeTopic['name'] ?? __('public.topics') }}</span></summary>
+            <div class="public-taxonomy-menu public-taxonomy-menu-topics">
+                @php($menuTopics = $activeCategory ? $taxonomyTopics->where('category_id', $activeCategory['id']) : $taxonomyTopics)
+                @foreach($menuTopics->groupBy(fn ($term) => $term['category_name'] ?: __('public.topics')) as $groupName => $groupTopics)
+                    <div class="public-taxonomy-menu-group">
+                        <small>{{ $groupName }}</small>
+                        @foreach($groupTopics as $term)
+                            @php($current = $activeTaxonomy === (string) $term['id'] || $activeTaxonomy === (string) $term['slug'])
+                            <a href="{{ $term['url'] }}" @if($current) aria-current="page" @endif>
+                                <span>{{ $term['name'] }}</span>
+                                <small>{{ $term['count'] }}</small>
+                            </a>
+                        @endforeach
+                    </div>
+                @endforeach
+            </div>
+        </details>
+        @endif
+    </nav>
 </section>
 @endif

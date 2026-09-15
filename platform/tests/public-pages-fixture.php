@@ -36,4 +36,17 @@ for($i=1;$i<=5;$i++){
     $taxonomy->sync($book,[$topics[$i%2]->id]);
     if($i===1)$paths['buecher']=parse_url(app(App\Services\PublicBooks::class)->card($book)['url'],PHP_URL_PATH);
 }
+for($categoryNumber=2;$categoryNumber<=10;$categoryNumber++){
+    $extraCategory=App\Models\TaxonomyTerm::create(['kind'=>'category','name'=>"Kategorie $categoryNumber",
+        'slug'=>"kategorie-$categoryNumber",'active'=>true]);
+    for($topicNumber=1;$topicNumber<=5;$topicNumber++){
+        $extraTopic=App\Models\TaxonomyTerm::create(['kind'=>'topic','name'=>"Thema $categoryNumber-$topicNumber",
+            'slug'=>"thema-$categoryNumber-$topicNumber",'parent_id'=>$extraCategory->id,'active'=>true]);
+        $extraArticle=App\Models\SourceRecord::create(['source'=>'public-visual-fixture',
+            'source_id'=>"extra-article-$categoryNumber-$topicNumber",'kind'=>'post',
+            'title'=>"Visuelles Thema $categoryNumber-$topicNumber",'body'=>'Isolierte Testdaten.',
+            'status'=>'ready','metadata'=>['public_published'=>true,'public_section'=>'beitraege']]);
+        $taxonomy->sync($extraArticle,[$extraTopic->id]);
+    }
+}
 echo json_encode($paths,JSON_THROW_ON_ERROR);

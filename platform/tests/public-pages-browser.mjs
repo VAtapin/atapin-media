@@ -39,23 +39,45 @@ try {
       assert(await page.locator('.public-header').isVisible(),route);
       assert.equal(await page.locator('main').count(),1,route);
       if(route==='/'&&await page.locator('[data-public-home-topics]').count()){
-        const categories=page.locator('.public-home-category-card'),topics=page.locator('.public-home-topic-card');
-        assert.equal(await categories.count(),1,'Home groups the two topics under one category');
-        assert.equal(await topics.count(),2,'Home displays both topics');
-        assert.equal(await page.locator('.public-home-category-cover').count(),1,'Home shows the category cover');
-        await page.locator('.public-home-category-cover img').scrollIntoViewIfNeeded();
-        await page.waitForFunction(()=>{const image=document.querySelector('.public-home-category-cover img');return image?.complete&&image.naturalWidth>0;});
-        assert.equal(await page.locator('.public-home-topics-heading').count(),0,'Home has no decorative headings or explanatory text');
-        assert(await categories.first().getByText('Glaube & Leben',{exact:true}).isVisible(),'Category name is visible');
-        for(const link of await page.locator('.public-home-topic-card nav a').evaluateAll(nodes=>nodes.map(node=>new URL(node.href).pathname+new URL(node.href).search))){
+        const bar=page.locator('[data-public-home-topics]'),categories=bar.locator('[data-home-category]');
+        await bar.scrollIntoViewIfNeeded();
+        const dimensions=await bar.evaluate(element=>({height:element.getBoundingClientRect().height,border:parseFloat(getComputedStyle(element).borderTopWidth)}));
+        assert(dimensions.height<=42&&dimensions.border<=2,`Home taxonomy is not a thin strip: ${JSON.stringify(dimensions)}`);
+        assert.equal(await categories.count(),10,'Home keeps all ten categories');
+        await bar.locator('[data-home-category-image]').scrollIntoViewIfNeeded();
+        await page.waitForFunction(()=>{const image=document.querySelector('[data-home-category-image]');return image?.complete&&image.naturalWidth>0;});
+        await bar.locator('[data-home-categories-menu] summary').click();
+        await categories.nth(1).click();
+        assert.equal(await categories.nth(1).getAttribute('aria-pressed'),'true','Selected category updates');
+        assert.equal(await bar.locator('[data-home-topic-group]:visible .public-taxonomy-menu-topic').count(),5,'Selected category shows only its five topics');
+        for(const link of await bar.locator('[data-home-topic-group]:visible a').evaluateAll(nodes=>nodes.map(node=>new URL(node.href).pathname+new URL(node.href).search))){
           assert.match(link,/^\/(videos|beitraege|buecher)\?taxonomy=/,'Home topic links must open one explicit content section');
         }
+        await bar.locator('.public-taxonomy-crumb').last().locator('summary').click();
       }
       if(['/videos','/beitraege','/buecher'].includes(route)&&await page.locator('[data-public-taxonomy]').count()){
-        assert(await page.locator('.public-taxonomy-group').first().isVisible(),`${route}: taxonomy navigation is visible`);
-        for(const link of await page.locator('[data-public-taxonomy] nav a').evaluateAll(nodes=>nodes.map(node=>new URL(node.href).pathname+new URL(node.href).search))){
+        const bar=page.locator('[data-public-taxonomy]');
+        await bar.scrollIntoViewIfNeeded();
+        const dimensions=await bar.evaluate(element=>({height:element.getBoundingClientRect().height,border:parseFloat(getComputedStyle(element).borderTopWidth)}));
+        assert(dimensions.height<=42&&dimensions.border<=2,`${route}: taxonomy is not a thin strip: ${JSON.stringify(dimensions)}`);
+        const crumbs=bar.locator('.public-taxonomy-crumb');
+        await crumbs.first().locator('summary').click();
+        assert(await crumbs.first().locator('.public-taxonomy-menu').isVisible(),`${route}: categories menu opens`);
+        if(route==='/beitraege'&&await crumbs.first().locator('.public-taxonomy-menu a').count()>=10){
+          await crumbs.first().locator('.public-taxonomy-menu a').filter({hasText:'Kategorie 2'}).click();
+          await page.waitForURL('**/beitraege?taxonomy=kategorie-2');
+          const filtered=page.locator('[data-public-taxonomy] .public-taxonomy-crumb').last();
+          await filtered.locator('summary').click();
+          assert.equal(await filtered.locator('.public-taxonomy-menu a').count(),5,'Selected catalog category shows only its five topics');
+          await page.goto('http://127.0.0.1:8795'+route);
+          await page.evaluate(()=>document.fonts.ready);
+        } else await crumbs.first().locator('summary').click();
+        await crumbs.last().locator('summary').click();
+        assert(await crumbs.last().locator('.public-taxonomy-menu').isVisible(),`${route}: topics menu opens`);
+        for(const link of await bar.locator('.public-taxonomy-menu a').evaluateAll(nodes=>nodes.map(node=>new URL(node.href).pathname+new URL(node.href).search))){
           assert(link.startsWith(`${route}?taxonomy=`),`${route}: taxonomy link escaped the current content section: ${link}`);
         }
+        await crumbs.last().locator('summary').click();
       }
       if(route==='/'||route==='/buecher'){
         const decorated=page.locator('.public-section-cards, .public-panel-heading, .public-empty-slot');
