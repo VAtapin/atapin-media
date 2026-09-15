@@ -1,7 +1,9 @@
 (() => {
   const W=window.DesktopWorkspaces;
   window.initializePublishingPreview=root=>{
-    const select=root.querySelector('[data-publishing-record]'),destinations=root.querySelector('[data-publishing-destinations]'),panel=W.el('section',undefined,'desktop-publishing-card');panel.dataset.publishingPreview='';destinations.after(panel);let generation=0;
+    const select=root.querySelector('[data-publishing-record]'),destinations=root.querySelector('[data-publishing-destinations]');
+    if(!select||!destinations)return;
+    const panel=W.el('section',undefined,'desktop-publishing-card');panel.dataset.publishingPreview='';destinations.after(panel);let generation=0;
     const load=async()=>{const sequence=++generation;if(!select.value){panel.replaceChildren();return;}try{const data=await W.request('/desktop/publishing/preview?record_id='+encodeURIComponent(select.value));if(sequence!==generation||!root.isConnected)return;panel.replaceChildren(W.el('h3',W.t('destination_preview')));for(const input of destinations.querySelectorAll('input:checked:not(:disabled)')){const provider=input.value,preview=data.previews[provider];if(!preview)continue;const section=W.el('section');section.append(W.el('h4',W.t(provider)),W.el('p',W.t('visibility')+': '+W.t(preview.visibility)),W.el('pre',preview.caption));section.querySelector('pre').style.cssText='white-space:pre-wrap;overflow-wrap:anywhere';if(preview.tags?.length)section.append(W.el('p',preview.tags.join(', ')));renderMedia(section,preview);if(document.querySelector('.os-start-menu [data-open-app=ai-assistant]')&&provider!=='website')section.append(W.button('generate_ai',()=>W.open('ai-assistant',{source_record_id:data.id,provider,purpose:'social',question:W.t('social')})));panel.append(section);}}catch(error){if(sequence===generation)panel.replaceChildren(W.el('p',error.message));}};
     root.addEventListener('change',event=>{if(event.target===select||destinations.contains(event.target))load();});root.addEventListener('publishing-loaded',load);load();
     function renderMedia(section,preview){

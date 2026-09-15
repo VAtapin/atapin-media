@@ -475,6 +475,7 @@
 .desktop-content-library .content-library-advanced-filters{width:100%}
 .content-structure-status{color:var(--ml-muted);font-size:12px;align-self:center}
 .content-assignment [data-structure-check]{white-space:nowrap}
+.content-list-badge.is-external{background:#edf5fb;color:#173957;border-color:#cbdceb}.content-list-badge.is-external .content-list-badge-icon{font-size:.68rem;font-weight:800}.content-external-publications{margin:12px 0;padding:10px 12px;border:1px solid #cbdceb;border-radius:10px;background:#f5f9fc}.content-external-publications h4{margin:0 0 6px}.content-external-publications p{margin:4px 0}.content-external-publications a{color:inherit}
 .desktop-content-library .content-video-card{position:relative;display:grid;grid-template-rows:auto 1fr;cursor:pointer}
 .content-video-card-open{display:block;width:100%;height:100%;padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
 .content-video-card-open:hover,.content-video-card-open:focus-visible{background:#f8fbfe;outline:none}

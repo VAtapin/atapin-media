@@ -186,6 +186,22 @@ class PublishingService
         });
     }
 
+    public function queueVisibility(Publication $publication, bool $active): bool
+    {
+        try { $connector = $this->registry->get($publication->provider); } catch (UnsupportedCapability) { return false; }
+        $action = $active ? 'update' : 'hide';
+        if (! $publication->external_id || in_array($publication->status, ['queued', 'processing'], true)
+            || $publication->remote_status === 'deleted' || ! $connector instanceof \App\Contracts\ManagesPublications
+            || ! in_array($action, $connector->actions(), true)) return false;
+        return DB::transaction(function () use ($publication, $action) {
+            $current = Publication::whereKey($publication->id)->lockForUpdate()->first();
+            if (! $current || in_array($current->status, ['queued', 'processing'], true) || $current->remote_status === 'deleted') return false;
+            $current->update(['status' => 'queued', 'error' => null, 'next_attempt_at' => null, 'payload' => [...($current->payload ?? []), 'action' => $action]]);
+            \App\Jobs\PublishToPlatform::dispatch($current->id)->afterCommit();
+            return true;
+        });
+    }
+
     public function records(): \Illuminate\Support\Collection
     {
         return SourceRecord::query()->whereIn('kind', ['video', 'short', 'post', 'live'])->where('status', 'ready')

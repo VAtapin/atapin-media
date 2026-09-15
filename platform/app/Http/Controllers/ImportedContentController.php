@@ -1,6 +1,6 @@
 <?php
 namespace App\Http\Controllers;
-use App\Models\Media;
+use App\Models\{Media, Publication};
 use App\Models\SourceRecord;
 use Illuminate\Http\Request;
 
@@ -40,6 +40,7 @@ class ImportedContentController extends Controller
         $page = $query->paginate(30);
         $covers = Media::whereIn('id', $page->getCollection()->pluck('metadata.cover_media_id')->filter()->unique())->get()->keyBy('id');
         $videos = Media::whereIn('id', $page->getCollection()->pluck('video_id')->filter()->unique())->get()->keyBy('id');
+        $externalPublications = Publication::whereIn('source_record_id', $page->getCollection()->pluck('id'))->where('direction', 'outbound')->where('provider', '!=', 'website')->get()->groupBy('source_record_id');
         return response()->json(['data' => $page->getCollection()->map(fn ($record) => [
             'id' => $record->id, 'title' => $record->title, 'body' => mb_substr($record->body ?? '', 0, 250),
             'kind' => $record->kind, 'source' => $record->source, 'status' => $record->status,
@@ -51,6 +52,7 @@ class ImportedContentController extends Controller
             'cover_url'=>$covers->get($record->metadata['cover_media_id']??null)?->previewUrl(),
             'video_url'=>$videos->get($record->video_id)?->previewUrl(),
             'video_duration'=>isset($record->video_duration)?(float)$record->video_duration:null,'video_bytes'=>$record->video_bytes!==null?(int)$record->video_bytes:null,'video_processing'=>$record->video_processing,
+            'external_publications'=>$externalPublications->get($record->id, collect())->map(fn ($publication) => ['provider'=>$publication->provider,'status'=>$publication->status,'remote_status'=>$publication->remote_status,'external_url'=>$publication->external_url,'published_at'=>$publication->published_at,'origin'=>($publication->payload['origin']??null)==='youtube_sync'?'youtube_sync':'outbound'])->values(),
             'detail_url' => route('content.show', $record),
         ]), 'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total()]]);
     }
@@ -135,6 +137,7 @@ class ImportedContentController extends Controller
         $assets = $presentation->assets($record);
         $publicContent=app(\App\Services\PublicContent::class);
         $publicUrl=$publicContent->visible($record)?$publicContent->card($record)['url']:null;
+        $externalPublications = Publication::where('source_record_id', $record->id)->where('direction', 'outbound')->where('provider', '!=', 'website')->get()->map(fn ($publication) => ['provider'=>$publication->provider,'status'=>$publication->status,'remote_status'=>$publication->remote_status,'external_url'=>$publication->external_url,'published_at'=>$publication->published_at,'origin'=>($publication->payload['origin']??null)==='youtube_sync'?'youtube_sync':'outbound'])->values();
         $version=app(\App\Services\Importing\ContentState::class)->version($record);
         return response()->json(['id' => $record->id, 'title' => $record->title, 'body' => ($metadata['body_format']??'plain')==='html'?app(\App\Services\RichContent::class)->sanitize($record->body??''):$record->body,
             ...array_intersect_key($metadata,array_flip(['workflow_stage','slug','locale','episode_number','season','public_published_at'])),
@@ -153,6 +156,7 @@ class ImportedContentController extends Controller
             'public_published'=>(bool)($metadata['public_published']??false),'public_homepage'=>(bool)($metadata['public_homepage']??false),
             'public_section'=>$publicContent->section($record),
             'public_url'=>$publicUrl,'preview_url'=>in_array($record->kind,['video','short','post'])?route('content.preview',$record):null,
+            'external_publications'=>$externalPublications,
             'references'=>$presentation->references($record),
             'external_url' => $presentation->externalUrl($metadata ?? [], $record->source, $record->source_id, $record->kind),
             'has_local_video' => $assets->contains(fn ($asset) => $asset['kind'] === 'video' && $asset['available']),

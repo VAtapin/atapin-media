@@ -65,6 +65,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/desktop/publishing', [\App\Http\Controllers\PublishingController::class, 'index'])->middleware('can:content.publish')->name('desktop.publishing.index');
     Route::post('/desktop/publishing/publish', [\App\Http\Controllers\PublishingController::class, 'publish'])->middleware(['can:content.publish', 'throttle:30,1'])->name('desktop.publishing.publish');
     Route::post('/desktop/publishing/sync', [\App\Http\Controllers\PublishingController::class, 'syncYouTube'])->middleware(['can:content.publish', 'throttle:10,1'])->name('desktop.publishing.sync');
+    Route::post('/desktop/publishing/publications/{publication}/visibility', [\App\Http\Controllers\PublishingController::class, 'visibility'])->middleware(['can:content.publish', 'throttle:30,1'])->name('desktop.publishing.visibility');
     Route::post('/desktop/publishing/live-outputs', [\App\Http\Controllers\PublishingController::class, 'saveLiveOutput'])->middleware(['can:integrations.manage', 'throttle:10,1'])->name('desktop.publishing.outputs.save');
     Route::delete('/desktop/publishing/live-outputs/{output}', [\App\Http\Controllers\PublishingController::class, 'removeLiveOutput'])->middleware(['can:integrations.manage', 'throttle:10,1'])->name('desktop.publishing.outputs.remove');
     Route::post('/desktop/publishing/publications/{publication}/retry', [\App\Http\Controllers\PublishingController::class, 'retry'])->middleware(['can:content.publish', 'throttle:30,1'])->name('desktop.publishing.retry');

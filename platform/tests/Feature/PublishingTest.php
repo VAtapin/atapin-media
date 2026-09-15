@@ -60,13 +60,36 @@ class PublishingTest extends TestCase
         $this->assertSame(route('desktop.publishing.youtube.callback'), $query['redirect_uri']);
     }
 
-    public function test_publishing_screen_explains_scope_and_loads_scrolling_styles(): void
+    public function test_publishing_screen_is_an_external_publication_registry(): void
     {
         $this->get('/desktop')->assertOk()
-            ->assertSee(__('publishing.explanation_title'))
-            ->assertSee(__('publishing.explanation_website'))
-            ->assertSee(__('publishing.explanation_channels'))
+            ->assertSee(__('publishing.external_title'))
+            ->assertSee(__('publishing.filters'))
+            ->assertSee(__('publishing.cards'))
             ->assertSee('desktop-publishing.css?v=3', false);
+    }
+
+    public function test_publication_registry_excludes_website_and_supports_filters(): void
+    {
+        $record = SourceRecord::create(['source' => 'upload', 'source_id' => 'registry-video', 'kind' => 'video', 'title' => 'External title', 'status' => 'ready', 'metadata' => []]);
+        Publication::create(['source_record_id' => $record->id, 'provider' => 'website', 'direction' => 'outbound', 'status' => 'published', 'remote_status' => 'published']);
+        Publication::create(['source_record_id' => $record->id, 'provider' => 'youtube', 'direction' => 'outbound', 'status' => 'published', 'remote_status' => 'public', 'external_id' => 'yt-id', 'external_url' => 'https://youtube.com/watch?v=yt-id', 'published_at' => now()]);
+
+        $this->getJson(route('desktop.publishing.index', ['provider' => 'youtube', 'search' => 'External']))
+            ->assertOk()->assertJsonCount(1, 'publications')->assertJsonPath('publications.0.provider', 'youtube');
+    }
+
+    public function test_external_publication_can_be_deactivated_when_provider_supports_it(): void
+    {
+        $this->connectYouTube();
+        $record = SourceRecord::create(['source' => 'upload', 'source_id' => 'visibility-video', 'kind' => 'video', 'title' => 'Visibility title', 'status' => 'ready', 'metadata' => []]);
+        $publication = Publication::create(['source_record_id' => $record->id, 'provider' => 'youtube', 'direction' => 'outbound', 'status' => 'published', 'remote_status' => 'public', 'external_id' => 'yt-visibility']);
+
+        $this->postJson(route('desktop.publishing.visibility', $publication), ['active' => false])->assertOk();
+        $publication->refresh();
+        $this->assertSame('queued', $publication->status);
+        $this->assertSame('hide', $publication->payload['action']);
+        Queue::assertPushed(PublishToPlatform::class, fn (PublishToPlatform $job) => $job->publicationId === $publication->id);
     }
 
     private function connectYouTube(): void

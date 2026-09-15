@@ -7,12 +7,39 @@ use App\Models\{Publication, SourceRecord};
 use App\Services\Publishing\{ConnectionStore, ConnectorRegistry, PublishingService, YouTubeClient};
 use App\Services\Settings;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class PublishingController extends Controller
 {
-    public function index(PublishingService $publishing, ConnectionStore $connections, ConnectorRegistry $registry)
+    public function index(Request $request, PublishingService $publishing, ConnectionStore $connections, ConnectorRegistry $registry)
     {
+        $filters = $request->validate([
+            'from' => 'nullable|date',
+            'to' => 'nullable|date|after_or_equal:from',
+            'provider' => 'nullable|string|regex:/^[a-z0-9_]{1,32}$/',
+            'status' => 'nullable|in:queued,processing,published,hidden,private,public,failed,skipped,deleted',
+            'search' => 'nullable|string|max:120',
+        ]);
+        $query = Publication::with('record')->where('direction', 'outbound')->where('provider', '!=', 'website');
+        if (! empty($filters['provider'])) $query->where('provider', $filters['provider']);
+        if (! empty($filters['status'])) $query->where(function ($status) use ($filters) {
+            $status->where('status', $filters['status'])->orWhere('remote_status', $filters['status']);
+        });
+        if (! empty($filters['search'])) $query->whereHas('record', fn ($record) => $record->where('title', 'like', '%'.$filters['search'].'%'));
+        if (! empty($filters['from']) || ! empty($filters['to'])) {
+            $from = ! empty($filters['from']) ? Carbon::parse($filters['from'])->startOfDay() : null;
+            $to = ! empty($filters['to']) ? Carbon::parse($filters['to'])->endOfDay() : null;
+            $query->where(function ($date) use ($from, $to) {
+                $date->where(function ($published) use ($from, $to) {
+                    $published->whereNotNull('published_at')->when($from, fn ($q) => $q->where('published_at', '>=', $from))->when($to, fn ($q) => $q->where('published_at', '<=', $to));
+                })->orWhere(function ($updated) use ($from, $to) {
+                    $updated->whereNull('published_at')->when($from, fn ($q) => $q->where('updated_at', '>=', $from))->when($to, fn ($q) => $q->where('updated_at', '<=', $to));
+                });
+            });
+        }
+        $publications = $query->latest('updated_at')->limit(250)->get();
+        $providerOptions = $publications->pluck('provider')->merge(collect($connections->publicConnections())->pluck('provider'))->filter()->unique()->sort()->values();
         return response()->json([
             'records' => $publishing->records()->map(fn (SourceRecord $record) => [
                 'id' => $record->id, 'title' => $record->title, 'kind' => $record->publishingKind(),
@@ -28,7 +55,7 @@ class PublishingController extends Controller
                     return [...$connection, 'label' => $connection['label'] ?? ucfirst($connection['provider']), 'capabilities' => $capabilities];
                 })->values()->all(),
             ],
-            'publications' => Publication::with('record')->latest('updated_at')->limit(100)->get()->map(function (Publication $item) use ($registry) {
+            'publications' => $publications->map(function (Publication $item) use ($registry) {
                 $actions = [];
                 try { $connector = $registry->get($item->provider); if ($connector instanceof \App\Contracts\ManagesPublications) $actions = $connector->actions(); } catch (\Throwable) { }
                 return [
@@ -36,12 +63,24 @@ class PublishingController extends Controller
                 'provider' => $item->provider, 'direction' => $item->direction, 'status' => $item->status,
                 'remote_status' => $item->remote_status,
                 'external_id' => $item->external_id, 'external_url' => $item->external_url, 'error' => $item->error,
+                'origin' => ($item->payload['origin'] ?? null) === 'youtube_sync' ? 'youtube_sync' : 'outbound',
                 'attempts' => $item->attempts, 'published_at' => $item->published_at?->toIso8601String(),
                 'last_attempt_at' => $item->last_attempt_at?->toIso8601String(), 'next_attempt_at' => $item->next_attempt_at?->toIso8601String(),
                 'can_remove' => $item->external_id && in_array('delete', $actions, true) && ! in_array($item->status, ['queued', 'processing'], true) && $item->remote_status !== 'deleted',
+                'can_activate' => $item->external_id && in_array('update', $actions, true) && ! in_array($item->status, ['queued', 'processing'], true) && in_array($item->remote_status, ['hidden', 'private'], true),
+                'can_deactivate' => $item->external_id && in_array('hide', $actions, true) && ! in_array($item->status, ['queued', 'processing'], true) && ! in_array($item->remote_status, ['hidden', 'private', 'deleted'], true),
             ]; })->values(),
+            'providers' => $providerOptions,
+            'filters' => ['from' => $filters['from'] ?? null, 'to' => $filters['to'] ?? null, 'provider' => $filters['provider'] ?? null, 'status' => $filters['status'] ?? null, 'search' => $filters['search'] ?? null],
             'youtube' => ['configured' => app(YouTubeClient::class)->configured(), 'channel' => $connections->connection('youtube')['public_url'] ?? null],
         ]);
+    }
+
+    public function visibility(Request $request, Publication $publication, PublishingService $publishing)
+    {
+        $data = $request->validate(['active' => 'required|boolean']);
+        abort_unless($publishing->queueVisibility($publication, $data['active']), 409, __('publishing.visibility_unavailable'));
+        return response()->json(['status' => 'queued', 'publication_id' => $publication->id]);
     }
 
     public function publish(Request $request, PublishingService $publishing, ConnectionStore $connections)

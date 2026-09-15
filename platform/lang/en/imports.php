@@ -283,7 +283,7 @@ return [
     'stage_files' => 'Registering files in the library',
     'stage_metadata' => 'Reading descriptions and content',
     'worker_stopped' => 'The background worker ended or reached its time limit. Saved files are kept; please retry.',
-    'publication_filter'=>'Publication','all_publication_states'=>'All publication states','publication_published'=>'Published on the website','publication_unpublished'=>'Not published on the website',
+    'publication_filter'=>'Publication','all_publication_states'=>'All publication states','publication_published'=>'Published on the website','publication_unpublished'=>'Not published on the website','external_publications'=>'External publications','external_published'=>'Published externally','external_hidden'=>'Disabled externally','external_queued'=>'External publication queued','external_failed'=>'External publication failed','provider_youtube'=>'YouTube','provider_facebook'=>'Facebook','provider_instagram'=>'Instagram','provider_telegram'=>'Telegram','provider_x'=>'X','provider_linkedin'=>'LinkedIn','youtube_sync'=>'Imported from YouTube','open_external'=>'Open',
     'all_content'=>'Show all content','section_only'=>'Show this section only','content_library_intro'=>'Search, review and edit your materials.','video_library_heading'=>'Video library','video_library_intro'=>'Find videos quickly, check their files and prepare them for publication.','video_play'=>'Play video',
     'short_description'=>'Short description (8–10 words)', 'short_description_generate'=>'Generate AI short text',
     'short_descriptions_missing'=>'Generate missing short texts','short_descriptions_selected'=>'Short texts for selection',

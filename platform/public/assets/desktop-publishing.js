@@ -3,16 +3,18 @@
   const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content || '';
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;' }[character]));
   const date = value => value ? new Date(value).toLocaleString() : '—';
+  const providerLabel = provider => labels()[`provider_${provider}`] || String(provider || '').replaceAll('_', ' ');
+  const status = item => item.remote_status || item.status || 'unknown';
 
   window.initializePublishing = function (root) {
     if (!root || root.dataset.ready) return;
     root.dataset.ready = 'true';
-    const recordSelect = root.querySelector('[data-publishing-record]');
-    const destinations = root.querySelector('[data-publishing-destinations]');
     const statusList = root.querySelector('[data-publishing-status-list]');
     const feedback = root.querySelector('[data-publishing-feedback]');
-    window.initializePublishingPreview?.(root);
-    let state = { records: [], destinations: [], publications: [] };
+    const summary = root.querySelector('[data-publishing-summary]');
+    const filters = [...root.querySelectorAll('[data-publishing-filter]')];
+    let state = { publications: [], providers: [] };
+    let view = 'cards';
 
     const show = (message, error = false) => {
       feedback.textContent = message;
@@ -25,91 +27,65 @@
       if (!response.ok) throw new Error(data.message || labels().error || 'Request failed');
       return data;
     };
-    const selectedRecord = () => state.records.find(record => String(record.id) === recordSelect.value);
-    const compatible = (destination, record) => !record || destination.provider === 'website' || destination.capabilities?.[record.kind] === true;
-
-    const renderDestinations = () => {
-      const record = selectedRecord();
-      const selected = Array.isArray(record?.publishing_targets) ? record.publishing_targets : ['website', 'youtube'];
-      const removal = root.querySelector('[data-remove-on-unpublish]');
-      if (removal) removal.checked = Boolean(record?.remove_external_on_unpublish);
-      destinations.innerHTML = state.destinations.filter(destination => destination.connected && !destination.revoked).map(destination => {
-        const supported = compatible(destination, record);
-        return `<label class="desktop-publishing-destination"><input type="checkbox" value="${escapeHtml(destination.provider)}" ${supported && selected.includes(destination.provider) ? 'checked' : ''} ${supported ? '' : 'disabled'}><span><strong>${escapeHtml(destination.label)}</strong><small>${escapeHtml(destination.public_url || '')}${supported ? '' : ` · ${escapeHtml(labels().unsupported || 'Unavailable for this content')}`}</small></span></label>`;
-      }).join('') || `<p class="desktop-publishing-muted">${escapeHtml(labels().youtube_not_connected || '')}</p>`;
-      if (record?.kind === 'post') {
-        const hint = document.createElement('p'); hint.className = 'desktop-publishing-muted'; hint.textContent = labels().adapted_post || '';
-        destinations.append(hint);
-      }
+    const query = () => {
+      const params = new URLSearchParams();
+      filters.forEach(input => { if (input.value) params.set(input.dataset.publishingFilter, input.value); });
+      return params.toString();
     };
-    const renderRecords = () => {
-      const selectedId = recordSelect.value;
-      recordSelect.innerHTML = state.records.map(record => `<option value="${escapeHtml(record.id)}">${escapeHtml(record.title)} · ${escapeHtml(labels()[record.kind] || record.kind)}</option>`).join('');
-      if (state.records.some(record => String(record.id) === selectedId)) recordSelect.value = selectedId;
-      root.querySelector('[data-publishing-empty]').hidden = state.records.length > 0;
-      recordSelect.disabled = !state.records.length;
-      renderDestinations();
+    const action = (item, name, text, active) => `<button type="button" class="desktop-button" data-publication-action="${name}" data-publication-id="${item.id}"${active === undefined ? '' : ` data-active="${active ? '1' : '0'}"`}>${escapeHtml(text)}</button>`;
+    const renderSummary = () => {
+      const total = state.publications.length;
+      const groups = [...new Set(state.publications.map(item => item.provider))].map(provider => `<span><strong>${state.publications.filter(item => item.provider === provider).length}</strong> ${escapeHtml(providerLabel(provider))}</span>`).join('');
+      summary.innerHTML = `<span><strong>${total}</strong> ${escapeHtml(labels().publication_count || 'Publications')}</span>${groups}`;
     };
-    const renderStatus = () => {
-      statusList.innerHTML = state.publications.length ? state.publications.map(item => `<article class="desktop-publishing-status-item"><div><strong>${escapeHtml(item.title || ('#' + item.record_id))}</strong><span>${escapeHtml(item.provider)} · ${escapeHtml(labels()[item.status] || item.status)}${item.remote_status && item.remote_status !== item.status ? ` · ${escapeHtml(labels()[item.remote_status] || item.remote_status)}` : ''}</span></div><small>${escapeHtml(item.error || '')}${item.published_at ? ` · ${escapeHtml(labels().published_at || 'Published')}: ${escapeHtml(date(item.published_at))}` : ''}${item.last_attempt_at ? ` · ${escapeHtml(labels().last_attempt || 'Last attempt')}: ${escapeHtml(date(item.last_attempt_at))}` : ''}${item.attempts ? ` · ${escapeHtml(labels().attempts || 'Attempts')}: ${item.attempts}` : ''}</small>${item.status === 'failed' ? `<button type="button" class="desktop-button" data-publishing-retry="${escapeHtml(item.id)}">${escapeHtml(labels().retry || 'Retry')}</button>` : ''}</article>`).join('') : `<p class="desktop-publishing-muted">${escapeHtml(labels().no_content || '')}</p>`;
-      [...statusList.querySelectorAll('article')].forEach((article, index) => {
-        if (!state.publications[index].can_remove) return;
-        const button = document.createElement('button');
-        button.className = 'desktop-button'; button.type = 'button'; button.dataset.publishingRemove = state.publications[index].id;
-        button.textContent = labels().remove_remote; article.append(button);
-      });
+    const renderItemActions = item => {
+      const actions = [];
+      if (item.external_url) actions.push(`<a class="desktop-button" href="${escapeHtml(item.external_url)}" target="_blank" rel="noopener">${escapeHtml(labels().open_external || 'Open')}</a>`);
+      if (item.can_deactivate) actions.push(action(item, 'visibility', labels().deactivate || 'Deactivate', false));
+      if (item.can_activate) actions.push(action(item, 'visibility', labels().activate || 'Activate', true));
+      if (item.status === 'failed') actions.push(action(item, 'retry', labels().retry || 'Retry'));
+      if (item.can_remove) actions.push(action(item, 'remove', labels().remove_remote || 'Delete', undefined));
+      return actions.join('');
+    };
+    const renderCards = () => state.publications.map(item => `<article class="desktop-publishing-publication-card"><div class="desktop-publishing-publication-top"><span class="desktop-publishing-provider">${escapeHtml(providerLabel(item.provider))}</span><span class="desktop-publishing-status is-${escapeHtml(status(item))}">${escapeHtml(labels()[status(item)] || status(item))}</span></div><h3>${escapeHtml(item.title || ('#' + item.record_id))}</h3><p class="desktop-publishing-publication-meta">${escapeHtml(labels()[item.origin] || '')}${item.published_at ? ` · ${escapeHtml(labels().published_at || 'Published')}: ${escapeHtml(date(item.published_at))}` : ''}</p>${item.error ? `<p class="desktop-publishing-publication-error">${escapeHtml(item.error)}</p>` : ''}<div class="desktop-publishing-publication-actions">${renderItemActions(item)}</div></article>`).join('');
+    const renderList = () => `<div class="desktop-publishing-table-wrap"><table class="desktop-publishing-table"><thead><tr><th>${escapeHtml(labels().content || 'Content')}</th><th>${escapeHtml(labels().provider || 'Platform')}</th><th>${escapeHtml(labels().status_filter || 'Status')}</th><th>${escapeHtml(labels().published_at || 'Published')}</th><th>${escapeHtml(labels().actions || 'Actions')}</th></tr></thead><tbody>${state.publications.map(item => `<tr><td><strong>${escapeHtml(item.title || ('#' + item.record_id))}</strong>${item.error ? `<small class="desktop-publishing-publication-error">${escapeHtml(item.error)}</small>` : ''}</td><td>${escapeHtml(providerLabel(item.provider))}</td><td><span class="desktop-publishing-status is-${escapeHtml(status(item))}">${escapeHtml(labels()[status(item)] || status(item))}</span></td><td>${escapeHtml(date(item.published_at || item.last_attempt_at))}</td><td><div class="desktop-publishing-publication-actions">${renderItemActions(item)}</div></td></tr>`).join('')}</tbody></table></div>`;
+    const render = () => {
+      renderSummary();
+      statusList.innerHTML = state.publications.length ? (view === 'list' ? renderList() : `<div class="desktop-publishing-publication-grid">${renderCards()}</div>`) : `<p class="desktop-publishing-muted">${escapeHtml(labels().no_publications || 'No external publications found.')}</p>`;
+    };
+    const populateProviders = () => {
+      const select = root.querySelector('[data-publishing-filter="provider"]');
+      const current = select.value;
+      select.innerHTML = `<option value="">${escapeHtml(labels().all_providers || 'All platforms')}</option>` + state.providers.map(provider => `<option value="${escapeHtml(provider)}">${escapeHtml(providerLabel(provider))}</option>`).join('');
+      select.value = current;
     };
     const load = async () => {
-      state = await request(root.dataset.apiUrl);
-      renderRecords();
-      renderStatus();
-      root.dispatchEvent(new Event('publishing-loaded'));
-      const outputs = root.querySelector('[data-live-output-list]');
-      if (outputs) outputs.innerHTML = state.destinations.filter(item => item.provider.startsWith('rtmp_')).map(item => `<p>${escapeHtml(item.label)} <button class="desktop-button" data-remove-output="${escapeHtml(item.provider)}">${escapeHtml(labels().remove_output)}</button></p>`).join('');
-      const connection = root.querySelector('[data-publishing-connection-status]');
-      if (connection) connection.textContent = state.youtube?.configured ? labels().youtube_connected : (labels().youtube_not_connected || 'YouTube not connected');
+      try {
+        state = await request(`${root.dataset.apiUrl}?${query()}`);
+        populateProviders();
+        render();
+      } catch (error) { show(error.message, true); }
     };
 
-    recordSelect.addEventListener('change', renderDestinations);
-    root.querySelector('[data-publishing-submit]')?.addEventListener('click', async () => {
-      const selected = [...destinations.querySelectorAll('input:checked:not(:disabled)')].map(input => input.value);
-      if (!selected.length) return show(labels().no_destination || 'Select a destination.', true);
-      const removal = root.querySelector('[data-remove-on-unpublish]');
-      try { await request(root.dataset.publishUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ record_id:recordSelect.value, destinations:selected, ...(removal ? {remove_external_on_unpublish:removal.checked} : {}) }) }); show(labels().saved || 'Queued.'); await load(); } catch (error) { show(error.message, true); }
-    });
-    root.querySelector('[data-publishing-sync]')?.addEventListener('click', async () => {
-      try { await request(root.dataset.syncUrl, { method:'POST' }); show(labels().sync_queued || 'Sync queued.'); } catch (error) { show(error.message, true); }
-    });
+    root.querySelector('[data-publishing-refresh]')?.addEventListener('click', load);
+    root.querySelector('[data-publishing-reset]')?.addEventListener('click', () => { filters.forEach(input => { input.value = ''; }); load(); });
+    filters.forEach(input => input.addEventListener(input.type === 'search' ? 'input' : 'change', () => load()));
+    root.querySelectorAll('[data-publishing-view]').forEach(button => button.addEventListener('click', () => { view = button.dataset.publishingView; root.querySelectorAll('[data-publishing-view]').forEach(item => item.classList.toggle('is-active', item === button)); render(); }));
     statusList.addEventListener('click', async event => {
-      const remove = event.target.closest('[data-publishing-remove]');
-      if (remove) {
-        if (!window.confirm(labels().confirm_remove_remote)) return;
-        try { await request(`/desktop/publishing/publications/${remove.dataset.publishingRemove}`, {method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({confirm:true})}); await load(); } catch (error) { show(error.message,true); }
-        return;
-      }
-      const button = event.target.closest('[data-publishing-retry]');
+      const button = event.target.closest('[data-publication-action]');
       if (!button) return;
-      try { await request(`/desktop/publishing/publications/${button.dataset.publishingRetry}/retry`, { method:'POST' }); show(labels().saved || 'Queued.'); await load(); } catch (error) { show(error.message, true); }
-    });
-    root.querySelector('[data-live-output-form]')?.addEventListener('submit', async event => {
-      event.preventDefault();
-      const form = event.currentTarget;
-      try { await request('/desktop/publishing/live-outputs', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(new FormData(form)))}); form.reset(); show(labels().saved); await load(); } catch (error) { show(error.message,true); }
-    });
-    root.querySelector('[data-live-output-list]')?.addEventListener('click', async event => {
-      const button = event.target.closest('[data-remove-output]');
-      if (!button) return;
-      try { await request(`/desktop/publishing/live-outputs/${button.dataset.removeOutput}`, {method:'DELETE'}); await load(); } catch (error) { show(error.message,true); }
-    });
-    const refreshStatus = async () => {
-      if (!root.isConnected) return;
+      const item = state.publications.find(publication => String(publication.id) === button.dataset.publicationId);
+      if (!item) return;
       try {
-        const data = await request(root.dataset.apiUrl);
-        state.publications = data.publications;
-        renderStatus(); // Do not reset the editor's selected record or destination checkboxes.
-      } catch { /* A transient refresh failure must not interrupt editing. */ }
-      setTimeout(refreshStatus, 5000);
-    };
-    load().then(() => setTimeout(refreshStatus, 5000)).catch(error => show(error.message, true));
+        if (button.dataset.publicationAction === 'remove' && !window.confirm(labels().confirm_remove_remote || 'Delete this external publication?')) return;
+        if (button.dataset.publicationAction === 'visibility') await request(`/desktop/publishing/publications/${item.id}/visibility`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({active: button.dataset.active === '1'}) });
+        if (button.dataset.publicationAction === 'retry') await request(`/desktop/publishing/publications/${item.id}/retry`, { method:'POST' });
+        if (button.dataset.publicationAction === 'remove') await request(`/desktop/publishing/publications/${item.id}`, { method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({confirm:true}) });
+        show(labels().queued_action || 'Operation queued.');
+        await load();
+      } catch (error) { show(error.message, true); }
+    });
+    root.querySelectorAll('[data-publishing-view]').forEach(button => button.classList.toggle('is-active', button.dataset.publishingView === view));
+    load();
   };
 })();

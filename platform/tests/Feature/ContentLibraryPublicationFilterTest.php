@@ -2,10 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\Role;
-use App\Models\Media;
-use App\Models\SourceRecord;
-use App\Models\User;
+use App\Models\{Media, Publication, Role, SourceRecord, User};
 use App\Services\Access;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -78,5 +75,18 @@ class ContentLibraryPublicationFilterTest extends TestCase
             ->assertJsonPath('data.0.title', 'Card video')
             ->assertJsonPath('data.0.cover_url', route('media.preview', $cover))
             ->assertJsonPath('data.0.video_url', route('media.preview', $video));
+    }
+
+    public function test_content_library_exposes_external_publication_badges_without_website_status(): void
+    {
+        app(Access::class)->seed();
+        $user = User::factory()->create();
+        $user->roles()->attach(Role::where('name', 'Owner')->firstOrFail());
+        $this->actingAs($user);
+        $video = SourceRecord::create(['source' => 'youtube', 'source_id' => 'external-video', 'kind' => 'video', 'title' => 'External video', 'body' => '', 'status' => 'ready', 'metadata' => ['public_published' => false]]);
+        Publication::create(['source_record_id' => $video->id, 'provider' => 'youtube', 'direction' => 'outbound', 'status' => 'published', 'remote_status' => 'public', 'external_id' => 'external-id', 'external_url' => 'https://youtube.com/watch?v=external-id']);
+
+        $this->getJson('/desktop/content?section=videos')->assertOk()->assertJsonPath('data.0.external_publications.0.provider', 'youtube')->assertJsonPath('data.0.external_publications.0.remote_status', 'public');
+        $this->getJson(route('content.show', $video))->assertOk()->assertJsonPath('external_publications.0.external_url', 'https://youtube.com/watch?v=external-id');
     }
 }
