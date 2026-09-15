@@ -93,7 +93,7 @@
 
 ## Последний связанный commit
 
-- Текущий функциональный блок: текущая переработка Publishing registry (commit будет создан после проверок).
+- Текущий функциональный блок: `034b2cd` — Turn Publishing into external registry. Branch/upstream: main → origin/main.
 
 - Предыдущий функциональный блок: f58854d — Fix public topic tag filters.
 
