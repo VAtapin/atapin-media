@@ -256,8 +256,8 @@ class PublishingAutomationTest extends TestCase
         app(OAuthAppCredentials::class)->save('x', ['client_id' => 'client']);
         $response = $this->get(route('desktop.publishing.x.connect'))->assertRedirect();
         $this->assertStringContainsString('code_challenge_method=S256', $response->headers->get('Location'));
-        $this->get(route('desktop.publishing.x.callback', ['state' => 'wrong', 'code' => 'code']))->assertStatus(419);
-        $this->get(route('desktop.publishing.x.callback', ['state' => '', 'code' => 'code']))->assertStatus(419);
+        $this->get(route('desktop.publishing.x.callback', ['state' => 'wrong', 'code' => 'code']))->assertRedirect('/desktop?open=settings');
+        $this->get(route('desktop.publishing.x.callback', ['state' => '', 'code' => 'code']))->assertRedirect('/desktop?open=settings');
     }
 
     public function test_x_video_processing_reuses_uploaded_segments_and_posts_once(): void
@@ -295,11 +295,11 @@ class PublishingAutomationTest extends TestCase
             'https://api.x.com/2/oauth2/token' => Http::response(['access_token' => 'x-access-secret', 'refresh_token' => 'x-refresh-secret']),
             'https://api.x.com/2/users/me*' => Http::response(['data' => ['id' => '123', 'username' => 'owner', 'protected' => false]]),
         ]);
-        $this->withSession(['publishing.x.oauth' => ['state' => 'state', 'verifier' => 'verifier']])->get(route('desktop.publishing.x.callback', ['state' => 'state', 'code' => 'code']))->assertRedirect('/desktop');
+        $this->withSession(['publishing.x.oauth' => ['state' => 'state', 'verifier' => 'verifier']])->get(route('desktop.publishing.x.callback', ['state' => 'state', 'code' => 'code']))->assertRedirect('/desktop?open=settings');
         $this->assertSame('x-refresh-secret', app(ConnectionStore::class)->credentials('x')['refresh_token']);
         $stored = \Illuminate\Support\Facades\DB::table('settings')->where('key', 'secret.social_x')->value('value');
         $this->assertStringNotContainsString('x-access-secret', $stored);
-        $this->get(route('desktop.publishing.x.callback', ['state' => 'state', 'code' => 'code']))->assertStatus(419);
+        $this->get(route('desktop.publishing.x.callback', ['state' => 'state', 'code' => 'code']))->assertRedirect('/desktop?open=settings');
         $this->postJson(route('desktop.publishing.x.disconnect'))->assertOk();
         $this->assertFalse(app(ConnectionStore::class)->connected('x'));
         $this->assertSame([], app(ConnectionStore::class)->credentials('x'));

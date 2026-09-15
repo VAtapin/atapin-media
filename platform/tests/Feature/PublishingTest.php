@@ -7,6 +7,8 @@ use App\Models\{Publication, Role, SourceRecord, User};
 use App\Services\{Access, Settings};
 use App\Services\Publishing\{ConnectionStore, MediaResolver, OAuthAppCredentials, PublishingService, SocialConnections, YouTubeClient};
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Log\Events\MessageLogged;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -60,6 +62,20 @@ class PublishingTest extends TestCase
         parse_str((string) parse_url($response->headers->get('Location'), PHP_URL_QUERY), $query);
         $this->assertSame('client-id', $query['client_id']);
         $this->assertSame(route('desktop.publishing.youtube.callback'), $query['redirect_uri']);
+    }
+
+    public function test_x_oauth_requires_admin_config_and_uses_the_configured_callback(): void
+    {
+        $url = route('desktop.publishing.x.connect');
+        $this->get($url)->assertRedirect('/desktop?open=settings')
+            ->assertSessionHas('saved_section', 'social')
+            ->assertSessionHas('desktop_error', __('publishing.x_oauth_not_configured'));
+
+        app(OAuthAppCredentials::class)->save('x', ['client_id' => 'x-client-id']);
+        $response = $this->get($url)->assertRedirect();
+        parse_str((string) parse_url($response->headers->get('Location'), PHP_URL_QUERY), $query);
+        $this->assertSame('x-client-id', $query['client_id']);
+        $this->assertSame(route('desktop.publishing.x.callback'), $query['redirect_uri']);
     }
 
     public function test_publishing_screen_is_an_external_publication_registry(): void
@@ -245,6 +261,71 @@ class PublishingTest extends TestCase
 
         $this->assertSame([], app(ConnectionStore::class)->connection('youtube'));
         $this->assertSame([], app(ConnectionStore::class)->credentials('youtube'));
+    }
+
+    public function test_x_oauth_callback_returns_invalid_state_and_cancel_to_social_settings(): void
+    {
+        Http::preventStrayRequests();
+        $url = route('desktop.publishing.x.callback');
+        $session = ['publishing.x.oauth' => ['state' => 'correct', 'verifier' => 'verifier']];
+
+        $this->get($url)->assertRedirect('/desktop?open=settings')
+            ->assertSessionHas('saved_section', 'social')
+            ->assertSessionHas('desktop_error', __('publishing.oauth_state_invalid'));
+        $this->withSession($session)->get($url.'?state=wrong&code=code')->assertRedirect('/desktop?open=settings')
+            ->assertSessionHas('desktop_error', __('publishing.oauth_state_invalid'));
+        $this->withSession($session)->get($url.'?state=correct&error=access_denied')->assertRedirect('/desktop?open=settings')
+            ->assertSessionHas('saved_section', 'social')
+            ->assertSessionHas('status', __('publishing.x_oauth_cancelled'));
+        $this->withSession($session)->get($url.'?state=correct')->assertRedirect('/desktop?open=settings')
+            ->assertSessionHas('desktop_error', __('publishing.x_connection_failed'));
+
+        $this->assertSame([], app(ConnectionStore::class)->connection('x'));
+        $this->assertSame([], app(ConnectionStore::class)->credentials('x'));
+        Http::assertNothingSent();
+    }
+
+    public function test_x_oauth_token_failure_is_redacted_and_does_not_save_a_connection(): void
+    {
+        app(OAuthAppCredentials::class)->save('x', ['client_id' => 'x-client-id', 'client_secret' => 'x-client-secret']);
+        $logs = [];
+        Log::listen(function (MessageLogged $event) use (&$logs) { $logs[] = [$event->message, $event->context]; });
+        Http::fake(['https://api.x.com/2/oauth2/token' => Http::response(['error_description' => 'client_secret=x-client-secret'], 401)]);
+
+        $this->withSession(['publishing.x.oauth' => ['state' => 'state', 'verifier' => 'verifier']])
+            ->get(route('desktop.publishing.x.callback').'?state=state&code=code')
+            ->assertRedirect('/desktop?open=settings')
+            ->assertSessionHas('saved_section', 'social')
+            ->assertSessionHas('desktop_error', __('publishing.x_connection_failed'));
+
+        $this->assertSame([], app(ConnectionStore::class)->connection('x'));
+        $this->assertSame([], app(ConnectionStore::class)->credentials('x'));
+        $this->assertNotEmpty($logs);
+        $this->assertStringNotContainsString('x-client-secret', json_encode($logs, JSON_THROW_ON_ERROR));
+    }
+
+    public function test_x_oauth_user_api_failure_redacts_pending_token_and_does_not_save_a_connection(): void
+    {
+        app(OAuthAppCredentials::class)->save('x', ['client_id' => 'x-client-id']);
+        $logs = [];
+        Log::listen(function (MessageLogged $event) use (&$logs) { $logs[] = [$event->message, $event->context]; });
+        Http::fake([
+            'https://api.x.com/2/oauth2/token' => Http::response(['access_token' => 'pending-access-secret', 'refresh_token' => 'pending-refresh-secret']),
+            'https://api.x.com/2/users/me*' => Http::response(['error' => 'Authorization: Bearer pending-access-secret'], 503),
+        ]);
+
+        $this->withSession(['publishing.x.oauth' => ['state' => 'state', 'verifier' => 'verifier']])
+            ->get(route('desktop.publishing.x.callback').'?state=state&code=code')
+            ->assertRedirect('/desktop?open=settings')
+            ->assertSessionHas('saved_section', 'social')
+            ->assertSessionHas('desktop_error', __('publishing.x_connection_failed'));
+
+        $this->assertSame([], app(ConnectionStore::class)->connection('x'));
+        $this->assertSame([], app(ConnectionStore::class)->credentials('x'));
+        $this->assertNotEmpty($logs);
+        $log = json_encode($logs, JSON_THROW_ON_ERROR);
+        $this->assertStringNotContainsString('pending-access-secret', $log);
+        $this->assertStringNotContainsString('pending-refresh-secret', $log);
     }
 
     public function test_oauth_reconnect_to_another_channel_drops_previous_stream_and_refresh_token(): void
