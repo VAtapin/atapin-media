@@ -87,5 +87,5 @@
 - Текущий функциональный блок: Catalog deletion actions (hash сообщён владельцу после публикации).
 
 - Предшествующий функциональный commit: `90d6b26` — Complete admin workflows and PWA foundation.
-- Последний функциональный commit: `0c82f59` — Simplify video library views. Branch/upstream: main → origin/main.
+- Последний функциональный commit: `5f99dbb` — Improve video catalog playback. Branch/upstream: main → origin/main.
 
