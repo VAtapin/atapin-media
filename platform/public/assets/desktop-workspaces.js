@@ -56,7 +56,26 @@
       b.addEventListener('keydown', event => { if (event.target === b && ['Enter', ' '].includes(event.key)) { event.preventDefault(); select(row); } }); list.append(b);
     }
   };
-  const cards = (root, items, select, remove) => { const list = root.querySelector('[data-workspace-list]'); list.replaceChildren(); if (!items.length) { list.append(el('p', t('empty'), 'workspace-empty')); return; } const grid = el('div', undefined, 'workspace-card-grid'); for (const row of items) { const card = el('article', undefined, 'workspace-card'); card.tabIndex = 0; card.setAttribute('role', 'button'); const visual = el('span', undefined, 'workspace-card-visual'); if (row.cover_url) { const image = el('img'); image.src = row.cover_url; image.alt = ''; visual.append(image); } else visual.append(el('span', row.kind === 'category' ? '◆' : row.kind === 'topic' ? '✦' : row.pdf_ready ? 'PDF' : '◈', 'workspace-card-placeholder')); const body = el('span', undefined, 'workspace-card-body'); body.append(el('strong', row.title || row.name || row.subject || row.question || ('#' + row.id))); const meta = [row.author, row.owner?.name, row.project?.title, row.kind ? t(row.kind) : '', row.status ? t(row.status) : '', row.pdf_ready === false ? t('book_pdf_missing') : row.pdf_ready ? t('book_pdf_ready') : '', bookAiState(row)].filter(Boolean); body.append(el('small', meta.join(' · '))); if (row.description) body.append(el('span', row.description, 'workspace-card-description')); card.append(visual, body); if (remove) { const action = button('delete', () => remove(row)); action.className = 'desktop-button is-danger workspace-card-remove'; action.addEventListener('click', event => event.stopPropagation(), {capture:true}); card.append(action); } card.addEventListener('click', event => { if (event.target.closest('.workspace-card-remove')) return; select(row); }); card.addEventListener('keydown', event => { if (event.target === card && ['Enter', ' '].includes(event.key)) { event.preventDefault(); select(row); } }); grid.append(card); } list.append(grid); };
+  const cards = (root, items, select, remove) => {
+    const list = root.querySelector('[data-workspace-list]'); list.replaceChildren();
+    if (!items.length) { list.append(el('p', t('empty'), 'workspace-empty')); return; }
+    const vertical = root.dataset.workspace === 'books-pdf'; const grid = el('div', undefined, 'workspace-card-grid');
+    for (const row of items) {
+      const card = el('article', undefined, 'workspace-card'); card.tabIndex = 0; card.setAttribute('role', 'button');
+      const title = el('strong', row.title || row.name || row.subject || row.question || ('#' + row.id));
+      const visual = el('span', undefined, 'workspace-card-visual');
+      if (row.cover_url) { const image = el('img'); image.src = row.cover_url; image.alt = ''; visual.append(image); }
+      else visual.append(el('span', row.kind === 'category' ? '◆' : row.kind === 'topic' ? '✦' : row.pdf_ready ? 'PDF' : '◈', 'workspace-card-placeholder'));
+      const body = el('span', undefined, 'workspace-card-body');
+      const meta = [row.author, row.owner?.name, row.project?.title, row.kind ? t(row.kind) : '', row.status ? t(row.status) : '', row.pdf_ready === false ? t('book_pdf_missing') : row.pdf_ready ? t('book_pdf_ready') : '', bookAiState(row)].filter(Boolean);
+      body.append(el('small', meta.join(' · '))); if (row.description) body.append(el('span', row.description, 'workspace-card-description'));
+      if (vertical) card.append(title, visual, body); else { body.prepend(title); card.append(visual, body); }
+      if (remove) { const action = button('delete', () => remove(row)); action.className = 'desktop-button is-danger workspace-card-remove'; action.addEventListener('click', event => event.stopPropagation(), {capture:true}); card.append(action); }
+      card.addEventListener('click', event => { if (event.target.closest('.workspace-card-remove')) return; select(row); });
+      card.addEventListener('keydown', event => { if (event.target === card && ['Enter', ' '].includes(event.key)) { event.preventDefault(); select(row); } }); grid.append(card);
+    }
+    list.append(grid);
+  };
   const table = (root, columns, items) => { const table = el('table', undefined, 'workspace-table'), head = el('tr'); for (const key of columns) head.append(el('th', t(key))); table.append(head); for (const row of items) { const tr = el('tr'); for (const key of columns) tr.append(el('td', typeof row[key] === 'object' ? JSON.stringify(row[key]) : row[key] ?? '—')); table.append(tr); } root.append(table); };
   const crud = (root, config) => {
     const filters = root.querySelector('[data-workspace-filters]'), actions = root.querySelector('[data-workspace-actions]'), editorMode = root.dataset.workspaceMode === 'editor'; let page = 1, items = [], editGeneration = 0;

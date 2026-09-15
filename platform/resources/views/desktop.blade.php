@@ -42,7 +42,7 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <title>Desktop · {{ config('platform.brand') }}</title>
     <link rel="icon" href="/favicon.png"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/brand/owner/app-icon.png"><meta name="theme-color" content="#8b6a3d"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=4"><link rel="stylesheet" href="/assets/desktop-windows.css?v=4"><link rel="stylesheet" href="/assets/desktop-settings.css?v=3">
     <link rel="stylesheet" href="/assets/desktop-app.css?v=2"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=11"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=3"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=3"><link rel="stylesheet" href="/assets/desktop-community.css?v=3"><link rel="stylesheet" href="/assets/desktop-publishing.css?v=4">
-    <link rel="stylesheet" href="/assets/desktop-workspaces.css?v=8">
+    <link rel="stylesheet" href="/assets/desktop-workspaces.css?v=9">
     <link rel="stylesheet" href="/assets/desktop-overview.css?v=2">
     <script>window.desktopWorkspaceLabels=@json(__('workspaces')); window.desktopAiLabels=@json(__('ai_dashboard'));</script>
     <script src="/assets/desktop-workspaces.js?v=7" defer></script>
