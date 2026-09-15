@@ -98,7 +98,7 @@
 
 ## Последний связанный commit
 
-- Текущий функциональный блок: `6d6ed54` — Fix PDF analysis parse error. Branch/upstream: main → origin/main.
+- Текущий функциональный блок: `6e20549` — Improve PDF workflow and book price input. Branch/upstream: main → origin/main.
 
 - Предыдущий функциональный блок: `034b2cd` — Turn Publishing into external registry.
 
