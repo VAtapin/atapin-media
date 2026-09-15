@@ -41,19 +41,21 @@
   const open = (app, row) => { if (row) pending.set(app, row); document.querySelector(`.os-start-menu [data-open-app="${CSS.escape(app)}"]`)?.click(); const api = controllers.get(app); if (row && api?.root.isConnected) { pending.delete(app); run(api.root, () => api.edit(row)); } };
   const openSeparate = (app, row = {}) => { pending.set(app, row); const win = window.openDesktopProgram?.(app, {forceNew:true}); if (!win) document.querySelector(`.os-start-menu [data-open-app="${CSS.escape(app)}"]`)?.click(); return win; };
   const pager = (root, page, load) => { const nav = root.querySelector('[data-workspace-pager]'); nav.replaceChildren(); const current = page.current_page || page.meta?.current_page || 1, last = page.last_page || page.meta?.last_page || 1; const prev = button('previous', () => load(current - 1)), next = button('next', () => load(current + 1)); prev.disabled = current <= 1; next.disabled = current >= last; nav.append(prev, el('span', `${current} / ${last} · ${page.total ?? page.meta?.total ?? ''}`), next); };
-  const listRows = (root, items, select) => {
+  const listRows = (root, items, select, remove) => {
     const list = root.querySelector('[data-workspace-list]'); list.replaceChildren();
     if (!items.length) list.append(el('p', t('empty'), 'workspace-empty'));
     for (const row of items) {
-      const b = el('button', undefined, 'workspace-row'); b.type = 'button';
+      const b = el('div', undefined, 'workspace-row'); b.tabIndex = 0; b.setAttribute('role', 'button');
       const detail = [t(row.status || row.kind || ''), row.refresh_status ? t(row.refresh_status) : '',
         [row.due_date?.slice(0,10), row.due_time].filter(Boolean).join(' '), row.project?.title,
         row.owner?.name, row.assignee?.name, row.source].filter(Boolean).join(' · ');
       b.append(el('strong', row.title || row.name || row.subject || row.question || row.email || ('#' + row.id)), el('small', detail));
-      b.addEventListener('click', () => select(row)); list.append(b);
+      if (remove) { const action = button('delete', () => remove(row)); action.className = 'desktop-button is-danger workspace-row-remove'; action.addEventListener('click', event => event.stopPropagation(), {capture:true}); b.append(action); }
+      b.addEventListener('click', event => { if (event.target.closest('.workspace-row-remove')) return; select(row); });
+      b.addEventListener('keydown', event => { if (event.target === b && ['Enter', ' '].includes(event.key)) { event.preventDefault(); select(row); } }); list.append(b);
     }
   };
-  const cards = (root, items, select) => { const list = root.querySelector('[data-workspace-list]'); list.replaceChildren(); if (!items.length) { list.append(el('p', t('empty'), 'workspace-empty')); return; } const grid = el('div', undefined, 'workspace-card-grid'); for (const row of items) { const card = el('button', undefined, 'workspace-card'); card.type = 'button'; const visual = el('span', undefined, 'workspace-card-visual'); if (row.cover_url) { const image = el('img'); image.src = row.cover_url; image.alt = ''; visual.append(image); } else visual.append(el('span', row.kind === 'category' ? '◆' : row.kind === 'topic' ? '✦' : row.pdf_ready ? 'PDF' : '◈', 'workspace-card-placeholder')); const body = el('span', undefined, 'workspace-card-body'); body.append(el('strong', row.title || row.name || row.subject || row.question || `#${row.id}`)); const meta = [row.author, row.owner?.name, row.project?.title, row.kind ? t(row.kind) : '', row.status ? t(row.status) : '', row.pdf_ready === false ? t('book_pdf_missing') : row.pdf_ready ? t('book_pdf_ready') : ''].filter(Boolean); body.append(el('small', meta.join(' · '))); if (row.description) body.append(el('span', row.description, 'workspace-card-description')); card.append(visual, body); card.addEventListener('click', () => select(row)); grid.append(card); } list.append(grid); };
+  const cards = (root, items, select, remove) => { const list = root.querySelector('[data-workspace-list]'); list.replaceChildren(); if (!items.length) { list.append(el('p', t('empty'), 'workspace-empty')); return; } const grid = el('div', undefined, 'workspace-card-grid'); for (const row of items) { const card = el('article', undefined, 'workspace-card'); card.tabIndex = 0; card.setAttribute('role', 'button'); const visual = el('span', undefined, 'workspace-card-visual'); if (row.cover_url) { const image = el('img'); image.src = row.cover_url; image.alt = ''; visual.append(image); } else visual.append(el('span', row.kind === 'category' ? '◆' : row.kind === 'topic' ? '✦' : row.pdf_ready ? 'PDF' : '◈', 'workspace-card-placeholder')); const body = el('span', undefined, 'workspace-card-body'); body.append(el('strong', row.title || row.name || row.subject || row.question || ('#' + row.id))); const meta = [row.author, row.owner?.name, row.project?.title, row.kind ? t(row.kind) : '', row.status ? t(row.status) : '', row.pdf_ready === false ? t('book_pdf_missing') : row.pdf_ready ? t('book_pdf_ready') : ''].filter(Boolean); body.append(el('small', meta.join(' · '))); if (row.description) body.append(el('span', row.description, 'workspace-card-description')); card.append(visual, body); if (remove) { const action = button('delete', () => remove(row)); action.className = 'desktop-button is-danger workspace-card-remove'; action.addEventListener('click', event => event.stopPropagation(), {capture:true}); card.append(action); } card.addEventListener('click', event => { if (event.target.closest('.workspace-card-remove')) return; select(row); }); card.addEventListener('keydown', event => { if (event.target === card && ['Enter', ' '].includes(event.key)) { event.preventDefault(); select(row); } }); grid.append(card); } list.append(grid); };
   const table = (root, columns, items) => { const table = el('table', undefined, 'workspace-table'), head = el('tr'); for (const key of columns) head.append(el('th', t(key))); table.append(head); for (const row of items) { const tr = el('tr'); for (const key of columns) tr.append(el('td', typeof row[key] === 'object' ? JSON.stringify(row[key]) : row[key] ?? '—')); table.append(tr); } root.append(table); };
   const crud = (root, config) => {
     const filters = root.querySelector('[data-workspace-filters]'), actions = root.querySelector('[data-workspace-actions]'), editorMode = root.dataset.workspaceMode === 'editor'; let page = 1, items = [], editGeneration = 0;
@@ -61,7 +63,15 @@
     root.classList.toggle('workspace-catalog-mode', !editorMode);
     const viewKey = `atapin.workspace.view.${root.dataset.workspace}`; let view = 'cards'; try { view = localStorage.getItem(viewKey) || 'cards'; } catch (_) {}
     const select = row => editorMode ? edit(row) : openSeparate(root.dataset.workspace, row);
-    const renderItems = () => view === 'list' ? listRows(root, items, select) : cards(root, items, select);
+    const canDelete = config.delete || ['projects', 'topics', 'books-pdf'].includes(root.dataset.workspace);
+    const deleteItem = row => run(root, async () => {
+      if (!window.confirm(t('delete_confirm'))) return;
+      await request(config.url + '/' + row.id, {confirmation:'DELETE'}, config.deleteMethod || 'DELETE');
+      feedback(root, t('deleted'));
+      document.dispatchEvent(new Event('desktop-media-changed'));
+      await load(1);
+    });
+    const renderItems = () => view === 'list' ? listRows(root, items, select, canDelete ? deleteItem : null) : cards(root, items, select, canDelete ? deleteItem : null);
     const edit = async (row = {}) => {
       const generation = ++editGeneration; if (config.detail && row.id) row = await config.detail(row); if (generation !== editGeneration || !root.isConnected) return;
       const editor = root.querySelector('[data-workspace-editor]'); if (editor.querySelector('form')?.dataset.dirty === 'true' && !window.confirm(window.desktopImportLabels?.discard_edits || t('save_before_action'))) return;
@@ -71,7 +81,6 @@
       for (const spec of config.fields || []) { const [name, type = 'text', options = [], defaultValue] = spec; const value = row[name] ?? row.metadata?.[name] ?? defaultValue ?? ''; const f = field(name, type, value, options); form.append(f); const input = f.querySelector('input,textarea,select'); if (['title','name','subject','question'].includes(name)) input.required = true; if (type === 'number') { input.min = 0; input.step = 1; } if (config.lookups?.[name]) try { await lookup(f, config.lookups[name], value, !!config.multiple?.includes(name)); } catch (error) { f.append(el('small', error.message)); } }
       if (config.readonly?.(row)) for (const input of form.elements) input.disabled = true;
       const save = el('button', t(config.submitLabel || 'save'), 'desktop-button is-primary'); save.type = 'submit'; form.append(save); if (config.readonly?.(row)) save.hidden = true;
-      const canDelete = config.delete || ['projects', 'topics', 'books-pdf'].includes(root.dataset.workspace);
       if (canDelete && row.id && !config.readonly?.(row)) {
         const remove = el('button', t('delete'), 'desktop-button is-danger'); remove.type = 'button';
         remove.addEventListener('click', () => run(root, async () => {

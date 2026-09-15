@@ -1,5 +1,6 @@
 <?php
 return [
+ 'book_ai_error'=>'Fehler bei der PDF-Verarbeitung',
  'deleted'=>'Gelöscht','delete'=>'Löschen','delete_confirm'=>'Diesen Eintrag dauerhaft löschen? Zugehörige Aufgaben und Dateien werden nicht gelöscht.',
  'subscriber_import'=>'Kontakte aus privater CSV übernehmen','csv_invalid'=>'CSV muss UTF-8, höchstens 2 MB, 10.000 Datenzeilen und 100 Spalten enthalten.','delimiter'=>'CSV-Trennzeichen','comma'=>'Komma','semicolon'=>'Semikolon','tab'=>'Tabulator','email_column'=>'Spalte mit E-Mail-Adressen','inspect_csv'=>'Spalten prüfen','confirm_csv'=>'Kontakte ohne nachgewiesenes Double-opt-in werden nur als unbestätigter Import gespeichert. Es werden keine E-Mails gesendet; bestehende Abmeldungen bleiben erhalten.','imported'=>'Importiert, Einwilligung ungeprüft',
  'prioritize'=>'Nächste Arbeitsschritte priorisieren','prioritize_question'=>'Welche fünf redaktionellen Arbeitsschritte sind als Nächstes sinnvoll? Fristen, Prioritäten und Review berücksichtigen; nur Vorschläge machen.',

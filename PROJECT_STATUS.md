@@ -60,6 +60,7 @@
 - Catalog deletion actions: shared CRUD editors now expose a confirmation-protected Delete action for projects, books and topics/categories; related tasks/materials/files remain intact where deletion is supported. node --check desktop-workspaces.js and git diff --check passed; Laravel tests remain unavailable because PHP 8.4 is not installed in this Windows session.
 
 - Current catalog redesign и исправление PDF intake job: node --check для desktop-workspaces.js, desktop-catalogs.js и desktop-os.js, а также git diff --check прошли. Исправлен production ParseError в AnalyzeBookPdf::state(), вызванный несогласованными скобками в обновлении metadata. Feature/Blade/route checks не запущены из-за отсутствия PHP 8.4 и локального preview-сервера; добавленный test покрывает project/topic image upload и queued PDF intake.
+- PDF intake refinement: catalog cards/lists for projects, topics and books now expose a fast confirmation-protected delete action; failed PDF analysis preserves the upload, stores a bounded error reason in book_pdf_ai and displays it in the book editor. Added extraction stderr context, cache busting and a focused failure-preservation test. Node syntax and git diff checks passed; PHP/Laravel checks remain unavailable because PHP 8.4 is not installed locally.
 
 - Для предыдущей правки `node --check` новых calendar/poll scripts и `git diff --check` прошли. Добавлены Feature-проверки staff vote и новой poll markup, а browser scenario проверяет month/week/list, семь дней недели и реальные проект/задачу. GitHub CI run 34944703711 подтвердил PHP/shell syntax и полный SQLite feature suite; повторный MySQL suite завершился ошибкой до browser steps, но публичный GitHub не открыл текстовый job log без авторизации. Локальный PHP 8.4 и Playwright в этой Windows-сессии недоступны из-за Application Control/отсутствующей browser dependency.
 - Для текущей правки `git diff --check` прошёл. Проверка реального Laravel/browser fixture не запущена: в этой Windows-сессии отсутствуют PHP и локальный preview-сервер; попытка открыть статический fixture через in-app browser заблокирована политикой локальных file-URL. Изменение проверено содержательным diff и изоляцией от незавершённых пользовательских файлов.
@@ -87,7 +88,7 @@
 
 ## Последний связанный commit
 
-- Текущий функциональный блок: a019e47 — Add AI content structure review.
+- Текущий функциональный блок: Improve PDF intake diagnostics and catalog deletion.
 
 - Предшествующий функциональный commit: `90d6b26` — Complete admin workflows and PWA foundation.
 - Последний функциональный commit: `5f99dbb` — Improve video catalog playback. Branch/upstream: main → origin/main.

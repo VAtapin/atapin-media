@@ -15,7 +15,10 @@ class BookPdfAnalyzer
         $process = new Process([config('platform.media_pdftotext_binary', 'pdftotext'), '-layout', app(MediaOriginalLocator::class)->path($location), '-']);
         $process->setTimeout(120);
         $process->run();
-        if (! $process->isSuccessful()) throw new \RuntimeException('PDF text extraction failed.');
+        if (! $process->isSuccessful()) {
+            $detail = trim($process->getErrorOutput());
+            throw new \RuntimeException('PDF text extraction failed.'.($detail !== '' ? ' '.mb_substr($detail, 0, 400) : ''));
+        }
         $text = trim($process->getOutput());
         if ($text === '') throw new \RuntimeException('PDF contains no selectable text.');
         return mb_substr($text, 0, 120000);

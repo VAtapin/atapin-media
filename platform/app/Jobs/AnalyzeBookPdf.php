@@ -52,26 +52,29 @@ class AnalyzeBookPdf implements ShouldQueue
                 if ($data) $product = $catalog->save([...$data, 'currency' => $product->currency ?: 'EUR', 'price_cents' => $product->price_cents ?? 0, 'status' => $product->status ?: 'draft'], $product);
                 $product->updateQuietly(['metadata' => [...($product->metadata ?? []), 'book_pdf_ai' => ['status'=>'completed','seed_title'=>$seed,'fields'=>array_keys($data),'source_text_chars'=>(int)($result['_source_text_chars'] ?? 0),'completed_at'=>now()->toIso8601String()]]);
             });
-        } catch (\Throwable) {
-            $this->state(Product::find($this->productId), 'failed');
+        } catch (\Throwable $error) {
+            $this->state(Product::find($this->productId), 'failed', $error->getMessage());
         }
     }
 
     public function failed(?\Throwable $error): void
     {
-        $this->state(Product::find($this->productId), 'failed');
+        $this->state(Product::find($this->productId), 'failed', $error?->getMessage());
     }
 
-    private function state(?Product $product, string $status): void
+    private function state(?Product $product, string $status, ?string $error = null): void
     {
         if (! $product) return;
 
         $metadata = $product->metadata ?? [];
-        $metadata['book_pdf_ai'] = [
+        $ai = [
             ...($metadata['book_pdf_ai'] ?? []),
             'status' => $status,
             'updated_at' => now()->toIso8601String(),
         ];
+        if ($error !== null) $ai['error'] = mb_substr(trim($error), 0, 500);
+        elseif ($status === 'processing') unset($ai['error']);
+        $metadata['book_pdf_ai'] = $ai;
 
         $product->updateQuietly(['metadata' => $metadata]);
     }

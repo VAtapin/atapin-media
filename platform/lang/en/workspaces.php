@@ -1,5 +1,6 @@
 <?php
 return [
+ 'book_ai_error'=>'PDF processing error',
  'deleted'=>'Deleted','delete'=>'Delete','delete_confirm'=>'Permanently delete this entry? Related tasks and files are not deleted.',
  'subscriber_import'=>'Import contacts from private CSV','csv_invalid'=>'CSV must be UTF-8, at most 2 MB, 10,000 data rows and 100 columns.','delimiter'=>'CSV delimiter','comma'=>'Comma','semicolon'=>'Semicolon','tab'=>'Tab','email_column'=>'Email address column','inspect_csv'=>'Inspect columns','confirm_csv'=>'Contacts without verified double opt-in are stored only as unverified imports. No emails are sent; existing opt-outs remain unchanged.','imported'=>'Imported, consent unverified',
  'prioritize'=>'Prioritize next actions','prioritize_question'=>'Which five editorial actions should come next? Consider deadlines, priorities and Review; only suggest actions.',

@@ -54,6 +54,7 @@
     const panel = el('section', undefined, 'workspace-asset-panel');
     panel.append(el('h3', t('book_files')));
     if (state) panel.append(el('p', `${t('book_ai_status')}: ${t('states.' + state) || state}`, 'workspace-muted'));
+    if (row.metadata?.book_pdf_ai?.error) panel.append(el('p', `${t('book_ai_error')}: ${row.metadata.book_pdf_ai.error}`, 'workspace-feedback is-error'));
     if (!row.id) return;
     const assets = row.assets || [];
     for (const asset of assets) {

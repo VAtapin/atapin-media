@@ -57,6 +57,12 @@ class DesktopWorkspacesTest extends TestCase
         $this->assertSame('queued',Product::findOrFail($book)->metadata['book_pdf_ai']['status']);
         Queue::assertPushed(\App\Jobs\AnalyzeBookPdf::class);
     }
+    public function test_pdf_analysis_failure_keeps_file_and_records_reason(): void
+    {
+        $product=$this->product(['metadata'=>['book_pdf_ai'=>['status'=>'queued']]]);$media=$this->pdf();$analyzer=\Mockery::mock(\App\Services\BookPdfAnalyzer::class);$analyzer->shouldReceive('extract')->once()->andThrow(new \RuntimeException('PDF contains no selectable text.'));
+        (new \App\Jobs\AnalyzeBookPdf($product->id,$media->id,$this->owner->id))->handle($analyzer,app(\App\Services\BookCatalog::class));
+        $this->assertNotNull(Media::find($media->id));$this->assertSame('failed',$product->fresh()->metadata['book_pdf_ai']['status']);$this->assertSame('PDF contains no selectable text.',$product->fresh()->metadata['book_pdf_ai']['error']);
+    }
     public function test_catalog_entries_can_be_deleted_without_deleting_related_files_or_materials(): void
     {
         $project=$this->postJson('/desktop/projects',['title'=>'Löschen','status'=>'idea'])->assertOk()->json('project_id');
