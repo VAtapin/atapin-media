@@ -22,10 +22,11 @@ class DesktopAiController extends Controller
     }
     public function store(Request $request, DesktopAi $service)
     {
-        $data = $request->validate(['question'=>'required|string|min:2|max:4000','purpose'=>'required|in:chat,title,summary,seo,social,reply,hashtags,youtube_description,bible_references,shorten,lengthen,tone,transform,ideas,prioritize',
+        $data = $request->validate(['question'=>'required|string|min:2|max:4000','purpose'=>'required|in:chat,title,summary,seo,social,reply,hashtags,youtube_description,bible_references,shorten,lengthen,tone,transform,ideas,prioritize,structure',
             'source_record_id'=>'nullable|integer|exists:source_records,id','product_id'=>'nullable|integer|exists:products,id','context'=>'nullable|array:provider','context.provider'=>'nullable|in:youtube,facebook,instagram,telegram,x']);
         abort_if(!empty($data['product_id'])&&!empty($data['source_record_id']),422);
         if($data['purpose']==='prioritize')abort_if(!empty($data['product_id'])||!empty($data['source_record_id'])||!empty($data['context']['provider']),422);
+        if($data['purpose']==='structure')abort_unless(!empty($data['source_record_id'])&&!empty($data['product_id']),422);
         if(!empty($data['product_id']))\Illuminate\Support\Facades\Gate::authorize('shop.manage');
         if (in_array($data['purpose'],['title','summary','seo'],true)) abort_unless(!empty($data['source_record_id'])||!empty($data['product_id']),422);
         $entry = $service->submit($request->user(),$data);
@@ -42,7 +43,7 @@ class DesktopAiController extends Controller
     {
         abort_unless($entry->user_id === $request->user()->id,404);
         $data=$request->validate(['proposal_version'=>'required|string|size:64',
-            'proposal'=>'required|array:answer,title,short_description,seo_title,seo_description,social_text',
+            'proposal'=>'required|array:answer,title,short_description,seo_title,seo_description,social_text,structured_body',
             'proposal.answer'=>'required|string|max:20000','proposal.title'=>'present|nullable|string|max:255',
             'proposal.short_description'=>'present|nullable|string|max:300','proposal.seo_title'=>'present|nullable|string|max:255',
             'proposal.seo_description'=>'present|nullable|string|max:500','proposal.social_text'=>'present|nullable|string|max:10000']);

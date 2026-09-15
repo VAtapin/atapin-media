@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\{DesktopAiRequest, User};
-use App\Services\DesktopAi;
+use App\Services\{ContentStructureReview, DesktopAi};
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -22,7 +22,11 @@ class AnswerDesktopAi implements ShouldQueue
             if ($entry->product_id && !User::find($entry->user_id)?->hasPermission('shop.manage')) throw new \RuntimeException('Book permission revoked.');
             $result = $service->answer($entry);
             $entry->update(['status'=>'completed','answer'=>mb_substr($result['answer'],0,10000),'proposal'=>$result]);
-        } catch (\Throwable) { $entry->update(['status'=>'failed']); }
+            if ($entry->purpose === 'structure') app(ContentStructureReview::class)->apply($entry);
+        } catch (\Throwable) {
+            if ($entry->purpose === 'structure') app(ContentStructureReview::class)->markFailed($entry);
+            $entry->update(['status'=>'failed']);
+        }
     }
     public function failed(?\Throwable $error): void { DesktopAiRequest::whereKey($this->requestId)->whereIn('status',['queued','processing'])->update(['status'=>'failed']); }
 }

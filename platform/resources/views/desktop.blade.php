@@ -172,7 +172,7 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <script src="/assets/desktop-content-enhancements.js?v=3" defer></script>
     <script src="/assets/desktop-local-links.js?v=1" defer></script>
     <script src="/assets/desktop-media-technical.js?v=1" defer></script>
-    <script src="/assets/desktop-content-assignment.js?v=9" defer></script>
+    <script src="/assets/desktop-content-assignment.js?v=10" defer></script>
     <script src="/assets/desktop-media-organization.js?v=4" defer></script>
     <script src="/assets/desktop-media-cover.js?v=2" defer></script>
     <script src="/assets/desktop-import-versions.js?v=1" defer></script>

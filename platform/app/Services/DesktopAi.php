@@ -30,7 +30,8 @@ class DesktopAi
         if($entry->source_version&&!$record&&!$product)throw new \RuntimeException('Source no longer exists.');
         if($entry->source_record_id&&!$record)throw new \RuntimeException('Source unavailable.');
         if($entry->product_id&&!$product)throw new \RuntimeException('Book unavailable.');
-        $source=$record?['title'=>$record->title,'body'=>mb_substr(strip_tags($record->body??''),0,10000),'author'=>$record->metadata['author']??null,'summary'=>$record->metadata['short_description']??null,'platform_text'=>$record->metadata['platform_metadata'][$entry->context['provider']??'']??null]:null;
+        $body = $entry->purpose === 'structure' ? mb_substr($record->body ?? '', 0, 50000) : mb_substr(strip_tags($record->body ?? ''), 0, 10000);
+        $source=$record?['title'=>$record->title,'body'=>$body,'body_format'=>$record->metadata['body_format']??'plain','formatting_only'=>$entry->purpose==='structure','author'=>$record->metadata['author']??null,'summary'=>$record->metadata['short_description']??null,'platform_text'=>$record->metadata['platform_metadata'][$entry->context['provider']??'']??null]:null;
         if($product)$source=['title'=>$product->title,'description'=>$product->description,'author'=>$product->author,'contents'=>mb_substr($product->contents??'',0,10000)];
         if($record&&$entry->purpose==='reply'){$parent=SourceRecord::find($record->metadata['parent_record_id']??0)??SourceRecord::where('source',$record->source)->where('source_id',$record->metadata['parent_source_id']??'')->first();$source['discussion']=$parent?['title'=>$parent->title,'body'=>mb_substr(strip_tags($parent->body??''),0,5000)]:null;}
         if($entry->purpose==='prioritize')$source=app(EditorialRecommendations::class)->context(User::findOrFail($entry->user_id));
@@ -39,6 +40,7 @@ class DesktopAi
 
     public function apply(DesktopAiRequest $entry,?string $proposalVersion=null): void
     {
+        if ($entry->purpose === 'structure') { app(ContentStructureReview::class)->apply($entry, $proposalVersion); return; }
         abort_unless($entry->status === 'completed' && ($entry->source_record_id||$entry->product_id),422);
         DB::transaction(function () use ($entry,$proposalVersion) {
             $entry = DesktopAiRequest::whereKey($entry->id)->lockForUpdate()->firstOrFail();

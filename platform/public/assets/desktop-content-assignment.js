@@ -106,3 +106,83 @@
     finally {button.disabled = false;}
   });
 })();
+(() => {
+  const labels = () => window.desktopImportLabels || {};
+  const request = async (url, data) => {
+    const response = await fetch(url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.message || labels().load_error || 'Request failed');
+    return result;
+  };
+  const supported = item => ['post', 'video', 'short'].includes(item?.kind) && !item?.archive_data;
+  const reviewDone = item => ['applied', 'no_change'].includes(item?.structure_review?.status) && item?.structure_review?.reviewed;
+
+  document.addEventListener('content-selected', event => {
+    const item = event.detail;
+    const details = event.target.closest?.('[data-content-details]');
+    if (!details || !supported(item) || details.dataset.dirty === 'true') return;
+    const toolbar = details.querySelector('.content-assignment .media-library-toolbar-row');
+    if (!toolbar || toolbar.querySelector('[data-structure-check]')) return;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'desktop-button';
+    button.dataset.structureCheck = '';
+    button.textContent = reviewDone(item) ? labels().structure_recheck : labels().structure_check;
+    const status = document.createElement('small');
+    status.className = 'content-structure-status';
+    status.textContent = item.structure_review?.status && labels()['structure_' + item.structure_review.status] || '';
+    toolbar.append(button, status);
+    button.addEventListener('click', async () => {
+      if (details.dataset.dirty === 'true') {
+        status.textContent = labels().save_before_ai;
+        return;
+      }
+      button.disabled = true;
+      try {
+        const result = await request('/desktop/content/' + item.id + '/structure', {force: reviewDone(item)});
+        status.textContent = result.status === 'skipped' ? labels().structure_skipped : labels().structure_queued;
+        document.dispatchEvent(new Event('desktop-media-changed'));
+      } catch (error) {
+        status.textContent = error.message;
+      } finally {
+        button.disabled = false;
+      }
+    });
+  });
+
+  document.addEventListener('click', async event => {
+    const button = event.target.closest('[data-structure-batch]');
+    if (!button) return;
+    const root = button.closest('[data-content-library]');
+    const form = root?.querySelector('[data-content-filter]');
+    const summary = root?.querySelector('[data-content-summary]');
+    if (!root || !form || !summary) return;
+    const filters = Object.fromEntries([...new FormData(form)].filter(([, value]) => value !== ''));
+    if (root.dataset.section) filters.section = root.dataset.section;
+    if (filters.trash === 'deleted' || filters.kind === 'playlist') {
+      summary.textContent = labels().structure_batch + ': ' + (labels().trash_restore_first || '');
+      return;
+    }
+    button.disabled = true;
+    try {
+      const result = await request('/desktop/content/structure/batch', {filters});
+      summary.textContent = (labels().structure_batch_done || '')
+        .replace(':queued', result.queued)
+        .replace(':skipped', result.skipped);
+      document.dispatchEvent(new Event('desktop-media-changed'));
+    } catch (error) {
+      summary.textContent = error.message;
+    } finally {
+      button.disabled = false;
+    }
+  });
+})();

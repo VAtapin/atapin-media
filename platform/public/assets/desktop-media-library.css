@@ -463,6 +463,8 @@
 
 .desktop-content-library .media-library-toolbar{display:grid;grid-template-columns:1fr;gap:8px}
 .desktop-content-library .content-library-advanced-filters{width:100%}
+.content-structure-status{color:var(--ml-muted);font-size:12px;align-self:center}
+.content-assignment [data-structure-check]{white-space:nowrap}
 .desktop-content-library .content-video-card{position:relative;display:grid;grid-template-rows:auto 1fr;cursor:default}
 .content-video-card-open{display:block;width:100%;height:100%;padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
 .content-video-card-open:hover,.content-video-card-open:focus-visible{background:#f8fbfe;outline:none}

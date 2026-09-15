@@ -12,6 +12,7 @@
                 <summary>{{ __('imports.more_actions') }}</summary>
                 <div>
                     @can('media.edit')<button type="button" class="desktop-button" data-classify-batch="record">{{ __('imports.ai_batch') }}</button>@endcan
+                    @can('content.edit')<button type="button" class="desktop-button" data-structure-batch>{{ __('imports.structure_batch') }}</button>@endcan
                     @can('content.edit')<button type="button" class="desktop-button" data-short-descriptions-missing>{{ __('imports.short_descriptions_missing') }}</button>@endcan
                     @can('imports.manage') @can('media.edit')<button type="button" class="desktop-button" data-local-video-check>{{ __('imports.audit_start') }}</button>@endcan @endcan
                     @can('content.edit')<details class="media-inspector"><summary>{{ __('imports.local_connections') }}</summary><p>{{ __('imports.local_connections_hint') }}</p><button type="button" class="desktop-button" data-repair-local-links>{{ __('imports.repair_connections') }}</button><p role="status"></p></details>@endcan
