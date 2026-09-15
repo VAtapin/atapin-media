@@ -2,8 +2,10 @@
 namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Services\Workflow;
+use App\Services\MediaLibrary;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Gate;
 class ProjectController extends Controller
 {
     public function index(Request $request)
@@ -14,12 +16,16 @@ class ProjectController extends Controller
         if ($data['status'] ?? '') $query->where('status', $data['status']);
         foreach (['type','user_id'] as $key) if ($data[$key] ?? null) $query->where($key,$data[$key]);
         if ($data['due_before'] ?? null) $query->whereDate('due_date','<=',$data['due_before']);
-        return response()->json($query->paginate(30));
+        $page = $query->paginate(30);
+        $covers = \App\Models\Media::whereIn('id', $page->getCollection()->pluck('cover_media_id')->filter())->get()->keyBy('id');
+        return response()->json($page->through(fn (Project $project) => [...$project->toArray(), 'cover_url' => $covers->get($project->cover_media_id)?->previewUrl()]));
     }
 
     public function show(Project $project)
     {
-        return response()->json(['project'=>$project->load('owner:id,name')->loadCount(['tasks','tasks as done_tasks_count'=>fn($q)=>$q->where('status','done')]),
+        $project->load('owner:id,name')->loadCount(['tasks','tasks as done_tasks_count'=>fn($q)=>$q->where('status','done')]);
+        $cover = $project->cover_media_id ? \App\Models\Media::find($project->cover_media_id) : null;
+        return response()->json(['project'=>[...$project->toArray(),'cover_url'=>$cover?->previewUrl()],
             'tasks'=>$project->tasks()->with('assignee:id,name')->orderBy('due_date')->paginate(30, ['*'], 'tasks_page'),
             'records'=>$project->records()->latest()->paginate(30, ['id','title','kind','status'], 'records_page'),
             'products'=>$project->products()->latest()->paginate(30, ['id','title','status'], 'products_page'),
@@ -44,6 +50,15 @@ class ProjectController extends Controller
         $workflow->saveProject($this->data($request), $project);
         if ($request->expectsJson()) return response()->json(['status'=>'saved','project_id'=>$project->id]);
         return back()->with('status', __('ui.saved'));
+    }
+
+    public function cover(Request $request, Project $project, MediaLibrary $library)
+    {
+        Gate::authorize('media.upload');
+        $request->validate(['file'=>'required|image|mimes:jpg,jpeg,png,webp,gif|max:10240']);
+        $media = $library->upload($request->file('file'), $request->user()->id);
+        $project->update(['cover_media_id'=>$media->id]);
+        return response()->json(['status'=>'saved','media_id'=>$media->id,'cover_url'=>$media->previewUrl()]);
     }
     private function data(Request $request): array
     {

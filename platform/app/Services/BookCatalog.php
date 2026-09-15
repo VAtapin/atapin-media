@@ -52,6 +52,7 @@ class BookCatalog
             $roles=$slot==='full'?['public_download','paid_download']:[$slot];
             DB::table('media_usages')->where('subject_type',Product::class)->where('subject_id',(string)$product->id)->whereIn('used_as',$roles)->delete();
             $media->usages()->firstOrCreate(['subject_type'=>Product::class,'subject_id'=>(string)$product->id,'used_as'=>$slot==='full'?($product->price_cents>0?'paid_download':'public_download'):$slot]);
+            if ($slot === 'cover') $product->updateQuietly(['metadata'=>[...($product->metadata ?? []),'cover_media_id'=>$media->id]]);
             app(Audit::class)->record('shop.asset_attached',(string)$product->id,['slot'=>$slot,'media_id'=>$media->id]);
         });
     }

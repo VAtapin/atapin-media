@@ -368,10 +368,11 @@
     runningApps.append(taskButton);
   };
 
-  const openProgram = (trigger, saved = null) => {
+  const openProgram = (trigger, saved = null, options = {}) => {
     hideSnap();
     stateWasCleared = false;
-    const appId = trigger.dataset.openApp;
+    const baseAppId = trigger.dataset.openApp;
+    const appId = options.forceNew ? `${baseAppId}-${Date.now()}-${cascade}` : baseAppId;
     let windowElement = windowFor(appId);
     if (!windowElement) {
       windowElement = template.content.firstElementChild.cloneNode(true);
@@ -384,12 +385,12 @@
       desktop.append(windowElement);
       bindWindow(windowElement);
       createTaskButton(windowElement, trigger);
-      if (appId.startsWith('help-')) {
-        const help = document.querySelector(`[data-help-template="${CSS.escape(appId.slice(5))}"]`);
+      if (baseAppId.startsWith('help-')) {
+        const help = document.querySelector(`[data-help-template="${CSS.escape(baseAppId.slice(5))}"]`);
         if (help) windowElement.querySelector('.os-window-content').append(help.content.firstElementChild.cloneNode(true));
         windowElement.querySelector('[data-window-action="help"]').remove();
       }
-      if (appId === 'settings') {
+      if (baseAppId === 'settings') {
         windowElement._settingsPreview = captureSettingsPreview(windowElement);
         const settingsTemplate = document.querySelector('#settings-app-template');
         const settingsApp = settingsTemplate?.content.firstElementChild.cloneNode(true);
@@ -400,7 +401,7 @@
 
       }
 
-      if (appId === 'live-studio') {
+      if (baseAppId === 'live-studio') {
         const liveStudioTemplate = document.querySelector('#live-studio-app-template');
         const liveStudio = liveStudioTemplate?.content.firstElementChild.cloneNode(true);
         if (liveStudio) {
@@ -409,7 +410,7 @@
         }
       }
 
-      if (appId === 'media') {
+      if (baseAppId === 'media') {
         const mediaTemplate = document.querySelector('#media-library-app-template');
         const mediaLibrary = mediaTemplate?.content.firstElementChild.cloneNode(true);
         if (mediaLibrary) {
@@ -418,7 +419,7 @@
         }
       }
 
-      if (appId === 'imports') {
+      if (baseAppId === 'imports') {
         const importsTemplate = document.querySelector('#import-center-app-template');
         const importCenter = importsTemplate?.content.firstElementChild.cloneNode(true);
         if (importCenter) {
@@ -426,7 +427,7 @@
           window.initializeImportCenter?.(importCenter);
         }
       }
-      if (appId === 'publishing') {
+      if (baseAppId === 'publishing') {
         const publishingTemplate = document.querySelector('#publishing-app-template');
         const publishing = publishingTemplate?.content.firstElementChild.cloneNode(true);
         if (publishing) {
@@ -434,15 +435,15 @@
           window.initializePublishing?.(publishing);
         }
       }
-      if (['videos', 'posts', 'podcast'].includes(appId)) {
+      if (['videos', 'posts', 'podcast'].includes(baseAppId)) {
         const content = document.querySelector('#content-library-app-template')?.content.firstElementChild.cloneNode(true);
         if (content) {
-          content.dataset.section = appId;
+          content.dataset.section = baseAppId;
           windowElement.querySelector('.os-window-content').append(content);
           window.initializeContentLibrary?.(content);
         }
       }
-      if (appId === 'community') {
+      if (baseAppId === 'community') {
         const communityTemplate = document.querySelector('#community-app-template');
         const community = communityTemplate?.content.firstElementChild.cloneNode(true);
         if (community) windowElement.querySelector('.os-window-content').append(community);
@@ -451,8 +452,8 @@
         const host=document.createElement('div');host.className='workspace-inline';inbox.append(host);windowElement.querySelector('.os-window-content').prepend(inbox);
         inbox.addEventListener('toggle',()=>{if(inbox.open&&!host.dataset.loaded){host.dataset.loaded='true';window.initializeDesktopWorkspace?.(host,'community');}});
       }
-      if (['overview','polls','projects','tasks','calendar','books-pdf','topics','newsletter','ai-assistant','analytics','shop','integrations'].includes(appId)) {
-        window.initializeDesktopWorkspace?.(windowElement.querySelector('.os-window-content'),appId);
+      if (['overview','polls','projects','tasks','calendar','books-pdf','topics','newsletter','ai-assistant','analytics','shop','integrations'].includes(baseAppId)) {
+        window.initializeDesktopWorkspace?.(windowElement.querySelector('.os-window-content'),baseAppId,options.forceNew ? {mode:'editor'} : {});
       }
 
       if (saved) {
@@ -488,6 +489,11 @@
     startMenu.hidden = true;
     startButton.setAttribute('aria-expanded', 'false');
     return windowElement;
+  };
+
+  window.openDesktopProgram = (appId, options = {}) => {
+    const trigger = programTrigger(appId);
+    return trigger ? openProgram(trigger, null, options) : null;
   };
 
   const bindResize = windowElement => {

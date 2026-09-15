@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\TaxonomyTerm;
 use App\Services\{Audit, Taxonomy};
+use App\Services\MediaLibrary;
 use Illuminate\Http\Request;
 use Illuminate\Support\{Str, Facades\DB};
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Gate;
 
 class TaxonomyController extends Controller
 {
@@ -16,11 +18,22 @@ class TaxonomyController extends Controller
         $query = TaxonomyTerm::with('parent:id,name')->orderBy('kind')->orderBy('name');
         if ($data['q'] ?? '') $query->where('name','like','%'.$data['q'].'%');
         if ($data['kind'] ?? '') $query->where('kind',$data['kind']);
-        return response()->json($query->paginate(50));
+        $page = $query->paginate(50);
+        $covers = \App\Models\Media::whereIn('id', $page->getCollection()->pluck('cover_media_id')->filter())->get()->keyBy('id');
+        return response()->json($page->through(fn (TaxonomyTerm $term) => [...$term->toArray(), 'cover_url' => $covers->get($term->cover_media_id)?->previewUrl()]));
     }
 
     public function store(Request $request) { return $this->save($request, new TaxonomyTerm); }
     public function update(Request $request, TaxonomyTerm $term) { return $this->save($request, $term); }
+
+    public function cover(Request $request, TaxonomyTerm $term, MediaLibrary $library)
+    {
+        Gate::authorize('media.upload');
+        $request->validate(['file'=>'required|image|mimes:jpg,jpeg,png,webp,gif|max:10240']);
+        $media = $library->upload($request->file('file'), $request->user()->id);
+        $term->update(['cover_media_id'=>$media->id]);
+        return response()->json(['status'=>'saved','media_id'=>$media->id,'cover_url'=>$media->previewUrl()]);
+    }
 
     private function save(Request $request, TaxonomyTerm $term)
     {

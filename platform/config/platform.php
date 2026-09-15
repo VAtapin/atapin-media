@@ -8,6 +8,7 @@ return [
     'media_disk' => 'local',
     'media_ffprobe_binary' => env('MEDIA_FFPROBE_BINARY', 'ffprobe'),
     'media_ffmpeg_binary' => env('MEDIA_FFMPEG_BINARY', 'ffmpeg'),
+    'media_pdftotext_binary' => env('MEDIA_PDFTOTEXT_BINARY', 'pdftotext'),
     'live_recording_remux_fallback' => (bool) env('LIVE_RECORDING_REMUX_FALLBACK', true),
     'media_upload_max_bytes' => (int) env('MEDIA_UPLOAD_MAX_BYTES', 20 * 1024 * 1024 * 1024),
     'media_upload_max_archive_bytes' => (int) env('MEDIA_UPLOAD_MAX_ARCHIVE_BYTES', 100 * 1024 * 1024 * 1024),

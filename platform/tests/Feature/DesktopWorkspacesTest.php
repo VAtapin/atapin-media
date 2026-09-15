@@ -6,6 +6,7 @@ use App\Jobs\{GeneratePdfEdition,DeliverNewsletter,AnswerDesktopAi,PublishSchedu
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\{Queue,Http,DB,Storage,Mail,URL};
 use Illuminate\Support\{Str,Carbon};
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class DesktopWorkspacesTest extends TestCase
@@ -42,6 +43,19 @@ class DesktopWorkspacesTest extends TestCase
         $this->getJson('/desktop/projects/'.$id)->assertOk()->assertJsonPath('tasks.data.0.title','Skript')->assertJsonPath('records.data.0.id',$record->id);
         $this->getJson('/desktop/tasks?mine=1&project_id='.$id)->assertOk()->assertJsonPath('total',1);
         $this->getJson('/desktop/projects?q=Serie')->assertJsonPath('data.0.records_count',1);
+    }
+    public function test_catalog_cards_can_have_images_and_pdf_intake_is_queued(): void
+    {
+        config(['platform.media_upload_reserve_free_bytes'=>0]);\Illuminate\Support\Facades\Storage::fake('local');
+        $project=$this->postJson('/desktop/projects',['title'=>'Projektbild','status'=>'idea'])->assertOk()->json('project_id');
+        $this->post('/desktop/projects/'.$project.'/cover',['file'=>UploadedFile::fake()->image('project.jpg')],['Accept'=>'application/json'])->assertOk();
+        $this->assertNotNull(\App\Models\Project::findOrFail($project)->cover_media_id);
+        $term=$this->postJson('/desktop/taxonomy',['name'=>'Bildthema','kind'=>'topic','active'=>true])->assertOk()->json('id');
+        $this->post('/desktop/taxonomy/'.$term.'/cover',['file'=>UploadedFile::fake()->image('topic.jpg')],['Accept'=>'application/json'])->assertOk();
+        $this->assertNotNull(TaxonomyTerm::findOrFail($term)->cover_media_id);
+        $book=$this->post('/desktop/books/intake',['file'=>UploadedFile::fake()->create('book.pdf',10,'application/pdf')],['Accept'=>'application/json'])->assertAccepted()->json('id');
+        $this->assertSame('queued',Product::findOrFail($book)->metadata['book_pdf_ai']['status']);
+        Queue::assertPushed(\App\Jobs\AnalyzeBookPdf::class);
     }
     public function test_taxonomy_rename_deactivation_and_cycles(): void
     {

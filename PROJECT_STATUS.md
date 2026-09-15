@@ -4,6 +4,8 @@
 
 ## Реализовано
 
+- Desktop catalogs переработаны в scan-first карточки с переключателем карточки/список и верхними фильтрами; создание и редактирование generic CRUD-записей открывается отдельным окном. Проекты, темы/категории и книги имеют image upload для карточек; книга начинается с отдельного PDF-интейка, создаёт draft и ставит реальный AI-анализ PDF в очередь с сохранением возможности ручной корректировки.
+
 - Laravel 13 / PHP 8.4, single-tenant foundation, auth/users/RBAC, encrypted settings, audit и Media Desktop с 21 программой, сохранением окон, Snap Layouts и персональным оформлением. Blade/progressive JavaScript; обязательной Node production-сборки нет.
 - Desktop overview: реальные permission-scoped проекты/задачи, storage, обработка/проблемы медиа, Review queue, свои AI-предложения, публикации, Live, inbox и system queue. Видимость/порядок/ширина widgets сохраняются per-account/device; drag и keyboard reorder, один столбец на mobile и в узком окне. Media item открывает конкретный файл.
 - Native Desktop: проекты со связанными задачами/материалами/книгами, проекты дополнены типом, team, start date, cover/tags/next action и task progress; задачи с ответственными/датой и временем срока, content link, priority, checklist/tags и доской. Календарь переработан в полноширинный planning workspace: корректные month/week/list periods, семь колонок, today navigation, project/type/provider filters, отдельные цвета проектов, задач, публикаций и Live, понятные детали и responsive horizontal fallback для узких окон. Темы/иерархические категории, книги/PDF, продажи, рассылки/подписчики, AI history, first-party аналитика и состояния интеграций сохранены. Поиск, фильтры и пагинация, в том числе зависимых списков проектов и серий. Проекты имеют paginated историю actual status transitions; перенос задачи сохраняет её историю в прежнем проекте; фильтры задач включают assignee/priority/content type/deadline. Пустой список означает отсутствие подходящих данных, а не заглушку программы.
@@ -30,6 +32,8 @@
 
 ## Важные решения
 
+- PDF-интейк сохраняет оригинал в существующей private Media Library, создаёт только draft-книгу и обрабатывается отдельным queue job; если PDF сканированный или AI недоступен, файл не теряется и запись остаётся для ручного заполнения.
+
 - OAuth/payment/AI credentials — защищённая админка/encrypted settings, не .env/Git/чат; обычные public users не получают admin routes. Existing SMTP/sendmail остаётся серверной mail-конфигурацией.
 - Долгие PDF/AI/newsletter/taxonomy операции — existing queue. Не добавлены новые cron/systemd services, video optimization pipeline или параллельный admin shell. Task board — текущая страница результата, calendar сообщает лимиты; analytics — daily sessions, не точное число людей.
 - Production: /var/www/vhosts/mannavomhimmel.de/httpdocs; document root platform/public; private runtime вне public root. Intake/YouTube/Takeout originals не затрагиваются deployment платформы.
@@ -49,6 +53,8 @@
 
 ## Проверки
 
+- Current catalog redesign: node --check для desktop-workspaces.js, desktop-catalogs.js и desktop-os.js, а также git diff --check прошли. Feature/Blade/route checks не запущены из-за отсутствия PHP 8.4 и локального preview-сервера; добавленный test покрывает project/topic image upload и queued PDF intake.
+
 - Для предыдущей правки `node --check` новых calendar/poll scripts и `git diff --check` прошли. Добавлены Feature-проверки staff vote и новой poll markup, а browser scenario проверяет month/week/list, семь дней недели и реальные проект/задачу. GitHub CI run 34944703711 подтвердил PHP/shell syntax и полный SQLite feature suite; повторный MySQL suite завершился ошибкой до browser steps, но публичный GitHub не открыл текстовый job log без авторизации. Локальный PHP 8.4 и Playwright в этой Windows-сессии недоступны из-за Application Control/отсутствующей browser dependency.
 - Для текущей правки `git diff --check` прошёл. Проверка реального Laravel/browser fixture не запущена: в этой Windows-сессии отсутствуют PHP и локальный preview-сервер; попытка открыть статический fixture через in-app browser заблокирована политикой локальных file-URL. Изменение проверено содержательным diff и изоляцией от незавершённых пользовательских файлов.
 - Полный локальный suite PHP 8.4.25 / SQLite: **387 tests / 2906 assertions passed**. После последних Live изменений targeted BrowserLiveTest/PublicBroadcastTest: **22 passed**. New tests cover loopback/control auth, user/record/protocol/expiry/RBAC, confirmation/publication, encrypted WHIP resource/no secret exposure, input conflict, actual TLS OBS kick route, unpublished idempotent Podcast original usage, unsafe host rejection and private operational health endpoint. Generated default/browser configurations validated by actual MediaMTX 1.21.0.
@@ -61,6 +67,8 @@
 
 ## Что рекомендуется следующим
 
+- После backup применить migration для taxonomy_terms.cover_media_id, проверить наличие pdftotext, настройки OpenAI и обработку AnalyzeBookPdf; затем открыть карточки/список проектов, тем и книг на desktop/mobile.
+
 - Off-air после Plesk backup получить release, применить forward migrations create_live_browser_sessions, create_channel_message_sync и allow_unverified_subscriber_imports с PHP 8.4 и очистить config/routes/views. Browser Studio и admin completion не добавляют Composer/Node dependencies; добавлены только существующий scheduler command для YouTube comments и operational heartbeats в cron entry point. В админке включить protected server/browser configuration; hosting owner однократно проверяет certificate/FFmpeg/firewall 8189/FPM workers. Затем проверить OBS, browser HLS/recording/output, inbound comments and `platform:check` на сервере. Production агентом не обновлялся.
 - Через админку подключить платформы/OpenAI/Stripe, зарегистрировать Stripe webhook/events по docs/DESKTOP-WORKSPACES.md; проверить тестовую покупку/refund/protected download, newsletter delivery/opt-out и scheduled publication. Secrets в чат не присылать.
 - После backup применить код и убедиться, что существующий Plesk queue worker обрабатывает `ProcessLiveRecording`; проверить один завершённый Live-сегмент через `platform:media-check` и browser playback.
@@ -69,5 +77,5 @@
 ## Последний связанный commit
 
 - Предшествующий функциональный commit: `90d6b26` — Complete admin workflows and PWA foundation.
-- Последний функциональный commit: `c2f1231` — Remux completed Live recordings. Branch/upstream: main → origin/main.
+- Последний функциональный commit: Redesign desktop content catalogs (hash сообщён владельцу после публикации). Branch/upstream: main → origin/main.
 

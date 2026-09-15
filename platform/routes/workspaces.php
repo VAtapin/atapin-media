@@ -15,7 +15,7 @@ Route::middleware('auth')->group(function(){
     Route::get('/desktop/publishing/preview',\App\Http\Controllers\PublishingPreviewController::class)->middleware('can:content.publish');
     Route::get('/desktop/live/{record}/monitor',\App\Http\Controllers\LiveMonitorController::class)->middleware('can:content.publish');
     Route::middleware('can:projects.manage')->group(function(){
-        Route::get('/desktop/projects',[ProjectController::class,'index']);Route::get('/desktop/projects/{project}',[ProjectController::class,'show']);Route::get('/desktop/tasks',[TaskController::class,'index']);
+        Route::get('/desktop/projects',[ProjectController::class,'index']);Route::post('/desktop/projects/{project}/cover',[ProjectController::class,'cover']);Route::get('/desktop/projects/{project}',[ProjectController::class,'show']);Route::get('/desktop/tasks',[TaskController::class,'index']);
         Route::get('/desktop/tasks/{task}',[TaskController::class,'show']);
     });
     Route::get('/desktop/planning',[CalendarController::class,'index'])->middleware('can:desktop.view');
@@ -32,13 +32,13 @@ Route::middleware('auth')->group(function(){
         Route::post('/desktop/content',[ImportedContentController::class,'store']);
         Route::post('/desktop/content/{record}/accept-review',[ImportedContentController::class,'acceptReview']);
         Route::get('/desktop/assistant/{entry}',[DesktopAiController::class,'show']);
-        Route::get('/desktop/taxonomy',[TaxonomyController::class,'index']);Route::post('/desktop/taxonomy',[TaxonomyController::class,'store']);Route::patch('/desktop/taxonomy/{term}',[TaxonomyController::class,'update']);
+        Route::get('/desktop/taxonomy',[TaxonomyController::class,'index']);Route::post('/desktop/taxonomy',[TaxonomyController::class,'store']);Route::post('/desktop/taxonomy/{term}/cover',[TaxonomyController::class,'cover']);Route::patch('/desktop/taxonomy/{term}',[TaxonomyController::class,'update']);
         Route::get('/desktop/series',[SeriesController::class,'index']);Route::post('/desktop/series',[SeriesController::class,'store']);Route::get('/desktop/series/{collection}',[SeriesController::class,'show']);Route::patch('/desktop/series/{collection}',[SeriesController::class,'update']);
         Route::get('/desktop/assistant',[DesktopAiController::class,'index']);Route::post('/desktop/assistant',[DesktopAiController::class,'store'])->middleware('throttle:10,1');Route::patch('/desktop/assistant/{entry}',[DesktopAiController::class,'update']);Route::post('/desktop/assistant/{entry}/apply',[DesktopAiController::class,'apply']);
         Route::post('/desktop/content/{record}/pdf',[PdfEditionController::class,'record'])->middleware('throttle:10,1');
     });
     Route::middleware('can:shop.manage')->group(function(){
-        Route::get('/desktop/books',[BookWorkspaceController::class,'index']);Route::post('/desktop/books',[BookWorkspaceController::class,'store']);Route::get('/desktop/books/{product}',[BookWorkspaceController::class,'show']);Route::patch('/desktop/books/{product}',[BookWorkspaceController::class,'update']);Route::post('/desktop/books/{product}/assets',[BookWorkspaceController::class,'asset']);Route::post('/desktop/books/{product}/pdf',[PdfEditionController::class,'book'])->middleware('throttle:10,1');Route::get('/desktop/sales',[BookWorkspaceController::class,'sales']);
+        Route::get('/desktop/books',[BookWorkspaceController::class,'index']);Route::post('/desktop/books',[BookWorkspaceController::class,'store']);Route::post('/desktop/books/intake',[BookWorkspaceController::class,'intake'])->middleware('throttle:10,1');Route::get('/desktop/books/{product}',[BookWorkspaceController::class,'show']);Route::patch('/desktop/books/{product}',[BookWorkspaceController::class,'update']);Route::post('/desktop/books/{product}/assets',[BookWorkspaceController::class,'asset']);Route::post('/desktop/books/{product}/pdf',[PdfEditionController::class,'book'])->middleware('throttle:10,1');Route::get('/desktop/sales',[BookWorkspaceController::class,'sales']);
     });
     Route::middleware('can:subscribers.manage')->group(function(){
         Route::middleware('can:media.view')->group(function(){Route::post('/desktop/subscribers/csv/inspect',[\App\Http\Controllers\SubscriberCsvController::class,'inspect'])->middleware('throttle:10,1');Route::post('/desktop/subscribers/csv',[\App\Http\Controllers\SubscriberCsvController::class,'store'])->middleware('throttle:5,1');Route::get('/desktop/subscribers/csv/{run}',[\App\Http\Controllers\SubscriberCsvController::class,'show']);});
