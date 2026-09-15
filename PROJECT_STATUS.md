@@ -26,6 +26,7 @@
 - Live recording processing: MediaMTX completion callbacks enqueue unique jobs; each fMP4 segment is losslessly remuxed to seekable MP4 with `faststart` before canonical registration, with a safe original-segment fallback when FFmpeg fails. Segments remain separate and are not merged.
 - Admin completion: video inventory exposes duration/size/processing facts and bounded filters/sorting/exclusions; provider covers/hashtags, destination preview and schedule states are visible. HTTPS URL/RSS/Atom imports retain a private provenance original and create sanitized unpublished drafts; subscriber CSV imports are resumable and never activate, re-consent or email unverified contacts. AI prioritization uses bounded permission-scoped facts and never mutates content automatically.
 - PWA/operations: public and Desktop layouts expose an installable manifest, offline static shell and Apple touch icon. Settings staff have a private operational health endpoint containing runtime, database, storage capacity, cache, search, owner, queue and scheduler/worker heartbeat facts without secrets. `platform:check` uses the same report; the documented Plesk cron entry point records successful scheduler/queue heartbeats.
+- Analytics dashboard: the existing first-party report is now a compact scan-first view with KPI cards, a clickable daily activity chart, visual top-event/page/content rankings, expandable raw data sections and drill-down details. Data collection, permissions and CSV export remain unchanged.
 
 ## Важные решения
 
@@ -56,6 +57,7 @@
 - Local MySQL/MariaDB, настоящие OpenAI/payment/SMTP/social, Linux encoding/Live pipeline и production deployment не запускались. CI сохраняет MySQL job и включает новый admin-completion browser scenario.
 - Edge 1672×941 / 390×844 + real pinned local MediaMTX: WHIP peer received actual synthetic camera/mic media; image/PiP/title scene, WAV PCM/header/download/library upload, Podcast draft, active-window protection и explicit session stop passed without JS errors/HTTP >=400. Desktop/mobile screenshots просмотрены. CI adds hash-verified pinned MediaMTX transport scenario. Physical devices, Linux transcoding and production are not implied by synthetic transport success.
 - Live remux orchestration покрыта `LiveRecordingRemuxTest`: закрытые сегменты ставятся в unique queue job, FFmpeg вызывается с stream copy/faststart, успешный результат регистрируется в canonical storage, а при ошибке сохраняется fallback-оригинал. Реальный Linux/Plesk FFmpeg и playback smoke-test не запускались.
+- Analytics dashboard: `node --check platform/public/assets/desktop-workspace-operations.js` and `git diff --check` passed. PHP syntax/Blade/browser checks were not run because PHP and a local preview server are unavailable in this Windows session.
 
 ## Что рекомендуется следующим
 
