@@ -54,7 +54,7 @@ $workspaceLabels = array_replace(__('workspaces'), [
     <link rel="stylesheet" href="/assets/desktop-workspaces.css?v=14">
     <link rel="stylesheet" href="/assets/desktop-overview.css?v=2">
     <script>window.desktopWorkspaceLabels=@json($workspaceLabels); window.desktopBookReviewLabels=@json(__('book-reviews')); window.desktopAiLabels=@json(__('ai_dashboard'));</script>
-    <script src="/assets/desktop-workspaces.js?v=11" defer></script>
+    <script src="/assets/desktop-workspaces.js?v=12" defer></script>
     <script src="/assets/public-pwa.js?v=1" defer></script>
     <script src="/assets/desktop-workspace-content.js?v=7" defer></script>
     <script src="/assets/desktop-ai-dashboard.js?v=2" defer></script>

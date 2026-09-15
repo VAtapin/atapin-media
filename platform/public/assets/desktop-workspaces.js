@@ -53,7 +53,7 @@
         [row.due_date?.slice(0,10), row.due_time].filter(Boolean).join(' '), row.project?.title,
         row.owner?.name, row.assignee?.name, row.source, bookAiState(row)].filter(Boolean).join(' · ');
       b.append(el('strong', row.title || row.name || row.subject || row.question || row.email || ('#' + row.id)), el('small', detail));
-      if (remove) { const action = button('delete', () => remove(row)); action.className = 'desktop-button is-danger workspace-row-remove'; action.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); }, {capture:true}); b.append(action); }
+      if (remove) { const action = button('delete', event => { event.preventDefault(); event.stopPropagation(); remove(row); }); action.className = 'desktop-button is-danger workspace-row-remove'; b.append(action); }
       b.addEventListener('click', event => { if (event.target.closest('.workspace-row-remove')) return; select(row); });
       b.addEventListener('keydown', event => { if (event.target === b && ['Enter', ' '].includes(event.key)) { event.preventDefault(); select(row); } }); list.append(b);
     }
@@ -72,7 +72,7 @@
       const meta = [row.author, row.owner?.name, row.project?.title, row.kind ? t(row.kind) : '', row.status ? statusText(root, row.status) : '', row.pdf_ready === false ? t('book_pdf_missing') : row.pdf_ready ? t('book_pdf_ready') : '', bookAiState(row)].filter(Boolean);
       body.append(el('small', meta.join(' · '))); if (row.description) body.append(el('span', row.description, 'workspace-card-description'));
       if (vertical) card.append(title, visual, body); else { body.prepend(title); card.append(visual, body); }
-      if (remove) { const action = button('delete', () => remove(row)); action.className = 'desktop-button is-danger workspace-card-remove'; action.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); }, {capture:true}); card.append(action); }
+      if (remove) { const action = button('delete', event => { event.preventDefault(); event.stopPropagation(); remove(row); }); action.className = 'desktop-button is-danger workspace-card-remove'; card.append(action); }
       card.addEventListener('click', event => { if (event.target.closest('.workspace-card-remove')) return; select(row); });
       card.addEventListener('keydown', event => { if (event.target === card && ['Enter', ' '].includes(event.key)) { event.preventDefault(); select(row); } }); grid.append(card);
     }

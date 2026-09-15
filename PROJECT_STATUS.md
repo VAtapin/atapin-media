@@ -6,6 +6,7 @@
 
 - `platform/` работает на Laravel 13 / PHP 8.4 как self-hosted single-tenant приложение. Готовы foundation, auth/users/RBAC, encrypted settings, audit, Media Library, imports, проекты, задачи, календарь, publishing, community, analytics, public website и оболочка Media Desktop. Интерфейс построен на Blade и progressive JavaScript, обязательной production Node-сборки нет.
 - Media Desktop использует единый native workflow: компактное создание и inline-редактирование проектов, задач, материалов, книг и Podcast без лишних Desktop-окон. Проекты показывают paginated связанные задачи, материалы, книги и внешние публикации; специализированные материалы открываются в соответствующем редакторе.
+- Общие кнопки удаления в каталогах корректно работают и в карточках, и в списках: подтверждение не блокируется обработчиком родительской карточки, после успешного `DELETE` каталог обновляется. Исправление распространяется на проекты, темы и книги/PDF.
 - Задачи поддерживают состояния `open/planned/working/waiting/done`, приоритеты, сроки, проект, ответственного, checklist/tags и повторение `once/daily/weekly/monthly/custom`. Повторы вычисляются из одной задачи без создания дубликатов. Доска и список сохранены; календарь показывает задачи, публикации и Live и открывает точную исходную запись.
 - Книги/PDF имеют title-first intake, inline editor, queued PDF analysis/generation, private originals, sample/full attachments и Stripe-entitlements. Рецензии перенесены в native Desktop-диалог с фильтрами, пагинацией и approve/reject; legacy `book-admin` UI удалён, старый маршрут безопасно перенаправляет в Bücher & PDF.
 - Podcast создаётся и редактируется inline поверх существующих `SourceRecord`, `Media`, assignments/assets. Поддержаны audio/video podcast, cover/file, episode/season, историческая дата публикации и явный переход к Publishing для будущего расписания.
@@ -34,6 +35,7 @@
 ## Проверки
 
 - Полный локальный suite на PHP 8.4.25 / SQLite: **450 tests, 3546 assertions — passed**.
+- Исправление удаления: targeted Laravel suite **52 tests, 453 assertions — passed**; реальный Edge browser-сценарий удалил проекты из карточек и списка и подтвердил отсутствие записей через API.
 - PHP syntax: **67 изменённых/новых файлов — passed**. Node syntax: **20 изменённых/новых JS/MJS — passed**.
 - Blade `view:cache` и Laravel `route:cache` — passed; generated caches после проверки очищены.
 - Browser scenarios ранее на этом же итоговом workflow прошли для Desktop workspaces, targeted calendar open, books/PDF, native reviews, Podcast/Live и content enhancements; desktop/mobile screenshots просмотрены.
@@ -47,5 +49,5 @@
 
 ## Последний связанный commit
 
-- Текущий функциональный блок: этот commit — `Complete Media Desktop workflow overhaul`. Branch/upstream: `main` → `origin/main`.
-- Предыдущий функциональный commit: `241f988` — `Fix AI workflow regressions`.
+- Текущий функциональный блок: этот commit — `Fix workspace delete actions`. Branch/upstream: `main` → `origin/main`.
+- Предыдущий функциональный commit: `bcdc5dc` — `Complete Media Desktop workflow overhaul`.
