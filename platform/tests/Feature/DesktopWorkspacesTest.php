@@ -57,6 +57,22 @@ class DesktopWorkspacesTest extends TestCase
         $this->assertSame('queued',Product::findOrFail($book)->metadata['book_pdf_ai']['status']);
         Queue::assertPushed(\App\Jobs\AnalyzeBookPdf::class);
     }
+    public function test_catalog_entries_can_be_deleted_without_deleting_related_files_or_materials(): void
+    {
+        $project=$this->postJson('/desktop/projects',['title'=>'Löschen','status'=>'idea'])->assertOk()->json('project_id');
+        $task=Task::create(['project_id'=>$project,'title'=>'Aufgabe','status'=>'open','priority'=>'normal']);
+        $record=$this->record(['project_id'=>$project]);
+        $this->deleteJson('/desktop/projects/'.$project,['confirmation'=>'DELETE'])->assertOk();
+        $this->assertDatabaseMissing('projects',['id'=>$project]);$this->assertNull($task->fresh()->project_id);$this->assertNull($record->fresh()->project_id);
+
+        $term=$this->postJson('/desktop/taxonomy',['name'=>'Löschen','kind'=>'topic','active'=>true])->assertOk()->json('id');
+        app(Taxonomy::class)->sync($record->fresh(),[$term]);
+        $this->deleteJson('/desktop/taxonomy/'.$term,['confirmation'=>'DELETE'])->assertOk();
+        $this->assertDatabaseMissing('taxonomy_terms',['id'=>$term]);$this->assertSame([], $record->fresh()->metadata['taxonomy_term_ids'] ?? []);$this->assertDatabaseCount('taxonomy_assignments',0);
+
+        $book=$this->product();$this->deleteJson('/desktop/books/'.$book->id,['confirmation'=>'DELETE'])->assertOk();
+        $this->assertDatabaseMissing('products',['id'=>$book->id]);
+    }
     public function test_taxonomy_rename_deactivation_and_cycles(): void
     {
         $id=$this->postJson('/desktop/taxonomy',['name'=>'Glaube','kind'=>'topic','active'=>true])->assertOk()->json('id');$record=$this->record(['metadata'=>['tags'=>['manual']]]);app(Taxonomy::class)->sync($record,[$id]);

@@ -26,6 +26,28 @@ class TaxonomyController extends Controller
     public function store(Request $request) { return $this->save($request, new TaxonomyTerm); }
     public function update(Request $request, TaxonomyTerm $term) { return $this->save($request, $term); }
 
+    public function destroy(Request $request, TaxonomyTerm $term, Taxonomy $taxonomy, Audit $audit)
+    {
+        $request->validate(['confirmation'=>'required|in:DELETE']);
+        $links = DB::table('taxonomy_assignments')->where('taxonomy_term_id', $term->id)->get(['subject_type', 'subject_id']);
+        DB::transaction(function () use ($term, $links, $taxonomy, $audit) {
+            $id = (string) $term->id;
+            $term->delete();
+            foreach ($links->groupBy(fn ($link) => $link->subject_type.'|'.$link->subject_id) as $group) {
+                $link = $group->first();
+                $subject = $link->subject_type === 'record'
+                    ? \App\Models\SourceRecord::find($link->subject_id)
+                    : ($link->subject_type === 'product' ? \App\Models\Product::find($link->subject_id) : null);
+                if ($subject) {
+                    $ids = DB::table('taxonomy_assignments')->where('subject_type', $link->subject_type)->where('subject_id', $link->subject_id)->pluck('taxonomy_term_id')->all();
+                    $taxonomy->sync($subject, $ids);
+                }
+            }
+            $audit->record('taxonomy.deleted', $id);
+        });
+        return response()->json(['status'=>'deleted']);
+    }
+
     public function cover(Request $request, TaxonomyTerm $term, MediaLibrary $library)
     {
         Gate::authorize('media.upload');

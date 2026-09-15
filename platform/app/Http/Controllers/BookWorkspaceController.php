@@ -1,9 +1,10 @@
 <?php
 namespace App\Http\Controllers;
 use App\Models\{Product,Media,Sale};
-use App\Services\{BookCatalog,MediaLibrary,StripePayments};
+use App\Services\{Audit,BookCatalog,MediaLibrary,StripePayments};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class BookWorkspaceController extends Controller
@@ -26,6 +27,17 @@ class BookWorkspaceController extends Controller
     }
     public function store(Request $request,BookCatalog $catalog){return response()->json($catalog->save($request->validate(BookCatalog::rules())),201);}
     public function update(Request $request,Product $product,BookCatalog $catalog){return $catalog->save($request->validate(BookCatalog::rules()),$product);}
+    public function destroy(Request $request, Product $product, Audit $audit)
+    {
+        $request->validate(['confirmation'=>'required|in:DELETE']);
+        DB::transaction(function () use ($product) {
+            DB::table('taxonomy_assignments')->where('subject_type', Product::class)->where('subject_id', (string) $product->id)->delete();
+            DB::table('media_usages')->where('subject_type', Product::class)->where('subject_id', (string) $product->id)->delete();
+            $product->delete();
+        });
+        $audit->record('shop.product_deleted', (string) $product->id);
+        return response()->json(['status'=>'deleted']);
+    }
     public function intake(Request $request, BookCatalog $catalog)
     {
         Gate::authorize('media.upload');

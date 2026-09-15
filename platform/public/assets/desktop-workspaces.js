@@ -71,6 +71,22 @@
       for (const spec of config.fields || []) { const [name, type = 'text', options = [], defaultValue] = spec; const value = row[name] ?? row.metadata?.[name] ?? defaultValue ?? ''; const f = field(name, type, value, options); form.append(f); const input = f.querySelector('input,textarea,select'); if (['title','name','subject','question'].includes(name)) input.required = true; if (type === 'number') { input.min = 0; input.step = 1; } if (config.lookups?.[name]) try { await lookup(f, config.lookups[name], value, !!config.multiple?.includes(name)); } catch (error) { f.append(el('small', error.message)); } }
       if (config.readonly?.(row)) for (const input of form.elements) input.disabled = true;
       const save = el('button', t(config.submitLabel || 'save'), 'desktop-button is-primary'); save.type = 'submit'; form.append(save); if (config.readonly?.(row)) save.hidden = true;
+      const canDelete = config.delete || ['projects', 'topics', 'books-pdf'].includes(root.dataset.workspace);
+      if (canDelete && row.id && !config.readonly?.(row)) {
+        const remove = el('button', t('delete'), 'desktop-button is-danger'); remove.type = 'button';
+        remove.addEventListener('click', () => run(root, async () => {
+          if (!window.confirm(t('delete_confirm'))) return;
+          remove.disabled = true;
+          try {
+            await request(config.url + '/' + row.id, {confirmation:'DELETE'}, config.deleteMethod || 'DELETE');
+            delete form.dataset.dirty;
+            feedback(root, t('deleted'));
+            document.dispatchEvent(new Event('desktop-media-changed'));
+            if (editorMode) root.closest('.os-window')?.querySelector('[data-window-action="close"]')?.click(); else await load(1);
+          } finally { remove.disabled = false; }
+        }));
+        form.append(remove);
+      }
       form.addEventListener('submit', event => { event.preventDefault(); run(root, async () => { save.disabled = true; try { let data = formData(form); if (config.transform) data = config.transform(data); const result = await request(config.url + (row.id ? '/' + row.id : ''), data, row.id ? (config.updateMethod || 'PATCH') : 'POST'); delete form.dataset.dirty; feedback(root, t('saved')); document.dispatchEvent(new Event('desktop-media-changed')); if (!editorMode) await load(page); const id = result.id || result.project_id || result.task_id; if (editorMode && id) await edit({id}); } finally { save.disabled = false; } }); });
       if (generation !== editGeneration || !root.isConnected) return;
       root._workspaceEdit = edit;

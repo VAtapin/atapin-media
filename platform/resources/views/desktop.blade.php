@@ -45,7 +45,7 @@ $wallpaperUrl ??= ($desktopAppearance['wallpaper'] === 'custom' && $desktopAppea
     <link rel="stylesheet" href="/assets/desktop-workspaces.css?v=6">
     <link rel="stylesheet" href="/assets/desktop-overview.css?v=2">
     <script>window.desktopWorkspaceLabels=@json(__('workspaces'));</script>
-    <script src="/assets/desktop-workspaces.js?v=4" defer></script>
+    <script src="/assets/desktop-workspaces.js?v=5" defer></script>
     <script src="/assets/public-pwa.js?v=1" defer></script>
     <script src="/assets/desktop-workspace-content.js?v=4" defer></script>
     <script src="/assets/desktop-catalogs.js?v=1" defer></script>

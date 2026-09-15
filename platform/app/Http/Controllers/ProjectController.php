@@ -1,7 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 use App\Models\Project;
-use App\Services\Workflow;
+use App\Services\{Audit,Workflow};
 use App\Services\MediaLibrary;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -50,6 +50,15 @@ class ProjectController extends Controller
         $workflow->saveProject($this->data($request), $project);
         if ($request->expectsJson()) return response()->json(['status'=>'saved','project_id'=>$project->id]);
         return back()->with('status', __('ui.saved'));
+    }
+
+    public function destroy(Request $request, Project $project, Audit $audit)
+    {
+        $request->validate(['confirmation'=>'required|in:DELETE']);
+        $id = (string) $project->id;
+        $project->delete();
+        $audit->record('project.deleted', $id);
+        return response()->json(['status'=>'deleted']);
     }
 
     public function cover(Request $request, Project $project, MediaLibrary $library)
