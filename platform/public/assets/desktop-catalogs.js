@@ -3,6 +3,7 @@
   if (!W) return;
   const {t, el, button, request, run, field, lookup, formData, crud} = W;
   const tags = data => ({...data, tags:(data.tags || '').split(',').map(value => value.trim()).filter(Boolean)});
+  const bookData = data => { const result = tags(data); const amount = Number(String(result.price ?? '').replace(',', '.')); result.price_cents = Number.isFinite(amount) ? Math.max(0, Math.round(amount * 100)) : 0; delete result.price; return result; };
   const linked = (editor, title, items, app) => {
     const section = el('section', undefined, 'workspace-asset-panel');
     section.append(el('h3', title));
@@ -53,8 +54,22 @@
     }
     const panel = el('section', undefined, 'workspace-asset-panel');
     panel.append(el('h3', t('book_files')));
-    if (state) panel.append(el('p', `${t('book_ai_status')}: ${t('states.' + state) || state}`, 'workspace-muted'));
+    if (state) {
+      panel.append(el('p', `${t('book_ai_status')}: ${t('states.' + state) || state}`, 'workspace-muted'));
+      const hintKey = {queued:'book_ai_queued', processing:'book_ai_processing', completed:'book_ai_completed', partial:'book_ai_partial', failed:'book_ai_failed'}[state] || 'book_ai_status_hint';
+      panel.append(el('p', t(hintKey), 'workspace-muted'));
+      if (row.metadata?.book_pdf_ai?.source_text_chars) panel.append(el('p', `${t('book_ai_source_chars')}: ${row.metadata.book_pdf_ai.source_text_chars}`, 'workspace-muted'));
+      if (['failed','partial'].includes(state) && row.id) {
+        const retry = button('book_analyze_retry', () => run(host, async () => {
+          retry.disabled = true;
+          try { await request(`/desktop/books/${row.id}/analyze`, undefined, 'POST'); if (host._workspaceEdit) await host._workspaceEdit({id:row.id}); else await load(); }
+          finally { retry.disabled = false; }
+        }));
+        panel.append(retry);
+      }
+    }
     if (row.metadata?.book_pdf_ai?.error) panel.append(el('p', `${t('book_ai_error')}: ${row.metadata.book_pdf_ai.error}`, 'workspace-feedback is-error'));
+    editor.prepend(panel);
     if (!row.id) return;
     const assets = row.assets || [];
     for (const asset of assets) {
@@ -69,7 +84,6 @@
     const file = field('file', 'file'); file.querySelector('input').accept = '.pdf,image/jpeg,image/png,image/webp,image/gif';
     const submit = el('button', t('upload'), 'desktop-button'); submit.type = 'submit'; form.append(slot, file, submit); panel.append(form);
     form.addEventListener('submit', event => { event.preventDefault(); run(host, async () => { submit.disabled = true; try { const data = new FormData(form); if (!file.querySelector('input').files.length) throw new Error(t('book_pdf_required')); await request(`/desktop/books/${row.id}/assets`, data, 'POST'); if (host._workspaceEdit) await host._workspaceEdit({id:row.id}); else await load(); } finally { submit.disabled = false; } }); });
-    editor.append(panel);
   };
   const projectConfig = {
     url:'/desktop/projects', detail:async row => { const data = await request('/desktop/projects/' + row.id); return {...data.project, tasks:data.tasks, records:data.records, products:data.products}; }, updateMethod:'PUT', statuses:['idea','script','production','review','published'],
@@ -83,9 +97,9 @@
   };
   const bookConfig = {
     url:'/desktop/books', newLabel:'new_book', statuses:['draft','active','archived'],
-    fields:[['title'],['subtitle'],['description','textarea'],['author'],['contents','textarea'],['edition_text','textarea'],['isbn'],['language','select',['de','en'],'de'],['page_count','number'],['publication_date','date'],['tags'],['seo_title'],['seo_description','textarea'],['price_cents','number',[],0],['currency','select',['EUR','USD','CHF','GBP'],'EUR'],['status','select',['draft','active','archived'],'draft'],['project_id','select'],['taxonomy_term_ids','select'],['external_shop_url','url']],
-    lookups:{project_id:'projects',taxonomy_term_ids:'terms'}, multiple:['taxonomy_term_ids'], transform:tags,
-    detail:async row => { const data = await request('/desktop/books/' + row.id); return {...data.product, assets:data.assets}; }, extra:bookExtra,
+    fields:[['title'],['subtitle'],['description','textarea'],['author'],['contents','textarea'],['edition_text','textarea'],['isbn'],['language','select',['de','en'],'de'],['page_count','number'],['publication_date','date'],['tags'],['seo_title'],['seo_description','textarea'],['price','number',[],0],['currency','select',['EUR','USD','CHF','GBP'],'EUR'],['status','select',['draft','active','archived'],'draft'],['project_id','select'],['taxonomy_term_ids','select'],['external_shop_url','url']],
+    lookups:{project_id:'projects',taxonomy_term_ids:'terms'}, multiple:['taxonomy_term_ids'], transform:bookData,
+    detail:async row => { const data = await request('/desktop/books/' + row.id); return {...data.product, price:data.product.price_cents === null || data.product.price_cents === undefined ? '' : (Number(data.product.price_cents) / 100).toFixed(2), assets:data.assets}; }, extra:bookExtra,
     intake:async (editor, row, root, load, edit) => {
       const section = el('section', undefined, 'workspace-pdf-intake'); section.append(el('h2', t('new_book')),
         el('p', t('book_upload_ai_hint'), 'workspace-muted'));

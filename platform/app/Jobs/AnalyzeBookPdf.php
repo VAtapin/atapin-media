@@ -24,7 +24,12 @@ class AnalyzeBookPdf implements ShouldQueue
         $this->state($product, 'processing');
         try {
             $text = $analyzer->extract(Media::findOrFail($this->mediaId));
-            $result = [...$analyzer->analyze($text), '_source_text_chars'=>strlen($text)];
+            try {
+                $result = [...$analyzer->analyze($text), '_source_text_chars'=>mb_strlen($text)];
+            } catch (\Throwable $error) {
+                $this->saveExtractedText($product, $text, $error);
+                return;
+            }
             DB::transaction(function () use ($catalog, $result) {
                 $product = Product::lockForUpdate()->findOrFail($this->productId);
                 $metadata = $product->metadata ?? [];
@@ -77,5 +82,20 @@ class AnalyzeBookPdf implements ShouldQueue
         $metadata['book_pdf_ai'] = $ai;
 
         $product->updateQuietly(['metadata' => $metadata]);
+    }
+
+    private function saveExtractedText(Product $product, string $text, \Throwable $error): void
+    {
+        $metadata = $product->metadata ?? [];
+        $metadata['book_pdf_ai'] = [
+            ...($metadata['book_pdf_ai'] ?? []),
+            'status' => 'partial',
+            'source_text_chars' => mb_strlen($text),
+            'error' => mb_substr(trim($error->getMessage()), 0, 500),
+            'updated_at' => now()->toIso8601String(),
+        ];
+        $data = ['metadata' => $metadata];
+        if (trim((string) $product->contents) === '') $data['contents'] = mb_substr($text, 0, 20000);
+        $product->updateQuietly($data);
     }
 }

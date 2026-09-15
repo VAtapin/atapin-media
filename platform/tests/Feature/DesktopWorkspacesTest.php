@@ -63,6 +63,19 @@ class DesktopWorkspacesTest extends TestCase
         (new \App\Jobs\AnalyzeBookPdf($product->id,$media->id,$this->owner->id))->handle($analyzer,app(\App\Services\BookCatalog::class));
         $this->assertNotNull(Media::find($media->id));$this->assertSame('failed',$product->fresh()->metadata['book_pdf_ai']['status']);$this->assertSame('PDF contains no selectable text.',$product->fresh()->metadata['book_pdf_ai']['error']);
     }
+    public function test_pdf_analysis_keeps_extracted_text_when_ai_fails(): void
+    {
+        $product=$this->product(['contents'=>null,'metadata'=>['book_pdf_ai'=>['status'=>'queued']]]);$media=$this->pdf();$analyzer=\Mockery::mock(\App\Services\BookPdfAnalyzer::class);$analyzer->shouldReceive('extract')->once()->andReturn('Aus dem PDF erkannter Text.');$analyzer->shouldReceive('analyze')->once()->andThrow(new \RuntimeException('AI is not configured.'));
+        (new \App\Jobs\AnalyzeBookPdf($product->id,$media->id,$this->owner->id))->handle($analyzer,app(\App\Services\BookCatalog::class));
+        $fresh=$product->fresh();$this->assertSame('partial',$fresh->metadata['book_pdf_ai']['status']);$this->assertSame('AI is not configured.',$fresh->metadata['book_pdf_ai']['error']);$this->assertSame('Aus dem PDF erkannter Text.',$fresh->contents);
+    }
+    public function test_failed_pdf_analysis_can_be_queued_again(): void
+    {
+        $book=$this->post('/desktop/books/intake',['file'=>UploadedFile::fake()->create('retry.pdf',10,'application/pdf')],['Accept'=>'application/json'])->assertAccepted()->json('id');
+        Product::findOrFail($book)->update(['metadata'=>['book_pdf_ai'=>['status'=>'failed','error'=>'previous failure']]]);
+        $this->postJson('/desktop/books/'.$book.'/analyze')->assertAccepted()->assertJson(['status'=>'queued','id'=>$book]);
+        $this->assertSame('queued',Product::findOrFail($book)->metadata['book_pdf_ai']['status']);Queue::assertPushed(\App\Jobs\AnalyzeBookPdf::class,2);
+    }
     public function test_catalog_entries_can_be_deleted_without_deleting_related_files_or_materials(): void
     {
         $project=$this->postJson('/desktop/projects',['title'=>'Löschen','status'=>'idea'])->assertOk()->json('project_id');

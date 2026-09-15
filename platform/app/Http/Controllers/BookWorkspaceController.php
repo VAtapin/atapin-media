@@ -30,13 +30,15 @@ class BookWorkspaceController extends Controller
     public function destroy(Request $request, Product $product, Audit $audit)
     {
         $request->validate(['confirmation'=>'required|in:DELETE']);
+        $productId = $product->id;
         DB::transaction(function () use ($product) {
             DB::table('taxonomy_assignments')->where('subject_type', Product::class)->where('subject_id', (string) $product->id)->delete();
             DB::table('media_usages')->where('subject_type', Product::class)->where('subject_id', (string) $product->id)->delete();
+            DB::table('book_reviews')->where('product_id', $product->id)->delete();
             $product->delete();
         });
-        $audit->record('shop.product_deleted', (string) $product->id);
-        return response()->json(['status'=>'deleted']);
+        $audit->record('shop.product_deleted', (string) $productId);
+        return response()->json(['status'=>'deleted','id'=>$productId]);
     }
     public function intake(Request $request, BookCatalog $catalog)
     {
@@ -49,6 +51,21 @@ class BookWorkspaceController extends Controller
         $catalog->attach($product, $media, 'full');
         \App\Jobs\AnalyzeBookPdf::dispatch($product->id, $media->id, $request->user()->id)->afterCommit();
         return response()->json(['status'=>'queued','id'=>$product->id,'media_id'=>$media->id], 202);
+    }
+    public function analyze(Request $request, Product $product)
+    {
+        $state = $product->metadata['book_pdf_ai']['status'] ?? null;
+        abort_if(in_array($state, ['queued','processing'], true), 409, __('workspaces.book_ai_running'));
+        $media = Media::where('mime','application/pdf')->whereNull('archived_at')
+            ->whereHas('usages', fn($q) => $q->where('subject_type', Product::class)->where('subject_id', (string) $product->id)->whereIn('used_as', ['full','public_download','paid_download']))
+            ->latest('media.created_at')->first();
+        abort_unless($media, 422, __('workspaces.book_pdf_missing'));
+        $metadata = $product->metadata ?? [];
+        $metadata['book_pdf_ai'] = [...($metadata['book_pdf_ai'] ?? []), 'status'=>'queued', 'seed_title'=>(string) ($metadata['book_pdf_ai']['seed_title'] ?? $product->title), 'queued_at'=>now()->toIso8601String()];
+        unset($metadata['book_pdf_ai']['error']);
+        $product->updateQuietly(['metadata'=>$metadata]);
+        \App\Jobs\AnalyzeBookPdf::dispatch($product->id, $media->id, $request->user()->id)->afterCommit();
+        return response()->json(['status'=>'queued','id'=>$product->id], 202);
     }
     public function asset(Request $request,Product $product,BookCatalog $catalog)
     {
