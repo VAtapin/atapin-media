@@ -1,7 +1,7 @@
 const W=window.DesktopWorkspaces;
 const endpoint='/desktop/live-studio';
 const studios=new WeakMap();
-const css=document.createElement('link');css.rel='stylesheet';css.href='/assets/desktop-browser-studio.css?v=2';document.head.append(css);
+const css=document.createElement('link');css.rel='stylesheet';css.href='/assets/desktop-browser-studio.css?v=3';document.head.append(css);
 const request=async(url,options={})=>{
   const response=await fetch(url,{credentials:'same-origin',headers:{Accept:'application/json','Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content},...options});
   const data=response.status===204?{}:await response.json().catch(()=>({}));
@@ -16,17 +16,18 @@ export async function initialize(root,event){
   let disposed=false,labels={},pc=null,session=null,context=null,mic=null,camera=null,screen=null,canvasStream=null,audioDestination=null;
   let micGain=null,screenGain=null,recorder=null,recording=false,pcm=[],pcmBytes=0,wav=null,drawTimer=null,beatTimer=null,preparing=false,uploadedMediaId=null,statsTimer=null;
   let scene='camera',pip=false,imageIndex=0,images=[],imageUrls=[],sources=[],observer=null,operation=0;
-  let previewWindow=null,previewWindowStream=null;
-  const closePreviewWindow=()=>{previewWindowStream?.getTracks().forEach(track=>track.stop());previewWindowStream=null;if(previewWindow&&!previewWindow.closed)previewWindow.close();previewWindow=null;};
+  let previewWindow=null,previewWindowStream=null,previewPanel=null,previewLayout=null,previewButton=null;
   const t=key=>labels[key]||key;
+  const detachPreview=detached=>{if(previewPanel)previewPanel.hidden=detached;previewLayout?.classList.toggle('is-detached',detached);if(previewButton)previewButton.textContent=t(detached?'show_preview':'open_preview');};
+  const closePreviewWindow=()=>{previewWindowStream?.getTracks().forEach(track=>track.stop());previewWindowStream=null;if(previewWindow&&!previewWindow.closed)previewWindow.close();previewWindow=null;detachPreview(false);};
   const status=W.el('p');status.setAttribute('role','status');
   const video=()=>{const node=document.createElement('video');node.muted=true;node.playsInline=true;node.autoplay=true;return node;};
   const cameraVideo=video(),screenVideo=video();
   const canvas=document.createElement('canvas');canvas.width=1280;canvas.height=720;canvas.dataset.studioCanvas='';
   const ctx=canvas.getContext('2d');
-  const controls=W.el('div',undefined,'desktop-browser-controls');
+  const controls=W.el('div',undefined,'desktop-browser-controls'),leftControls=W.el('div',undefined,'desktop-browser-control-column'),rightControls=W.el('div',undefined,'desktop-browser-control-column');controls.append(leftControls,rightControls);
   let fieldGroup=controls;
-  const group=(key,name)=>{const section=W.el('fieldset',undefined,'desktop-browser-group '+name);section.append(W.el('legend',t(key)));controls.append(section);return section;};
+  const group=(key,name,column)=>{const section=W.el('fieldset',undefined,'desktop-browser-group '+name);section.append(W.el('legend',t(key)));column.append(section);return section;};
   const actionRow=(section,...buttons)=>{const row=W.el('div',undefined,'desktop-browser-actions');row.append(...buttons);section.append(row);return row;};
   const action=(key,fn)=>{const b=W.el('button',t(key),'desktop-button');b.type='button';b.dataset.studioAction=key;
     b.onclick=async()=>{b.disabled=true;try{await fn();}catch(error){status.textContent=error.message||t('error');}finally{if(!disposed)b.disabled=false;}};return b;};
@@ -48,34 +49,39 @@ export async function initialize(root,event){
     const mode=value=>{root.dataset.studioMode=value;panel.hidden=value!=='browser';grid.hidden=value==='browser';if(value==='browser')for(const frame of root.querySelectorAll('[data-live-console] iframe')){frame.removeAttribute('src');frame.hidden=true;}else closePreviewWindow();for(const button of tabs.children)button.setAttribute('aria-pressed',String(button.dataset.mode===value));};
     for(const [value,label]of [['obs',t('obs_mode')],['browser',t('browser_mode')]]){const button=W.el('button',label,'desktop-button');button.type='button';button.dataset.mode=value;button.onclick=()=>mode(value);tabs.append(button);}mode(root.dataset.studioMode||'obs');
     const telemetry=W.el('p');telemetry.dataset.studioTelemetry='';
-    const layout=W.el('div',undefined,'desktop-browser-layout'),preview=W.el('aside',undefined,'desktop-browser-preview'),previewHead=W.el('div',undefined,'desktop-browser-preview-head');
+    const layout=W.el('div',undefined,'desktop-browser-layout'),preview=W.el('aside',undefined,'desktop-browser-preview'),previewHead=W.el('div',undefined,'desktop-browser-preview-head');previewPanel=preview;previewLayout=layout;
     const openPreview=action('open_preview',()=>{
       if(previewWindow&&!previewWindow.closed){previewWindow.focus();return;}
       const popup=window.open('','_blank','popup,width=720,height=470,resizable=yes');
       if(!popup)throw new Error(t('popup_blocked'));
-      previewWindow=popup;popup.document.title=t('preview')+' · '+event.title;popup.document.documentElement.lang=document.documentElement.lang||'de';
-      const viewport=popup.document.createElement('meta');viewport.name='viewport';viewport.content='width=device-width,initial-scale=1';
-      const style=popup.document.createElement('style');style.textContent='*{box-sizing:border-box}body{margin:0;padding:16px;background:#102238;color:#fff;font:14px Inter,Arial,sans-serif}header{margin-bottom:12px;overflow-wrap:anywhere}video{display:block;width:100%;aspect-ratio:16/9;object-fit:contain;background:#071526;border-radius:10px}';
-      popup.document.head.append(viewport,style);
-      const heading=popup.document.createElement('header'),video=popup.document.createElement('video');heading.textContent=event.title;video.muted=true;video.playsInline=true;video.autoplay=true;
-      popup.document.body.replaceChildren(heading,video);
-      previewWindowStream=canvas.captureStream(30);video.srcObject=previewWindowStream;video.play().catch(()=>{});
-      popup.addEventListener('beforeunload',()=>{previewWindowStream?.getTracks().forEach(track=>track.stop());previewWindowStream=null;previewWindow=null;},{once:true});
+      previewWindow=popup;
+      try{
+        popup.document.title=t('preview')+' · '+event.title;popup.document.documentElement.lang=document.documentElement.lang||'de';
+        const viewport=popup.document.createElement('meta');viewport.name='viewport';viewport.content='width=device-width,initial-scale=1';
+        const style=popup.document.createElement('style');style.textContent='*{box-sizing:border-box}body{margin:0;padding:16px;background:#102238;color:#fff;font:14px Inter,Arial,sans-serif}header{margin-bottom:12px;overflow-wrap:anywhere}video{display:block;width:100%;aspect-ratio:16/9;object-fit:contain;background:#071526;border-radius:10px}';
+        popup.document.head.append(viewport,style);
+        const heading=popup.document.createElement('header'),video=popup.document.createElement('video');heading.textContent=event.title;video.muted=true;video.playsInline=true;video.autoplay=true;
+        popup.document.body.replaceChildren(heading,video);
+        previewWindowStream=canvas.captureStream(30);video.srcObject=previewWindowStream;video.play().catch(()=>{});
+        popup.addEventListener('beforeunload',()=>{previewWindowStream?.getTracks().forEach(track=>track.stop());previewWindowStream=null;previewWindow=null;detachPreview(false);},{once:true});
+        detachPreview(true);
+      }catch(error){closePreviewWindow();throw error;}
     });
-    previewHead.append(W.el('strong',t('preview')),openPreview);preview.append(previewHead,canvas);layout.append(preview,controls);
-    panel.append(W.el('h3',t('title')+' · '+event.title),W.el('p',t('intro')),layout);
-    const devices=group('devices','is-devices');fieldGroup=devices;
+    previewButton=openPreview;previewHead.append(W.el('strong',t('preview')));preview.append(previewHead,canvas);layout.append(preview,controls);
+    const heading=W.el('div',undefined,'desktop-browser-heading');heading.append(W.el('h3',t('title')+' · '+event.title),openPreview);
+    panel.append(heading,W.el('p',t('intro')),layout);
+    const devices=group('devices','is-devices',leftControls);fieldGroup=devices;
     const cameraChoice=select('camera'),micChoice=select('microphone');cameraChoice.append(new Option(t('none'),'none'));micChoice.append(new Option(t('microphone'),''));
     const micVolume=input('mic_volume','range');micVolume.min=0;micVolume.max=1;micVolume.step=.01;micVolume.value=.8;micVolume.oninput=()=>{if(micGain)micGain.gain.value=Number(micVolume.value);};
     const meter=document.createElement('meter');meter.min=0;meter.max=1;meter.setAttribute('aria-label',t('microphone'));const meterLabel=W.el('label',t('audio_level'));meterLabel.append(meter);devices.append(meterLabel);
-    const visuals=group('visuals','is-visuals');fieldGroup=visuals;
+    const visuals=group('visuals','is-visuals',rightControls);fieldGroup=visuals;
     const scenes=select('scene');for(const key of ['camera','screen','image'])scenes.append(new Option(t(key+'_scene'),key));scenes.onchange=()=>{scene=scenes.value;};
     const pictureInPicture=input('pip','checkbox');pictureInPicture.onchange=()=>pip=pictureInPicture.checked;
     const overlay=input('overlay');overlay.maxLength=100;
     const sharedVolume=input('screen_volume','range');sharedVolume.min=0;sharedVolume.max=1;sharedVolume.step=.01;sharedVolume.value=.5;sharedVolume.oninput=()=>{if(screenGain)screenGain.gain.value=Number(sharedVolume.value);};
     const imageInput=input('image','file');imageInput.accept='image/png,image/jpeg,image/webp';imageInput.multiple=true;
     const imageChoice=select('active_image');imageChoice.onchange=()=>{imageIndex=Number(imageChoice.value);scene='image';scenes.value=scene;};
-    const audio=group('audio_group','is-audio'),broadcast=group('broadcast','is-broadcast');
+    const audio=group('audio_group','is-audio',leftControls),broadcast=group('broadcast','is-broadcast',controls);
     imageInput.onchange=async()=>{
       try{
         const files=[...imageInput.files];if(files.length>20||files.some(f=>f.size>20*1024*1024||!['image/png','image/jpeg','image/webp'].includes(f.type)))throw new Error(t('error'));
@@ -89,6 +95,7 @@ export async function initialize(root,event){
     };
     drawTimer=setInterval(()=>{
       if(disposed)return;ctx.fillStyle='#102238';ctx.fillRect(0,0,1280,720);
+      if(previewWindow?.closed)closePreviewWindow();
       if(scene==='screen')fit(screenVideo);else if(scene==='image'&&images[imageIndex])fit(images[imageIndex].image);else if(scene==='camera')fit(cameraVideo);
       if(pip&&scene!=='camera'&&cameraVideo.videoWidth){ctx.fillStyle='#102238';ctx.fillRect(966,522,294,178);fit(cameraVideo,974,530,278,162);}
       if(overlay.value){ctx.fillStyle='rgba(16,34,56,.8)';ctx.fillRect(0,650,1280,70);ctx.font='32px sans-serif';ctx.fillStyle='#fff';ctx.fillText(overlay.value,24,697,1232);}
@@ -155,7 +162,7 @@ export async function initialize(root,event){
         let previous=null;statsTimer=setInterval(async()=>{const current=pc;if(!current)return;try{const reports=await current.getStats();if(pc!==current)return;for(const report of reports.values())if(report.type==='outbound-rtp'&&report.kind==='video'&&!report.isRemote){let rate='—';if(previous&&report.timestamp>previous.timestamp)rate=Math.round((report.bytesSent-previous.bytesSent)*8/(report.timestamp-previous.timestamp))+' kbit/s';telemetry.textContent=t('telemetry')+' · '+t('bitrate')+': '+rate+' · '+t('frames')+': '+(report.framesEncoded??'—');previous=report;}}catch{/* Statistics are optional, never made-up. */}},1000);
       }catch(error){await stop().catch(()=>{});throw error;}
     }),action('stop',stop));broadcast.append(status,telemetry);
-    const settings=W.el('details');settings.append(W.el('summary',t('server')),W.el('p',t(server.available?'available':'unavailable')));if(!server.available)settings.append(W.el('p',t('unavailable_hint')));settings.append(W.el('p',t('setup_hint')),W.el('p',t('network_hint')));panel.append(settings);
+    const settings=W.el('details');settings.append(W.el('summary',t('server')),W.el('p',t(server.available?'available':'unavailable')));if(!server.available)settings.append(W.el('p',t('unavailable_hint')));if(!server.browser_enabled)settings.append(W.el('p',t('enable_hint')));settings.append(W.el('p',t('setup_hint')),W.el('p',t('network_hint')));panel.append(settings);
     if(server.can_configure){const form=W.el('form'),host=document.createElement('input'),enable=document.createElement('input');host.value=server.host||location.hostname;host.required=true;host.name='live_browser_host';enable.type='checkbox';enable.checked=server.browser_enabled;enable.name='live_browser_enabled';const h=W.el('label',t('host')),e=W.el('label',t('enable')),hint=W.el('small',t('host_hint'));h.append(host,hint);e.append(enable);const apply=W.el('button',t('apply'),'desktop-button');apply.type='submit';form.append(h,e,apply);form.onsubmit=async ev=>{ev.preventDefault();if(!confirm(t('confirm_config')))return;apply.disabled=true;try{await request(endpoint+'/server',{method:'POST',body:JSON.stringify({confirm:true,live_browser_host:host.value,live_browser_enabled:enable.checked})});await initialize(root,event);}catch(error){status.textContent=error.message;}finally{apply.disabled=false;}};settings.append(form);}
     if(server.can_disconnect)settings.append(action('disconnect',async()=>{if(confirm(t('confirm_disconnect')))await request(endpoint+'/events/'+event.id+'/disconnect',{method:'POST',body:JSON.stringify({confirm:true})});}));
     if(server.session){session=server.session.id;status.textContent=t('restore_session');}
