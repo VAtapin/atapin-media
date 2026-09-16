@@ -61,6 +61,12 @@ try {
           const geometry=await bar.evaluate(node=>({shelf:node.getBoundingClientRect().height,background:node.querySelector('.public-book-shelf-background').getBoundingClientRect().height}));
           assert(geometry.background>geometry.shelf*1.4,'Hanging plants do not extend beyond the shelf');
           await bar.screenshot({path:`tests/artifacts/public-shelf-empty-home-${width}.png`});
+          await visible.first().locator('.public-book-shelf-category-books').evaluate(node=>{const book=document.createElement('a');book.className='public-book-shelf-book';book.href='/beitraege?taxonomy=probe';book.textContent='Probe';node.append(book);});
+          await page.setViewportSize({width:width>1550?1500:width-1,height:width===1672?941:844});
+          await page.waitForFunction(()=>document.querySelector('[data-public-book-shelf]')?.dataset.shelfVariant==='globe');
+          assert.match(await bar.locator('.public-book-shelf-background').evaluate(node=>getComputedStyle(node).backgroundImage),/shelf-globe\.png/,'A sparsely occupied Start shelf uses the globe background');
+          await bar.screenshot({path:`tests/artifacts/public-shelf-home-globe-${width}.png`});
+          await page.setViewportSize({width,height:width===1672?941:844});
         } else {
           if(await hidden.count()>0)assert.equal(await bar.getAttribute('data-shelf-variant'),'blank','Full shelf must not place a plant over books');
           assert.equal(await visible.first().locator('.public-book-shelf-book').count(),2,'Initial category has two dynamic books');
@@ -71,6 +77,12 @@ try {
             assert.match(link,/^\/(videos|beitraege|buecher)\?taxonomy=/,'Topic books must use existing section-specific routes');
           }
           const book=visible.locator('.public-book-shelf-book').first();
+          const labelPlacement=await visible.evaluateAll(groups=>groups.filter(group=>group.querySelector('.public-book-shelf-book')).map(group=>{
+            const books=[...group.querySelectorAll('.public-book-shelf-book')].map(book=>book.getBoundingClientRect().bottom);
+            const label=group.querySelector('.public-book-shelf-category-name').getBoundingClientRect();
+            return {bookBottom:Math.max(...books),labelTop:label.top};
+          }));
+          assert(labelPlacement.every(item=>item.labelTop>=item.bookBottom+2),`Category labels overlap book spines: ${JSON.stringify(labelPlacement)}`);
           const floor=await bar.evaluate(element=>{
             const shelf=element.getBoundingClientRect();
             const book=element.querySelector('.public-book-shelf-book').getBoundingClientRect();

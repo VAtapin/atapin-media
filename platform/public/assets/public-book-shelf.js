@@ -57,7 +57,8 @@
     const roomForObject = !state.overflow && state.free >= Math.max(110, shelf.clientWidth * .2);
     let variant = 'blank';
     if (state.empty) variant = context === 'home' ? 'empty-home' : 'empty-cabinet';
-    else if (roomForObject && (context === 'home' || context === 'overview' || context === 'cabinet-detail' || index === 0)) variant = 'plant';
+    else if (roomForObject && context === 'home') variant = 'globe';
+    else if (roomForObject && (context === 'overview' || context === 'cabinet-detail' || index === 0)) variant = 'plant';
     else if (roomForObject && context === 'cabinet' && index === 2) variant = 'globe';
     shelf.dataset.shelfVariant = variant;
   }

@@ -1,9 +1,9 @@
 @extends('public.layout', ['title'=>$selectedShelf['name'] ?? __('public.category_directory_title')])
 @push('publicStyles')
-<link rel="stylesheet" href="/assets/public-book-shelf.css?v=5">
+<link rel="stylesheet" href="/assets/public-book-shelf.css?v=6">
 <link rel="stylesheet" href="/assets/public-category-directory.css?v=1">
 @endpush
-@push('publicScripts')<script src="/assets/public-book-shelf.js?v=4" defer></script>@endpush
+@push('publicScripts')<script src="/assets/public-book-shelf.js?v=5" defer></script>@endpush
 
 @section('content')
 @php
