@@ -16,11 +16,20 @@ const assets = new Map([
   ['/assets/desktop-browser-studio.css', 'public/assets/desktop-browser-studio.css'],
   ['/assets/desktop-browser-studio.js', 'public/assets/desktop-browser-studio.js'],
 ]);
-const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="layout-test"><link rel="stylesheet" href="/assets/desktop-app.css"><link rel="stylesheet" href="/assets/desktop-live-studio.css"><link rel="stylesheet" href="/assets/desktop-publishing.css"><style>html,body{margin:0;height:100%;background:#edf3f8}.os-window{height:100%}.os-titlebar{box-sizing:border-box;height:44px;padding:12px;background:#102f52;color:white;font:600 14px Inter,Arial,sans-serif}.desktop-live-studio{box-sizing:border-box;height:calc(100% - 44px)}</style></head><body><div class="os-window"><div class="os-titlebar">Live Studio</div><section class="desktop-live-studio" data-live-studio><div class="desktop-live-studio-grid"></div></section></div><script>window.DesktopWorkspaces={el:(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;}};import('/assets/desktop-browser-studio.js?v=4').then(module=>module.initialize(document.querySelector('[data-live-studio]'),{id:'layout-test',title:'Ein neues Zuhause für Manna Vom Himmel'}));</script></body></html>`;
+const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="layout-test"><link rel="stylesheet" href="/assets/desktop-app.css"><link rel="stylesheet" href="/assets/desktop-live-studio.css"><link rel="stylesheet" href="/assets/desktop-publishing.css"><style>html,body{margin:0;height:100%;background:#edf3f8}.os-window{height:100%}.os-titlebar{box-sizing:border-box;height:44px;padding:12px;background:#102f52;color:white;font:600 14px Inter,Arial,sans-serif}.desktop-live-studio{box-sizing:border-box;height:calc(100% - 44px)}</style></head><body><div class="os-window"><div class="os-titlebar">Live Studio</div><section class="desktop-live-studio" data-live-studio><div class="desktop-live-studio-grid"></div></section></div><script>window.DesktopWorkspaces={el:(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;}};import('/assets/desktop-browser-studio.js?v=5').then(module=>module.initialize(document.querySelector('[data-live-studio]'),{id:'layout-test',title:'Ein neues Zuhause für Manna Vom Himmel'}));</script></body></html>`;
+const configuration = { available: false, browser_enabled: false, host: '' };
+let rejectFirstConfig = true;
 const server = createServer(async (request, response) => {
   const path = new URL(request.url, base).pathname;
   if (path === '/') { response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); response.end(html); return; }
-  if (path === '/desktop/live-studio/server') { response.writeHead(200, { 'Content-Type': 'application/json' }); response.end(JSON.stringify({ available: false, browser_enabled: false, can_configure: true, can_disconnect: false, host: '', labels })); return; }
+  if (path === '/desktop/live-studio/server') {
+    if (request.method === 'POST') {
+      let body = ''; for await (const chunk of request) body += chunk;
+      if (rejectFirstConfig) { rejectFirstConfig = false; response.writeHead(503, { 'Content-Type': 'application/json' }); response.end(JSON.stringify({ message: 'Konfiguration scheiterte beim Schritt „private Konfigurationsdatei schreiben“; vorherige Einstellungen wurden wiederhergestellt.' })); return; }
+      const values = JSON.parse(body); configuration.browser_enabled = values.live_browser_enabled; configuration.host = values.live_browser_host;
+    }
+    response.writeHead(200, { 'Content-Type': 'application/json' }); response.end(JSON.stringify({ ...configuration, can_configure: true, can_disconnect: false, labels })); return;
+  }
   const file = assets.get(path);
   if (file) { response.writeHead(200, { 'Content-Type': path.endsWith('.js') ? 'text/javascript' : 'text/css' }); response.end(await readFile(file)); return; }
   response.writeHead(404); response.end();
@@ -93,8 +102,41 @@ try {
   await page.screenshot({ path: 'tests/artifacts/browser-live-layout-detached-mobile.png' });
   await mobilePopup.close();
   await studio.locator('.desktop-browser-preview').waitFor({ state: 'visible' });
+  await page.setViewportSize({ width: 1672, height: 941 });
+  await studio.locator('summary').click();
+  await studio.locator('[name=live_browser_host]').fill('mannavomhimmel.de');
+  await studio.locator('[name=live_browser_enabled]').check();
+  page.on('dialog', dialog => dialog.accept());
+  const apply = studio.locator('form .desktop-button');
+  await apply.click();
+  const feedback = studio.locator('[data-server-config-feedback]');
+  await page.waitForFunction(() => document.querySelector('[data-server-config-feedback]')?.textContent.includes('Nicht gespeichert:'));
+  assert.match(await feedback.textContent(), /Nicht gespeichert:.*private Konfigurationsdatei schreiben/);
+  assert.equal(await feedback.getAttribute('role'), 'alert');
+  assert(await studio.locator('[name=live_browser_enabled]').isChecked(), 'Failed attempt should preserve the unsaved choice in the form');
+  assert.equal(configuration.browser_enabled, false, 'Server must not persist a failed attempt');
+  await apply.click();
+  const result = studio.locator('[data-server-config-result]');
+  await result.waitFor({ state: 'visible' });
+  assert.match(await result.textContent(), /gespeichert, aber die lokale API antwortet noch nicht/);
+  assert(await studio.locator('[name=live_browser_enabled]').isChecked(), 'Saved browser setting should remain checked');
+  assert.equal(configuration.host, 'mannavomhimmel.de');
+  configuration.available = true;
+  await page.reload();
+  await root.locator('[data-mode=browser]').click();
+  await studio.locator('summary').click();
+  await studio.locator('[name=live_browser_enabled]').waitFor();
+  assert(await studio.locator('[name=live_browser_enabled]').isChecked(), 'Saved browser setting should survive a page reload');
+  assert.equal(await studio.locator('[name=live_browser_host]').inputValue(), 'mannavomhimmel.de');
+  assert.match(await studio.textContent(), /Server-API erreichbar/);
+  await page.evaluate(async () => {
+    const module = await import('/assets/desktop-browser-studio.js?v=5');
+    await module.initialize(document.querySelector('[data-live-studio]'), { id: 'next-live', title: 'Nächster Livestream' });
+  });
+  await studio.locator('summary').click();
+  assert(await studio.locator('[name=live_browser_enabled]').isChecked(), 'Saved server setting should apply to a different livestream');
   assert.deepEqual(errors, []);
-  console.log('Compact Browser Studio groups, preview, pop-out, server hostname hint and mobile layout passed.');
+  console.log('Browser Studio layout, visible configuration failure and persistent server setting passed.');
 } finally {
   if (browser) await browser.close();
   await new Promise(resolve => server.close(resolve));

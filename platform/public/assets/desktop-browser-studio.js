@@ -1,14 +1,14 @@
 const W=window.DesktopWorkspaces;
 const endpoint='/desktop/live-studio';
 const studios=new WeakMap();
-const css=document.createElement('link');css.rel='stylesheet';css.href='/assets/desktop-browser-studio.css?v=3';document.head.append(css);
+const css=document.createElement('link');css.rel='stylesheet';css.href='/assets/desktop-browser-studio.css?v=4';document.head.append(css);
 const request=async(url,options={})=>{
   const response=await fetch(url,{credentials:'same-origin',headers:{Accept:'application/json','Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content},...options});
   const data=response.status===204?{}:await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(data.message||'Live studio request failed');return data;
 };
 export const busy=root=>Boolean(studios.get(root)?.busy());
-export async function initialize(root,event){
+export async function initialize(root,event,configured=false){
   const old=studios.get(root);if(old?.busy())return;old?.dispose();
   if(!event.id)return;
   const panel=W.el('section',undefined,'desktop-browser-studio desktop-publishing-card');panel.dataset.browserStudio='';
@@ -163,7 +163,21 @@ export async function initialize(root,event){
       }catch(error){await stop().catch(()=>{});throw error;}
     }),action('stop',stop));broadcast.append(status,telemetry);
     const settings=W.el('details');settings.append(W.el('summary',t('server')),W.el('p',t(server.available?'available':'unavailable')));if(!server.available)settings.append(W.el('p',t('unavailable_hint')));if(!server.browser_enabled)settings.append(W.el('p',t('enable_hint')));settings.append(W.el('p',t('setup_hint')),W.el('p',t('network_hint')));panel.append(settings);
-    if(server.can_configure){const form=W.el('form'),host=document.createElement('input'),enable=document.createElement('input');host.value=server.host||location.hostname;host.required=true;host.name='live_browser_host';enable.type='checkbox';enable.checked=server.browser_enabled;enable.name='live_browser_enabled';const h=W.el('label',t('host')),e=W.el('label',t('enable')),hint=W.el('small',t('host_hint'));h.append(host,hint);e.append(enable);const apply=W.el('button',t('apply'),'desktop-button');apply.type='submit';form.append(h,e,apply);form.onsubmit=async ev=>{ev.preventDefault();if(!confirm(t('confirm_config')))return;apply.disabled=true;try{await request(endpoint+'/server',{method:'POST',body:JSON.stringify({confirm:true,live_browser_host:host.value,live_browser_enabled:enable.checked})});await initialize(root,event);}catch(error){status.textContent=error.message;}finally{apply.disabled=false;}};settings.append(form);}
+    if(configured){const notice=W.el('p',t(server.available?'config_saved':'config_saved_api_unavailable'),'desktop-browser-config-notice');notice.dataset.serverConfigResult='';notice.dataset.state=server.available?'success':'warning';notice.setAttribute('role','status');settings.append(notice);settings.open=true;}
+    if(server.can_configure){
+      const form=W.el('form'),host=document.createElement('input'),enable=document.createElement('input');host.value=server.host||location.hostname;host.required=true;host.name='live_browser_host';enable.type='checkbox';enable.checked=server.browser_enabled;enable.name='live_browser_enabled';
+      const h=W.el('label',t('host')),e=W.el('label',t('enable')),hint=W.el('small',t('host_hint'));h.append(host,hint);e.append(enable);
+      const apply=W.el('button',t('apply'),'desktop-button'),feedback=W.el('p',undefined,'desktop-browser-config-notice');apply.type='submit';feedback.dataset.serverConfigFeedback='';feedback.setAttribute('aria-live','polite');form.append(h,e,apply,feedback);
+      form.onsubmit=async ev=>{
+        ev.preventDefault();if(!confirm(t('confirm_config')))return;
+        feedback.removeAttribute('role');feedback.dataset.state='pending';feedback.textContent=t('config_applying');apply.disabled=true;apply.textContent=t('config_applying');
+        try{await request(endpoint+'/server',{method:'POST',body:JSON.stringify({confirm:true,live_browser_host:host.value,live_browser_enabled:enable.checked})});await initialize(root,event,true);}
+        catch(error){feedback.dataset.state='error';feedback.setAttribute('role','alert');feedback.textContent=t('config_not_saved')+' '+(error.message||t('error'));feedback.scrollIntoView({block:'nearest'});}
+        finally{if(!disposed){apply.disabled=false;apply.textContent=t('apply');}}
+      };
+      settings.append(form);
+    }
+    if(configured)settings.querySelector('[data-server-config-result]').scrollIntoView({block:'nearest'});
     if(server.can_disconnect)settings.append(action('disconnect',async()=>{if(confirm(t('confirm_disconnect')))await request(endpoint+'/events/'+event.id+'/disconnect',{method:'POST',body:JSON.stringify({confirm:true})});}));
     if(server.session){session=server.session.id;status.textContent=t('restore_session');}
   }catch(error){if(!disposed){panel.append(status);status.textContent=error.message;}}

@@ -60,19 +60,26 @@ class LiveServer
             $previous=['live_browser_enabled'=>$settings->get('live_browser_enabled',false),'live_browser_host'=>$settings->get('live_browser_host','')];
             if(!$settings->hasSecret('live_control'))$settings->updateSecrets(['live_control'=>bin2hex(random_bytes(32))]);
             $candidate=$root.'/mediamtx.candidate.yml';$current=$root.'/mediamtx.yml';
-            $applied=false;$backedUp=false;
+            $applied=false;$backedUp=false;$stage='settings';
             try {
                 $settings->update($values);
+                $stage='configuration';
                 $content=app(PublicBroadcast::class)->configuration();
+                $stage='write';
                 if(file_put_contents($candidate,$content,LOCK_EX)===false)throw new \RuntimeException();
                 chmod($candidate,0600);
+                $stage='validation';
                 $validation=new Process([$binary,'--validate-conf',$candidate]);$validation->setTimeout(10);$validation->disableOutput();$validation->mustRun();
+                $stage='backup';
                 if(is_file($current)){$backedUp=copy($current,$root.'/mediamtx.backup.yml');if(!$backedUp)throw new \RuntimeException();}
                 if(is_file($root.'/mediamtx.backup.yml'))chmod($root.'/mediamtx.backup.yml',0600);
+                $stage='replace';
                 if(!rename($candidate,$current))throw new \RuntimeException();
                 $applied=true;
                 // MediaMTX reloads changed configuration; start is idempotent when already running.
+                $stage='start';
                 $start=new Process(['/bin/bash',base_path('bin/live-server.sh'),'start']);$start->setTimeout(10);$start->disableOutput();$start->mustRun();
+                $stage='audit';
                 app(Audit::class)->record('live.server_configured',null,['browser_enabled'=>$values['live_browser_enabled']]);
             }catch(\Throwable){
                 $settings->update($previous);
@@ -83,7 +90,8 @@ class LiveServer
                     if($restored){chmod($candidate,0600);$restored=rename($candidate,$current);}
                 }
                 if(is_file($candidate))unlink($candidate);
-                abort(503,__($restored?'live-browser.server_configuration_failed':'live-browser.server_rollback_failed'));
+                abort(503,__($restored?'live-browser.server_configuration_failed_stage':'live-browser.server_rollback_failed',
+                    ['step'=>__('live-browser.config_step_'.$stage)]));
             }
         });
     }

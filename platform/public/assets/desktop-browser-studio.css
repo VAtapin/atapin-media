@@ -35,5 +35,10 @@
 .desktop-browser-studio form{display:grid;gap:9px;max-width:560px;margin:10px 0}
 .desktop-browser-studio form small{color:#5d7390;font-size:10px;line-height:1.35}
 .desktop-browser-studio form .desktop-button{justify-self:start;max-width:100%;padding:7px 10px;font-size:11px}
+.desktop-browser-studio .desktop-browser-config-notice{box-sizing:border-box;justify-self:start;max-width:100%;margin:0;padding:8px 10px;border:1px solid #cbd9e6;border-radius:7px;background:#f3f7fb;color:#234b78;font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+.desktop-browser-config-notice:empty{display:none}
+.desktop-browser-studio .desktop-browser-config-notice[data-state=error]{border-color:#d9aaa7;background:#fff2f1;color:#8a2724}
+.desktop-browser-studio .desktop-browser-config-notice[data-state=warning]{border-color:#ddc590;background:#fff9ed;color:#6b4b15}
+.desktop-browser-studio .desktop-browser-config-notice[data-state=success]{border-color:#a4c5b5;background:#edf7f1;color:#235b3f}
 @media(max-width:900px){.desktop-browser-layout{grid-template-columns:1fr}.desktop-browser-preview{position:static;width:min(360px,100%)}.desktop-browser-controls{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.desktop-browser-studio{padding:12px}.desktop-browser-heading{flex-wrap:wrap}.desktop-browser-controls{grid-template-columns:1fr}.desktop-browser-control-column{display:contents}.desktop-browser-group{padding:9px 10px 10px}.desktop-browser-group.is-devices{order:1}.desktop-browser-group.is-visuals{order:2}.desktop-browser-group.is-audio{order:3}.desktop-browser-group.is-broadcast{order:4}.desktop-browser-preview{width:auto}}
