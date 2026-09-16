@@ -44,7 +44,8 @@ class BrowserLiveController extends Controller
         Gate::authorize('live.manage');$request->validate(['confirm'=>'required|accepted']);
         abort_unless(($record->metadata['public_section']??null)==='live',404);
         // Disable reconnects before kicking OBS; the user can explicitly re-enable the event.
-        $record->update(['metadata'=>[...$record->metadata,'live_stream_enabled'=>false]]);
+        $record->update(['metadata'=>[...$record->metadata,'live_obs_enabled'=>false,
+            'live_stream_enabled'=>(bool)($record->metadata['live_browser_enabled']??false)]]);
         $server->disconnect($record);return response()->noContent();
     }
     public function podcast(Request $request,SourceRecord $record,\App\Services\RecordedPodcast $podcasts)

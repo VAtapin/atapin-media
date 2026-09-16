@@ -55,7 +55,7 @@ class PublicBroadcast
         $key=$path===self::SHARED_PATH?app(Settings::class)->secret('live_publish_shared'):app(Settings::class)->secret('live_publish_'.($record?->id ?? ''));
         if(!is_string($key)||!is_string($data['password']??null)||!hash_equals($key,$data['password']))return false;
         $selected=$path===self::SHARED_PATH?$this->activateSharedRecord():$record;
-        if(!$selected)return false;
+        if(!$selected||!$this->obsEnabled($selected))return false;
         $selected->update(['metadata'=>[...$selected->metadata,'live_ingest_reserved_until'=>now()->addSeconds(30)->toIso8601String()]]);
         return true;
     }
@@ -150,12 +150,14 @@ class PublicBroadcast
     {
         return $this->activeRecord() ?? SourceRecord::where('metadata->public_section','live')
             ->where('metadata->live_stream_enabled',true)->where('metadata->live_recording_pending',true)
+            ->where(fn($query)=>$query->where('metadata->live_obs_enabled',true)->orWhereNull('metadata->live_obs_enabled'))
             ->latest('metadata->live_signal_at')->first();
     }
 
     private function candidateRecord(): ?SourceRecord
     {
         $records=SourceRecord::where('metadata->public_section','live')->where('metadata->live_stream_enabled',true)
+            ->where(fn($query)=>$query->where('metadata->live_obs_enabled',true)->orWhereNull('metadata->live_obs_enabled'))
             ->where(function($query){$query->whereNull('metadata->live_status')->orWhereIn('metadata->live_status',['draft','scheduled','live']);})->get();
         return $records->sortBy(function(SourceRecord $record){
             $status=$record->metadata['live_status']??null;
@@ -167,10 +169,14 @@ class PublicBroadcast
 
     private function activateSharedRecord(): ?SourceRecord
     {
-        if ($active=$this->activeRecord()) return !empty($active->metadata['live_stream_enabled'])?$active:null;
+        if ($active=$this->activeRecord()) return $this->obsEnabled($active)?$active:null;
         $record=$this->candidateRecord();
         if (!$record) return null;
         $record->update(['metadata'=>[...$record->metadata,'live_ingest_active'=>true]]);
         return $record->fresh();
+    }
+    private function obsEnabled(SourceRecord $record): bool
+    {
+        return (bool)($record->metadata['live_obs_enabled']??($record->metadata['live_stream_enabled']??false));
     }
 }

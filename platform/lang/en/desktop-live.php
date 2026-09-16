@@ -35,7 +35,7 @@ return [
     'poster_upload_error' => 'Image could not be saved. Please try again.',
     'schedule_label' => 'Schedule',
     'publish' => 'Publish on the website',
-    'enable' => 'Enable live broadcast for this event (OBS or browser)',
+    'enable' => 'Enable this event for the shared OBS input',
     'rotate' => 'Rotate the shared OBS key',
     'save' => 'Save livestream',
     'saved' => 'Livestream saved.',

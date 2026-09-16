@@ -2,11 +2,11 @@ import {createInset,mountInsetEditor} from '/assets/desktop-browser-pip.js?v=1';
 const W=window.DesktopWorkspaces;
 const endpoint='/desktop/live-studio';
 const studios=new WeakMap();
-const css=document.createElement('link');css.rel='stylesheet';css.href='/assets/desktop-browser-studio.css?v=6';document.head.append(css);
+const css=document.createElement('link');css.rel='stylesheet';css.href='/assets/desktop-browser-studio.css?v=7';document.head.append(css);
 const request=async(url,options={})=>{
   const response=await fetch(url,{credentials:'same-origin',headers:{Accept:'application/json','Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content},...options});
   const data=response.status===204?{}:await response.json().catch(()=>({}));
-  if(!response.ok)throw new Error(data.message||'Live studio request failed');return data;
+  if(!response.ok){const error=new Error(data.message||'Live studio request failed');error.status=response.status;error.retryAfter=Number(response.headers.get('Retry-After'))||null;throw error;}return data;
 };
 export const busy=root=>Boolean(studios.get(root)?.busy());
 export async function initialize(root,event,configured=false){
@@ -77,8 +77,8 @@ export async function initialize(root,event,configured=false){
     const inlineSurface=W.el('div',undefined,'desktop-browser-pip-surface');inlineSurface.append(canvas);
     inlineInsetEditor=mountInsetEditor(inlineSurface,inset,{label:t('pip_adjust'),visible:()=>pip&&scene!=='camera',onChange:syncInsetEditors});
     preview.append(previewHead,inlineSurface);layout.append(preview,controls);
-    const heading=W.el('div',undefined,'desktop-browser-heading');previewHeading=heading;heading.append(W.el('h3',t('title')+' · '+event.title));
-    panel.append(heading,W.el('p',t('intro')),layout);
+    const heading=W.el('div',undefined,'desktop-browser-heading');previewHeading=heading;heading.append(W.el('h3',t('title')));
+    panel.append(heading,W.el('p',t('selected_event')+': '+event.title,'desktop-browser-selected-event'),W.el('p',t('intro')),layout);
     const devices=group('devices','is-devices',leftControls);fieldGroup=devices;
     const cameraChoice=select('camera'),micChoice=select('microphone');cameraChoice.append(new Option(t('none'),'none'));micChoice.append(new Option(t('microphone'),''));
     const micVolume=input('mic_volume','range');micVolume.min=0;micVolume.max=1;micVolume.step=.01;micVolume.value=.8;micVolume.oninput=()=>{if(micGain)micGain.gain.value=Number(micVolume.value);};
@@ -91,31 +91,7 @@ export async function initialize(root,event,configured=false){
     const imageInput=input('image','file');imageInput.accept='image/png,image/jpeg,image/webp';imageInput.multiple=true;
     const imageChoice=select('active_image');imageChoice.onchange=()=>{imageIndex=Number(imageChoice.value);scene='image';scenes.value=scene;};
     const audio=group('audio_group','is-audio',leftControls),broadcast=group('broadcast','is-broadcast',controls);
-    const eventForm=W.el('form',undefined,'desktop-browser-event-form');eventForm.dataset.browserEventForm='';
-    const published=document.createElement('input'),enabled=document.createElement('input');
-    for(const [field,key] of [[published,'event_publish'],[enabled,'event_enable']]){
-      field.type='checkbox';field.checked=Boolean(event[key==='event_publish'?'published':'enabled']);field.dataset.eventField=key;
-      const label=W.el('label',t(key));label.prepend(field);eventForm.append(label);
-    }
-    const eventSave=W.el('button',t('event_save'),'desktop-button');eventSave.type='submit';eventSave.dataset.eventSave='';
-    const eventFeedback=W.el('p',undefined,'desktop-browser-event-feedback');eventFeedback.setAttribute('role','status');
-    eventForm.append(eventSave,eventFeedback);broadcast.append(eventForm);
-    const eventReady=W.el('p',undefined,'desktop-browser-event-ready');eventReady.dataset.eventReady='';
-    const eventChanged=()=>published.checked!==Boolean(event.published)||enabled.checked!==Boolean(event.enabled);
-    const updateEventReady=()=>{const ready=event.published&&event.enabled&&!eventChanged();eventReady.textContent=t(eventChanged()?'event_unsaved':ready?'event_ready':'event_not_ready');eventReady.dataset.state=ready?'ready':'warning';};
-    updateEventReady();eventForm.onchange=updateEventReady;broadcast.append(eventReady);
-    eventForm.onsubmit=async ev=>{
-      ev.preventDefault();if(state.busy()){eventFeedback.textContent=t('close_warning');return;}
-      eventSave.disabled=true;eventFeedback.textContent=t('event_saving');
-      try{
-        const payload={title:event.title,body:event.body||'',starts_at:event.starts_at||null,published:published.checked,enabled:enabled.checked};
-        const saved=await request(root.dataset.apiBase+'/'+encodeURIComponent(event.id),{method:'PATCH',body:JSON.stringify(payload)});
-        Object.assign(event,saved.data);published.checked=event.published;enabled.checked=event.enabled;
-        updateEventReady();eventFeedback.textContent=t('event_saved');
-        root.dispatchEvent(new CustomEvent('desktop-live-event-saved',{detail:saved.data}));
-      }catch(error){eventFeedback.textContent=error.message||t('error');}
-      finally{if(!disposed)eventSave.disabled=false;}
-    };
+    broadcast.append(W.el('p',t('event_start_hint'),'desktop-browser-event-start-hint'));
     imageInput.onchange=async()=>{
       try{
         const files=[...imageInput.files];if(files.length>20||files.some(f=>f.size>20*1024*1024||!['image/png','image/jpeg','image/webp'].includes(f.type)))throw new Error(t('error'));
@@ -178,8 +154,6 @@ export async function initialize(root,event,configured=false){
     audioActions.append(action('podcast_draft',async()=>{if(!uploadedMediaId)throw new Error(t('audio_unavailable'));await request(endpoint+'/events/'+event.id+'/podcast',{method:'POST',body:JSON.stringify({confirm:true,media_id:uploadedMediaId})});status.textContent=t('podcast_created');}));
     const stop=async()=>{operation++;const id=session;clearInterval(beatTimer);clearInterval(statsTimer);pc?.close();pc=null;canvasStream?.getTracks().forEach(track=>track.stop());canvasStream=null;if(id)await request(endpoint+'/sessions/'+id,{method:'DELETE'});session=null;status.textContent=t('ended');};
     actionRow(broadcast,action('start',async()=>{
-      if(eventChanged())throw new Error(t('event_unsaved'));
-      if(!event.published||!event.enabled)throw new Error(t('event_not_ready'));
       if(session||pc||!mic||(scene==='camera'&&!camera)||(scene==='screen'&&!screen)||(scene==='image'&&!images.length))throw new Error(t('choose_source'));
       if(!server.available||!server.browser_enabled)throw new Error(t('browser_disabled'));if(!confirm(t('confirm_start')))return;
       status.textContent=t('connecting');pc=new RTCPeerConnection();
@@ -193,11 +167,13 @@ export async function initialize(root,event,configured=false){
         await new Promise((resolve,reject)=>{if(pc.iceGatheringState==='complete'){resolve();return;}const timeout=setTimeout(()=>reject(new Error(t('browser_connection_failed'))),12000);pc.onicegatheringstatechange=()=>{if(pc?.iceGatheringState==='complete'){clearTimeout(timeout);resolve();}};});
         const data=await request(endpoint+'/events/'+event.id+'/browser',{method:'POST',body:JSON.stringify({confirm:true,sdp:pc.localDescription.sdp})});
         if(disposed||operation!==generation){await request(endpoint+'/sessions/'+data.id,{method:'DELETE'});throw new Error(t('ended'));}session=data.id;
+        event.published=true;event.browser_enabled=true;event.starts_at=data.starts_at||event.starts_at;
+        root.dispatchEvent(new CustomEvent('desktop-live-event-started',{detail:{...event}}));
         await pc.setRemoteDescription({type:'answer',sdp:data.sdp});
         const beat=async()=>{try{const data=await request(endpoint+'/sessions/'+session+'/heartbeat',{method:'POST'});status.textContent=t(data.status==='live'?'live':'connecting');}catch(error){await stop().catch(()=>{});status.textContent=error.message;}};
         beatTimer=setInterval(beat,10000);await beat();
         let previous=null;statsTimer=setInterval(async()=>{const current=pc;if(!current)return;try{const reports=await current.getStats();if(pc!==current)return;for(const report of reports.values())if(report.type==='outbound-rtp'&&report.kind==='video'&&!report.isRemote){let rate='—';if(previous&&report.timestamp>previous.timestamp)rate=Math.round((report.bytesSent-previous.bytesSent)*8/(report.timestamp-previous.timestamp))+' kbit/s';telemetry.textContent=t('telemetry')+' · '+t('bitrate')+': '+rate+' · '+t('frames')+': '+(report.framesEncoded??'—');previous=report;}}catch{/* Statistics are optional, never made-up. */}},1000);
-      }catch(error){await stop().catch(()=>{});throw error;}
+      }catch(error){await stop().catch(()=>{});if(error.status===429)throw new Error(t('start_cooldown').replace(':seconds',String(error.retryAfter||60)));throw error;}
     }),action('stop',stop));broadcast.append(status,telemetry);
     const settings=W.el('details');settings.append(W.el('summary',t('server')),W.el('p',t(server.available?'available':'unavailable')));if(!server.available)settings.append(W.el('p',t('unavailable_hint')));if(!server.browser_enabled)settings.append(W.el('p',t('enable_hint')));settings.append(W.el('p',t('setup_hint')),W.el('p',t('network_hint')));panel.append(settings);
     if(configured){const notice=W.el('p',t(server.available?'config_saved':'config_saved_api_unavailable'),'desktop-browser-config-notice');notice.dataset.serverConfigResult='';notice.dataset.state=server.available?'success':'warning';notice.setAttribute('role','status');settings.append(notice);settings.open=true;}

@@ -59,10 +59,16 @@ class PublicBroadcastController extends Controller
     }
     private function persist(Request $request,Settings $settings,?SourceRecord $record): SourceRecord
     {
-        $data=$request->validate(['title'=>'required|string|max:255','body'=>'nullable|string|max:10000','starts_at'=>'nullable|date','published'=>'nullable|boolean','enabled'=>'nullable|boolean','rotate_key'=>'nullable|boolean','cover_media_id'=>'nullable|uuid|exists:media,id']);
+        $data=$request->validate(['title'=>'required|string|max:255','body'=>'nullable|string|max:10000','starts_at'=>'nullable|date','published'=>'nullable|boolean','enabled'=>'nullable|boolean','browser_enabled'=>'nullable|boolean','rotate_key'=>'nullable|boolean','cover_media_id'=>'nullable|uuid|exists:media,id']);
         if($record && !$record->exists)$record=null;
         $this->assertLiveEvent($record);
-        $metadata=[...($record?->metadata??[]),'public_section'=>'live','public_published'=>$request->boolean('published'),'live_stream_enabled'=>$request->boolean('enabled'),'starts_at'=>$data['starts_at']??null];
+        $previous=$record?->metadata??[];
+        // Existing events used one Live flag for OBS. Preserve it as the OBS choice when the new per-mode flags are absent.
+        $obsEnabled=$request->exists('enabled')?$request->boolean('enabled'):(bool)($previous['live_obs_enabled']??($previous['live_stream_enabled']??false));
+        $browserEnabled=$request->exists('browser_enabled')?$request->boolean('browser_enabled'):(bool)($previous['live_browser_enabled']??false);
+        $metadata=[...$previous,'public_section'=>'live','public_published'=>$request->boolean('published'),
+            'live_obs_enabled'=>$obsEnabled,'live_browser_enabled'=>$browserEnabled,
+            'live_stream_enabled'=>$obsEnabled||$browserEnabled,'starts_at'=>$data['starts_at']??null];
         if(!isset($metadata['live_status'])||in_array($metadata['live_status'],['draft','scheduled'],true))$metadata['live_status']=empty($metadata['starts_at'])?'draft':'scheduled';
         if(!$record)$record=SourceRecord::create(['source'=>'website','source_id'=>'live:'.\Illuminate\Support\Str::uuid(),'kind'=>'video','title'=>$data['title'],'body'=>$data['body']??'','status'=>'ready','metadata'=>$metadata]);
         else $record->update(['title'=>$data['title'],'body'=>$data['body']??'','status'=>'ready','metadata'=>$metadata]);
@@ -84,6 +90,10 @@ class PublicBroadcastController extends Controller
         $cover=$coverId?Media::find($coverId):null;
         $coverPreview=$cover && $cover->kind==='image' && app(\App\Services\MediaOriginalLocator::class)->find($cover)
             ?$cover->previewUrl():null;
-        return ['id'=>$record->id,'title'=>$record->title,'body'=>$record->body,'starts_at'=>$metadata['starts_at']??null,'published'=>(bool)($metadata['public_published']??false),'enabled'=>(bool)($metadata['live_stream_enabled']??false),'status'=>$metadata['live_status']??'draft','cover_media_id'=>$cover?->id,'cover_preview_url'=>$coverPreview,'created_at'=>$record->created_at?->toIso8601String(),'updated_at'=>$record->updated_at?->toIso8601String(),'ingest'=>$ingest];
+        return ['id'=>$record->id,'title'=>$record->title,'body'=>$record->body,'starts_at'=>$metadata['starts_at']??null,
+            'published'=>(bool)($metadata['public_published']??false),
+            'enabled'=>(bool)($metadata['live_obs_enabled']??($metadata['live_stream_enabled']??false)),
+            'browser_enabled'=>(bool)($metadata['live_browser_enabled']??false),
+            'status'=>$metadata['live_status']??'draft','cover_media_id'=>$cover?->id,'cover_preview_url'=>$coverPreview,'created_at'=>$record->created_at?->toIso8601String(),'updated_at'=>$record->updated_at?->toIso8601String(),'ingest'=>$ingest];
     }
 }

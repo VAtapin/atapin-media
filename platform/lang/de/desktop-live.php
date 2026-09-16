@@ -39,7 +39,7 @@ return [
     'poster_source_too_large' => 'Die ausgewählte Quelldatei ist zu groß. Bitte ein Bild bis 50 MB auswählen.',
     'schedule_label' => 'Sendeplan',
     'publish' => 'Auf der Website veröffentlichen',
-    'enable' => 'Live-Übertragung für diesen Termin aktivieren (OBS oder Browser)',
+    'enable' => 'Diesen Termin für den gemeinsamen OBS-Eingang aktivieren',
     'rotate' => 'Gemeinsamen OBS-Schlüssel erneuern',
     'save' => 'Livestream speichern',
     'saved' => 'Livestream gespeichert.',

@@ -17,18 +17,13 @@ const assets = new Map([
   ['/assets/desktop-browser-studio.js', 'public/assets/desktop-browser-studio.js'],
   ['/assets/desktop-browser-pip.js', 'public/assets/desktop-browser-pip.js'],
 ]);
-const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="layout-test"><link rel="stylesheet" href="/assets/desktop-app.css"><link rel="stylesheet" href="/assets/desktop-live-studio.css"><link rel="stylesheet" href="/assets/desktop-publishing.css"><style>html,body{margin:0;height:100%;background:#edf3f8}.os-window{height:100%}.os-titlebar{box-sizing:border-box;height:44px;padding:12px;background:#102f52;color:white;font:600 14px Inter,Arial,sans-serif}.desktop-live-studio{box-sizing:border-box;height:calc(100% - 44px)}</style></head><body><div class="os-window"><div class="os-titlebar">Live Studio</div><section class="desktop-live-studio" data-live-studio data-api-base="/api/desktop/live"><div class="desktop-live-studio-grid"></div></section></div><script>window.DesktopWorkspaces={el:(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;}};import('/assets/desktop-browser-studio.js?v=7').then(module=>module.initialize(document.querySelector('[data-live-studio]'),{id:'layout-test',title:'Ein neues Zuhause für Manna Vom Himmel',published:true,enabled:true}));</script></body></html>`;
+const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="layout-test"><link rel="stylesheet" href="/assets/desktop-app.css"><link rel="stylesheet" href="/assets/desktop-live-studio.css"><link rel="stylesheet" href="/assets/desktop-publishing.css"><style>html,body{margin:0;height:100%;background:#edf3f8}.os-window{height:100%}.os-titlebar{box-sizing:border-box;height:44px;padding:12px;background:#102f52;color:white;font:600 14px Inter,Arial,sans-serif}.desktop-live-studio{box-sizing:border-box;height:calc(100% - 44px)}</style></head><body><div class="os-window"><div class="os-titlebar">Live Studio</div><section class="desktop-live-studio" data-live-studio data-api-base="/api/desktop/live"><div class="desktop-live-studio-grid"></div></section></div><script>window.DesktopWorkspaces={el:(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;}};import('/assets/desktop-browser-studio.js?v=8').then(module=>module.initialize(document.querySelector('[data-live-studio]'),{id:'layout-test',title:'Ein neues Zuhause für Manna Vom Himmel',published:true,enabled:true}));</script></body></html>`;
 const configuration = { available: false, browser_enabled: false, host: '' };
 let rejectFirstConfig = true;
-let eventSaveCount = 0, browserStartCount = 0;
+let browserStartCount = 0;
 const server = createServer(async (request, response) => {
   const path = new URL(request.url, base).pathname;
   if (path === '/') { response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); response.end(html); return; }
-  if (path === '/api/desktop/live/next-live' && request.method === 'PATCH') {
-    let body = ''; for await (const chunk of request) body += chunk;
-    const saved = JSON.parse(body);eventSaveCount++;
-    response.writeHead(200, { 'Content-Type': 'application/json' });response.end(JSON.stringify({ data: { id:'next-live', ...saved } }));return;
-  }
   if (path.endsWith('/browser') && request.method === 'POST') browserStartCount++;
   if (path === '/desktop/live-studio/server') {
     if (request.method === 'POST') {
@@ -58,7 +53,9 @@ try {
   const studioBox = await studio.boundingBox();
   assert(studioBox && studioBox.width >= 1672 * .9, `Studio should use the maximized window: ${JSON.stringify(studioBox)}`);
   assert.equal(await studio.locator('.desktop-browser-group').count(), 4);
-  assert.match(await studio.locator('[data-event-ready]').textContent(), /aktiviert und veröffentlicht/);
+  assert.match(await studio.locator('.desktop-browser-selected-event').textContent(), /Ausgewählter Livestream/);
+  assert.match(await studio.locator('.desktop-browser-event-start-hint').textContent(), /Kalendereintrag ist nicht nötig/);
+  assert.equal(await studio.locator('[data-browser-event-form]').count(),0,'Browser start should not require an extra activation checkbox or save action');
   for (const name of ['Kamera & Mikrofon', 'Bild & Bildschirm', 'Audio-Aufnahme', 'Übertragung']) {
     assert(await studio.locator('legend', { hasText: name }).isVisible(), name);
   }
@@ -190,21 +187,13 @@ try {
   assert.equal(await studio.locator('[name=live_browser_host]').inputValue(), 'mannavomhimmel.de');
   assert.match(await studio.textContent(), /Server-API erreichbar/);
   await page.evaluate(async () => {
-    const module = await import('/assets/desktop-browser-studio.js?v=7');
+    const module = await import('/assets/desktop-browser-studio.js?v=8');
     await module.initialize(document.querySelector('[data-live-studio]'), { id: 'next-live', title: 'Nächster Livestream' });
   });
-  const eventForm=studio.locator('[data-browser-event-form]');
-  assert(await eventForm.isVisible(), 'Event activation should be on the Browser Studio screen');
+  assert.match(await studio.locator('.desktop-browser-selected-event').textContent(), /Nächster Livestream/);
   await studio.locator('[data-studio-action=start]').click();
-  assert.match(await studio.locator('.is-broadcast [role=status]').last().textContent(), /beide Häkchen setzen/);
-  assert.equal(browserStartCount,0,'No broadcast request should be made for an inactive event');
-  await eventForm.locator('[data-event-field=event_publish]').check();
-  await eventForm.locator('[data-event-field=event_enable]').check();
-  assert.match(await studio.locator('[data-event-ready]').textContent(), /Änderungen zuerst/);
-  await eventForm.locator('[data-event-save]').click();
-  assert.equal(eventSaveCount,1,'Both event flags should be saved in one action');
-  await studio.locator('[data-event-ready][data-state=ready]').waitFor();
-  assert.match(await studio.locator('[data-event-ready]').textContent(), /aktiviert und veröffentlicht/);
+  assert.match(await studio.locator('.is-broadcast [role=status]').last().textContent(), /Mikrofon vorbereiten/);
+  assert.equal(browserStartCount,0,'No broadcast request should be made before media is prepared');
   await studio.locator('summary').click();
   assert(await studio.locator('[name=live_browser_enabled]').isChecked(), 'Saved server setting should apply to a different livestream');
   assert.deepEqual(errors, []);

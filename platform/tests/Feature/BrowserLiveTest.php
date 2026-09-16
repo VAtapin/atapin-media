@@ -24,7 +24,7 @@ class BrowserLiveTest extends TestCase
     private function event(array $metadata=[]): SourceRecord
     {
         return SourceRecord::create(['source'=>'website','source_id'=>\Illuminate\Support\Str::uuid(),'kind'=>'video','title'=>'Browser Live',
-            'status'=>'ready','metadata'=>[...['public_section'=>'live','public_published'=>true,'live_stream_enabled'=>true],...$metadata]]);
+            'status'=>'ready','metadata'=>[...['public_section'=>'live','public_published'=>true,'live_stream_enabled'=>true,'live_browser_enabled'=>true],...$metadata]]);
     }
     private function browserSession(SourceRecord $record): LiveBrowserSession
     {
@@ -87,9 +87,9 @@ class BrowserLiveTest extends TestCase
         $this->postJson('/desktop/live-studio/sessions/'.$session->id.'/heartbeat')->assertConflict();
         $this->deleteJson('/desktop/live-studio/sessions/'.$session->id)->assertNoContent();
     }
-    public function test_rbac_confirmation_owner_and_unpublished_event_are_enforced(): void
+    public function test_rbac_confirmation_owner_and_invalid_event_are_enforced(): void
     {
-        $record=$this->event(['public_published'=>false]);$payload=['sdp'=>"v=0\nm=video\nm=audio",'confirm'=>true];
+        $record=$this->event();$record->update(['status'=>'needs_attention']);$payload=['sdp'=>"v=0\nm=video\nm=audio",'confirm'=>true];
         $this->postJson('/desktop/live-studio/events/'.$record->id.'/browser',$payload)->assertUnprocessable();
         $this->postJson('/desktop/live-studio/events/'.$record->id.'/browser',['sdp'=>$payload['sdp']])->assertUnprocessable();
         $session=$this->browserSession($this->event());$other=User::factory()->create();$other->roles()->attach(Role::where('name','Editor')->firstOrFail());$this->actingAs($other);
@@ -97,16 +97,28 @@ class BrowserLiveTest extends TestCase
         $this->postJson('/desktop/live-studio/server',['confirm'=>true,'live_browser_enabled'=>true,'live_browser_host'=>'example.test'])->assertForbidden();
         $this->actingAs(User::factory()->create())->getJson('/desktop/live-studio/server')->assertForbidden();
     }
-    public function test_selected_live_event_can_be_enabled_and_published_together_before_browser_start(): void
+    public function test_browser_start_publishes_event_without_enabling_obs_or_a_calendar_entry(): void
     {
-        $record=$this->event(['public_published'=>false,'live_stream_enabled'=>false]);
+        $record=$this->event(['public_published'=>false,'live_stream_enabled'=>false,'live_browser_enabled'=>false]);
         $this->assertFalse(app(BrowserBroadcast::class)->eligible($record));
-        $this->patchJson('/api/desktop/live/'.$record->id,[
-            'title'=>$record->title,'body'=>'Event description','starts_at'=>now()->addHour()->toIso8601String(),
-            'published'=>true,'enabled'=>true,
-        ])->assertOk()->assertJsonPath('data.published',true)->assertJsonPath('data.enabled',true);
+        $secret=(string)\Illuminate\Support\Str::uuid();
+        $this->whipHandler=fn($request)=>Http::response('v=0',201,['Location'=>parse_url($request->url(),PHP_URL_PATH).'/'.$secret]);
+        $start=$this->postJson('/desktop/live-studio/events/'.$record->id.'/browser',[
+            'sdp'=>"v=0\nm=video\nm=audio",'confirm'=>true,
+        ])->assertCreated();
+        $this->assertNotEmpty($start->json('starts_at'));
+        $metadata=$record->fresh()->metadata;
+        $this->assertTrue($metadata['public_published']);$this->assertTrue($metadata['live_browser_enabled']);
+        $this->assertTrue($metadata['live_stream_enabled']);$this->assertFalse($metadata['live_obs_enabled']);
         $this->assertTrue(app(BrowserBroadcast::class)->eligible($record->fresh()));
-        $this->assertSame('Event description',$record->fresh()->body);
+        $this->assertSame($record->id,app(PublicBroadcast::class)->record('live-'.$record->id)?->id);
+        $this->assertNull(app(PublicBroadcast::class)->record('live'));
+        $this->assertNotEmpty($metadata['starts_at']);
+        $this->getJson('/api/desktop/live')->assertOk()->assertJsonPath('data.0.id',$record->id);
+        $this->patchJson('/api/desktop/live/'.$record->id,[
+            'title'=>$record->title,'published'=>true,'enabled'=>false,
+        ])->assertOk()->assertJsonPath('data.enabled',false)->assertJsonPath('data.browser_enabled',true);
+        $this->assertTrue($record->fresh()->metadata['live_stream_enabled']);
     }
     public function test_active_obs_prevents_browser_start_and_unsafe_whip_location_is_rejected(): void
     {
@@ -117,12 +129,33 @@ class BrowserLiveTest extends TestCase
         $this->postJson('/desktop/live-studio/events/'.$record->id.'/browser',$payload)->assertStatus(503);
         $this->assertSame('failed',LiveBrowserSession::firstOrFail()->status);
     }
+    public function test_failed_browser_start_restores_event_publication_and_mode_flags(): void
+    {
+        $record=$this->event(['public_published'=>false,'live_stream_enabled'=>false,'live_browser_enabled'=>false]);
+        $this->postJson('/desktop/live-studio/events/'.$record->id.'/browser',[
+            'sdp'=>"v=0\nm=video\nm=audio",'confirm'=>true,
+        ])->assertStatus(503);
+        $metadata=$record->fresh()->metadata;
+        $this->assertFalse($metadata['public_published']);
+        $this->assertFalse($metadata['live_browser_enabled']);
+        $this->assertFalse($metadata['live_stream_enabled']);
+        $this->assertNull($metadata['starts_at']??null);
+        $this->assertArrayNotHasKey('live_browser_start_session_id',$metadata);
+    }
+    public function test_browser_start_keeps_a_bounded_ten_attempt_per_minute_limit(): void
+    {
+        $record=$this->event();$url='/desktop/live-studio/events/'.$record->id.'/browser';
+        for($attempt=0;$attempt<10;$attempt++)$this->postJson($url,['sdp'=>'invalid','confirm'=>true])->assertUnprocessable();
+        $this->postJson($url,['sdp'=>'invalid','confirm'=>true])->assertStatus(429);
+    }
     public function test_obs_disconnect_uses_actual_tls_endpoint_and_disables_reconnect(): void
     {
         $record=$this->event();$record->update(['metadata'=>[...$record->metadata,'live_ingest_active'=>true]]);$id=(string)\Illuminate\Support\Str::uuid();
         $this->pathItems=[['name'=>'live','ready'=>true,'source'=>['type'=>'rtmpsConn','id'=>$id]]];
         $this->postJson('/desktop/live-studio/events/'.$record->id.'/disconnect',['confirm'=>true])->assertNoContent();
-        $this->assertFalse($record->fresh()->metadata['live_stream_enabled']);
+        $this->assertFalse($record->fresh()->metadata['live_obs_enabled']);
+        $this->assertTrue($record->fresh()->metadata['live_browser_enabled']);
+        $this->assertTrue($record->fresh()->metadata['live_stream_enabled']);
         Http::assertSent(fn($request)=>$request->url()==='http://127.0.0.1:9997/v3/rtmps/conns/kick/'.$id&&$request->method()==='POST');
     }
     public function test_server_settings_reject_command_injection_and_do_not_mutate_on_unsupported_host(): void
