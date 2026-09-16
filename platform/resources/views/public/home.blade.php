@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="/assets/brand/ui-kit.css">
 <link rel="stylesheet" href="/assets/public.css">
 <link rel="stylesheet" href="/assets/public-rich-content.css?v=1">
-<link rel="stylesheet" href="/assets/public-pages.css?v=27">
+<link rel="stylesheet" href="/assets/public-pages.css?v=28">
 <link rel="stylesheet" href="/assets/public-book-shelf.css?v=7">
 <link rel="icon" href="/favicon.png">
 <script src="/assets/public.js?v=13" defer>

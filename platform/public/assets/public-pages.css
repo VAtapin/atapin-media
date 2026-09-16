@@ -532,6 +532,7 @@
 .public-overview-intro{max-width:510px;font-size:14px;line-height:1.4}
 .public-overview-actions{display:flex;gap:16px;margin-top:15px}
 .public-overview-feature{height:285px!important;min-width:0;position:relative;overflow:hidden;border-radius:15px;background:#203851;color:#fff;box-shadow:0 8px 24px #102c4a35}
+.public-overview-hero-live{height:472px!important}.public-overview-hero-live .public-overview-feature{height:auto!important;aspect-ratio:16/9;align-self:center}
 .public-overview-feature>.public-photo,.public-overview-feature>.public-photo-placeholder,.public-overview-feature .public-feature-picture{width:100%;height:100%;object-fit:cover;display:block}
 .public-overview-feature .public-feature-link-wrap{position:absolute;inset:0;display:block;color:inherit}
 .public-overview-feature>.public-empty-slot{height:100%;min-height:0;border:0;border-radius:15px;background:linear-gradient(90deg,#132c45e8,#244661c9),var(--hero-image);background-position:center;background-size:cover;color:#fff!important}
@@ -581,6 +582,7 @@
  .public-overview-copy h1{font-size:37px}
  .public-overview-intro{font-size:14px}
  .public-overview-feature{height:250px!important}
+ .public-overview-hero-live .public-overview-feature{height:auto!important;aspect-ratio:16/9}
  .public-overview-hero .public-hero-side-copy{margin:20px auto 10px}
 }
 .public-lightbox-trigger{display:block;width:100%;padding:0;border:0;background:transparent;color:inherit;cursor:zoom-in;text-align:inherit}

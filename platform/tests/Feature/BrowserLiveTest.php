@@ -87,6 +87,16 @@ class BrowserLiveTest extends TestCase
         $this->postJson('/desktop/live-studio/sessions/'.$session->id.'/heartbeat')->assertConflict();
         $this->deleteJson('/desktop/live-studio/sessions/'.$session->id)->assertNoContent();
     }
+    public function test_browser_stop_is_not_blocked_by_heartbeat_rate_limit(): void
+    {
+        $record=$this->event();$session=$this->browserSession($record);
+        for($attempt=0;$attempt<10;$attempt++)$this->postJson('/desktop/live-studio/sessions/'.$session->id.'/heartbeat')->assertOk();
+        $this->deleteJson('/desktop/live-studio/sessions/'.$session->id)->assertNoContent();
+        $this->assertSame('ended',$session->fresh()->status);
+        $script=file_get_contents(public_path('assets/desktop-browser-studio.js'));
+        $this->assertStringContainsString('const ratio=Math.max(width/sw,height/sh)',$script);
+        $this->assertStringNotContainsString('const ratio=Math.min(width/sw,height/sh)',$script);
+    }
     public function test_rbac_confirmation_owner_and_invalid_event_are_enforced(): void
     {
         $record=$this->event();$record->update(['status'=>'needs_attention']);$payload=['sdp'=>"v=0\nm=video\nm=audio",'confirm'=>true];

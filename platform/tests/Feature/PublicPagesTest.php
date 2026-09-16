@@ -98,6 +98,8 @@ class PublicPagesTest extends TestCase
         $script=file_get_contents(public_path('assets/public.js'));
         $this->assertStringContainsString('statusUrl=shell.dataset.liveCurrentUrl',$script);
         $this->assertStringContainsString('setTimeout(check,2000)',$script);
+        $styles=file_get_contents(public_path('assets/public-pages.css'));
+        $this->assertStringContainsString('.public-overview-hero-live .public-overview-feature{height:auto!important;aspect-ratio:16/9',$styles);
         $dom=new \DOMDocument();@$dom->loadHTML($response->getContent());$this->assertStringNotContainsString('Der Livestream wird vorbereitet',$dom->getElementsByTagName('main')->item(0)->textContent);
         $response->assertDontSee('data-community-action',false);
     }

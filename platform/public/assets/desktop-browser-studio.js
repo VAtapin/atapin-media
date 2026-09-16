@@ -3,7 +3,7 @@ import {mountBrowserEvents} from '/assets/desktop-browser-events.js?v=1';
 const W=window.DesktopWorkspaces;
 const endpoint='/desktop/live-studio';
 const studios=new WeakMap();
-const css=document.createElement('link');css.rel='stylesheet';css.href='/assets/desktop-browser-studio.css?v=8';document.head.append(css);
+const css=document.createElement('link');css.rel='stylesheet';css.href='/assets/desktop-browser-studio.css?v=9';document.head.append(css);
 const request=async(url,options={})=>{
   const response=await fetch(url,{credentials:'same-origin',headers:{Accept:'application/json','Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content},...options});
   const data=response.status===204?{}:await response.json().catch(()=>({}));
@@ -109,7 +109,8 @@ export async function initialize(root,event,configured=false){
     };
     const fit=(source,x=0,y=0,width=1280,height=720)=>{
       const sw=source.videoWidth||source.naturalWidth,sh=source.videoHeight||source.naturalHeight;if(!sw||!sh)return;
-      const ratio=Math.min(width/sw,height/sh);ctx.drawImage(source,x+(width-sw*ratio)/2,y+(height-sh*ratio)/2,sw*ratio,sh*ratio);
+      const ratio=Math.max(width/sw,height/sh),drawWidth=sw*ratio,drawHeight=sh*ratio;
+      ctx.save();ctx.beginPath();ctx.rect(x,y,width,height);ctx.clip();ctx.drawImage(source,x+(width-drawWidth)/2,y+(height-drawHeight)/2,drawWidth,drawHeight);ctx.restore();
     };
     drawTimer=setInterval(()=>{
       if(disposed)return;ctx.fillStyle='#102238';ctx.fillRect(0,0,1280,720);

@@ -130,7 +130,7 @@ class PublicBroadcastTest extends TestCase
         $this->assertSame('ended',$first->fresh()->metadata['live_status']);
         $this->assertArrayNotHasKey('live_ingest_active',$first->fresh()->metadata);
         $this->postJson('/live/server-auth',['path'=>'live','action'=>'read','protocol'=>'hls'])->assertNoContent();
-        $first->update(['metadata'=>[...$first->fresh()->metadata,'public_published'=>false]]);
+        $first->update(['metadata'=>[...$first->fresh()->metadata,'public_published'=>false,'live_status'=>'live','live_ingest_active'=>true]]);
         $this->postJson('/live/server-auth',['path'=>'live','action'=>'read','protocol'=>'hls'])->assertUnauthorized();
         $this->assertFalse(app(Settings::class)->hasSecret('live_publish_'.$first->id));
         $this->assertFalse(app(Settings::class)->hasSecret('live_publish_'.$second->id));

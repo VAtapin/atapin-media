@@ -42,7 +42,9 @@ class PublicBroadcast
         if($browser!==null)return $browser;
         $path=$data['path']??'';
         if(($data['action']??'')==='read'){
-            $record=$this->readRecord($path);return $record&&($data['protocol']??'')==='hls'&&app(PublicContent::class)->visible($record);
+            if(($data['protocol']??'')!=='hls')return false;
+            if($path===self::SHARED_PATH){$record=$this->activeRecord();return !$record||app(PublicContent::class)->visible($record);}
+            $record=$this->record($path);return $record&&app(PublicContent::class)->visible($record);
         }
         if(($data['action']??'')!=='publish'||($data['protocol']??'')!=='rtmp'||($data['user']??'')!=='publisher')return false;
         return \Illuminate\Support\Facades\Cache::lock('live-input-owner',15)->block(3,fn()=>$this->authorizeObs($data));
@@ -141,18 +143,6 @@ class PublicBroadcast
     {
         return SourceRecord::where('metadata->public_section','live')
             ->where('metadata->live_ingest_active',true)->where(function($query){$query->whereNull('metadata->live_status')->orWhere('metadata->live_status','!=','ended');})->first();
-    }
-
-    private function readRecord(string $path): ?SourceRecord
-    {
-        if ($path !== self::SHARED_PATH) return $this->record($path);
-        if ($active=$this->activeRecord()) return $active;
-
-        // Keep the public HLS path authorised after the publisher disappears. The
-        // player then gets an unavailable stream instead of a Basic Auth challenge.
-        return SourceRecord::where('metadata->public_section','live')
-            ->where('metadata->public_published',true)->where('metadata->live_status','ended')
-            ->latest('metadata->live_signal_at')->first();
     }
 
     private function recordingRecord(): ?SourceRecord
