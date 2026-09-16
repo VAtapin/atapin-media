@@ -17,7 +17,8 @@ class PublicBroadcastController extends Controller
         $date=(string)$request->query('date',$today);
         try { $date=\Illuminate\Support\Carbon::createFromFormat('!Y-m-d',$date,config('app.timezone'))->format('Y-m-d'); }
         catch(\Throwable) { $date=$today; }
-        $filter=$request->query('filter','day')==='scheduled'?'scheduled':'day';
+        $filter=match($request->query('filter','day')){'scheduled'=>'scheduled','browser_today'=>'browser_today',default=>'day'};
+        if($filter==='browser_today')$date=$today;
         $perPage=20;
         $page=max(1,(int)$request->query('page',1));
         $all=SourceRecord::where('metadata->public_section','live')->get();
@@ -27,6 +28,7 @@ class PublicBroadcastController extends Controller
         $events=$all->filter(function(SourceRecord $record)use($filter,$date,$content){
             $status=$record->metadata['live_status']??'draft';
             if($filter==='scheduled')return $status==='scheduled'&&$content->hasFutureStart($record);
+            if($filter==='browser_today'&&($status!=='scheduled'||$record->status!=='ready'||$record->trashed()||!$content->hasFutureStart($record)))return false;
             $starts=$record->metadata['starts_at']??null;
             if(!is_string($starts)||$starts==='')return false;
             try{return \Illuminate\Support\Carbon::parse($starts,config('app.timezone'))->timezone(config('app.timezone'))->toDateString()===$date;}

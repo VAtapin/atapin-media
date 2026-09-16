@@ -25,6 +25,12 @@ class PublicLiveOverviewTest extends TestCase
         $this->get('/')->assertOk()->assertViewHas('live',fn($card)=>$card['id']===$live->id&&$card['live_status']==='live')->assertSee(__('public.live_now'));
         $this->get('/live?event='.$scheduled->id)->assertOk()->assertDontSee('data-live-player',false);
     }
+    public function test_live_draft_status_uses_translated_label_on_detail_poster_and_summary(): void
+    {
+        $draft=$this->event('draft');
+        $this->get('/live?event='.$draft->id)->assertOk()->assertSee(__('public.live_draft'))
+            ->assertDontSee('public.live_draft');
+    }
 
     public function test_current_status_is_public_only_and_tracks_ingest_hooks_without_presence_writes(): void
     {

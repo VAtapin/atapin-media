@@ -15,7 +15,7 @@
     if (!root || root.dataset.initialized === 'true') return;
     root.dataset.initialized = 'true';
     let browserStudio=null;
-    const studioModule=import('/assets/desktop-browser-studio.js?v=8').then(module=>{browserStudio=module;return module;});
+    const studioModule=import('/assets/desktop-browser-studio.js?v=9').then(module=>{browserStudio=module;return module;});
     const form = root.querySelector('[data-live-form]');
     const empty = root.querySelector('[data-live-editor-empty]');
     const events = root.querySelector('[data-live-events]');
@@ -229,9 +229,9 @@
     root.querySelector('[data-live-help]').addEventListener('click', () => root.closest('.os-window')?.querySelector('[data-window-action="help"]')?.click());
     root.addEventListener('desktop-live-open',event=>{const id=Number(event.detail?.id);if(Number.isInteger(id)&&id>0)loadEvent(id);});
     root.addEventListener('desktop-live-event-started',event=>{
-      const data=event.detail;if(!data||current?.id!==data.id)return;
-      current=data;form.elements.published.checked=Boolean(data.published);
-      form.elements.starts_at.value=localDate(data.starts_at);loadIndex(false);
+      const data=event.detail;if(!data?.id)return;
+      if(current?.id===data.id){current=data;form.elements.published.checked=Boolean(data.published);form.elements.starts_at.value=localDate(data.starts_at);}
+      loadIndex(false);
     });
     events.addEventListener('click', event => { const button = event.target.closest('[data-live-event]'); if (button) loadEvent(button.dataset.liveEvent); });
     currentEvents.addEventListener('click', event => { const button = event.target.closest('[data-live-event]'); if (button) loadEvent(button.dataset.liveEvent); });

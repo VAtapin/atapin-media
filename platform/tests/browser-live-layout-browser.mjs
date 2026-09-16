@@ -15,16 +15,27 @@ const assets = new Map([
   ['/assets/desktop-publishing.css', 'public/assets/desktop-publishing.css'],
   ['/assets/desktop-browser-studio.css', 'public/assets/desktop-browser-studio.css'],
   ['/assets/desktop-browser-studio.js', 'public/assets/desktop-browser-studio.js'],
+  ['/assets/desktop-browser-events.js', 'public/assets/desktop-browser-events.js'],
   ['/assets/desktop-browser-pip.js', 'public/assets/desktop-browser-pip.js'],
+  ['/assets/desktop-podcast-recorder.js', 'public/assets/desktop-podcast-recorder.js'],
 ]);
-const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="layout-test"><link rel="stylesheet" href="/assets/desktop-app.css"><link rel="stylesheet" href="/assets/desktop-live-studio.css"><link rel="stylesheet" href="/assets/desktop-publishing.css"><style>html,body{margin:0;height:100%;background:#edf3f8}.os-window{height:100%}.os-titlebar{box-sizing:border-box;height:44px;padding:12px;background:#102f52;color:white;font:600 14px Inter,Arial,sans-serif}.desktop-live-studio{box-sizing:border-box;height:calc(100% - 44px)}</style></head><body><div class="os-window"><div class="os-titlebar">Live Studio</div><section class="desktop-live-studio" data-live-studio data-api-base="/api/desktop/live"><div class="desktop-live-studio-grid"></div></section></div><script>window.DesktopWorkspaces={el:(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;}};import('/assets/desktop-browser-studio.js?v=8').then(module=>module.initialize(document.querySelector('[data-live-studio]'),{id:'layout-test',title:'Ein neues Zuhause für Manna Vom Himmel',published:true,enabled:true}));</script></body></html>`;
+const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="layout-test"><link rel="stylesheet" href="/assets/desktop-app.css"><link rel="stylesheet" href="/assets/desktop-live-studio.css"><link rel="stylesheet" href="/assets/desktop-publishing.css"><style>html,body{margin:0;height:100%;background:#edf3f8}.os-window{height:100%}.os-titlebar{box-sizing:border-box;height:44px;padding:12px;background:#102f52;color:white;font:600 14px Inter,Arial,sans-serif}.desktop-live-studio{box-sizing:border-box;height:calc(100% - 44px)}</style></head><body><div class="os-window"><div class="os-titlebar">Live Studio</div><section class="desktop-live-studio" data-live-studio data-user-id="1" data-api-base="/api/desktop/live"><div class="desktop-live-studio-grid"></div></section></div><script>window.DesktopWorkspaces={el:(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;}};import('/assets/desktop-browser-studio.js?v=9').then(module=>module.initialize(document.querySelector('[data-live-studio]'),{id:'layout-test',title:'Ein neues Zuhause für Manna Vom Himmel',published:true,enabled:true}));</script></body></html>`;
 const configuration = { available: false, browser_enabled: false, host: '' };
 let rejectFirstConfig = true;
-let browserStartCount = 0;
+let browserStartCount = 0, quickCreateCount = 0, lastStartEvent = null, lastCreatedPayload=null;
+const scheduled = [
+  { id: 'today-one', title:'Erster geplanter Livestream', starts_at:new Date(Date.now()+3600000).toISOString(), status:'scheduled' },
+  { id: 'today-two', title:'Zweiter geplanter Livestream', starts_at:new Date(Date.now()+7200000).toISOString(), status:'scheduled' },
+];
 const server = createServer(async (request, response) => {
   const path = new URL(request.url, base).pathname;
   if (path === '/') { response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); response.end(html); return; }
-  if (path.endsWith('/browser') && request.method === 'POST') browserStartCount++;
+  if (path === '/api/desktop/live' && request.method === 'GET') { response.writeHead(200, { 'Content-Type':'application/json' });response.end(JSON.stringify({data:scheduled,pagination:{last_page:1,total:scheduled.length}}));return; }
+  if (path.startsWith('/api/desktop/live/') && request.method === 'GET') { const selected=scheduled.find(item=>item.id===path.split('/').pop());response.writeHead(selected?200:404,{'Content-Type':'application/json'});response.end(JSON.stringify(selected?{data:selected}:{message:'Event not found'}));return; }
+  if (path === '/api/desktop/live' && request.method === 'POST') { let body='';for await(const chunk of request)body+=chunk;quickCreateCount++;const data=JSON.parse(body);lastCreatedPayload=data;response.writeHead(201,{'Content-Type':'application/json'});response.end(JSON.stringify({data:{id:'created-now',...data}}));return; }
+  if (path.endsWith('/browser') && request.method === 'POST') {browserStartCount++;lastStartEvent=path.split('/').at(-2);response.writeHead(201,{'Content-Type':'application/json'});response.end(JSON.stringify({id:'mock-session',sdp:'v=0',starts_at:new Date().toISOString()}));return;}
+  if (path.endsWith('/heartbeat') && request.method === 'POST') {response.writeHead(200,{'Content-Type':'application/json'});response.end(JSON.stringify({status:'live'}));return;}
+  if (path.includes('/sessions/') && request.method === 'DELETE') {response.writeHead(204);response.end();return;}
   if (path === '/desktop/live-studio/server') {
     if (request.method === 'POST') {
       let body = ''; for await (const chunk of request) body += chunk;
@@ -40,9 +51,24 @@ const server = createServer(async (request, response) => {
 await new Promise(resolve => server.listen(8811, '127.0.0.1', resolve));
 let browser;
 try {
-  browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}) });
+  browser = await chromium.launch({ headless: true, args:['--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream'], ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}) });
   const page = await browser.newPage({ viewport: { width: 1672, height: 941 } });
   page.setDefaultTimeout(20000);
+  await page.addInitScript(() => {
+    window.uploadDesktopMedia=async(file,userId,onProgress,unused,options)=>{
+      if(options?.profile==='poster'){window.posterUploadCount=(window.posterUploadCount||0)+1;return 'poster-media-id';}
+      return 'audio-media-id';
+    };
+    window.RTCPeerConnection=class {
+      constructor(){this.iceGatheringState='complete';this.connectionState='new';}
+      addTransceiver(){return {setCodecPreferences(){}};}
+      async createOffer(){return {type:'offer',sdp:'v=0\nm=video 9 UDP/TLS/RTP/SAVPF 96\nm=audio 9 UDP/TLS/RTP/SAVPF 111\n'};}
+      async setLocalDescription(offer){this.localDescription=offer;}
+      async setRemoteDescription(){}
+      async getStats(){return new Map();}
+      close(){this.connectionState='closed';}
+    };
+  });
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(base);
@@ -53,8 +79,13 @@ try {
   const studioBox = await studio.boundingBox();
   assert(studioBox && studioBox.width >= 1672 * .9, `Studio should use the maximized window: ${JSON.stringify(studioBox)}`);
   assert.equal(await studio.locator('.desktop-browser-group').count(), 4);
-  assert.match(await studio.locator('.desktop-browser-selected-event').textContent(), /Ausgewählter Livestream/);
-  assert.match(await studio.locator('.desktop-browser-event-start-hint').textContent(), /Kalendereintrag ist nicht nötig/);
+  const eventChoice=studio.locator('[data-browser-event-choice]');
+  await eventChoice.locator('option').nth(3).waitFor({state:'attached'});
+  assert.match(await studio.locator('.desktop-browser-selected-event').textContent(), /Livestream auswählen/,'The editor’s first row must not be broadcast automatically');
+  assert.equal(await eventChoice.locator('option').count(),4,'Two scheduled events, a placeholder and quick creation');
+  await eventChoice.selectOption('today-two');
+  await studio.locator('.desktop-browser-selected-event').filter({hasText:'Zweiter geplanter Livestream'}).waitFor();
+  assert.match(await studio.locator('.desktop-browser-event-start-hint').textContent(), /demselben Klick gespeichert/);
   assert.equal(await studio.locator('[data-browser-event-form]').count(),0,'Browser start should not require an extra activation checkbox or save action');
   for (const name of ['Kamera & Mikrofon', 'Bild & Bildschirm', 'Audio-Aufnahme', 'Übertragung']) {
     assert(await studio.locator('legend', { hasText: name }).isVisible(), name);
@@ -187,17 +218,75 @@ try {
   assert.equal(await studio.locator('[name=live_browser_host]').inputValue(), 'mannavomhimmel.de');
   assert.match(await studio.textContent(), /Server-API erreichbar/);
   await page.evaluate(async () => {
-    const module = await import('/assets/desktop-browser-studio.js?v=8');
+    const module = await import('/assets/desktop-browser-studio.js?v=9');
     await module.initialize(document.querySelector('[data-live-studio]'), { id: 'next-live', title: 'Nächster Livestream' });
   });
-  assert.match(await studio.locator('.desktop-browser-selected-event').textContent(), /Nächster Livestream/);
+  assert.match(await studio.locator('.desktop-browser-selected-event').textContent(), /Livestream auswählen/);
+  await eventChoice.selectOption('today-two');
+  await studio.locator('.desktop-browser-selected-event').filter({hasText:'Zweiter geplanter Livestream'}).waitFor();
   await studio.locator('[data-studio-action=start]').click();
   assert.match(await studio.locator('.is-broadcast [role=status]').last().textContent(), /Mikrofon vorbereiten/);
   assert.equal(browserStartCount,0,'No broadcast request should be made before media is prepared');
+  await eventChoice.selectOption('new');
+  await studio.locator('[data-browser-quick-title]').fill('Sofortige Browser-Sendung');
+  await studio.locator('[data-browser-quick-description]').fill('Beschreibung direkt im Studio');
+  assert(await studio.locator('[data-browser-quick-poster]').isVisible());
+  assert.equal(quickCreateCount,0,'Quick event should be saved by Start, not by changing the selector');
+  await studio.locator('[data-studio-field=camera]').selectOption('none');
+  await studio.locator('[data-studio-action=prepare]').click();
+  await studio.locator('[role=status]').filter({hasText:'Lokale Vorschau bereit'}).waitFor();
+  await studio.locator('[data-studio-field=image]').setInputFiles('public/assets/brand/owner/logo-mark.png');
+  await studio.locator('[data-studio-field=active_image] option').waitFor({state:'attached'});
+  await eventChoice.selectOption('today-two');
+  await studio.locator('[data-studio-action=start]').click();
+  await studio.locator('[role=status]').filter({hasText:'Live auf der Website'}).waitFor();
+  assert.equal(lastStartEvent,'today-two','Browser start must use the explicitly chosen second event');
+  assert.equal(quickCreateCount,0,'Selecting a scheduled event must not create a new one');
+  const otherTab=await browser.newPage();
+  await otherTab.goto('about:blank');await otherTab.bringToFront();
+  await page.waitForTimeout(1500);
+  assert.match(await studio.locator('.is-broadcast [role=status]').last().textContent(),/Live auf der Website/,'Switching browser tabs must not end the session');
+  await page.bringToFront();await otherTab.close();
+  await studio.locator('[data-studio-action=stop]').click();
+  await eventChoice.selectOption('new');
+  await studio.locator('[data-browser-quick-title]').fill('Sofortige Browser-Sendung');
+  await studio.locator('[data-browser-quick-description]').fill('Beschreibung direkt im Studio');
+  await studio.locator('[data-browser-quick-poster]').setInputFiles('public/assets/brand/owner/logo-mark.png');
+  assert(await studio.locator('.desktop-browser-quick-event img').isVisible());
+  const quickStart=await studio.locator('[data-studio-action=start]').boundingBox();
+  assert(quickStart && quickStart.y+quickStart.height<=941,`Quick-creation Start should remain visible in the maximized desktop window: ${JSON.stringify(quickStart)}`);
+  await page.screenshot({path:'tests/artifacts/browser-live-layout-quick-desktop.png'});
+  const quickPopupPromise=page.waitForEvent('popup');
+  await studio.locator('[data-studio-action=open_preview]').click();
+  const quickPopup=await quickPopupPromise;
+  assert(await studio.locator('.desktop-browser-preview').isHidden());
+  assert(await studio.locator('[data-browser-quick-title]').isVisible(),'Quick fields should remain in the Studio when preview is detached');
+  await quickPopup.close();
+  assert(await studio.locator('[data-browser-quick-title]').isVisible());
+  await page.setViewportSize({width:390,height:844});
+  assert(await studio.evaluate(panel=>panel.scrollWidth<=panel.clientWidth+1),'Quick creation has mobile horizontal overflow');
+  await page.screenshot({path:'tests/artifacts/browser-live-layout-quick-mobile.png'});
+  await page.setViewportSize({width:1672,height:941});
+  await studio.locator('[data-studio-action=start]').click();
+  await studio.locator('[role=status]').filter({hasText:'Live auf der Website'}).waitFor();
+  assert.equal(quickCreateCount,1,'One Start click should create the quick livestream');
+  assert.equal(lastStartEvent,'created-now','The quick livestream should be the one started');
+  assert.equal(lastCreatedPayload.title,'Sofortige Browser-Sendung');
+  assert.equal(lastCreatedPayload.body,'Beschreibung direkt im Studio');
+  assert.equal(lastCreatedPayload.cover_media_id,'poster-media-id');
+  assert.equal(await page.evaluate(()=>window.posterUploadCount),1);
+  assert.equal(await eventChoice.inputValue(),'created-now');
+  assert(await studio.locator('.desktop-browser-quick-event').isHidden(),'The quick form should close after the new stream starts');
+  await studio.locator('[data-studio-action=stop]').click();
   await studio.locator('summary').click();
   assert(await studio.locator('[name=live_browser_enabled]').isChecked(), 'Saved server setting should apply to a different livestream');
+  scheduled.length=0;
+  await page.reload();await root.locator('[data-mode=browser]').click();
+  await studio.locator('[data-browser-event-choice]').waitFor();
+  assert.equal(await studio.locator('[data-browser-event-choice]').inputValue(),'new','No upcoming events should open quick creation automatically');
+  assert(await studio.locator('[data-browser-quick-title]').isVisible());
   assert.deepEqual(errors, []);
-  console.log('Browser Studio layout, visible configuration failure and persistent server setting passed.');
+  console.log('Browser Studio explicit event choice, one-click quick stream with poster, desktop/mobile layout, preview pop-out and persistent server setting passed.');
 } finally {
   if (browser) await browser.close();
   await new Promise(resolve => server.close(resolve));

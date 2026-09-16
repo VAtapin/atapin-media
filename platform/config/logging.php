@@ -73,6 +73,14 @@ return [
             'locking' => true,
         ],
 
+        'live_browser_transport' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/live-browser-transport.log'),
+            'level' => 'warning',
+            'permission' => 0600,
+            'locking' => true,
+        ],
+
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),

@@ -83,6 +83,7 @@ class BrowserBroadcast
         abort_unless($session->user_id===$user->id,403);
         return DB::transaction(function()use($session){
             $session=LiveBrowserSession::lockForUpdate()->findOrFail($session->id);
+            abort_if($session->status==='failed',503,__('live-browser.browser_relay_failed'));
             abort_unless($session->status==='connected'&&$session->expires_at->isFuture()&&$this->eligible(SourceRecord::findOrFail($session->source_record_id)),409,__('live-browser.browser_session_ended'));
             $session->update(['expires_at'=>now()->addMinutes(2)]);
             $record=SourceRecord::findOrFail($session->source_record_id);

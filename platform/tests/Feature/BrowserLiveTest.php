@@ -1,7 +1,7 @@
 <?php
 namespace Tests\Feature;
 use App\Models\{User,Role,SourceRecord,LiveBrowserSession};
-use App\Services\{Access,Settings,PublicBroadcast,BrowserBroadcast,LiveServer};
+use App\Services\{Access,Settings,PublicBroadcast,BrowserBroadcast,BrowserLiveRelay,LiveServer};
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\{Http,Storage};
 use Tests\TestCase;
@@ -29,6 +29,31 @@ class BrowserLiveTest extends TestCase
     private function browserSession(SourceRecord $record): LiveBrowserSession
     {
         return LiveBrowserSession::create(['id'=>(string)\Illuminate\Support\Str::uuid(),'user_id'=>$this->owner->id,'source_record_id'=>$record->id,'status'=>'connected','expires_at'=>now()->addMinutes(2)]);
+    }
+    public function test_relay_keeps_process_output_pipes_and_logs_safe_failure_without_secret(): void
+    {
+        $session=$this->browserSession($this->event());
+        $process=(new \ReflectionMethod(BrowserLiveRelay::class,'process'))->invoke(new BrowserLiveRelay(),$session);
+        $this->assertFalse($process->isOutputDisabled(),'Plesk open_basedir may exclude /dev/null');
+        $file=tempnam(sys_get_temp_dir(),'live-relay-');config(['logging.channels.live_browser_transport.path'=>$file]);
+        $relay=new class extends BrowserLiveRelay {
+            protected function process(LiveBrowserSession $session): \Symfony\Component\Process\Process
+            {
+                return new \Symfony\Component\Process\Process([PHP_BINARY,'-r',
+                    'fwrite(STDERR,"Authorization failed for rtsp://control:private-secret@127.0.0.1\\n");exit(42);']);
+            }
+        };
+        try {
+            $relay->run('browser-'.$session->id);
+            $this->assertSame('failed',$session->fresh()->status);
+            $log=file_get_contents($file);
+            $this->assertStringContainsString('encoder_exited',$log);
+            $this->assertStringContainsString('auth_rejected',$log);
+            $this->assertStringContainsString('"exit_code":42',$log);
+            $this->assertStringNotContainsString('private-secret',$log);
+            $this->postJson('/desktop/live-studio/sessions/'.$session->id.'/heartbeat')->assertStatus(503)
+                ->assertJsonPath('message',__('live-browser.browser_relay_failed'));
+        } finally { @unlink($file); }
     }
     public function test_config_is_loopback_authenticated_and_preserves_obs_recording(): void
     {

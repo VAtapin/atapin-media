@@ -49,6 +49,21 @@ class PublicBroadcastTest extends TestCase
             $this->assertSame('missed_schedule',$missed->fresh()->metadata['ended_reason']);
         } finally { Carbon::setTestNow(); }
     }
+    public function test_browser_studio_lists_only_future_scheduled_livestreams_for_today(): void
+    {
+        app(\App\Services\Access::class)->seed();
+        $owner=User::factory()->create();$owner->roles()->attach(\App\Models\Role::where('name','Owner')->firstOrFail());
+        Carbon::setTestNow(Carbon::parse('2026-09-16 14:00:00',config('app.timezone')));
+        try {
+            $today=$this->actingAs($owner)->postJson('/api/desktop/live',['title'=>'Today evening','starts_at'=>'2026-09-16T20:00'])->assertCreated()->json('data');
+            $this->postJson('/api/desktop/live',['title'=>'Already missed','starts_at'=>'2026-09-16T12:00'])->assertCreated();
+            $this->postJson('/api/desktop/live',['title'=>'Tomorrow','starts_at'=>'2026-09-17T12:00'])->assertCreated();
+            $response=$this->getJson('/api/desktop/live?filter=browser_today&date=2026-09-17')->assertOk()
+                ->assertJsonPath('filter.mode','browser_today')->assertJsonPath('filter.date','2026-09-16')
+                ->assertJsonPath('pagination.total',1);
+            $this->assertSame($today['id'],$response->json('data.0.id'));
+        } finally { Carbon::setTestNow(); }
+    }
     public function test_live_studio_defaults_to_today_with_pagination_and_keeps_live_events_separate(): void
     {
         app(\App\Services\Access::class)->seed();

@@ -1,8 +1,9 @@
 import {createInset,mountInsetEditor} from '/assets/desktop-browser-pip.js?v=1';
+import {mountBrowserEvents} from '/assets/desktop-browser-events.js?v=1';
 const W=window.DesktopWorkspaces;
 const endpoint='/desktop/live-studio';
 const studios=new WeakMap();
-const css=document.createElement('link');css.rel='stylesheet';css.href='/assets/desktop-browser-studio.css?v=7';document.head.append(css);
+const css=document.createElement('link');css.rel='stylesheet';css.href='/assets/desktop-browser-studio.css?v=8';document.head.append(css);
 const request=async(url,options={})=>{
   const response=await fetch(url,{credentials:'same-origin',headers:{Accept:'application/json','Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content},...options});
   const data=response.status===204?{}:await response.json().catch(()=>({}));
@@ -11,17 +12,18 @@ const request=async(url,options={})=>{
 export const busy=root=>Boolean(studios.get(root)?.busy());
 export async function initialize(root,event,configured=false){
   const old=studios.get(root);if(old?.busy())return;old?.dispose();
-  if(!event.id)return;
+  const obsEvent=event;
+  event={}; // Browser input is chosen here, independently of the editor's initially opened OBS event.
   const panel=W.el('section',undefined,'desktop-browser-studio desktop-publishing-card');panel.dataset.browserStudio='';
   const tabs=W.el('nav',undefined,'desktop-browser-tabs'),grid=root.querySelector('.desktop-live-studio-grid');grid.before(tabs,panel);
   let disposed=false,labels={},pc=null,session=null,context=null,mic=null,camera=null,screen=null,canvasStream=null,audioDestination=null;
   let micGain=null,screenGain=null,recorder=null,recording=false,pcm=[],pcmBytes=0,wav=null,drawTimer=null,beatTimer=null,preparing=false,uploadedMediaId=null,statsTimer=null;
-  let scene='camera',pip=false,imageIndex=0,images=[],imageUrls=[],sources=[],observer=null,operation=0;
-  let previewWindow=null,previewWindowStream=null,previewPanel=null,previewLayout=null,previewButton=null,previewHead=null,previewHeading=null;
+  let scene='camera',pip=false,imageIndex=0,images=[],imageUrls=[],sources=[],observer=null,operation=0,creating=false;
+  let previewWindow=null,previewWindowStream=null,previewPanel=null,previewLayout=null,previewButton=null,previewHead=null,previewHeading=null,eventPicker=null;
   const inset=createInset();let inlineInsetEditor=null,popupInsetEditor=null,popupInsetHint=null;
   const syncInsetEditors=()=>{inlineInsetEditor?.update();popupInsetEditor?.update();if(popupInsetHint)popupInsetHint.hidden=!pip||scene==='camera';};
   const t=key=>labels[key]||key;
-  const detachPreview=detached=>{if(previewPanel)previewPanel.hidden=detached;previewLayout?.classList.toggle('is-detached',detached);if(previewButton){previewButton.textContent=t(detached?'show_preview':'open_preview');(detached?previewHeading:previewHead)?.append(previewButton);}};
+  const detachPreview=detached=>{eventPicker?.place(detached);if(previewPanel)previewPanel.hidden=detached;previewLayout?.classList.toggle('is-detached',detached);if(previewButton){previewButton.textContent=t(detached?'show_preview':'open_preview');(detached?previewHeading:previewHead)?.append(previewButton);}};
   const closePreviewWindow=()=>{previewWindowStream?.getTracks().forEach(track=>track.stop());previewWindowStream=null;if(previewWindow&&!previewWindow.closed)previewWindow.close();previewWindow=null;popupInsetEditor=null;popupInsetHint=null;detachPreview(false);};
   const status=W.el('p');status.setAttribute('role','status');
   const video=()=>{const node=document.createElement('video');node.muted=true;node.playsInline=true;node.autoplay=true;return node;};
@@ -36,11 +38,11 @@ export async function initialize(root,event,configured=false){
     b.onclick=async()=>{b.disabled=true;try{await fn();}catch(error){status.textContent=error.message||t('error');}finally{if(!disposed)b.disabled=false;}};return b;};
   const input=(key,type='text')=>{const label=W.el('label',t(key)),field=document.createElement('input');field.type=type;field.dataset.studioField=key;label.append(field);fieldGroup.append(label);return field;};
   const select=key=>{const label=W.el('label',t(key)),field=document.createElement('select');field.dataset.studioField=key;label.append(field);fieldGroup.append(label);return field;};
-  const state={busy:()=>Boolean(pc||session||recording||preparing),dispose:()=>{
+  const state={busy:()=>Boolean(pc||session||recording||preparing||creating),dispose:()=>{
     if(disposed)return;disposed=true;clearInterval(drawTimer);clearInterval(beatTimer);clearInterval(statsTimer);observer?.disconnect();window.removeEventListener('beforeunload',unload);
     if(session)fetch(endpoint+'/sessions/'+session,{method:'DELETE',credentials:'same-origin',keepalive:true,headers:{Accept:'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content}}).catch(()=>{});
     pc?.close();canvasStream?.getTracks().forEach(track=>track.stop());for(const stream of [mic,camera,screen])stream?.getTracks().forEach(track=>track.stop());
-    recorder?.disconnect();sources.forEach(source=>source.disconnect());context?.close();imageUrls.forEach(url=>URL.revokeObjectURL(url));closePreviewWindow();document.removeEventListener('click',guardClose,true);panel.remove();tabs.remove();grid.hidden=false;delete root.dataset.studioCapturing;
+    recorder?.disconnect();sources.forEach(source=>source.disconnect());context?.close();imageUrls.forEach(url=>URL.revokeObjectURL(url));eventPicker?.dispose();closePreviewWindow();document.removeEventListener('click',guardClose,true);panel.remove();tabs.remove();grid.hidden=false;delete root.dataset.studioCapturing;
   }};studios.set(root,state);
   const unload=e=>{if(state.busy()){e.preventDefault();e.returnValue='';}};
   window.addEventListener('beforeunload',unload);
@@ -59,11 +61,11 @@ export async function initialize(root,event,configured=false){
       if(!popup)throw new Error(t('popup_blocked'));
       previewWindow=popup;
       try{
-        popup.document.title=t('preview')+' · '+event.title;popup.document.documentElement.lang=document.documentElement.lang||'de';
+        popup.document.title=t('preview')+' · '+(event.title||t('quick_new'));popup.document.documentElement.lang=document.documentElement.lang||'de';
         const viewport=popup.document.createElement('meta');viewport.name='viewport';viewport.content='width=device-width,initial-scale=1';
         const style=popup.document.createElement('style');style.textContent='*{box-sizing:border-box}body{margin:0;padding:16px;background:#102238;color:#fff;font:14px Inter,Arial,sans-serif}header{margin-bottom:12px;overflow-wrap:anywhere}header small{display:block;margin-top:4px;color:#cbd9e6}header small[hidden]{display:none}video{display:block;width:100%;aspect-ratio:16/9;object-fit:contain;background:#071526;border-radius:10px}.desktop-browser-pip-surface{position:relative;width:100%}.desktop-browser-pip-handle{position:absolute;z-index:2;border:2px solid #fff;box-shadow:0 0 0 1px #102238,0 0 8px #102238;cursor:move;touch-action:none}.desktop-browser-pip-handle[hidden]{display:none}.desktop-browser-pip-handle [data-pip-resize]{position:absolute;right:-2px;bottom:-2px;width:20px;height:20px;border:2px solid #102238;background:#fff;cursor:nwse-resize}.desktop-browser-pip-handle:focus-visible{outline:3px solid #ffce65;outline-offset:3px}';
         popup.document.head.append(viewport,style);
-        const heading=popup.document.createElement('header'),video=popup.document.createElement('video');heading.textContent=event.title;video.muted=true;video.playsInline=true;video.autoplay=true;
+        const heading=popup.document.createElement('header'),video=popup.document.createElement('video');heading.textContent=event.title||t('quick_new');video.muted=true;video.playsInline=true;video.autoplay=true;
         popupInsetHint=popup.document.createElement('small');popupInsetHint.textContent=t('pip_hint');heading.append(popupInsetHint);
         const surface=popup.document.createElement('div');surface.className='desktop-browser-pip-surface';surface.append(video);
         popupInsetEditor=mountInsetEditor(surface,inset,{label:t('pip_adjust'),visible:()=>pip&&scene!=='camera',onChange:syncInsetEditors});
@@ -78,7 +80,13 @@ export async function initialize(root,event,configured=false){
     inlineInsetEditor=mountInsetEditor(inlineSurface,inset,{label:t('pip_adjust'),visible:()=>pip&&scene!=='camera',onChange:syncInsetEditors});
     preview.append(previewHead,inlineSurface);layout.append(preview,controls);
     const heading=W.el('div',undefined,'desktop-browser-heading');previewHeading=heading;heading.append(W.el('h3',t('title')));
-    panel.append(heading,W.el('p',t('selected_event')+': '+event.title,'desktop-browser-selected-event'),W.el('p',t('intro')),layout);
+    const selectedLabel=W.el('p',t('selected_event')+': '+t('choose_placeholder'),'desktop-browser-selected-event');
+    panel.append(heading,selectedLabel,W.el('p',t('intro')),layout);
+    eventPicker=mountBrowserEvents({root,panel,t,request,onSelect:data=>{
+      event=data||{};selectedLabel.textContent=t('selected_event')+': '+(event.title||(eventPicker?.mode()==='new'?t('quick_new'):t('choose_placeholder')));
+      if(previewWindow&&!previewWindow.closed){previewWindow.document.title=t('preview')+' · '+(event.title||t('quick_new'));previewWindow.document.querySelector('header').firstChild.textContent=event.title||t('quick_new');}
+    }});
+    await eventPicker.refresh(server.session?.source_record_id||null);if(disposed)return;
     const devices=group('devices','is-devices',leftControls);fieldGroup=devices;
     const cameraChoice=select('camera'),micChoice=select('microphone');cameraChoice.append(new Option(t('none'),'none'));micChoice.append(new Option(t('microphone'),''));
     const micVolume=input('mic_volume','range');micVolume.min=0;micVolume.max=1;micVolume.step=.01;micVolume.value=.8;micVolume.oninput=()=>{if(micGain)micGain.gain.value=Number(micVolume.value);};
@@ -146,16 +154,17 @@ export async function initialize(root,event,configured=false){
       wav=new Blob([header,...pcm],{type:'audio/wav'});pcm=[];pcmBytes=0;status.textContent=t('ready');
     };
     const audioActions=actionRow(audio,action('record',async()=>{if(!mic||!recorder||recording)throw new Error(t('choose_source'));if(wav&&!confirm(t('download')+'?'))return;wav=null;uploadedMediaId=null;pcm=[];pcmBytes=0;await context.resume();recording=true;recorder.port.postMessage(true);status.textContent=t('recording');}),action('record_stop',finishRecording),action('download',()=>{
-      if(!wav)throw new Error(t('choose_source'));const url=URL.createObjectURL(wav),a=document.createElement('a');a.href=url;a.download='podcast-'+event.id+'.wav';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);
+      if(!wav)throw new Error(t('choose_source'));const url=URL.createObjectURL(wav),a=document.createElement('a');a.href=url;a.download='podcast-'+(event.id||'browser')+'.wav';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);
     }));
     if(typeof window.uploadDesktopMedia==='function')audioActions.append(action('upload',async()=>{
-      if(!wav||recording)throw new Error(t('choose_source'));uploadedMediaId=await window.uploadDesktopMedia(new File([wav],'podcast-'+event.id+'.wav',{type:'audio/wav'}),root.dataset.userId,()=>{},null);status.textContent=t('uploaded');
+      if(!wav||recording)throw new Error(t('choose_source'));uploadedMediaId=await window.uploadDesktopMedia(new File([wav],'podcast-'+(event.id||'browser')+'.wav',{type:'audio/wav'}),root.dataset.userId,()=>{},null);status.textContent=t('uploaded');
     }));
-    audioActions.append(action('podcast_draft',async()=>{if(!uploadedMediaId)throw new Error(t('audio_unavailable'));await request(endpoint+'/events/'+event.id+'/podcast',{method:'POST',body:JSON.stringify({confirm:true,media_id:uploadedMediaId})});status.textContent=t('podcast_created');}));
-    const stop=async()=>{operation++;const id=session;clearInterval(beatTimer);clearInterval(statsTimer);pc?.close();pc=null;canvasStream?.getTracks().forEach(track=>track.stop());canvasStream=null;if(id)await request(endpoint+'/sessions/'+id,{method:'DELETE'});session=null;status.textContent=t('ended');};
+    audioActions.append(action('podcast_draft',async()=>{if(!uploadedMediaId)throw new Error(t('audio_unavailable'));if(!event.id)throw new Error(t('choose_required'));await request(endpoint+'/events/'+event.id+'/podcast',{method:'POST',body:JSON.stringify({confirm:true,media_id:uploadedMediaId})});status.textContent=t('podcast_created');}));
+    const stop=async()=>{operation++;const id=session;clearInterval(beatTimer);clearInterval(statsTimer);pc?.close();pc=null;canvasStream?.getTracks().forEach(track=>track.stop());canvasStream=null;if(id)await request(endpoint+'/sessions/'+id,{method:'DELETE'});session=null;eventPicker.lock(false);status.textContent=t('ended');};
     actionRow(broadcast,action('start',async()=>{
       if(session||pc||!mic||(scene==='camera'&&!camera)||(scene==='screen'&&!screen)||(scene==='image'&&!images.length))throw new Error(t('choose_source'));
-      if(!server.available||!server.browser_enabled)throw new Error(t('browser_disabled'));if(!confirm(t('confirm_start')))return;
+      if(!server.available||!server.browser_enabled)throw new Error(t('browser_disabled'));eventPicker.validate();if(!confirm(t('confirm_start')))return;
+      creating=true;try{event=await eventPicker.ensureEvent();}finally{creating=false;}
       status.textContent=t('connecting');pc=new RTCPeerConnection();
       const generation=++operation;
       try{
@@ -167,13 +176,13 @@ export async function initialize(root,event,configured=false){
         await new Promise((resolve,reject)=>{if(pc.iceGatheringState==='complete'){resolve();return;}const timeout=setTimeout(()=>reject(new Error(t('browser_connection_failed'))),12000);pc.onicegatheringstatechange=()=>{if(pc?.iceGatheringState==='complete'){clearTimeout(timeout);resolve();}};});
         const data=await request(endpoint+'/events/'+event.id+'/browser',{method:'POST',body:JSON.stringify({confirm:true,sdp:pc.localDescription.sdp})});
         if(disposed||operation!==generation){await request(endpoint+'/sessions/'+data.id,{method:'DELETE'});throw new Error(t('ended'));}session=data.id;
-        event.published=true;event.browser_enabled=true;event.starts_at=data.starts_at||event.starts_at;
+        event.published=true;event.browser_enabled=true;event.starts_at=data.starts_at||event.starts_at;eventPicker.complete(event);eventPicker.lock(true);
         root.dispatchEvent(new CustomEvent('desktop-live-event-started',{detail:{...event}}));
         await pc.setRemoteDescription({type:'answer',sdp:data.sdp});
         const beat=async()=>{try{const data=await request(endpoint+'/sessions/'+session+'/heartbeat',{method:'POST'});status.textContent=t(data.status==='live'?'live':'connecting');}catch(error){await stop().catch(()=>{});status.textContent=error.message;}};
         beatTimer=setInterval(beat,10000);await beat();
         let previous=null;statsTimer=setInterval(async()=>{const current=pc;if(!current)return;try{const reports=await current.getStats();if(pc!==current)return;for(const report of reports.values())if(report.type==='outbound-rtp'&&report.kind==='video'&&!report.isRemote){let rate='—';if(previous&&report.timestamp>previous.timestamp)rate=Math.round((report.bytesSent-previous.bytesSent)*8/(report.timestamp-previous.timestamp))+' kbit/s';telemetry.textContent=t('telemetry')+' · '+t('bitrate')+': '+rate+' · '+t('frames')+': '+(report.framesEncoded??'—');previous=report;}}catch{/* Statistics are optional, never made-up. */}},1000);
-      }catch(error){await stop().catch(()=>{});if(error.status===429)throw new Error(t('start_cooldown').replace(':seconds',String(error.retryAfter||60)));throw error;}
+      }catch(error){await stop().catch(()=>{});eventPicker.lock(false);if(error.status===429)throw new Error(t('start_cooldown').replace(':seconds',String(error.retryAfter||60)));throw error;}
     }),action('stop',stop));broadcast.append(status,telemetry);
     const settings=W.el('details');settings.append(W.el('summary',t('server')),W.el('p',t(server.available?'available':'unavailable')));if(!server.available)settings.append(W.el('p',t('unavailable_hint')));if(!server.browser_enabled)settings.append(W.el('p',t('enable_hint')));settings.append(W.el('p',t('setup_hint')),W.el('p',t('network_hint')));panel.append(settings);
     if(configured){const notice=W.el('p',t(server.available?'config_saved':'config_saved_api_unavailable'),'desktop-browser-config-notice');notice.dataset.serverConfigResult='';notice.dataset.state=server.available?'success':'warning';notice.setAttribute('role','status');settings.append(notice);settings.open=true;}
@@ -184,14 +193,14 @@ export async function initialize(root,event,configured=false){
       form.onsubmit=async ev=>{
         ev.preventDefault();if(!confirm(t('confirm_config')))return;
         feedback.removeAttribute('role');feedback.dataset.state='pending';feedback.textContent=t('config_applying');apply.disabled=true;apply.textContent=t('config_applying');
-        try{await request(endpoint+'/server',{method:'POST',body:JSON.stringify({confirm:true,live_browser_host:host.value,live_browser_enabled:enable.checked})});await initialize(root,event,true);}
+        try{await request(endpoint+'/server',{method:'POST',body:JSON.stringify({confirm:true,live_browser_host:host.value,live_browser_enabled:enable.checked})});await initialize(root,obsEvent,true);}
         catch(error){feedback.dataset.state='error';feedback.setAttribute('role','alert');feedback.textContent=t('config_not_saved')+' '+(error.message||t('error'));feedback.scrollIntoView({block:'nearest'});}
         finally{if(!disposed){apply.disabled=false;apply.textContent=t('apply');}}
       };
       settings.append(form);
     }
     if(configured)settings.querySelector('[data-server-config-result]').scrollIntoView({block:'nearest'});
-    if(server.can_disconnect)settings.append(action('disconnect',async()=>{if(confirm(t('confirm_disconnect')))await request(endpoint+'/events/'+event.id+'/disconnect',{method:'POST',body:JSON.stringify({confirm:true})});}));
-    if(server.session){session=server.session.id;status.textContent=t('restore_session');}
+    if(server.can_disconnect&&obsEvent?.id)settings.append(action('disconnect',async()=>{if(confirm(t('confirm_disconnect')))await request(endpoint+'/events/'+obsEvent.id+'/disconnect',{method:'POST',body:JSON.stringify({confirm:true})});}));
+    if(server.session){session=server.session.id;eventPicker.lock(true);status.textContent=t('restore_session');}
   }catch(error){if(!disposed){panel.append(status);status.textContent=error.message;}}
 }

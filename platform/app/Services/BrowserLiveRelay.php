@@ -1,6 +1,7 @@
 <?php
 namespace App\Services;
 use App\Models\{LiveBrowserSession,SourceRecord,User};
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\Process\Process;
 class BrowserLiveRelay
 {
@@ -14,18 +15,45 @@ class BrowserLiveRelay
             pcntl_signal(SIGINT,static function()use(&$stopping){$stopping=true;});
             pcntl_signal(SIGTERM,static function()use(&$stopping){$stopping=true;});
         }
-        $process=$this->process($session);$process->start();
+        $process=$this->process($session);$stderr='';$reason='encoder_exited';$exceptionType=null;
         try{
+            // Keep Symfony's output pipes: disabling output opens /dev/null, which Plesk open_basedir can forbid.
+            $process->start(function($type,$buffer)use($process,&$stderr){
+                if($type===Process::ERR)$stderr=substr($stderr.$buffer,-2048);
+                $process->clearOutput();$process->clearErrorOutput();
+            });
             while(!$stopping&&$process->isRunning()){
                 $session->refresh();$owner=User::find($session->user_id);$record=SourceRecord::find($session->source_record_id);
-                if(!in_array($session->status,['starting','connected'],true)||$session->expires_at->isPast()||!$owner||!$owner->can('content.publish')||!$record||!app(BrowserBroadcast::class)->eligible($record))break;
+                if(!in_array($session->status,['starting','connected'],true)){ $reason='session_stopped';break; }
+                if($session->expires_at->isPast()){ $reason='session_expired';break; }
+                if(!$owner||!$owner->can('content.publish')||!$record||!app(BrowserBroadcast::class)->eligible($record)){ $reason='event_unavailable';break; }
                 sleep(1);
             }
+        }catch(\Throwable $error){$reason='encoder_start_failed';$exceptionType=class_basename($error);
         }finally{
-            $process->stop(2);
-            if(in_array($session->status,['starting','connected'],true))$session->update(['status'=>'failed','expires_at'=>now()]);
+            if($process->isRunning())$process->stop(2);
+            $session->refresh();
+            if(in_array($session->status,['starting','connected'],true)){
+                $session->update(['status'=>'failed','expires_at'=>now()]);
+                try{Log::channel('live_browser_transport')->warning('live.browser_relay_failed',[
+                    'session_id'=>$session->id,'event_id'=>$session->source_record_id,'reason'=>$reason,
+                    'exit_code'=>$process->getExitCode(),'error_code'=>$this->errorCode($stderr),'exception_type'=>$exceptionType,
+                ]);}catch(\Throwable){/* Logging failure must not prevent upstream cleanup. */}
+            }
             try{app(BrowserBroadcast::class)->closeUpstream($session->fresh());}catch(\Throwable){/* No secret process diagnostics in public logs. */}
         }
+    }
+    private function errorCode(string $stderr): string
+    {
+        $text=strtolower($stderr);
+        return match(true){
+            str_contains($text,'401 unauthorized'),str_contains($text,'authorization failed')=>'auth_rejected',
+            str_contains($text,'connection refused')=>'connection_refused',
+            str_contains($text,'permission denied')=>'permission_denied',
+            str_contains($text,'timed out')=>'media_timeout',
+            str_contains($text,'invalid data')=>'invalid_media',
+            default=>'unknown',
+        };
     }
     protected function process(LiveBrowserSession $session): Process
     {
@@ -36,6 +64,6 @@ class BrowserLiveRelay
             '-rtsp_transport','tcp','-rw_timeout','15000000','-i',$input,'-map','0:v:0','-map','0:a:0',
             '-c:v','libx264','-preset','veryfast','-tune','zerolatency','-pix_fmt','yuv420p','-profile:v','baseline','-g','60','-b:v','2500k',
             '-c:a','aac','-b:a','128k','-ar','48000','-f','flv',$output]);
-        $process->setTimeout(null);$process->disableOutput();return $process;
+        $process->setTimeout(null);return $process;
     }
 }
