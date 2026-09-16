@@ -1,6 +1,6 @@
 <?php
 namespace App\Services;
-use Illuminate\Support\Facades\{Cache,Http};
+use Illuminate\Support\Facades\{Cache,Http,Log};
 use Symfony\Component\Process\Process;
 class LiveServer
 {
@@ -81,7 +81,8 @@ class LiveServer
                 $start=new Process(['/bin/bash',base_path('bin/live-server.sh'),'start']);$start->setTimeout(10);$start->disableOutput();$start->mustRun();
                 $stage='audit';
                 app(Audit::class)->record('live.server_configured',null,['browser_enabled'=>$values['live_browser_enabled']]);
-            }catch(\Throwable){
+                $this->logConfigurationAttempt('applied','complete',(bool)$values['live_browser_enabled']);
+            }catch(\Throwable $error){
                 $settings->update($previous);
                 $restored=true;
                 if($applied){
@@ -90,10 +91,22 @@ class LiveServer
                     if($restored){chmod($candidate,0600);$restored=rename($candidate,$current);}
                 }
                 if(is_file($candidate))unlink($candidate);
+                $this->logConfigurationAttempt($restored?'rolled_back':'rollback_unconfirmed',$stage,(bool)$values['live_browser_enabled'],$error);
                 abort(503,__($restored?'live-browser.server_configuration_failed_stage':'live-browser.server_rollback_failed',
                     ['step'=>__('live-browser.config_step_'.$stage)]));
             }
         });
+    }
+    private function logConfigurationAttempt(string $outcome,string $stage,bool $browserEnabled,?\Throwable $error=null): void
+    {
+        $context=['outcome'=>$outcome,'stage'=>$stage,'browser_enabled'=>$browserEnabled];
+        if($error){
+            $context['error_type']=$error::class;
+            if($error instanceof \Symfony\Component\Process\Exception\ProcessFailedException)
+                $context['process_exit_code']=$error->getProcess()->getExitCode();
+        }
+        try{Log::channel('live_server')->log($error?'warning':'info','live.server_configuration_'.$outcome,$context);}
+        catch(\Throwable){/* A logging problem must not change the server or rollback result. */}
     }
     public function disconnect(\App\Models\SourceRecord $record): void
     {

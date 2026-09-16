@@ -65,6 +65,14 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'live_server' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/live-server-configuration.log'),
+            'level' => 'info',
+            'permission' => 0600,
+            'locking' => true,
+        ],
+
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),
