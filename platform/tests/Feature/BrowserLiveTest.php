@@ -42,6 +42,7 @@ class BrowserLiveTest extends TestCase
         $errorCode=new \ReflectionMethod(BrowserLiveRelay::class,'errorCode');
         $this->assertSame('encoder_unavailable',$errorCode->invoke(new BrowserLiveRelay(),"Unknown encoder 'aac'"));
         $this->assertSame('media_track_missing',$errorCode->invoke(new BrowserLiveRelay(),"Stream map '0:a:0' matches no streams"));
+        $this->assertSame('codec_parameters_unavailable',$errorCode->invoke(new BrowserLiveRelay(),'Could not find codec parameters: dimensions not set'));
         $file=tempnam(sys_get_temp_dir(),'live-relay-');config(['logging.channels.live_browser_transport.path'=>$file]);
         $relay=new class extends BrowserLiveRelay {
             protected function process(LiveBrowserSession $session): \Symfony\Component\Process\Process
@@ -72,14 +73,18 @@ class BrowserLiveTest extends TestCase
         ])->assertCreated()->json();
         $session=LiveBrowserSession::findOrFail($started['id']);
         $relay=new class extends BrowserLiveRelay {
+            public int $attempts=0;
             protected function process(LiveBrowserSession $session): \Symfony\Component\Process\Process
             {
+                $this->attempts++;
                 return new \Symfony\Component\Process\Process([PHP_BINARY,'-r','exit(1);']);
             }
+            protected function pauseBeforeRetry(int $attempt): void {}
         };
         $relay->run('browser-'.$session->id);
         $metadata=$record->fresh()->metadata;
         $this->assertSame('failed',$session->fresh()->status);
+        $this->assertSame(3,$relay->attempts);
         $this->assertFalse($metadata['public_published']);
         $this->assertFalse($metadata['live_browser_enabled']);
         $this->assertFalse($metadata['live_stream_enabled']);

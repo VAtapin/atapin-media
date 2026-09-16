@@ -15,7 +15,7 @@
     if (!root || root.dataset.initialized === 'true') return;
     root.dataset.initialized = 'true';
     let browserStudio=null;
-    const studioModule=import('/assets/desktop-browser-studio.js?v=9').then(module=>{browserStudio=module;return module;});
+    const studioModule=import('/assets/desktop-browser-studio.js?v=10').then(module=>{browserStudio=module;return module;});
     const form = root.querySelector('[data-live-form]');
     const empty = root.querySelector('[data-live-editor-empty]');
     const events = root.querySelector('[data-live-events]');
