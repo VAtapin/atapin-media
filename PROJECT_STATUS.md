@@ -40,12 +40,12 @@
 
 - Реальные OpenAI, Stripe, SMTP, Meta, YouTube, X, Telegram, OBS/WHIP и production credentials локально не использовались; интеграционные ответы проверены через HTTP fakes и контрактные тесты.
 - TikTok и LinkedIn пока остаются profile-only, без фиктивного publishing API.
-- Production deployment и post-deployment smoke-test агентом не выполнялись.
+- Production-код обновлён владельцем; `platform:check` и реальный Browser-эфир агентом не выполнялись.
 - Перед production migration обязателен backup базы данных.
 - Вставка изображений непосредственно в rich-text пока отключена: её следует добавить отдельным блоком через защищённую Media Library и проверку public media URLs; arbitrary URL/base64 images не допускаются.
 - Старый тест `DesktopWorkspacesTest::test_calendar_uses_local_time_and_respects_access` после перехода локальной даты воспроизводимо получает `null` вместо `10:30`; он не связан с taxonomy, но требует отдельной стабилизации календарного теста/границы timezone.
 - Полный Playwright-сценарий приложения локально не завершился: Chrome/Edge не переходили на `127.0.0.1` из этой среды, хотя тестовый PHP-сервер отвечал. Сквозные проверки остаются в CI; изолированные браузерные проверки этого блока прошли.
-- На production существующий MediaMTX имеет `api=false`, `webrtc=false`, локальный API `127.0.0.1:9997` не слушает (`HTTP 000`). Конфиг валиден, FFmpeg имеет `libx264`/AAC, приватная папка и конфиг принадлежат пользователю Plesk. После обновления диагностического кода защищённая конфигурация откатилась на этапе `validation`; приватный журнал подтвердил `ErrorException` до результата validator. Источник ошибки `/dev/null` при PHP `open_basedir` следует из Symfony Process и является рабочей гипотезой; production-повтор после исправления ещё нужен. Публичный TCP/UDP 8189 открыт владельцем; API не включается открытием firewall-порта. Реальная Browser-трансляция не подтверждена.
+- На production прежняя защищённая конфигурация откатывалась на этапе `validation` с `ErrorException`; Symfony Process при отключённом выводе открывал `/dev/null`, исключённый из Plesk PHP `open_basedir`. После опубликованного исправления владелец применил конфигурацию: Live Studio показала `Serverkonfiguration gespeichert. Diese Einstellung gilt auch für kommende Livestreams.`, а после обновления страницы — `Server-API erreichbar`. Настройка глобальна и не требуется для каждого эфира. Публичный TCP/UDP 8189 открыт владельцем; реальная Browser-трансляция и `platform:check` ещё не подтверждены.
 
 ## Проверки
 
@@ -54,13 +54,13 @@
 - PHP/Node syntax затронутых файлов, Blade `view:cache`, routes `route:cache` — passed; generated caches очищены. Composer audit и npm build не требуются: manifest dependencies не менялись.
 - Для Browser Studio изолированный Edge browser check на `1672 × 941` и `390 × 844` прошёл: layout и отдельное превью, заметный откат серверной настройки возле формы, успешное сохранение галочки/hostname после обновления страницы и для другого Livestream. PHP/Node syntax, немецкое Laravel translation rendering и Blade `view:cache` прошли, compiled views очищены. PHP Feature/реальный MediaMTX transport для этого блока локально не запускались: установленный PHP 8.4 не имеет `pdo_sqlite`, а pinned MediaMTX binary здесь отсутствует; проверка Browser Studio добавлена в CI.
 - Для отдельного Live-конфигурационного журнала PHP syntax и Laravel `config:cache` прошли, config cache очищен. Изолированная запись через новый logging channel создала ожидаемую запись с этапом/типом/exit code в локальном runtime log; QA-файл затем удалён. После deployment production-журнал подтвердил откат `validation` с `ErrorException`.
-- Для совместимости защищённой Live-конфигурации с Plesk PHP `open_basedir` PHP syntax и локальная проверка вызова Symfony Process прошли. Linux-проверка с исключённым `/dev/null` добавлена в CI; локально не запускалась, поскольку WSL/Linux и pinned MediaMTX здесь отсутствуют. Production-проверка после обновления кода ожидается.
+- Для совместимости защищённой Live-конфигурации с Plesk PHP `open_basedir` PHP syntax и локальная проверка вызова Symfony Process прошли. Linux-проверка с исключённым `/dev/null` добавлена в CI; локально не запускалась, поскольку WSL/Linux и pinned MediaMTX здесь отсутствуют. Владелец подтвердил успешное применение на production и доступность Server-API после обновления страницы.
 - Для тонкой taxonomy-навигации **36 PHP tests, 320 assertions — passed** на локальном PHP 8.4 / SQLite; отдельный scale-тест проверил 10 категорий, 50 тем и 12 Beiträge в теме. Изолированный Edge browser проверил главную и каталоги Videos/Beiträge/Bücher на `1672 × 941` и `390 × 844`: полоса до 42 px, рамка до 2 px, смена категории, меню тем, переходы и отсутствие horizontal overflow/JavaScript errors — passed. PHP/Node syntax и Blade `view:cache` прошли; compiled views очищены. Полный suite для этой локальной правки не повторялся.
 
 ## Что рекомендуется следующим
 
-- Применить опубликованные Public Website и Live Studio UI commits на production обычным `git pull --ff-only` и очистить compiled Blade views; после фактического deployment выполнить документированный `platform:check`. Migrations, Composer и Node build для UI-блоков не нужны.
-- После обновления кода без активной трансляции повторить защищённое применение Browser-конфигурации в Live Studio. При отказе сопоставить этап возле кнопки с `error_source`/`warning_code` приватного `live-server-configuration.log`; после успеха проверить локальный API и пройти реальный smoke-test трансляции. Публичные API/WHIP/RTSP порты открывать не требуется.
+- Продолжить отдельный блок Public Website с собственными проверками и production-обновлением после его commit/push; текущий Live Server уже обновлён владельцем.
+- Провести реальный Browser-эфир и документированный `platform:check` на production; проверять WebRTC media через публичный TCP/UDP 8189. Публичные API/WHIP/RTSP порты открывать не требуется.
 - При следующем запуске CI проверить обновлённые сквозные браузерные сценарии на штатном Linux/Chromium окружении.
 - Отдельно спроектировать защищённый выбор изображений из Media Library для Jodit, если изображения в тексте нужны владельцу.
 - В настройках по очереди сохранить app credentials и пройти реальные OAuth/API checks Meta, YouTube, X, Telegram и Stripe test mode. Секреты в чат не присылать.
@@ -68,5 +68,5 @@
 
 ## Последний связанный commit
 
-- Текущий функциональный блок: этот commit — `Keep Live server commands within Plesk open_basedir`. Branch/upstream: `main` → `origin/main`.
-- Предыдущий функциональный commit: `f84ad11` — `Log protected Live server configuration attempts`.
+- Последнее подтверждённое состояние Live Server: этот commit — `Record protected Live server recovery`. Branch/upstream: `main` → `origin/main`.
+- Функциональный commit: `2126f9a` — `Keep Live server commands within Plesk open_basedir`.
