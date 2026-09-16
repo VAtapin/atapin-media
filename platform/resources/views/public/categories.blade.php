@@ -1,7 +1,7 @@
 @extends('public.layout', ['title'=>$selectedShelf['name'] ?? __('public.category_directory_title')])
 @push('publicStyles')
 <link rel="stylesheet" href="/assets/public-book-shelf.css?v=7">
-<link rel="stylesheet" href="/assets/public-category-directory.css?v=2">
+<link rel="stylesheet" href="/assets/public-category-directory.css?v=3">
 @endpush
 @push('publicScripts')<script src="/assets/public-book-shelf.js?v=6" defer></script>@endpush
 
@@ -20,12 +20,16 @@
             <p class="public-overview-intro">{{ $selectedShelf ? __('public.category_directory_selected_intro') : __('public.category_directory_intro') }}</p>
             <div class="public-overview-actions"><a class="public-button" href="{{ $selectedShelf ? route('public.categories') : '#cabinet' }}">{{ $selectedShelf ? __('public.category_directory_all') : __('public.category_directory_explore') }} →</a></div>
         </div>
-        <div class="public-overview-feature public-directory-feature">
+        <div class="public-overview-feature public-directory-feature{{ $selectedShelf ? ' public-directory-feature-selected' : '' }}">
             <img class="public-photo" src="{{ $featureImage }}" alt="" aria-hidden="true">
             <div class="public-feature-content">
+                @if($selectedShelf)
+                <h2>{{ $selectedShelf['name'] }}</h2>
+                @else
                 <span class="public-feature-label">{{ $selectedShelf['name'] ?? __('public.category_directory_title') }}</span>
                 <h2>{{ trans_choice('public.category_directory_categories_count', $categoryCount, ['count'=>$categoryCount]) }}</h2>
                 <p>{{ trans_choice('public.category_directory_topics_count', $topicCount, ['count'=>$topicCount]) }}</p>
+                @endif
             </div>
         </div>
     </div>

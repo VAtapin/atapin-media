@@ -56,6 +56,8 @@ class PublicTaxonomyUiTest extends TestCase
         $this->get('/beitraege?taxonomy=medizin')->assertOk()->assertSee('Anatomie Beitrag');
         $categoryPage = $this->get('/themen?category=medizin')->assertOk()
             ->assertSee('<img class="public-photo" src="'.$cover->publicUrl().'"', false)
+            ->assertSee('public-directory-feature-selected', false)
+            ->assertDontSee('<span class="public-feature-label">', false)
             ->assertSee('Anatomie Beitrag')->assertSee('Anatomie Video')->assertSee('Anatomie Buch')
             ->assertSee(route('public.categories', ['category'=>'medizin', 'taxonomy'=>'anatomie']))
             ->assertSee('href="'.route('public.beitraege', ['taxonomy'=>'medizin']).'"', false)
