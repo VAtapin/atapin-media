@@ -19,9 +19,9 @@ const assets = new Map([
   ['/assets/desktop-browser-pip.js', 'public/assets/desktop-browser-pip.js'],
   ['/assets/desktop-podcast-recorder.js', 'public/assets/desktop-podcast-recorder.js'],
 ]);
-const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="layout-test"><link rel="stylesheet" href="/assets/desktop-app.css"><link rel="stylesheet" href="/assets/desktop-live-studio.css"><link rel="stylesheet" href="/assets/desktop-publishing.css"><style>html,body{margin:0;height:100%;background:#edf3f8}.os-window{height:100%}.os-titlebar{box-sizing:border-box;height:44px;padding:12px;background:#102f52;color:white;font:600 14px Inter,Arial,sans-serif}.desktop-live-studio{box-sizing:border-box;height:calc(100% - 44px)}</style></head><body><div class="os-window"><div class="os-titlebar">Live Studio</div><section class="desktop-live-studio" data-live-studio data-user-id="1" data-api-base="/api/desktop/live"><div class="desktop-live-studio-grid"></div></section></div><script>window.DesktopWorkspaces={el:(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;}};import('/assets/desktop-browser-studio.js?v=10').then(module=>module.initialize(document.querySelector('[data-live-studio]'),{id:'layout-test',title:'Ein neues Zuhause für Manna Vom Himmel',published:true,enabled:true}));</script></body></html>`;
+const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="layout-test"><link rel="stylesheet" href="/assets/desktop-app.css"><link rel="stylesheet" href="/assets/desktop-live-studio.css"><link rel="stylesheet" href="/assets/desktop-publishing.css"><style>html,body{margin:0;height:100%;background:#edf3f8}.os-window{height:100%}.os-titlebar{box-sizing:border-box;height:44px;padding:12px;background:#102f52;color:white;font:600 14px Inter,Arial,sans-serif}.desktop-live-studio{box-sizing:border-box;height:calc(100% - 44px)}</style></head><body><div class="os-window"><div class="os-titlebar">Live Studio</div><section class="desktop-live-studio" data-live-studio data-user-id="1" data-api-base="/api/desktop/live"><div class="desktop-live-studio-grid"></div></section></div><script>window.DesktopWorkspaces={el:(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;}};import('/assets/desktop-browser-studio.js?v=11').then(module=>module.initialize(document.querySelector('[data-live-studio]'),{id:'layout-test',title:'Ein neues Zuhause für Manna Vom Himmel',published:true,enabled:true}));</script></body></html>`;
 const configuration = { available: false, browser_enabled: false, host: '' };
-let rejectFirstConfig = true;
+let rejectFirstConfig = true, rejectFirstBrowserStart = true;
 let browserStartCount = 0, quickCreateCount = 0, lastStartEvent = null, lastCreatedPayload=null;
 const scheduled = [
   { id: 'today-one', title:'Erster geplanter Livestream', starts_at:new Date(Date.now()+3600000).toISOString(), status:'scheduled' },
@@ -33,7 +33,7 @@ const server = createServer(async (request, response) => {
   if (path === '/api/desktop/live' && request.method === 'GET') { response.writeHead(200, { 'Content-Type':'application/json' });response.end(JSON.stringify({data:scheduled,pagination:{last_page:1,total:scheduled.length}}));return; }
   if (path.startsWith('/api/desktop/live/') && request.method === 'GET') { const selected=scheduled.find(item=>item.id===path.split('/').pop());response.writeHead(selected?200:404,{'Content-Type':'application/json'});response.end(JSON.stringify(selected?{data:selected}:{message:'Event not found'}));return; }
   if (path === '/api/desktop/live' && request.method === 'POST') { let body='';for await(const chunk of request)body+=chunk;quickCreateCount++;const data=JSON.parse(body);lastCreatedPayload=data;response.writeHead(201,{'Content-Type':'application/json'});response.end(JSON.stringify({data:{id:'created-now',...data}}));return; }
-  if (path.endsWith('/browser') && request.method === 'POST') {browserStartCount++;lastStartEvent=path.split('/').at(-2);response.writeHead(201,{'Content-Type':'application/json'});response.end(JSON.stringify({id:'mock-session',sdp:'v=0',starts_at:new Date().toISOString()}));return;}
+  if (path.endsWith('/browser') && request.method === 'POST') {browserStartCount++;lastStartEvent=path.split('/').at(-2);if(rejectFirstBrowserStart){rejectFirstBrowserStart=false;response.writeHead(429,{'Content-Type':'application/json','Retry-After':'1'});response.end(JSON.stringify({message:'rate limited'}));return;}response.writeHead(201,{'Content-Type':'application/json'});response.end(JSON.stringify({id:'mock-session',sdp:'v=0',starts_at:new Date().toISOString()}));return;}
   if (path.endsWith('/heartbeat') && request.method === 'POST') {response.writeHead(200,{'Content-Type':'application/json'});response.end(JSON.stringify({status:'live'}));return;}
   if (path.includes('/sessions/') && request.method === 'DELETE') {response.writeHead(204);response.end();return;}
   if (path === '/desktop/live-studio/server') {
@@ -218,7 +218,7 @@ try {
   assert.equal(await studio.locator('[name=live_browser_host]').inputValue(), 'mannavomhimmel.de');
   assert.match(await studio.textContent(), /Server-API erreichbar/);
   await page.evaluate(async () => {
-    const module = await import('/assets/desktop-browser-studio.js?v=10');
+    const module = await import('/assets/desktop-browser-studio.js?v=11');
     await module.initialize(document.querySelector('[data-live-studio]'), { id: 'next-live', title: 'Nächster Livestream' });
   });
   assert.match(await studio.locator('.desktop-browser-selected-event').textContent(), /Livestream auswählen/);

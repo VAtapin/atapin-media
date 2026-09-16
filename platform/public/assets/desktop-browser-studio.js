@@ -17,7 +17,7 @@ export async function initialize(root,event,configured=false){
   const panel=W.el('section',undefined,'desktop-browser-studio desktop-publishing-card');panel.dataset.browserStudio='';
   const tabs=W.el('nav',undefined,'desktop-browser-tabs'),grid=root.querySelector('.desktop-live-studio-grid');grid.before(tabs,panel);
   let disposed=false,labels={},pc=null,session=null,context=null,mic=null,camera=null,screen=null,canvasStream=null,audioDestination=null;
-  let micGain=null,screenGain=null,recorder=null,recording=false,pcm=[],pcmBytes=0,wav=null,drawTimer=null,beatTimer=null,preparing=false,uploadedMediaId=null,statsTimer=null;
+  let micGain=null,screenGain=null,recorder=null,recording=false,pcm=[],pcmBytes=0,wav=null,drawTimer=null,beatTimer=null,preparing=false,uploadedMediaId=null,statsTimer=null,leaseUntil=0;
   let scene='camera',pip=false,imageIndex=0,images=[],imageUrls=[],sources=[],observer=null,operation=0,creating=false;
   let previewWindow=null,previewWindowStream=null,previewPanel=null,previewLayout=null,previewButton=null,previewHead=null,previewHeading=null,eventPicker=null;
   const inset=createInset();let inlineInsetEditor=null,popupInsetEditor=null,popupInsetHint=null;
@@ -171,15 +171,26 @@ export async function initialize(root,event,configured=false){
         canvasStream=canvas.captureStream(30);for(const track of [...canvasStream.getVideoTracks(),...audioDestination.stream.getAudioTracks()]){
           const transceiver=pc.addTransceiver(track,{direction:'sendonly'});if(track.kind==='video'&&transceiver.setCodecPreferences){const codecs=RTCRtpSender.getCapabilities('video').codecs.filter(codec=>codec.mimeType.toLowerCase()==='video/h264');if(!codecs.length)throw new Error(t('unsupported'));transceiver.setCodecPreferences(codecs);}
         }
-        pc.onconnectionstatechange=()=>{if(pc?.connectionState==='failed')stop().catch(error=>status.textContent=error.message);};
+        pc.onconnectionstatechange=()=>{if(pc?.connectionState==='failed'){const message=t('browser_connection_failed');stop().catch(()=>{}).finally(()=>{status.textContent=message;});}};
         await pc.setLocalDescription(await pc.createOffer());
         await new Promise((resolve,reject)=>{if(pc.iceGatheringState==='complete'){resolve();return;}const timeout=setTimeout(()=>reject(new Error(t('browser_connection_failed'))),12000);pc.onicegatheringstatechange=()=>{if(pc?.iceGatheringState==='complete'){clearTimeout(timeout);resolve();}};});
-        const data=await request(endpoint+'/events/'+event.id+'/browser',{method:'POST',body:JSON.stringify({confirm:true,sdp:pc.localDescription.sdp})});
+        const startRequest=()=>request(endpoint+'/events/'+event.id+'/browser',{method:'POST',body:JSON.stringify({confirm:true,sdp:pc.localDescription.sdp})});
+        let data;try{data=await startRequest();}catch(error){
+          if(error.status!==429||!error.retryAfter||error.retryAfter>10)throw error;
+          status.textContent=t('start_wait').replace(':seconds',String(error.retryAfter));
+          await new Promise(resolve=>setTimeout(resolve,(error.retryAfter+1)*1000));
+          if(disposed||operation!==generation)throw new Error(t('ended'));
+          data=await startRequest();
+        }
         if(disposed||operation!==generation){await request(endpoint+'/sessions/'+data.id,{method:'DELETE'});throw new Error(t('ended'));}session=data.id;
         event.published=true;event.browser_enabled=true;event.starts_at=data.starts_at||event.starts_at;event.status=data.status||'starting';eventPicker.complete(event);eventPicker.lock(true);
         root.dispatchEvent(new CustomEvent('desktop-live-event-started',{detail:{...event}}));
         await pc.setRemoteDescription({type:'answer',sdp:data.sdp});
-        const beat=async()=>{try{const data=await request(endpoint+'/sessions/'+session+'/heartbeat',{method:'POST'});status.textContent=t(data.status==='live'?'live':'connecting');}catch(error){await stop().catch(()=>{});status.textContent=error.message;}};
+        const beat=async()=>{try{const data=await request(endpoint+'/sessions/'+session+'/heartbeat',{method:'POST'});leaseUntil=Date.parse(data.expires_at)||leaseUntil;status.textContent=t(data.status==='live'?'live':'connecting');}catch(error){
+          const rejected=[401,403,404,409].includes(error.status),leaseExpired=leaseUntil&&Date.now()>=leaseUntil;
+          if(rejected||leaseExpired){await stop().catch(()=>{});status.textContent=error.message;return;}
+          status.textContent=t('heartbeat_warning');
+        }};
         beatTimer=setInterval(beat,10000);await beat();
         let previous=null;statsTimer=setInterval(async()=>{const current=pc;if(!current)return;try{const reports=await current.getStats();if(pc!==current)return;for(const report of reports.values())if(report.type==='outbound-rtp'&&report.kind==='video'&&!report.isRemote){let rate='—';if(previous&&report.timestamp>previous.timestamp)rate=Math.round((report.bytesSent-previous.bytesSent)*8/(report.timestamp-previous.timestamp))+' kbit/s';telemetry.textContent=t('telemetry')+' · '+t('bitrate')+': '+rate+' · '+t('frames')+': '+(report.framesEncoded??'—');previous=report;}}catch{/* Statistics are optional, never made-up. */}},1000);
       }catch(error){await stop().catch(()=>{});eventPicker.lock(false);if(error.status===429)throw new Error(t('start_cooldown').replace(':seconds',String(error.retryAfter||60)));throw error;}
