@@ -1,5 +1,4 @@
 (() => {
-  const cabinets = new Map();
   const shelves = [...document.querySelectorAll('[data-public-book-shelf]')];
 
   function widthOf(element) {
@@ -15,14 +14,7 @@
     const categories = shelf.querySelector('[data-shelf-categories]');
     const groups = [...shelf.querySelectorAll('[data-shelf-category]')];
     const all = shelf.querySelector('[data-shelf-all]');
-    const decor = shelf.querySelector('[data-shelf-decor]');
-    const left = shelf.querySelector('[data-shelf-plant-left]');
-    const motto = shelf.querySelector('[data-shelf-motto]');
-    const globe = shelf.querySelector('[data-shelf-globe]');
-    const right = shelf.querySelector('[data-shelf-plant-right]');
     for (const group of groups) { group.hidden = false; group.style.maxWidth = ''; group.classList.remove('public-book-shelf-category-scrollable'); }
-    left.hidden = true;
-    motto.hidden = globe.hidden = right.hidden = true;
     all.hidden = true;
 
     const gap = parseFloat(getComputedStyle(categories).gap) || 0;
@@ -54,47 +46,25 @@
     }
 
     const free = Math.max(0, stage.clientWidth - used - (overflow ? widthOf(all) + gap : 0));
-    const decorGap = parseFloat(getComputedStyle(decor).gap) || 0;
     const empty = groups.every(group => group.querySelectorAll('.public-book-shelf-book').length === 0);
-    return {free, overflow, empty, decorGap, left, motto, globe, right};
+    return {free, overflow, empty};
   }
 
-  function updateAuto(shelf) {
+  function update(shelf) {
     const state = layout(shelf);
-    if (state.overflow) return;
-    const leftWidth = state.empty ? widthOf(state.left) : 0;
-    state.left.hidden = !state.empty || state.free < leftWidth;
-    const free = state.free - (state.left.hidden ? 0 : leftWidth);
-    const globeWidth = widthOf(state.globe);
-    const rightWidth = widthOf(state.right);
-    const mottoWidth = widthOf(state.motto);
-    state.globe.hidden = free < globeWidth + state.decorGap;
-    state.right.hidden = state.globe.hidden || free < globeWidth + rightWidth + 2 * state.decorGap;
-    state.motto.hidden = state.right.hidden || free < mottoWidth + globeWidth + rightWidth + 3 * state.decorGap;
-  }
-
-  function updateCabinet(cabinet) {
-    const states = cabinets.get(cabinet).map(shelf => ({shelf, ...layout(shelf)}));
-    const available = states.filter(state => !state.overflow).sort((left, right) => right.free - left.free);
-    const occupied = new Set();
-    for (const item of ['globe', 'right', 'left']) {
-      const choice = available.find(state => !occupied.has(state.shelf)
-        && state.free >= widthOf(state[item]) + state.decorGap);
-      if (!choice) continue;
-      choice[item].hidden = false;
-      occupied.add(choice.shelf);
-    }
+    const context = shelf.dataset.shelfContext;
+    const index = Number(shelf.dataset.shelfIndex || 0);
+    const roomForObject = !state.overflow && state.free >= Math.max(110, shelf.clientWidth * .2);
+    let variant = 'blank';
+    if (state.empty) variant = context === 'home' ? 'empty-home' : 'empty-cabinet';
+    else if (roomForObject && (context === 'home' || context === 'overview' || context === 'cabinet-detail' || index === 0)) variant = 'plant';
+    else if (roomForObject && context === 'cabinet' && index === 2) variant = 'globe';
+    shelf.dataset.shelfVariant = variant;
   }
 
   for (const shelf of shelves) {
-    const cabinet = shelf.closest('[data-book-cabinet]');
-    if (cabinet && shelf.dataset.shelfDecorMode === 'cabinet') {
-      if (!cabinets.has(cabinet)) cabinets.set(cabinet, []);
-      cabinets.get(cabinet).push(shelf);
-    } else updateAuto(shelf);
+    update(shelf);
     const stage = shelf.querySelector('[data-shelf-stage]');
-    new ResizeObserver(() => cabinet && shelf.dataset.shelfDecorMode === 'cabinet'
-      ? updateCabinet(cabinet) : updateAuto(shelf)).observe(stage);
+    new ResizeObserver(() => update(shelf)).observe(stage);
   }
-  for (const cabinet of cabinets.keys()) updateCabinet(cabinet);
 })();

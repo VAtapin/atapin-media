@@ -17,4 +17,4 @@
     }
     if ($groups->isEmpty()) $groups->push(['name' => __('public.categories'), 'books' => []]);
 @endphp
-@include('public.book-shelf', ['shelfGroups'=>$groups->all()])
+@include('public.book-shelf', ['shelfGroups'=>$groups->all(), 'shelfContext'=>'overview'])

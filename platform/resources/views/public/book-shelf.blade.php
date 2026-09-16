@@ -1,9 +1,8 @@
 @php($groups = collect($shelfGroups ?? []))
-<section class="public-book-shelf" aria-label="{{ $shelfLabel ?? __('public.categories').' / '.__('public.topics') }}" data-public-book-shelf data-shelf-decor-mode="{{ $shelfDecor ?? 'auto' }}">
-    <img class="public-book-shelf-background" src="/assets/book-shelf/shelf.png?v=2" alt="" aria-hidden="true" loading="lazy">
+<section class="public-book-shelf" aria-label="{{ $shelfLabel ?? __('public.categories').' / '.__('public.topics') }}" data-public-book-shelf data-shelf-context="{{ $shelfContext ?? 'overview' }}" data-shelf-index="{{ $shelfIndex ?? 0 }}" data-shelf-variant="blank" style="--shelf-layer:{{ $shelfLayer ?? 2 }}">
+    <div class="public-book-shelf-background" aria-hidden="true"></div>
     <div class="public-book-shelf-inner">
         <div class="public-book-shelf-stage" data-shelf-stage>
-            <img class="public-book-shelf-plant-left" data-shelf-plant-left src="/assets/book-shelf/plant-left.png" alt="" aria-hidden="true" loading="lazy" hidden>
             <div class="public-book-shelf-categories" data-shelf-categories>
                 @foreach($groups as $group)
                 <div class="public-book-shelf-category" data-shelf-category="{{ $loop->index }}">
@@ -22,11 +21,6 @@
                     @endif
                 </div>
                 @endforeach
-            </div>
-            <div class="public-book-shelf-decor" data-shelf-decor>
-                <div class="public-book-shelf-motto" data-shelf-motto aria-hidden="true" @if(($shelfDecor ?? 'auto') === 'cabinet') hidden @endif>{{ __('public.shelf_motto') }}</div>
-                <img class="public-book-shelf-globe" data-shelf-globe src="/assets/book-shelf/globe.png" alt="" aria-hidden="true" loading="lazy" @if(($shelfDecor ?? 'auto') === 'cabinet') hidden @endif>
-                <img class="public-book-shelf-plant-right" data-shelf-plant-right src="/assets/book-shelf/plant-right.png" alt="" aria-hidden="true" loading="lazy" @if(($shelfDecor ?? 'auto') === 'cabinet') hidden @endif>
             </div>
             <a class="public-book-shelf-all" data-shelf-all href="{{ route('public.categories') }}" hidden>{{ __('public.shelf_see_all') }} →</a>
             <noscript><a class="public-book-shelf-all" href="{{ route('public.categories') }}">{{ __('public.shelf_see_all') }} →</a></noscript>

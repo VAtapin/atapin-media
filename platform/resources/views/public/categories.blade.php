@@ -1,9 +1,9 @@
 @extends('public.layout', ['title'=>$selectedShelf['name'] ?? __('public.category_directory_title')])
 @push('publicStyles')
-<link rel="stylesheet" href="/assets/public-book-shelf.css?v=4">
+<link rel="stylesheet" href="/assets/public-book-shelf.css?v=5">
 <link rel="stylesheet" href="/assets/public-category-directory.css?v=1">
 @endpush
-@push('publicScripts')<script src="/assets/public-book-shelf.js?v=2" defer></script>@endpush
+@push('publicScripts')<script src="/assets/public-book-shelf.js?v=4" defer></script>@endpush
 
 @section('content')
 @php
@@ -40,10 +40,10 @@
                     return $shelf;
                 })->sortBy(fn (array $shelf) => $shelf['selected'] ? 0 : 1)->values()->all();
             @endphp
-            @include('public.book-shelf', ['shelfGroups'=>$navigationGroups, 'shelfLabel'=>__('public.categories').' / '.$selectedShelf['name']])
+            @include('public.book-shelf', ['shelfGroups'=>$navigationGroups, 'shelfLabel'=>__('public.categories').' / '.$selectedShelf['name'], 'shelfContext'=>'cabinet-detail'])
         @else
         @forelse($directoryShelves as $shelf)
-            @include('public.book-shelf', ['shelfGroups'=>[$shelf], 'shelfDecor'=>'cabinet', 'shelfLabel'=>$shelf['name']])
+            @include('public.book-shelf', ['shelfGroups'=>[$shelf], 'shelfContext'=>'cabinet', 'shelfIndex'=>$loop->index, 'shelfLayer'=>count($directoryShelves)-$loop->index+1, 'shelfLabel'=>$shelf['name']])
         @empty
             <p class="public-empty-slot">{{ __('public.no_data') }}</p>
         @endforelse

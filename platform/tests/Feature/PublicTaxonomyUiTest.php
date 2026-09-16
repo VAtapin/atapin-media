@@ -29,7 +29,7 @@ class PublicTaxonomyUiTest extends TestCase
         $taxonomy->sync($book, [$topic->id]);
 
         $home = $this->get('/')->assertOk()->assertSee('data-public-book-shelf', false)
-            ->assertSee('/assets/book-shelf/shelf.png', false)
+            ->assertSee('public-book-shelf-background', false)->assertSee('data-shelf-context="home"', false)
             ->assertSee('public-book-shelf-book', false)->assertSee('Medizin')->assertSee('Anatomie')
             ->assertSee('href="'.route('public.categories', ['category'=>'medizin']).'"', false)
             ->assertSee('href="'.route('public.beitraege', ['taxonomy'=>'anatomie']).'"', false)
@@ -84,7 +84,7 @@ class PublicTaxonomyUiTest extends TestCase
             'url'=>route('public.categories', ['category'=>'empty-category']),
         ]], app(\App\Services\PublicTaxonomy::class)->homeCategories());
         $this->get('/')->assertOk()->assertSee('Empty category')
-            ->assertSee('data-shelf-plant-left', false)
+            ->assertSee('public-book-shelf-background', false)
             ->assertSee('data-shelf-category="0"', false)
             ->assertDontSee('public-book-shelf-book-1', false);
     }

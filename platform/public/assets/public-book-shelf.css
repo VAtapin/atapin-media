@@ -1,7 +1,11 @@
-.public-book-shelf{--shelf-floor-shift:17px;position:relative;isolation:isolate;max-width:1590px;min-height:190px;aspect-ratio:2172/374;margin:0 auto 12px;color:#fff7e8}
+.public-book-shelf{--shelf-floor-shift:17px;position:relative;z-index:var(--shelf-layer,2);isolation:isolate;overflow:visible;max-width:1590px;min-height:190px;aspect-ratio:1024/177;margin:0 auto 12px;color:#fff7e8}
 .public-book-shelf [hidden]{display:none!important}
-.public-book-shelf-background{display:block;width:100%;height:100%;position:absolute;inset:0;object-fit:fill;pointer-events:none}
-.public-book-shelf-inner{position:absolute;inset:0}
+.public-book-shelf-background{position:absolute;inset:0 0 auto;width:100%;height:100%;background:url('/assets/book-shelf/shelf.png') center top/100% 100% no-repeat;pointer-events:none}
+.public-book-shelf[data-shelf-variant="plant"] .public-book-shelf-background{height:156%;background-image:url('/assets/book-shelf/shelf-plant.png')}
+.public-book-shelf[data-shelf-variant="globe"] .public-book-shelf-background{background-image:url('/assets/book-shelf/shelf-globe.png')}
+.public-book-shelf[data-shelf-variant="empty-home"] .public-book-shelf-background{height:148%;background-image:url('/assets/book-shelf/shelf-empty-home.png')}
+.public-book-shelf[data-shelf-variant="empty-cabinet"] .public-book-shelf-background{height:148%;background-image:url('/assets/book-shelf/shelf-empty-cabinet.png')}
+.public-book-shelf-inner{position:absolute;z-index:1;inset:0}
 .public-book-shelf-stage{position:absolute;inset:10% 4% calc(22% - 37px - var(--shelf-floor-shift));display:flex;align-items:flex-end;min-width:0}
 .public-book-shelf-categories{display:flex;align-items:flex-end;gap:clamp(10px,1.2vw,20px);flex:none;width:max-content;max-width:100%;height:100%;min-width:0;overflow:hidden}
 .public-book-shelf-category{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;flex:none;width:max-content;max-width:100%;height:100%;min-width:0}
@@ -24,13 +28,10 @@
 .public-book-shelf-book-mark{position:absolute;bottom:3px;color:#d4ac5a;font:14px Georgia,serif}
 .public-book-shelf-book:hover,.public-book-shelf-book:focus-visible{z-index:3;transform:perspective(450px) translateZ(30px);box-shadow:14px 12px 22px #0a1115ba,inset 2px 0 2px #ffffff48}
 .public-book-shelf-book:focus-visible{outline:2px solid #fff7de;outline-offset:2px}
-.public-book-shelf-decor{display:flex;align-items:flex-end;gap:clamp(7px,1vw,18px);flex:none;margin-left:auto;height:100%;min-width:0;padding-bottom:37px;box-sizing:border-box;pointer-events:none}
-.public-book-shelf-motto{align-self:flex-start;white-space:pre-line;min-width:clamp(78px,9vw,145px);padding-top:10%;font:italic clamp(16px,2vw,29px)/1.16 Georgia,serif;color:#f9e0a5;text-shadow:0 1px 3px #36200a}
-.public-book-shelf-globe{display:block;width:clamp(145px,13vw,205px);height:auto;max-height:100%;object-fit:contain}
-.public-book-shelf-plant-right,.public-book-shelf-plant-left{display:block;width:clamp(135px,12vw,190px);height:auto;max-height:100%;object-fit:contain}
-.public-book-shelf-plant-left{flex:none;margin-bottom:37px;pointer-events:none}
 .public-book-shelf-all{display:block;position:relative;top:calc(-1 * var(--shelf-floor-shift));flex:none;align-self:flex-end;margin-left:auto;margin-bottom:4px;padding:8px 10px;border-radius:6px;background:#102132e8;color:#fff!important;white-space:nowrap;font:600 12px Inter,Arial,sans-serif;text-decoration:none;box-shadow:0 3px 8px #0008}
 .public-book-shelf-all:hover,.public-book-shelf-all:focus-visible{background:#8d621e;outline-color:#fff}
 @media(max-width:1550px){.public-book-shelf{margin-left:24px;margin-right:24px}}
-@media(max-width:800px){.public-book-shelf{--shelf-floor-shift:15px;margin:0 16px 12px;min-height:225px;aspect-ratio:auto}.public-book-shelf-background{object-fit:cover;object-position:center}.public-book-shelf-stage{inset:12% 6% calc(22% - 34px - var(--shelf-floor-shift))}.public-book-shelf-book{width:35px}.public-book-shelf-category-name{font-size:16px;min-width:80px;min-height:30px;padding:4px 6px}.public-book-shelf-decor{padding-bottom:34px}.public-book-shelf-plant-left{margin-bottom:34px}.public-book-shelf-motto{font-size:16px}.public-book-shelf-globe{width:90px}.public-book-shelf-plant-left,.public-book-shelf-plant-right{width:65px}}
+@media(max-width:800px){.public-book-shelf{--shelf-floor-shift:15px;margin:0 16px 12px;min-height:225px;aspect-ratio:auto}.public-book-shelf-background{background-size:auto 225px}.public-book-shelf[data-shelf-variant="plant"] .public-book-shelf-background,.public-book-shelf[data-shelf-variant="globe"] .public-book-shelf-background{background-position:right top}.public-book-shelf-stage{inset:12% 6% calc(22% - 34px - var(--shelf-floor-shift))}.public-book-shelf-book{width:35px}.public-book-shelf-category-name{font-size:16px;min-width:80px;min-height:30px;padding:4px 6px}}
+@media(max-width:800px){.public-book-shelf:is([data-shelf-variant="empty-home"],[data-shelf-variant="empty-cabinet"]) .public-book-shelf-background{background-image:url('/assets/book-shelf/shelf.png');background-size:auto 225px;background-position:center top}.public-book-shelf:is([data-shelf-variant="empty-home"],[data-shelf-variant="empty-cabinet"]) .public-book-shelf-background::after{content:"";position:absolute;inset:0;background-repeat:no-repeat;pointer-events:none}.public-book-shelf[data-shelf-variant="empty-home"] .public-book-shelf-background::after{background-image:url('/assets/book-shelf/plant-left.png'),url('/assets/book-shelf/globe.png'),url('/assets/book-shelf/plant-right.png');background-size:160px 160px,125px 125px,160px 160px;background-position:-20px 133px,50% 100px,100% 133px}.public-book-shelf[data-shelf-variant="empty-cabinet"] .public-book-shelf-background::after{background-image:url('/assets/book-shelf/plant-left.png'),url('/assets/book-shelf/plant-right.png');background-size:160px 160px,160px 160px;background-position:-20px 133px,100% 133px}}
+@media(max-width:800px){.public-book-shelf[data-shelf-variant="plant"] .public-book-shelf-background{background-size:auto 100%}}
 @media(prefers-reduced-motion:reduce){.public-book-shelf-book{transition:none}.public-book-shelf-book:hover,.public-book-shelf-book:focus-visible{transform:none}}
