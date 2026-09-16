@@ -107,6 +107,13 @@ class AdminCompletionTest extends TestCase
         $this->getJson('/desktop/live/'.$record->id.'/monitor')->assertOk()->assertJsonPath('online',1)->assertJsonPath('status','live')->assertJsonMissingPath('session_hash');
         $this->actingAs(User::factory()->create());$this->getJson('/desktop/live/'.$record->id.'/monitor')->assertForbidden();
     }
+    public function test_obs_live_monitor_embeds_only_the_stream_player(): void
+    {
+        $script=file_get_contents(public_path('assets/desktop-live-console.js'));
+        $this->assertStringContainsString("const url='/_live/live/?cookieCheck=1'",$script);
+        $this->assertStringNotContainsString("const url='/live?event='",$script);
+        $this->get('/desktop')->assertOk()->assertSee('/assets/desktop-live-console.js?v=3',false);
+    }
     public function test_publishing_preview_uses_provider_override_without_creating_publication(): void
     {
         $record=$this->record(['metadata'=>['public_section'=>'beitraege','public_published'=>false,'platform_metadata'=>['youtube'=>['title'=>'YouTube title','body'=>'YouTube body']],'tags'=>['Bible']]]);
