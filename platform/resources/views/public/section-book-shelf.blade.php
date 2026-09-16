@@ -6,6 +6,8 @@
     $groups = collect($shelfCategories ?? [])->map(fn (array $category) => [
         'id' => $category['id'],
         'name' => $category['name'],
+        'url' => route('public.beitraege', ['taxonomy' => $category['slug']]),
+        'selected' => $category['id'] === $selected,
         'books' => $filters->where('kind', 'topic')->where('category_id', $category['id'])
             ->map(fn (array $topic) => [
                 'name' => $topic['name'], 'url' => $topic['url'],

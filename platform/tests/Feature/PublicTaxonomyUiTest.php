@@ -31,6 +31,7 @@ class PublicTaxonomyUiTest extends TestCase
         $home = $this->get('/')->assertOk()->assertSee('data-public-book-shelf', false)
             ->assertSee('/assets/book-shelf/shelf.png', false)
             ->assertSee('public-book-shelf-book', false)->assertSee('Medizin')->assertSee('Anatomie')
+            ->assertSee('href="'.route('public.categories', ['category'=>'medizin']).'"', false)
             ->assertSee('href="'.route('public.beitraege', ['taxonomy'=>'anatomie']).'"', false)
             ->assertDontSee('public-taxonomy-crumbs', false)
             ->assertDontSee($cover->publicUrl(), false);
@@ -49,6 +50,7 @@ class PublicTaxonomyUiTest extends TestCase
         }
         $this->get('/beitraege')->assertOk()->assertSee('data-public-book-shelf', false)
             ->assertSee('Medizin')->assertSee('Anatomie')
+            ->assertSee('href="'.route('public.beitraege', ['taxonomy'=>'medizin']).'"', false)
             ->assertSee('href="'.route('public.beitraege', ['taxonomy'=>'anatomie']).'"', false)
             ->assertDontSee('public-taxonomy-crumbs', false);
         $this->get('/beitraege?taxonomy=medizin')->assertOk()->assertSee('Anatomie Beitrag');
@@ -77,7 +79,10 @@ class PublicTaxonomyUiTest extends TestCase
         $category = TaxonomyTerm::create(['kind'=>'category','name'=>'Empty category',
             'slug'=>'empty-category','active'=>true]);
 
-        $this->assertSame([['id'=>$category->id,'name'=>'Empty category']], app(\App\Services\PublicTaxonomy::class)->homeCategories());
+        $this->assertSame([[
+            'id'=>$category->id,'name'=>'Empty category','slug'=>'empty-category',
+            'url'=>route('public.categories', ['category'=>'empty-category']),
+        ]], app(\App\Services\PublicTaxonomy::class)->homeCategories());
         $this->get('/')->assertOk()->assertSee('Empty category')
             ->assertSee('data-shelf-plant-left', false)
             ->assertSee('data-shelf-category="0"', false)
@@ -95,9 +100,16 @@ class PublicTaxonomyUiTest extends TestCase
 
         $this->get('/themen')->assertOk()->assertSee('data-book-cabinet', false)
             ->assertSee('Anatomie und Bibelwissen')->assertSee('Gebet')
+            ->assertSee('href="'.route('public.categories', ['category'=>'medizin']).'"', false)
             ->assertSee('href="'.route('public.beitraege', ['taxonomy'=>'anatomie-bibelwissen']).'"', false)
             ->assertSee('href="'.route('public.beitraege', ['taxonomy'=>'gebet']).'"', false)
             ->assertSee('public-overview-hero', false);
+        $this->get('/themen?category=medizin')->assertOk()
+            ->assertSee('<title>Medizin', false)
+            ->assertSee('Anatomie und Bibelwissen')
+            ->assertDontSee('href="'.route('public.beitraege', ['taxonomy'=>'gebet']).'"', false)
+            ->assertViewHas('directoryShelves', fn (array $shelves) => count($shelves) === 1 && $shelves[0]['slug'] === 'medizin')
+            ->assertSee(__('public.category_directory_all'));
         $this->assertCount(2, app(\App\Services\PublicTaxonomy::class)->directoryShelves());
     }
 

@@ -10,6 +10,7 @@
     })->values()->all();
     $groups = collect($homeCategories ?? [])->map(fn (array $category) => [
         'name' => $category['name'],
+        'url' => $category['url'],
         'books' => $asBooks($topics->where('category_id', $category['id'])),
     ]);
     $uncategorized = $asBooks($topics->whereNull('category_id'));

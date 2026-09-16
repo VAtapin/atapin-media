@@ -1,9 +1,9 @@
-@extends('public.layout', ['title'=>__('public.category_directory_title')])
+@extends('public.layout', ['title'=>$selectedShelf['name'] ?? __('public.category_directory_title')])
 @push('publicStyles')
-<link rel="stylesheet" href="/assets/public-book-shelf.css?v=1">
+<link rel="stylesheet" href="/assets/public-book-shelf.css?v=2">
 <link rel="stylesheet" href="/assets/public-category-directory.css?v=1">
 @endpush
-@push('publicScripts')<script src="/assets/public-book-shelf.js?v=1" defer></script>@endpush
+@push('publicScripts')<script src="/assets/public-book-shelf.js?v=2" defer></script>@endpush
 
 @section('content')
 @php
@@ -15,14 +15,14 @@
     <div class="public-overview-hero-inner">
         <div class="public-overview-copy">
             <p class="public-eyebrow">{{ __('public.categories') }}</p>
-            <h1>{{ __('public.category_directory_title') }}</h1>
-            <p class="public-overview-intro">{{ __('public.category_directory_intro') }}</p>
-            <div class="public-overview-actions"><a class="public-button" href="#cabinet">{{ __('public.category_directory_explore') }} →</a></div>
+            <h1>{{ $selectedShelf['name'] ?? __('public.category_directory_title') }}</h1>
+            <p class="public-overview-intro">{{ $selectedShelf ? __('public.category_directory_selected_intro') : __('public.category_directory_intro') }}</p>
+            <div class="public-overview-actions"><a class="public-button" href="{{ $selectedShelf ? route('public.categories') : '#cabinet' }}">{{ $selectedShelf ? __('public.category_directory_all') : __('public.category_directory_explore') }} →</a></div>
         </div>
         <div class="public-overview-feature public-directory-feature">
             <img class="public-photo" src="{{ $heroImage }}" alt="" aria-hidden="true">
             <div class="public-feature-content">
-                <span class="public-feature-label">{{ __('public.category_directory_title') }}</span>
+                <span class="public-feature-label">{{ $selectedShelf['name'] ?? __('public.category_directory_title') }}</span>
                 <h2>{{ trans_choice('public.category_directory_categories_count', $categoryCount, ['count'=>$categoryCount]) }}</h2>
                 <p>{{ trans_choice('public.category_directory_topics_count', $topicCount, ['count'=>$topicCount]) }}</p>
             </div>

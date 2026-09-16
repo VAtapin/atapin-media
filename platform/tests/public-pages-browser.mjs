@@ -42,11 +42,12 @@ try {
         const bar=page.locator('[data-public-book-shelf]'),categories=bar.locator('[data-shelf-category]');
         await bar.scrollIntoViewIfNeeded();
         const dimensions=await bar.evaluate(element=>({height:element.getBoundingClientRect().height,border:parseFloat(getComputedStyle(element).borderTopWidth)}));
-        assert(dimensions.height>=200&&dimensions.border===0,`Home shelf has the wrong size or an extra frame: ${JSON.stringify(dimensions)}`);
+        assert(dimensions.height>=190&&dimensions.height<=(width>800?290:230)&&dimensions.border===0,`Home shelf did not use the shorter image: ${JSON.stringify(dimensions)}`);
         assert.equal(await bar.locator('.public-taxonomy-crumbs').count(),0,'Old home taxonomy strip is gone');
         const emptyShelf=process.env.PUBLIC_EXPECT_EMPTY_SHELF==='1';
         assert.equal(await categories.count(),emptyShelf?1:10,'Home keeps all active categories in the data');
         await page.waitForFunction(()=>{const image=document.querySelector('.public-book-shelf-background');return image?.complete&&image.naturalWidth>0;});
+        assert.equal(await bar.locator('.public-book-shelf-background').evaluate(image=>image.naturalHeight),374,'New shelf PNG is not loaded');
         const visible=bar.locator('[data-shelf-category]:visible'),hidden=bar.locator('[data-shelf-category][hidden]');
         assert(await visible.count()>0,'At least one category fits on the shelf');
         assert.equal(await bar.locator('[data-shelf-all]').isVisible(),await hidden.count()>0,'See all appears only when categories overflow');
@@ -56,14 +57,28 @@ try {
           for(const item of ['[data-shelf-plant-left]','[data-shelf-globe]','[data-shelf-plant-right]']){
             assert(await bar.locator(item).isVisible(),`Empty category should show ${item}`);
           }
+          const globeWidth=await bar.locator('[data-shelf-globe]').evaluate(image=>image.getBoundingClientRect().width);
+          assert(globeWidth>=(width>800?150:85),`Empty shelf globe remained too small: ${globeWidth}`);
         } else {
           assert.equal(await visible.first().locator('.public-book-shelf-book').count(),2,'Initial category has two dynamic books');
-          for(const link of await visible.locator('a').evaluateAll(nodes=>nodes.map(node=>new URL(node.href).pathname+new URL(node.href).search))){
+          const categoryLink=visible.first().locator('.public-book-shelf-category-name');
+          assert.equal(new URL(await categoryLink.getAttribute('href'),base).pathname,'/themen','Category plaque does not link to category directory');
+          assert.equal(new URL(await categoryLink.getAttribute('href'),base).searchParams.get('category'),'glaube-leben','Category plaque links to the wrong category');
+          for(const link of await visible.locator('.public-book-shelf-book').evaluateAll(nodes=>nodes.map(node=>new URL(node.href).pathname+new URL(node.href).search))){
             assert.match(link,/^\/(videos|beitraege|buecher)\?taxonomy=/,'Topic books must use existing section-specific routes');
           }
           const book=visible.locator('.public-book-shelf-book').first();
+          const floor=await bar.evaluate(element=>{
+            const image=element.querySelector('.public-book-shelf-background').getBoundingClientRect();
+            const book=element.querySelector('.public-book-shelf-book').getBoundingClientRect();
+            return {shelfFloor:image.top+image.height*292/374,bookBottom:book.bottom};
+          });
+          assert(Math.abs(floor.shelfFloor-floor.bookBottom)<=16,`Book slides away from the shelf floor at ${width}: ${JSON.stringify(floor)}`);
           await book.hover();
-          assert.notEqual(await book.evaluate(element=>getComputedStyle(element).transform),'none','Book does not move on hover');
+          await page.waitForTimeout(250);
+          assert.match(await book.evaluate(element=>getComputedStyle(element).transform),/^matrix3d\(/,'Book does not pull forward with perspective on hover');
+          assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Pulled-forward book causes horizontal overflow');
+          await bar.screenshot({path:`tests/artifacts/public-shelf-hover-${width}.png`});
           const spacing=await bar.evaluate(element=>{
             const books=element.querySelector('[data-shelf-categories]');
             const decor=element.querySelector('[data-shelf-decor]');
@@ -83,18 +98,36 @@ try {
         assert.equal(await page.locator('[data-book-cabinet] [data-shelf-category]').count(),10,'Each cabinet shelf has exactly one category');
         assert.equal(await page.locator('[data-book-cabinet] .public-book-shelf-book').count(),47,'The cabinet keeps all published topic books');
         assert.equal(await shelves.first().locator('[data-shelf-all]').isVisible(),false,'A one-category shelf never needs See all');
-        const decorations=await page.locator('[data-book-cabinet] [data-public-book-shelf]').evaluateAll(nodes=>nodes.map(node=>({
-          shown:[...node.querySelectorAll('[data-shelf-globe],[data-shelf-plant-right],[data-shelf-plant-left]')].filter(item=>!item.hidden).length,
-          booksRight:node.querySelector('[data-shelf-categories]').getBoundingClientRect().right,
-          decorLeft:node.querySelector('[data-shelf-decor]').getBoundingClientRect().left,
-        })));
+        const decorations=await page.locator('[data-book-cabinet] [data-public-book-shelf]').evaluateAll(nodes=>nodes.map(node=>{
+          const visible=[...node.querySelectorAll('[data-shelf-globe],[data-shelf-plant-right],[data-shelf-plant-left]')].filter(item=>!item.hidden);
+          const image=node.querySelector('.public-book-shelf-background').getBoundingClientRect();
+          return {
+            shown:visible.length,
+            booksRight:node.querySelector('[data-shelf-categories]').getBoundingClientRect().right,
+            decorLeft:node.querySelector('[data-shelf-decor]').getBoundingClientRect().left,
+            floor:image.top+image.height*292/374,
+            visibleBottom:visible[0]?.getBoundingClientRect().bottom,
+          };
+        }));
         assert(decorations.every(item=>item.shown<=1),'Cabinet decorations must be distributed across different shelves');
         assert(decorations.every(item=>!item.shown||item.decorLeft>=item.booksRight-1),`Cabinet books overlap decoration: ${JSON.stringify(decorations)}`);
+        assert(decorations.every(item=>!item.shown||Math.abs(item.floor-item.visibleBottom)<=16),`Cabinet decorations slide off the shelf floor: ${JSON.stringify(decorations)}`);
+        const globe=shelves.locator('[data-shelf-globe]:visible');
+        if(await globe.count())assert(await globe.first().evaluate(image=>image.getBoundingClientRect().width)>=(width>800?150:85),'Cabinet globe remained too small');
+        const categoryLink=shelves.first().locator('.public-book-shelf-category-name');
+        const category=new URL(await categoryLink.getAttribute('href'),base);
+        assert.equal(category.pathname,'/themen','Cabinet category plaque is not a link');
+        assert.equal(category.searchParams.get('category'),'glaube-leben');
+        await categoryLink.click();
+        await page.waitForURL(category.href);
+        assert.equal(await page.locator('[data-book-cabinet] [data-public-book-shelf]').count(),1,'Category link does not open its own shelf');
+        await page.goto(base+'/themen');
       }
       if(route==='/beitraege'&&await page.locator('[data-public-book-shelf]').count()){
         const shelf=page.locator('[data-public-book-shelf]');
         assert.equal(await shelf.locator('[data-shelf-category]').count(),10,'Beiträge shelf uses all categories');
         assert.equal(await page.locator('[data-public-taxonomy]').count(),0,'Beiträge does not duplicate taxonomy navigation');
+        assert.equal(new URL(await shelf.locator('[data-shelf-category]').nth(1).locator('.public-book-shelf-category-name').getAttribute('href'),base).searchParams.get('taxonomy'),'kategorie-2','Beiträge category plaque does not filter the category');
         await page.goto('http://127.0.0.1:8795/beitraege?taxonomy=kategorie-2');
         assert.equal(await page.locator('[data-public-book-shelf] [data-shelf-category]:visible').first().locator('.public-book-shelf-category-name').textContent(),'Kategorie 2');
         assert.equal(await page.locator('[data-public-book-shelf] [data-shelf-category]:visible').first().locator('.public-book-shelf-book').count(),5,'Filtered category keeps its five topic books');

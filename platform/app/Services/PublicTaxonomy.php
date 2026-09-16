@@ -110,9 +110,11 @@ class PublicTaxonomy
     public function homeCategories(): array
     {
         return TaxonomyTerm::where('active', true)->where('kind', 'category')->orderBy('name')
-            ->get(['id', 'name'])->map(fn (TaxonomyTerm $term) => [
+            ->get(['id', 'name', 'slug'])->map(fn (TaxonomyTerm $term) => [
                 'id' => (int) $term->id,
                 'name' => $term->name,
+                'slug' => $term->slug,
+                'url' => route('public.categories', ['category' => $term->slug]),
             ])->sort(fn (array $left, array $right) => strnatcasecmp($left['name'], $right['name']))
             ->values()->all();
     }
@@ -123,7 +125,12 @@ class PublicTaxonomy
         $published = collect($this->homeTopics())->keyBy('id');
         $shelves = [];
         foreach ($terms->where('kind', 'category')->sort(fn (TaxonomyTerm $left, TaxonomyTerm $right) => strnatcasecmp($left->name, $right->name)) as $category) {
-            $shelves[(int) $category->id] = ['name' => $category->name, 'books' => []];
+            $shelves[(int) $category->id] = [
+                'name' => $category->name,
+                'slug' => $category->slug,
+                'url' => route('public.categories', ['category' => $category->slug]),
+                'books' => [],
+            ];
         }
         foreach ($terms->where('kind', 'topic') as $topic) {
             $category = $this->categoryForTopic($terms, (int) $topic->id);

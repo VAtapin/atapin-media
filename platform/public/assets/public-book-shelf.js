@@ -20,7 +20,7 @@
     const motto = shelf.querySelector('[data-shelf-motto]');
     const globe = shelf.querySelector('[data-shelf-globe]');
     const right = shelf.querySelector('[data-shelf-plant-right]');
-    for (const group of groups) { group.hidden = false; group.style.maxWidth = ''; }
+    for (const group of groups) { group.hidden = false; group.style.maxWidth = ''; group.classList.remove('public-book-shelf-category-scrollable'); }
     left.hidden = true;
     motto.hidden = globe.hidden = right.hidden = true;
     all.hidden = true;
@@ -39,7 +39,10 @@
       for (const [index, group] of groups.entries()) {
         const next = used + (shown ? gap : 0) + widths[index];
         if (shown > 0 && next > budget) { group.hidden = true; continue; }
-        if (shown === 0 && widths[index] > budget) group.style.maxWidth = `${budget}px`;
+        if (shown === 0 && widths[index] > budget) {
+          group.style.maxWidth = `${budget}px`;
+          group.classList.add('public-book-shelf-category-scrollable');
+        }
         used += (shown ? gap : 0) + Math.min(widths[index], budget);
         shown++;
       }
@@ -47,6 +50,7 @@
       all.hidden = !overflow;
     } else if (groups.length === 1 && total > stage.clientWidth) {
       groups[0].style.maxWidth = `${stage.clientWidth}px`;
+      groups[0].classList.add('public-book-shelf-category-scrollable');
     }
 
     const free = Math.max(0, stage.clientWidth - used - (overflow ? widthOf(all) + gap : 0));

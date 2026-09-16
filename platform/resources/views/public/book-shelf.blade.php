@@ -1,6 +1,6 @@
 @php($groups = collect($shelfGroups ?? []))
 <section class="public-book-shelf" aria-label="{{ $shelfLabel ?? __('public.categories').' / '.__('public.topics') }}" data-public-book-shelf data-shelf-decor-mode="{{ $shelfDecor ?? 'auto' }}">
-    <img class="public-book-shelf-background" src="/assets/book-shelf/shelf.png" alt="" aria-hidden="true" loading="lazy">
+    <img class="public-book-shelf-background" src="/assets/book-shelf/shelf.png?v=2" alt="" aria-hidden="true" loading="lazy">
     <div class="public-book-shelf-inner">
         <div class="public-book-shelf-stage" data-shelf-stage>
             <img class="public-book-shelf-plant-left" data-shelf-plant-left src="/assets/book-shelf/plant-left.png" alt="" aria-hidden="true" loading="lazy" hidden>
@@ -15,7 +15,11 @@
                         </a>
                         @endforeach
                     </div>
+                    @if($group['url'] ?? null)
+                    <a class="public-book-shelf-category-name" href="{{ $group['url'] }}" @if($group['selected'] ?? false) aria-current="page" @endif>{{ $group['name'] }}</a>
+                    @else
                     <span class="public-book-shelf-category-name">{{ $group['name'] }}</span>
+                    @endif
                 </div>
                 @endforeach
             </div>

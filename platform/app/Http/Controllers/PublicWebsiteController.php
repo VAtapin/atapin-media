@@ -26,10 +26,13 @@ class PublicWebsiteController extends Controller
             'live'=>$live?$content->card($live):null,'homeTopics'=>$taxonomy->homeTopics(),
             'homeCategories'=>$taxonomy->homeCategories()]);
     }
-    public function categories(PublicTaxonomy $taxonomy)
+    public function categories(Request $request, PublicTaxonomy $taxonomy)
     {
+        $shelves = $taxonomy->directoryShelves();
+        $selected = $request->filled('category')
+            ? collect($shelves)->firstWhere('slug', $request->query('category')) : null;
         return view('public.categories', [...$this->shared(), 'section'=>'categories',
-            'directoryShelves'=>$taxonomy->directoryShelves()]);
+            'directoryShelves'=>$selected ? [$selected] : $shelves, 'selectedShelf'=>$selected]);
     }
     public function recordView(Request $request, SourceRecord $record, PublicContent $content, PublicViewCounter $counter)
     {
