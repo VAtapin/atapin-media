@@ -35,12 +35,12 @@ class BrowserBroadcast
                 $selected=SourceRecord::lockForUpdate()->findOrFail($record->id);
                 abort_unless($this->selectable($selected),422,__('live-browser.browser_event_required'));
                 $metadata=$selected->metadata??[];
-                $flags=['public_published','live_obs_enabled','live_browser_enabled','live_stream_enabled','starts_at','live_status'];
+                $flags=['public_published','live_obs_enabled','live_browser_enabled','live_stream_enabled','live_ingest_active','starts_at','live_status'];
                 $previous=[];foreach($flags as $key)$previous[$key]=['exists'=>array_key_exists($key,$metadata),'value'=>$metadata[$key]??null];
                 $session=LiveBrowserSession::create(['id'=>(string)Str::uuid(),'user_id'=>$user->id,'source_record_id'=>$selected->id,'expires_at'=>now()->addMinutes(2)]);
                 $selected->update(['metadata'=>[...$metadata,'public_published'=>true,
                     'live_obs_enabled'=>(bool)($metadata['live_obs_enabled']??($metadata['live_stream_enabled']??false)),
-                    'live_browser_enabled'=>true,'live_stream_enabled'=>true,
+                    'live_browser_enabled'=>true,'live_stream_enabled'=>true,'live_ingest_active'=>true,
                     'starts_at'=>$metadata['starts_at']??now()->toIso8601String(),
                     'live_status'=>'starting','live_browser_start_session_id'=>$session->id,
                     'live_browser_start_previous'=>$previous]]);
@@ -48,11 +48,13 @@ class BrowserBroadcast
             });
         });
         try{
-            $response=$this->transport($session)->withBody($sdp,'application/sdp')->post('http://127.0.0.1:8889/browser-'.$session->id.'/whip');
+            // Publish straight into the canonical Website path. MediaMTX supports H264/Opus
+            // from WebRTC in both HLS and fMP4 recording, so no FFmpeg relay is required.
+            $response=$this->transport($session)->withBody($sdp,'application/sdp')->post('http://127.0.0.1:8889/live/whip');
             abort_unless($response->status()===201&&strlen($response->body())<=262144,503,__('live-browser.browser_connection_failed'));
             $location=$response->header('Location');
             // Save only a validated local session resource; never forward arbitrary upstream URLs.
-            $prefix='/browser-'.$session->id.'/whip/';
+            $prefix='/live/whip/';
             if(str_starts_with($location,'http://127.0.0.1:8889/'))$location=substr($location,strlen('http://127.0.0.1:8889'));
             abort_unless(str_starts_with($location,$prefix)&&preg_match('~^'.preg_quote($prefix,'~').'[a-f0-9-]{36}$~D',$location),503,__('live-browser.browser_connection_failed'));
             $session->update(['status'=>'connected','upstream_location'=>$location]);
@@ -86,7 +88,7 @@ class BrowserBroadcast
         abort_unless($session->user_id===$user->id,403);
         return DB::transaction(function()use($session){
             $session=LiveBrowserSession::lockForUpdate()->findOrFail($session->id);
-            abort_if($session->status==='failed',503,__('live-browser.browser_relay_failed'));
+            abort_if($session->status==='failed',503,__('live-browser.browser_connection_failed'));
             abort_unless($session->status==='connected'&&$session->expires_at->isFuture()&&$this->eligible(SourceRecord::findOrFail($session->source_record_id)),409,__('live-browser.browser_session_ended'));
             $session->update(['expires_at'=>now()->addMinutes(2)]);
             $record=SourceRecord::findOrFail($session->source_record_id);
@@ -129,12 +131,11 @@ class BrowserBroadcast
             if(!in_array($data['ip']??'',['127.0.0.1','::1'],true))return false;
             $key=app(Settings::class)->secret('live_control');
             if(!is_string($key)||!hash_equals($key,(string)($data['password']??'')))return false;
-            return in_array($action,['api','metrics'],true)||($action==='read'&&$protocol==='rtsp'&&preg_match('/^browser-[a-f0-9-]{36}$/D',$path)&&$this->active()->whereKey(substr($path,8))->exists());
+            return in_array($action,['api','metrics'],true);
         }
         if($user!=='browser')return str_starts_with($path,'browser-')||in_array($action,['api','metrics'],true)?false:null;
         if($action!=='publish')return false;
-        $session=($protocol==='webrtc'&&str_starts_with($path,'browser-'))?$this->active()->find(substr($path,8)):
-            ((in_array($protocol,['rtmp','rtsp'],true)&&preg_match('/^live-([1-9][0-9]*)$/D',$path,$match))?$this->active()->where('source_record_id',$match[1])->first():null);
+        $session=$protocol==='webrtc'&&$path===PublicBroadcast::SHARED_PATH?$this->active()->first():null;
         if(!$session||!hash_equals($this->token($session),(string)($data['password']??'')))return false;
         $owner=User::find($session->user_id);$record=SourceRecord::find($session->source_record_id);
         return $owner&&$owner->can('content.publish')&&$record&&$this->eligible($record);

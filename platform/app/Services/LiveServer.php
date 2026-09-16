@@ -48,11 +48,6 @@ class LiveServer
             $root=dirname(base_path(),2).'/private/atapin-live';
             $binary=$root.'/mediamtx';
             abort_unless(is_executable($binary),503,__('live-browser.server_setup_required'));
-            if($values['live_browser_enabled']){
-                $encoder=new Process([(string)config('platform.media_ffmpeg_binary','ffmpeg'),'-hide_banner','-encoders']);$encoder->setTimeout(5);
-                try{$encoder->mustRun();abort_unless(preg_match('/\baac\b/',$encoder->getOutput()),503,__('live-browser.encoder_required'));}
-                catch(\Symfony\Component\Process\Exception\ExceptionInterface){abort(503,__('live-browser.encoder_required'));}
-            }
             abort_if(\App\Models\LiveBrowserSession::whereIn('status',['starting','connected'])->where('expires_at','>',now())->exists(),409,__('live-browser.server_busy'));
             // Never reconfigure an on-air source. API may still be disabled before first setup.
             abort_if(collect($this->status()['active'])->isNotEmpty()||\App\Models\SourceRecord::where('metadata->public_section','live')->where('metadata->live_status','live')->exists(),409,__('live-browser.server_busy'));

@@ -116,7 +116,8 @@ class LiveRelay
             (string) config('publishing.live_relay_ffmpeg', 'ffmpeg'),
             '-nostdin', '-hide_banner', '-loglevel', 'error', '-rw_timeout', '15000000',
             '-i', 'http://127.0.0.1:8888/'.rawurlencode($path).'/index.m3u8',
-            '-c', 'copy', '-f', 'flv', $url,
+            '-map', '0:v:0', '-map', '0:a:0?', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '128k', '-ar', '48000',
+            '-f', 'flv', $url,
         ]);
         $process->setTimeout(null);
         $process->disableOutput(); // ffmpeg diagnostics may contain the secret ingestion URL.

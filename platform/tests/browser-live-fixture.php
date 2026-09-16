@@ -15,7 +15,6 @@ $config['webrtcAdditionalHosts']=['127.0.0.1'];$config['rtmp']=false;$config['rt
 // This transport integration test uses real MediaMTX/WebRTC, not Linux/Plesk hook processes.
 $config['pathDefaults']['record']=false;
 $config['pathDefaults']['runOnAvailable']='';$config['pathDefaults']['runOnUnavailable']='';$config['pathDefaults']['runOnRecordSegmentComplete']='';
-$config['paths']['~^browser-[a-f0-9-]{36}$']['runOnAvailable']='';
 if(!is_dir(__DIR__.'/artifacts'))mkdir(__DIR__.'/artifacts',0700,true);
 file_put_contents(__DIR__.'/artifacts/browser-live-test.yml',json_encode($config,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
 chmod(__DIR__.'/artifacts/browser-live-test.yml',0600);

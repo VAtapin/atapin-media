@@ -32,6 +32,8 @@ class YouTubeLiveRelayTest extends TestCase
         $process = $relay->command();
         $command = $process->getCommandLine();
         $this->assertStringContainsString('http://127.0.0.1:8888/live/index.m3u8', $command);
+        $this->assertStringContainsString('-c:v copy', $command);
+        $this->assertStringContainsString('-c:a aac', $command);
         $this->assertStringNotContainsString('rtmp://127.0.0.1:1935', $command);
         $this->assertStringContainsString('rtmp://a.rtmp.youtube.com/live2/secret-key', $command);
         $this->assertTrue($process->isOutputDisabled());

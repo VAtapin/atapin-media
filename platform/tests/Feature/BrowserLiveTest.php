@@ -1,7 +1,7 @@
 <?php
 namespace Tests\Feature;
 use App\Models\{User,Role,SourceRecord,LiveBrowserSession};
-use App\Services\{Access,Settings,PublicBroadcast,BrowserBroadcast,BrowserLiveRelay,LiveServer};
+use App\Services\{Access,Settings,PublicBroadcast,BrowserBroadcast,LiveServer};
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\{Http,Storage};
 use Tests\TestCase;
@@ -30,78 +30,13 @@ class BrowserLiveTest extends TestCase
     {
         return LiveBrowserSession::create(['id'=>(string)\Illuminate\Support\Str::uuid(),'user_id'=>$this->owner->id,'source_record_id'=>$record->id,'status'=>'connected','expires_at'=>now()->addMinutes(2)]);
     }
-    public function test_relay_keeps_process_output_pipes_and_logs_safe_failure_without_secret(): void
-    {
-        $session=$this->browserSession($this->event());
-        $process=(new \ReflectionMethod(BrowserLiveRelay::class,'process'))->invoke(new BrowserLiveRelay(),$session);
-        $this->assertFalse($process->isOutputDisabled(),'Plesk open_basedir may exclude /dev/null');
-        $this->assertStringContainsString('127.0.0.1:8554/browser-'.$session->id,$process->getCommandLine());
-        $this->assertStringContainsString('-f flv',$process->getCommandLine());
-        $this->assertStringContainsString('rtmp://127.0.0.1:1935/live-'.$session->source_record_id.'?user=browser&pass=',$process->getCommandLine());
-        $this->assertStringNotContainsString('127.0.0.1:8554/live-'.$session->source_record_id,$process->getCommandLine());
-        $this->assertStringContainsString('0:a:0?',$process->getCommandLine());
-        $this->assertStringNotContainsString('libx264',$process->getCommandLine());
-        $errorCode=new \ReflectionMethod(BrowserLiveRelay::class,'errorCode');
-        $this->assertSame('encoder_unavailable',$errorCode->invoke(new BrowserLiveRelay(),"Unknown encoder 'aac'"));
-        $this->assertSame('media_track_missing',$errorCode->invoke(new BrowserLiveRelay(),"Stream map '0:a:0' matches no streams"));
-        $this->assertSame('codec_parameters_unavailable',$errorCode->invoke(new BrowserLiveRelay(),'Could not find codec parameters: dimensions not set'));
-        $file=tempnam(sys_get_temp_dir(),'live-relay-');config(['logging.channels.live_browser_transport.path'=>$file]);
-        $relay=new class extends BrowserLiveRelay {
-            protected function process(LiveBrowserSession $session): \Symfony\Component\Process\Process
-            {
-                return new \Symfony\Component\Process\Process([PHP_BINARY,'-r',
-                    'fwrite(STDERR,"Authorization failed for rtsp://control:private-secret@127.0.0.1\\n");exit(42);']);
-            }
-        };
-        try {
-            $relay->run('browser-'.$session->id);
-            $this->assertSame('failed',$session->fresh()->status);
-            $log=file_get_contents($file);
-            $this->assertStringContainsString('encoder_exited',$log);
-            $this->assertStringContainsString('auth_rejected',$log);
-            $this->assertStringContainsString('"exit_code":42',$log);
-            $this->assertStringNotContainsString('private-secret',$log);
-            $this->postJson('/desktop/live-studio/sessions/'.$session->id.'/heartbeat')->assertStatus(503)
-                ->assertJsonPath('message',__('live-browser.browser_relay_failed'));
-        } finally { @unlink($file); }
-    }
-    public function test_relay_failure_restores_the_event_state_that_existed_before_browser_start(): void
-    {
-        $record=$this->event(['public_published'=>false,'live_stream_enabled'=>false,'live_browser_enabled'=>false,'live_status'=>'draft']);
-        $secret=(string)\Illuminate\Support\Str::uuid();
-        $this->whipHandler=fn($request)=>Http::response('v=0',201,['Location'=>parse_url($request->url(),PHP_URL_PATH).'/'.$secret]);
-        $started=$this->postJson('/desktop/live-studio/events/'.$record->id.'/browser',[
-            'sdp'=>"v=0\nm=video\nm=audio",'confirm'=>true,
-        ])->assertCreated()->json();
-        $session=LiveBrowserSession::findOrFail($started['id']);
-        $relay=new class extends BrowserLiveRelay {
-            public int $attempts=0;
-            protected function process(LiveBrowserSession $session): \Symfony\Component\Process\Process
-            {
-                $this->attempts++;
-                return new \Symfony\Component\Process\Process([PHP_BINARY,'-r','exit(1);']);
-            }
-            protected function pauseBeforeRetry(int $attempt): void {}
-        };
-        $relay->run('browser-'.$session->id);
-        $metadata=$record->fresh()->metadata;
-        $this->assertSame('failed',$session->fresh()->status);
-        $this->assertSame(3,$relay->attempts);
-        $this->assertFalse($metadata['public_published']);
-        $this->assertFalse($metadata['live_browser_enabled']);
-        $this->assertFalse($metadata['live_stream_enabled']);
-        $this->assertSame('draft',$metadata['live_status']);
-        $this->assertArrayNotHasKey('live_browser_start_session_id',$metadata);
-        $this->assertArrayNotHasKey('live_browser_start_previous',$metadata);
-    }
     public function test_config_is_loopback_authenticated_and_preserves_obs_recording(): void
     {
         $config=json_decode(app(PublicBroadcast::class)->configuration(),true);
         $this->assertTrue($config['api']);$this->assertSame('127.0.0.1:9997',$config['apiAddress']);$this->assertSame([],$config['authHTTPExclude']);
-        $this->assertSame('127.0.0.1:8889',$config['webrtcAddress']);$this->assertSame('127.0.0.1:8554',$config['rtspAddress']);
-        $this->assertSame(['tcp'],$config['rtspTransports']);$this->assertSame(['stream.example.test'],$config['webrtcAdditionalHosts']);
-        $this->assertTrue($config['pathDefaults']['record']);$this->assertFalse($config['paths']['~^browser-[a-f0-9-]{36}$']['record']);
-        $this->assertFalse($config['paths']['~^browser-[a-f0-9-]{36}$']['runOnAvailable']==='');
+        $this->assertSame('127.0.0.1:8889',$config['webrtcAddress']);$this->assertFalse($config['rtsp']);
+        $this->assertSame(['stream.example.test'],$config['webrtcAdditionalHosts']);
+        $this->assertTrue($config['pathDefaults']['record']);$this->assertArrayNotHasKey('~^browser-[a-f0-9-]{36}$',$config['paths']);
         $this->assertStringNotContainsString(str_repeat('s',64),json_encode($config));
         if($binary=getenv('MEDIAMTX_VALIDATE_BIN')){
             Storage::disk('live-recordings')->put('browser-validation.yml',app(PublicBroadcast::class)->configuration());
@@ -121,11 +56,10 @@ class BrowserLiveTest extends TestCase
     public function test_browser_publish_token_is_scoped_to_owner_record_protocol_and_expiry(): void
     {
         $record=$this->event();$session=$this->browserSession($record);$token=app(BrowserBroadcast::class)->token($session);
-        $auth=['path'=>'browser-'.$session->id,'action'=>'publish','protocol'=>'webrtc','user'=>'browser','password'=>$token];
+        $auth=['path'=>'live','action'=>'publish','protocol'=>'webrtc','user'=>'browser','password'=>$token];
         $this->postJson('/live/server-auth',$auth)->assertNoContent();
-        $this->postJson('/live/server-auth',[...$auth,'path'=>'live-'.$record->id,'protocol'=>'rtsp'])->assertNoContent();
-        $this->postJson('/live/server-auth',[...$auth,'path'=>'live-'.$record->id,'protocol'=>'rtmp'])->assertNoContent();
-        $this->postJson('/live/server-auth',[...$auth,'path'=>'live-'.$this->event()->id,'protocol'=>'rtmp'])->assertUnauthorized();
+        $this->postJson('/live/server-auth',[...$auth,'path'=>'browser-'.$session->id])->assertUnauthorized();
+        $this->postJson('/live/server-auth',[...$auth,'protocol'=>'rtmp'])->assertUnauthorized();
         $this->postJson('/live/server-auth',[...$auth,'password'=>'wrong'])->assertUnauthorized();
         $this->postJson('/live/server-auth',[...$auth,'action'=>'read'])->assertUnauthorized();
         $this->owner->roles()->detach();$this->postJson('/live/server-auth',$auth)->assertUnauthorized();
@@ -142,6 +76,7 @@ class BrowserLiveTest extends TestCase
         $payload=['sdp'=>"v=0\r\nm=video 9 UDP/TLS/RTP/SAVPF 96\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n",'confirm'=>true];
         $start=$this->postJson('/desktop/live-studio/events/'.$record->id.'/browser',$payload)->assertCreated()->json();
         $session=LiveBrowserSession::findOrFail($start['id']);$this->assertSame('connected',$session->status);
+        Http::assertSent(fn($request)=>$request->method()==='POST'&&$request->url()==='http://127.0.0.1:8889/live/whip');
         $this->assertStringContainsString($secret,$session->upstream_location);
         $this->assertStringNotContainsString($secret,\Illuminate\Support\Facades\DB::table('live_browser_sessions')->where('id',$session->id)->value('upstream_location'));
         $this->assertArrayNotHasKey('upstream_location',$start);$this->assertStringNotContainsString(str_repeat('s',64),json_encode($start));
@@ -176,12 +111,12 @@ class BrowserLiveTest extends TestCase
         $metadata=$record->fresh()->metadata;
         $this->assertTrue($metadata['public_published']);$this->assertTrue($metadata['live_browser_enabled']);
         $this->assertTrue($metadata['live_stream_enabled']);$this->assertFalse($metadata['live_obs_enabled']);
+        $this->assertTrue($metadata['live_ingest_active']);
         $this->assertSame('starting',$metadata['live_status']);
         $this->assertTrue(app(BrowserBroadcast::class)->eligible($record->fresh()));
-        $this->assertSame($record->id,app(PublicBroadcast::class)->record('live-'.$record->id)?->id);
-        $this->assertNull(app(PublicBroadcast::class)->record('live'));
+        $this->assertSame($record->id,app(PublicBroadcast::class)->record('live')?->id);
         $this->assertNotEmpty($metadata['starts_at']);
-        app(PublicBroadcast::class)->signal('live-'.$record->id,true);
+        app(PublicBroadcast::class)->signal('live',true);
         $metadata=$record->fresh()->metadata;
         $this->assertSame('live',$metadata['live_status']);
         $this->assertArrayNotHasKey('live_browser_start_session_id',$metadata);
@@ -211,6 +146,7 @@ class BrowserLiveTest extends TestCase
         $this->assertFalse($metadata['public_published']);
         $this->assertFalse($metadata['live_browser_enabled']);
         $this->assertFalse($metadata['live_stream_enabled']);
+        $this->assertArrayNotHasKey('live_ingest_active',$metadata);
         $this->assertNull($metadata['starts_at']??null);
         $this->assertArrayNotHasKey('live_status',$metadata);
         $this->assertArrayNotHasKey('live_browser_start_session_id',$metadata);

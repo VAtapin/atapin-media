@@ -132,9 +132,6 @@ class PublicBroadcast
             $config['webrtc']=true;$config['webrtcAddress']='127.0.0.1:8889';$config['webrtcAllowOrigins']=[];
             $config['webrtcLocalUDPAddress']=':8189';$config['webrtcLocalTCPAddress']=':8189';
             $config['webrtcIPsFromInterfaces']=false;$config['webrtcAdditionalHosts']=[$settings->get('live_browser_host',config('platform.live_rtmp_host'))];
-            $config['rtsp']=true;$config['rtspAddress']='127.0.0.1:8554';$config['rtspTransports']=['tcp'];
-            $config['paths']['~^browser-[a-f0-9-]{36}$']=['source'=>'publisher','record'=>false,
-                'runOnAvailable'=>$prefix.' browser','runOnAvailableRestart'=>true,'runOnUnavailable'=>'','runOnRecordSegmentComplete'=>''];
         }
         // JSON is a YAML subset supported by MediaMTX; no second parser/dependency.
         return json_encode($config,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)."\n";
