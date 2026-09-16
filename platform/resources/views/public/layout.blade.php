@@ -22,7 +22,7 @@
 </script>
 <script src="/assets/public-pwa.js?v=1" defer></script>
 <script src="/assets/public-push.js?v=1" defer></script>
-<script src="/assets/public-ai-chat.js?v=1" defer></script>
+<script src="/assets/public-ai-chat.js?v=2" defer></script>
 <script src="/assets/public-comments.js?v=1" defer></script>
 <script src="/assets/public-audio-analytics.js?v=1" defer></script>
 @stack('publicScripts')

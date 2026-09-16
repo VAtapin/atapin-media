@@ -3,7 +3,7 @@
 return [
     'request' => 'Anfrage an die KI',
     'help' => 'Hilfe',
-    'request_hint' => 'Stelle eine Frage zur Administration. Die KI antwortet nur aus der dokumentierten Media-Desktop-Basis und führt keine Aktion aus.',
+    'request_hint' => 'Frage zur Bedienung oder zu Website-Inhalten. Die KI nutzt das KAI-Handbuch und veröffentlichte Daten; geplante Funktionen kennzeichnet sie.',
     'question' => 'Frage',
     'send' => 'Senden',
     'cancel' => 'Schließen',

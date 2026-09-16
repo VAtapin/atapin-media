@@ -30,18 +30,18 @@
   const openGlobalDialog = title => {
     let dialog = document.querySelector('[data-ai-global-dialog]');
     if (!dialog) {
-      dialog = document.createElement('dialog'); dialog.className = 'ai-dashboard-dialog'; dialog.dataset.aiGlobalDialog = 'true';
-      dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+      dialog = document.createElement('dialog'); dialog.className = 'ai-dashboard-dialog ai-dashboard-help'; dialog.dataset.aiGlobalDialog = 'true';
+      document.addEventListener('pointerdown', event => { if (dialog.open && !dialog.contains(event.target) && !document.querySelector('[data-ai-chat]')?.contains(event.target)) dialog.close(); });
       document.body.append(dialog);
     }
     dialog.replaceChildren();
     const header = document.createElement('header'); header.className = 'ai-dashboard-dialog-head';
     const heading = document.createElement('h2'); heading.textContent = title;
-    const close = button(t('cancel'), () => dialog.close());
+    const close = button('×', () => dialog.close()); close.setAttribute('aria-label',t('cancel')); close.classList.add('ai-dashboard-help-close');
     header.append(heading, close);
     const body = document.createElement('div'); body.className = 'ai-dashboard-dialog-body';
     dialog.append(header, body);
-    if (!dialog.open) dialog.showModal();
+    if (!dialog.open) dialog.show();
     return { dialog, body };
   };
   const renderDetail = (root, row) => {
@@ -55,13 +55,14 @@
     if (!trigger || trigger.dataset.aiChatReady) return;
     trigger.dataset.aiChatReady = 'true';
     trigger.addEventListener('click', () => {
+      const existing=document.querySelector('[data-ai-global-dialog]');if(existing?.open){existing.close();return;}
       const {dialog, body} = openGlobalDialog(t('help'));
       const hint = document.createElement('p'); hint.className = 'ai-dashboard-muted'; hint.textContent = t('request_hint');
       const form = document.createElement('form'); form.className = 'ai-dashboard-request-form';
       const label = document.createElement('label'); label.textContent = t('question');
-      const textarea = document.createElement('textarea'); textarea.name = 'question'; textarea.rows = 8; textarea.required = true; textarea.maxLength = 4000; textarea.placeholder = t('question_help'); label.append(textarea);
+      const textarea = document.createElement('textarea'); textarea.name = 'question'; textarea.rows = 4; textarea.required = true; textarea.maxLength = 4000; textarea.placeholder = t('question_help'); label.append(textarea);
       const actions = document.createElement('div'); actions.className = 'workspace-actions';
-      const send = button(t('send'), async () => { if (!form.reportValidity()) return; send.disabled = true; body.querySelector('[data-ai-error]')?.remove(); try { await W.request('/desktop/assistant', {purpose:'admin_help', question:textarea.value}, 'POST'); const notice = document.createElement('p'); notice.className = 'ai-dashboard-muted'; notice.textContent = t('request_sent'); body.replaceChildren(notice); } catch (error) { const notice = document.createElement('p'); notice.dataset.aiError = 'true'; notice.className = 'workspace-feedback is-error'; notice.textContent = error.message; body.append(notice); } finally { send.disabled = false; } }, true);
+      const send = button(t('send'), async () => { if (!form.reportValidity()) return; send.disabled = true; body.querySelector('[data-ai-error]')?.remove(); const wait=document.createElement('p');wait.className='ai-dashboard-muted';wait.textContent=t('status_processing');body.append(wait); try { const result=await W.request('/desktop/assistant', {purpose:'admin_help', question:textarea.value}, 'POST'); const answer=document.createElement('p');answer.className='ai-dashboard-answer';answer.textContent=result.answer;body.replaceChildren(answer);load?.(1); } catch (error) { wait.remove(); const notice = document.createElement('p'); notice.dataset.aiError = 'true'; notice.className = 'workspace-feedback is-error'; notice.textContent = error.message; body.append(notice); } finally { send.disabled = false; } }, true);
       actions.append(send); form.append(label, actions); body.append(hint, form); textarea.focus();
     });
   };

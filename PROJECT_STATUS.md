@@ -21,6 +21,8 @@
 - Meta OAuth реализован через App ID/Secret, state, short-to-long token exchange, обязательные scopes, выбор Facebook Page и связанный Instagram professional account. Page token хранится encrypted один раз; check проверяет app/page permissions и Instagram, disconnect удаляет credentials.
 - YouTube, X и Telegram имеют реальные read-only connection checks, понятные состояния, безопасные redacted logs и disconnect. YouTube/X обновляют истёкший access token через refresh flow; Telegram проверяет bot, публичный channel/supergroup, membership и право публикации. Пустые profile-only формы больше не создают фиктивные publishing connections.
 - Public Website, protected downloads, newsletter, polls, first-party analytics, imports/Takeout, AI suggestions, community inbox, YouTube comments, Browser Studio, PWA и operational health остаются на существующих production-compatible контрактах.
+- `/suche` ищет опубликованные видео, лекции, интервью, Beiträge, Podcast, Live, Community и опросы, а также активные книги по названию/описанию/оглавлению и активные темы/категории. Public KAI получает свежий опубликованный контекст и верхнюю навигацию непосредственно из БД/конфигурации; вопрос Live KAI и интерактивная помощь Desktop отвечают в том же HTTP-запросе без worker. Длинные редакционные предложения KI по-прежнему выполняются в очереди.
+- Руководство администратора `docs/KAI-ADMIN-MANUAL.md` содержит действия и пути по разделам со статусами `implemented/planned/unverified`. `kai:sync-knowledge` загружает его в отдельную таблицу, добавляет актуальную public-навигацию и запускается планировщиком каждые шесть часов. Desktop KAI отвечает из этого индекса и свежего публичного контекста; Public KAI также получает только публичные разделы руководства. Помощь Desktop открывается компактной панелью с крестиком и закрытием нажатием вне панели.
 
 ## Текущее состояние и решения
 
@@ -28,7 +30,8 @@
 - Import регистрирует existing original и не публикует автоматически. Защищённые файлы доступны только через authorization/entitlement contracts.
 - Будущая публикация Podcast выполняется через Publishing; поле даты в Podcast хранит фактическую/историческую дату, а не создаёт скрытый scheduler.
 - OAuth app configuration отделена от подключённого аккаунта. Секреты не возвращаются в браузер и не записываются в открытые settings/logs.
-- Taxonomy assignments используют существующие canonical subject types `record` и `product`; новых migrations и изменений Composer/npm dependencies в этом блоке нет.
+- Публичный контекст KAI ограничен опубликованными записями, активными книгами и темами; приватные полные PDF, черновики и секреты не индексируются. Подпись `planned` означает «предусмотрено, ещё не сделано», `unverified` — наличие кода без подтверждённого production/API результата.
+- Taxonomy assignments используют существующие canonical subject types `record` и `product`; в этом блоке их схема не менялась. Добавлена только новая таблица руководства KAI; Composer/npm dependencies не менялись.
 - В Media Desktop родитель темы выбирается только из активных категорий. Существующие legacy-связи темы с темой не выводятся как новые варианты и сохраняются при редактировании других полей, пока редактор явно не выбирает категорию либо пустое значение.
 - Rich-text HTML при сохранении и публичном выводе проходит общий `RichContent` sanitizer: разрешены редакционные заголовки, списки, цитаты, таблицы, безопасные ссылки и ограниченное выравнивание. Скрипты, event-атрибуты, iframe и произвольные стили не допускаются. Jodit подключён как локальный статический vendor asset с MIT license; Composer/npm dependencies и схема БД не менялись.
 - На Videos и Bücher маленькие обложки категорий в компактной taxonomy-навигации выводятся только из публичного canonical image storage; private media-preview URL не попадает в страницу. При отсутствии обложки навигация остаётся текстовой. Для desktop полка выбирает предоставленные владельцем составные PNG 1024 px шириной как CSS-фон, а при узком экране сохраняет пропорции деревянной полки и размещает предметы CSS-фонами без дополнительных HTML-картинок и расчётов в JavaScript. Вместимость групп и условная ссылка пересчитываются при изменении ширины.
@@ -44,6 +47,7 @@
 - TikTok и LinkedIn пока остаются profile-only, без фиктивного publishing API.
 - Защищённая Live Server конфигурация уже применена владельцем на production и глобально сохраняется; новый Browser Studio код и отдельный Public Website фон ещё требуют production-обновления. `platform:check` и реальный Browser-эфир агентом не выполнялись.
 - Перед production migration обязателен backup базы данных.
+- Новая таблица KAI и первоначальная синхронизация руководства ещё не применялись на production. Реальный OpenAI ответ после этого изменения агентом не проверялся; HTTP fakes и контрактные тесты прошли. Справочник требует обновления при изменении кнопок и маршрутов.
 - Вставка изображений непосредственно в rich-text пока отключена: её следует добавить отдельным блоком через защищённую Media Library и проверку public media URLs; arbitrary URL/base64 images не допускаются.
 - Названия категорий всё ещё расположены слишком высоко, под книгами. Владелец попросил сначала заменить фон полки; положение названий остаётся следующим отдельным UI-исправлением.
 - Полный сквозной Playwright-сценарий приложения для этого блока не запускался; изолированные Edge browser checks Public Website прошли локально, остальные сквозные проверки остаются в CI.
@@ -51,7 +55,8 @@
 
 ## Проверки
 
-- Полный локальный PHPUnit suite на PHP 8.4 / SQLite, включая прежний календарный тест: **463 tests, 3750 assertions — passed**. В локальном PHP CLI расширение GD выключено по умолчанию, поэтому suite запускался с `-d extension=gd`; обычный `composer test` без GD остановился на изображении в `DesktopWorkspacesTest`.
+- Полный локальный PHPUnit suite на PHP 8.4 / SQLite с нужными CLI extensions: **477 tests, 3880 assertions — passed**. Локальный `composer test` без включённых расширений не пригоден для этого окружения; PHPUnit запущен напрямую с изолированным PHP ini.
+- Изолированный Edge browser check помощи KAI на `1672 × 941` и `390 × 844` прошёл: компактная немодальная панель, расположение, закрытие крестиком/значком/вне панели. `kai:sync-knowledge` создал 60 записей в тестовой SQLite; расписание подтвердило запуск каждые шесть часов.
 - Изолированные Chrome browser checks: форма Beiträge/Media Library и сетка селектов на `1672 × 941` и `390 × 844`, положение Jodit/taxonomy/действий с файлами, адресный поиск и индивидуальное удаление импорт-версий — passed. Сквозные проверки обновлены в CI, но локально не прошли по ограничению браузерного localhost.
 - PHP/Node syntax затронутых файлов, Blade `view:cache`, routes `route:cache` — passed; generated caches очищены. Composer audit и npm build не требуются: manifest dependencies не менялись.
 - Для Browser Studio целевые **36 PHP tests, 275 assertions — passed**: выбор будущих записей сегодняшнего дня, сохранение и старт нового эфира, отдельный OBS-флаг, защита от `/dev/null` и приватное обезличенное сообщение при сбое FFmpeg relay, перевод статуса черновика. Изолированный Edge browser check на `1672 × 941` и `390 × 844` прошёл: выбор второго из нескольких эфиров вместо OBS-записи, создание с картинкой одним нажатием, переход в другую вкладку без завершения тестовой сессии, pop-out, layout и сохранённую настройку сервера. PHP/Node syntax, Laravel `config:cache` и Blade `view:cache` прошли, generated caches очищены. Реальный MediaMTX/FFmpeg transport локально не запускался: pinned binary отсутствует.
@@ -61,7 +66,7 @@
 
 ## Что рекомендуется следующим
 
-- После Live Studio commit/push обновить platform на production через `git pull --ff-only`, `config:clear` и `view:clear`. Затем выполнить документированный `platform:check`, запустить Browser-эфир, переключиться в другую вкладку, проверить публичную `/live` и при сбое прочитать защищённый live-browser-transport log. Для WebRTC media открыт публичный TCP/UDP 8189; API/WHIP/RTSP порты публично открывать не требуется. Отдельный Public Website commit `388e997` также ещё требует deployment и проверки составных фонов на Start, Beiträge и `/themen`; положение названий категорий остаётся следующим UI-блоком. Текущие незавершённые AI-изменения другого чата остаются вне Live commit.
+- Перед production migration сделать backup БД через Plesk; затем получить текущую ветку, применить migration, выполнить `kai:sync-knowledge` и очистить Blade views. Проверить реальный вопрос о книгах/меню/запланированной функции на public и Desktop KAI и быстрый `/suche`. После обновления Live Studio проверить Browser-эфир, публичную `/live` и документированный `platform:check`; фон полок и положение названий категорий проверить отдельно.
 - При следующем запуске CI проверить обновлённые сквозные браузерные сценарии на штатном Linux/Chromium окружении.
 - Отдельно спроектировать защищённый выбор изображений из Media Library для Jodit, если изображения в тексте нужны владельцу.
 - В настройках по очереди сохранить app credentials и пройти реальные OAuth/API checks Meta, YouTube, X, Telegram и Stripe test mode. Секреты в чат не присылать.
@@ -69,12 +74,5 @@
 
 ## Последний связанный commit
 
-- Текущий функциональный блок: этот commit — `Choose browser livestreams and keep FFmpeg relay alive`. Branch/upstream: `main` → `origin/main`.
-- Предыдущий блок Public Website: `388e997` — `Use composed shelf backgrounds without layout spacers`.
-- Предыдущий блок Public Website: `9a004ef` — `Keep all active categories accessible on bookshelves`.
-- Предыдущий блок Live Studio: `5437532` — `Start browser livestreams without activation checkbox`.
-- Предыдущий независимый блок Public Website: `51b211e` — `Refine compact category bookshelves`.
-- Предыдущий блок Live Studio: `61fbf91` — `Improve Browser Studio event controls and camera inset`.
-- Предыдущий блок Public Website: `c1f8cc5` — `Build dynamic category bookshelves`.
-- Предыдущий блок Browser Studio: `cd3ab22` — `Move Browser Studio preview action beside preview`.
-- Последнее подтверждённое состояние Live Server: `abb12e2` — `Record protected Live server recovery`.
+- Текущий функциональный блок: этот commit — `Answer KAI questions from published and indexed knowledge`. Branch/upstream: `main` → `origin/main`.
+- Предыдущий Live Studio commit: `be0b590` — `Choose browser livestreams and keep FFmpeg relay alive`.

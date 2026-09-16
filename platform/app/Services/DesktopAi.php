@@ -21,10 +21,30 @@ class DesktopAi
                     ? app(ContentStructureReview::class)->version($record)
                     : app(ContentState::class)->version($record))
                 : ($product ? $this->bookVersion($product) : null);
-            return DesktopAiRequest::create([...$data,'user_id'=>$user->id,'source_version'=>$sourceVersion]);
+            return DesktopAiRequest::create([...$data,'user_id'=>$user->id,'source_version'=>$sourceVersion,
+                'status'=>in_array($data['purpose'],['admin_help','chat'],true)?'processing':'queued']);
         });
-        \App\Jobs\AnswerDesktopAi::dispatch($entry->id)->afterCommit();
+        if($entry->status==='processing')$this->complete($entry);
+        else \App\Jobs\AnswerDesktopAi::dispatch($entry->id)->afterCommit();
         return $entry;
+    }
+
+    public function complete(DesktopAiRequest $entry): void
+    {
+        if($entry->status!=='processing')return;
+        try {
+            $user=User::find($entry->user_id);
+            if(!$user?->hasPermission('content.edit'))throw new \RuntimeException('Permission revoked.');
+            if($entry->product_id&&!$user->hasPermission('shop.manage'))throw new \RuntimeException('Book permission revoked.');
+            $result=$this->answer($entry);
+            $usage=$result['_usage']??[];unset($result['_usage']);
+            $entry->update(['status'=>'completed','answer'=>mb_substr($result['answer'],0,10000),'proposal'=>$result]);
+            app(AiUsage::class)->record($entry,is_array($usage)?$usage:[]);
+            if($entry->purpose==='structure')app(ContentStructureReview::class)->apply($entry);
+        }catch(\Throwable){
+            if($entry->purpose==='structure')app(ContentStructureReview::class)->markFailed($entry);
+            $entry->update(['status'=>'failed']);
+        }
     }
 
     public function answer(DesktopAiRequest $entry): array
@@ -37,6 +57,7 @@ class DesktopAi
                 'question'=>$entry->question,
                 'locale'=>$entry->context['locale']??app()->getLocale(),
                 'knowledge_base'=>app(AdminKnowledgeBase::class)->context($entry->question),
+                'published_website'=>app(PublicAiKnowledge::class)->context(null,$entry->question),
             ]);
         }
         if($entry->source_version&&!$record&&!$product)throw new \RuntimeException('Source no longer exists.');

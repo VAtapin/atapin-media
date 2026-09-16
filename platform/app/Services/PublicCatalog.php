@@ -1,7 +1,7 @@
 <?php
 namespace App\Services;
 
-use App\Models\{Collection,Product,SourceRecord,PublicContentState};
+use App\Models\{Collection,Product,SourceRecord,PublicContentState,TaxonomyTerm};
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -13,7 +13,7 @@ class PublicCatalog
         if($section==='live')$this->content->expireScheduledLives();
         $data=$request->validate(['q'=>'nullable|string|max:120','tag'=>'nullable|string|max:100','taxonomy'=>'nullable|string|max:180','sort'=>'nullable|in:latest,oldest,popular','series'=>'nullable|integer|min:1','page'=>'nullable|integer|min:1|max:100000']);
         $query=$section==='buecher'?$this->books->query():$this->content->withViewCounts($section==='search'?$this->content->query()->whereIn('kind',['video','short','post','poll']):$this->content->forSection($section));
-        if($data['q']??'')$query->where(fn($q)=>$q->where('title','like','%'.$data['q'].'%')->orWhere($section==='buecher'?'description':'body','like','%'.$data['q'].'%'));
+        if($data['q']??'')$query->where(fn($q)=>$q->where('title','like','%'.$data['q'].'%')->orWhere($section==='buecher'?'description':'body','like','%'.$data['q'].'%')->when($section==='buecher',fn($q)=>$q->orWhere('contents','like','%'.$data['q'].'%')));
         $tagFilter = trim((string) ($data['tag'] ?? ''));
         $taxonomyFilter = $this->taxonomy->resolve($data['taxonomy'] ?? null);
         if (($data['taxonomy'] ?? '') !== '' && ! $taxonomyFilter) abort(404);
@@ -55,7 +55,14 @@ class PublicCatalog
         $popularQuery=$section==='buecher'?$this->books->query()->latest():($section==='live'?$this->content->forSection('live')->where('metadata->live_status','ended')->latest():$this->content->withViewCounts($this->content->forSection($section))->orderByDesc('public_view_count')->latest()->orderByDesc('id'));
         if($taxonomyFilter)$this->taxonomy->constrain($popularQuery,$section,$taxonomyFilter);
         $taxonomyFilters=$this->taxonomy->filters($section);
-        return ['items'=>$items,'featured'=>$featured,'readingBooks'=>$readingBooks,'resume'=>$resumeRecord?[...$this->content->card($resumeRecord),'position'=>$resumeState->value['position']??0]:null,
+        $searchBooks=collect();$searchTerms=collect();
+        if($section==='search'){
+            $needle=trim((string)($data['q']??''));
+            $searchBooks=$this->books->query()->when($needle!=='',fn($q)=>$q->where(fn($q)=>$q->where('title','like','%'.$needle.'%')->orWhere('description','like','%'.$needle.'%')->orWhere('contents','like','%'.$needle.'%')))->latest()->limit(24)->get()->map($this->books->card(...));
+            $links=[];foreach($this->taxonomy->directoryShelves() as $shelf)foreach($shelf['books'] as $topic)$links[$topic['id']]=$topic['url'];
+            $searchTerms=TaxonomyTerm::where('active',true)->when($needle!=='',fn($q)=>$q->where(fn($q)=>$q->where('name','like','%'.$needle.'%')->orWhere('description','like','%'.$needle.'%')))->orderBy('name')->limit(24)->get()->map(fn($term)=>['id'=>$term->id,'name'=>$term->name,'kind'=>$term->kind,'description'=>$term->description,'url'=>$term->kind==='category'?route('public.categories',['category'=>$term->slug]):($links[$term->id]??route('public.beitraege',['taxonomy'=>$term->slug]))]);
+        }
+        return ['items'=>$items,'searchBooks'=>$searchBooks,'searchTerms'=>$searchTerms,'featured'=>$featured,'readingBooks'=>$readingBooks,'resume'=>$resumeRecord?[...$this->content->card($resumeRecord),'position'=>$resumeState->value['position']??0]:null,
             'popular'=>$popularQuery->limit($section==='beitraege'?6:5)->get()->map($mapper),
             'topics'=>$this->topics($section),'taxonomyFilters'=>$taxonomyFilters,'selectedTaxonomy'=>$taxonomyFilter,'series'=>$this->series($section),
             'record'=>$record,'assets'=>$record?$this->content->assets($record):collect(),

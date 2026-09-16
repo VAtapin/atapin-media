@@ -168,11 +168,29 @@ class AdminCompletionTest extends TestCase
     {
         app(Settings::class)->update(['ai_enabled'=>true,'ai_provider'=>'openai','ai_model'=>'test-model']);app(Settings::class)->updateSecrets(['ai_api_key'=>'test-not-real']);
         DesktopAiRequest::create(['user_id'=>$this->owner->id,'purpose'=>'structure','question'=>'Format imported text','status'=>'failed','answer'=>null]);
-        $this->getJson('/desktop/assistant')->assertOk()->assertJsonPath('stats.total',1)->assertJsonPath('stats.failed',1)->assertJsonPath('knowledge.entries',19);
-        $id=$this->postJson('/desktop/assistant',['purpose'=>'admin_help','question'=>'Wie veröffentliche ich einen Beitrag?'])->assertAccepted()->json('id');
         Http::fake(['api.openai.com/*'=>Http::response(['status'=>'completed','usage'=>['input_tokens'=>1000,'output_tokens'=>500,'total_tokens'=>1500],'output'=>[['content'=>[['type'=>'output_text','text'=>json_encode(['answer'=>'Öffne Beiträge und starte die Veröffentlichung am Material.','title'=>'','short_description'=>'','seo_title'=>'','seo_description'=>'','social_text'=>''])]]]]])]);
-        (new \App\Jobs\AnswerDesktopAi($id))->handle(app(DesktopAi::class));
+        $knowledge=app(\App\Services\AdminKnowledgeBase::class);$entries=$knowledge->sync();
+        $this->getJson('/desktop/assistant')->assertOk()->assertJsonPath('stats.total',1)->assertJsonPath('stats.failed',1)->assertJsonPath('knowledge.entries',$entries);
+        $response=$this->postJson('/desktop/assistant',['purpose'=>'admin_help','question'=>'Wie veröffentliche ich einen Beitrag?'])
+            ->assertOk()->assertJsonPath('status','completed')->assertJsonPath('answer','Öffne Beiträge und starte die Veröffentlichung am Material.');
+        $id=$response->json('id');
         $entry=DesktopAiRequest::findOrFail($id);$this->assertSame('completed',$entry->status);$this->assertSame(1500,$entry->total_tokens);$this->assertNull($entry->estimated_cost_micros);Http::assertSent(fn($r)=>str_contains($r['input'],'Publishing')&&str_contains($r['input'],'knowledge_base'));
+        $this->assertContains('planned',array_column($knowledge->context('TikTok publishing'),'status'));
+    }
+    public function test_admin_help_uses_the_current_published_book_catalog_without_drafts_or_queue(): void
+    {
+        app(Settings::class)->update(['ai_enabled'=>true,'ai_provider'=>'openai','ai_model'=>'test-model']);
+        app(Settings::class)->updateSecrets(['ai_api_key'=>'test-not-real']);
+        Product::create(['title'=>'Active public book','description'=>'Visible synopsis','contents'=>'Visible chapter',
+            'status'=>'active','currency'=>'EUR','price_cents'=>0]);
+        Product::create(['title'=>'Private draft book','description'=>'Hidden synopsis','contents'=>'Hidden chapter',
+            'status'=>'draft','currency'=>'EUR','price_cents'=>0]);
+        Http::fake(['api.openai.com/*'=>Http::response(['status'=>'completed','output'=>[['content'=>[['type'=>'output_text','text'=>json_encode(['answer'=>'Active public book','title'=>'','short_description'=>'','seo_title'=>'','seo_description'=>'','social_text'=>''])]]]]])]);
+        $this->postJson('/desktop/assistant',['purpose'=>'admin_help','question'=>'Какие книги есть на сайте?'])
+            ->assertOk()->assertJsonPath('answer','Active public book');
+        Http::assertSent(fn($request)=>str_contains($request['input'],'Active public book')
+            &&str_contains($request['input'],'Visible chapter')&&!str_contains($request['input'],'Private draft book'));
+        Queue::assertNothingPushed();
     }
     public function test_poll_admin_counts_multiple_and_legacy_votes_without_returning_voters(): void
     {

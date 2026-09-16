@@ -35,6 +35,8 @@ class DesktopAiController extends Controller
         if(!empty($data['product_id']))\Illuminate\Support\Facades\Gate::authorize('shop.manage');
         if (in_array($data['purpose'],['title','summary','seo'],true)) abort_unless(!empty($data['source_record_id'])||!empty($data['product_id']),422);
         $entry = $service->submit($request->user(),$data);
+        if($entry->status==='failed')return response()->json(['id'=>$entry->id,'status'=>'failed','message'=>__('workspaces.ai_unavailable')],503);
+        if($entry->status==='completed')return response()->json(['id'=>$entry->id,'status'=>'completed','answer'=>$entry->answer])->header('Cache-Control','private, no-store');
         return response()->json(['id'=>$entry->id,'status'=>'queued'],202);
     }
     public function apply(Request $request, DesktopAiRequest $entry, DesktopAi $service)

@@ -9,7 +9,8 @@ class PublicAiChatController extends Controller
     {
         $data=$request->validate(['question'=>'required|string|min:2|max:1000','consent'=>'required|accepted']);
         $entry=$chat->submit($request->user(),$record,preg_replace('/^\s*@Assistent\s*/iu','',$data['question']));
-        return response()->json(['status'=>$entry->status,'status_url'=>route('public.ai-chat-status',$entry)],202);
+        if($entry->status==='failed')return response()->json(['status'=>'failed','message'=>__('public.ai_chat_error')],503);
+        return response()->json(['status'=>'completed','answer'=>$entry->answer])->header('Cache-Control','private, no-store');
     }
     public function show(Request $request,PublicAiChatRequest $entry)
     {
