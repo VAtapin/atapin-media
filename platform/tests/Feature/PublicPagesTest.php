@@ -114,9 +114,15 @@ class PublicPagesTest extends TestCase
     }
     public function test_scheduled_live_events_are_not_listed_as_recordings(): void
     {
+        Storage::fake('media-canonical');Storage::disk('media-canonical')->put(str_repeat('b',64).'.mp4','recording');
+        $media=Media::create(['source'=>'live','source_id'=>'ready-segment','title'=>'Ready recording','original_name'=>'recording.mp4','disk'=>'media-canonical',
+            'path'=>str_repeat('b',64).'.mp4','kind'=>'video','mime'=>'video/mp4','bytes'=>9,'status'=>'unsorted']);
         $scheduled=$this->record('video',['public_section'=>'live','live_status'=>'scheduled','starts_at'=>'2027-01-01T12:00:00']);
-        $ended=$this->record('video',['public_section'=>'live','live_status'=>'ended']);
-        $this->get('/live?event='.$scheduled->id)->assertOk()->assertViewHas('popular',fn($items)=>!$items->contains('id',$scheduled->id)&&$items->contains('id',$ended->id));
+        $ready=$this->record('video',['public_section'=>'live','live_status'=>'ended','media_ids'=>[$media->id]]);
+        $pending=$this->record('video',['public_section'=>'live','live_status'=>'ended','live_recording_pending'=>true]);
+        $this->get('/live?event='.$scheduled->id)->assertOk()
+            ->assertViewHas('popular',fn($items)=>!$items->contains('id',$scheduled->id)&&$items->contains('id',$ready->id)&&!$items->contains('id',$pending->id))
+            ->assertViewHas('items',fn($items)=>$items->contains('id',$scheduled->id)&&$items->contains('id',$ready->id)&&!$items->contains('id',$pending->id));
     }
     public function test_expired_scheduled_lives_are_marked_ended_and_removed_from_upcoming(): void
     {

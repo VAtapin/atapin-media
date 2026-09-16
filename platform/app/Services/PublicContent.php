@@ -36,7 +36,18 @@ class PublicContent
     }
     public function latestRecording(): ?SourceRecord
     {
-        return $this->forSection('live')->where('metadata->live_status','ended')->latest()->first();
+        return $this->recordings()->first();
+    }
+    public function recordings(): \Illuminate\Support\Collection
+    {
+        return $this->forSection('live')->where('metadata->live_status','ended')->latest()->get()
+            ->filter($this->hasPlayableRecording(...))->values();
+    }
+    public function hasPlayableRecording(SourceRecord $record): bool
+    {
+        if (($record->metadata['live_status'] ?? null) !== 'ended') return false;
+        return $this->assets($record)->contains(fn(Media $media)=>$media->kind === 'video'
+            && in_array($media->mime,['video/mp4','video/webm'],true));
     }
     public function withViewCounts(Builder $query): Builder
     {

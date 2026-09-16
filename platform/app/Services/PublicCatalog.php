@@ -11,8 +11,10 @@ class PublicCatalog
     public function listing(Request $request,string $section): array
     {
         if($section==='live')$this->content->expireScheduledLives();
+        $recordingIds=$section==='live'?$this->content->recordings()->pluck('id')->all():[];
         $data=$request->validate(['q'=>'nullable|string|max:120','tag'=>'nullable|string|max:100','taxonomy'=>'nullable|string|max:180','sort'=>'nullable|in:latest,oldest,popular','series'=>'nullable|integer|min:1','page'=>'nullable|integer|min:1|max:100000']);
         $query=$section==='buecher'?$this->books->query():$this->content->withViewCounts($section==='search'?$this->content->query()->whereIn('kind',['video','short','post','poll']):$this->content->forSection($section));
+        if($section==='live')$query->where(fn($q)=>$q->whereIn('metadata->live_status',['live','scheduled'])->orWhereIn('id',$recordingIds));
         if($data['q']??'')$query->where(fn($q)=>$q->where('title','like','%'.$data['q'].'%')->orWhere($section==='buecher'?'description':'body','like','%'.$data['q'].'%')->when($section==='buecher',fn($q)=>$q->orWhere('contents','like','%'.$data['q'].'%')));
         $tagFilter = trim((string) ($data['tag'] ?? ''));
         $taxonomyFilter = $this->taxonomy->resolve($data['taxonomy'] ?? null);
@@ -52,7 +54,7 @@ class PublicCatalog
         $resumeState=$request->user()?PublicContentState::where('user_id',$request->user()->id)->where('subject_type','record')->where('action','progress')->whereIn('subject_id',$this->content->forSection('podcast')->select('id'))->latest('updated_at')->first():null;
         $resumeRecord=$resumeState?$this->content->forSection('podcast')->find($resumeState->subject_id):null;
         $sessionId=$request->hasSession()?$request->session()->getId():null;
-        $popularQuery=$section==='buecher'?$this->books->query()->latest():($section==='live'?$this->content->forSection('live')->where('metadata->live_status','ended')->latest():$this->content->withViewCounts($this->content->forSection($section))->orderByDesc('public_view_count')->latest()->orderByDesc('id'));
+        $popularQuery=$section==='buecher'?$this->books->query()->latest():($section==='live'?$this->content->forSection('live')->whereIn('id',$recordingIds)->latest():$this->content->withViewCounts($this->content->forSection($section))->orderByDesc('public_view_count')->latest()->orderByDesc('id'));
         if($taxonomyFilter)$this->taxonomy->constrain($popularQuery,$section,$taxonomyFilter);
         $taxonomyFilters=$this->taxonomy->filters($section);
         $searchBooks=collect();$searchTerms=collect();
