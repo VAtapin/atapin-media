@@ -114,6 +114,24 @@ try {
           await page.goto('http://127.0.0.1:8795/');
         }
       }
+      if(route==='/'&&width<=800&&await page.locator('.public-home-grid .public-latest-item').count()){
+        const homeGrid=page.locator('.public-home-grid');
+        const latest=homeGrid.locator('.public-latest-item').first();
+        const compact=await latest.evaluate(node=>{
+          const image=node.querySelector('.public-photo').getBoundingClientRect();
+          const title=getComputedStyle(node.querySelector('h3'));
+          const panel=getComputedStyle(node.closest('.public-panel'));
+          return {imageWidth:image.width,imageHeight:image.height,titleClamp:title.webkitLineClamp,padding:parseFloat(panel.paddingTop)};
+        });
+        assert(compact.imageWidth<=84&&compact.imageHeight<=60,`Mobile latest card image is not compact: ${JSON.stringify(compact)}`);
+        assert.equal(compact.titleClamp,'3','Mobile latest title is not limited to three lines');
+        assert(compact.padding<=12,`Mobile home panels keep desktop padding: ${JSON.stringify(compact)}`);
+        const bookDescription=homeGrid.locator('.public-book-description');
+        if(await bookDescription.count())assert.equal(await bookDescription.isVisible(),false,'Long book description remains visible on mobile home');
+        const livePhoto=homeGrid.locator(':scope > .public-panel:last-child > a > .public-photo');
+        if(await livePhoto.count())assert((await livePhoto.boundingBox()).height<=140,'Mobile home livestream image is too tall');
+        await homeGrid.screenshot({path:'tests/artifacts/public-home-content-390.png'});
+      }
       if(route==='/themen'){
         const shelves=page.locator('[data-book-cabinet] [data-public-book-shelf]');
         if(process.env.PUBLIC_EXPECT_EMPTY_SHELF==='1'){
@@ -166,6 +184,22 @@ try {
         assert(await page.locator('[data-public-book-shelf] .public-book-shelf-book').count()>0,'Other topic books remain on the shelf');
         assert.equal(await page.locator('[data-public-book-shelf] [data-shelf-category]').count(),10,'Other categories remain available from a topic');
         await page.goto('http://127.0.0.1:8795/beitraege');
+      }
+      if(route==='/beitraege'&&width<=800&&await page.locator('.public-post-grid .public-content-card-post').count()){
+        const card=page.locator('.public-post-grid .public-content-card-post').first();
+        const compact=await card.evaluate(node=>{
+          const image=node.querySelector('.public-photo').getBoundingClientRect();
+          const title=getComputedStyle(node.querySelector('h3'));
+          const excerpt=node.querySelector('p');
+          return {imageWidth:image.width,imageHeight:image.height,titleClamp:title.webkitLineClamp,excerptClamp:excerpt?getComputedStyle(excerpt).webkitLineClamp:null,columns:getComputedStyle(node).gridTemplateColumns};
+        });
+        assert(compact.imageWidth<=88&&compact.imageHeight<=104,`Mobile Beiträge cover is not compact: ${JSON.stringify(compact)}`);
+        assert.equal(compact.titleClamp,'3','Mobile Beiträge title is not limited to three lines');
+        if(compact.excerptClamp!==null)assert.equal(compact.excerptClamp,'2','Mobile Beiträge excerpt is not limited to two lines');
+        assert.match(compact.columns,/86px/,'Mobile Beiträge card is not a compact horizontal row');
+        const ranked=page.locator('.public-post-overview .public-ranked .public-content-card').first();
+        if(await ranked.count())assert((await ranked.locator('.public-photo').boundingBox()).width<=80,'Popular Beiträge thumbnail is too wide on mobile');
+        await page.locator('.public-post-overview').screenshot({path:'tests/artifacts/public-beitraege-content-390.png'});
       }
       if(['/videos','/buecher'].includes(route)&&await page.locator('[data-public-taxonomy]').count()){
         const bar=page.locator('[data-public-taxonomy]');

@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="/assets/brand/ui-kit.css">
 <link rel="stylesheet" href="/assets/public.css">
 <link rel="stylesheet" href="/assets/public-rich-content.css?v=1">
-<link rel="stylesheet" href="/assets/public-pages.css?v=26">
+<link rel="stylesheet" href="/assets/public-pages.css?v=27">
 @stack('publicStyles')
 <script src="/assets/public.js?v=15" defer>
 </script>
