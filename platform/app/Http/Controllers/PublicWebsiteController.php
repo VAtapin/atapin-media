@@ -23,7 +23,13 @@ class PublicWebsiteController extends Controller
         $featuredRecord=$content->homepageVideos()->latest()->orderByDesc('id')->first()??$content->forSection('videos')->latest()->orderByDesc('id')->first();
         return view('public.home',[...$this->shared(),'videos'=>$videos,'articles'=>$articles,
             'featured'=>$featuredRecord?$content->card($featuredRecord):null,'book'=>$book?$books->card($book):null,
-            'live'=>$live?$content->card($live):null,'homeTopics'=>$taxonomy->homeTopics()]);
+            'live'=>$live?$content->card($live):null,'homeTopics'=>$taxonomy->homeTopics(),
+            'homeCategories'=>$taxonomy->homeCategories()]);
+    }
+    public function categories(PublicTaxonomy $taxonomy)
+    {
+        return view('public.categories', [...$this->shared(), 'section'=>'categories',
+            'directoryShelves'=>$taxonomy->directoryShelves()]);
     }
     public function recordView(Request $request, SourceRecord $record, PublicContent $content, PublicViewCounter $counter)
     {
@@ -36,7 +42,8 @@ class PublicWebsiteController extends Controller
         if(in_array($section,['videos','beitraege','buecher','live','podcast','community','search'])){
             $data=app(PublicCatalog::class)->listing($request,$section);
             return view('public.'.($section==='search'?'section':$section),[...$this->shared(),'section'=>$section,
-                'layoutMode'=>$section==='live'&&$request->filled('event')?'detail':'overview',...$data]);
+                'layoutMode'=>$section==='live'&&$request->filled('event')?'detail':'overview',...$data,
+                'shelfCategories'=>$section==='beitraege'?app(PublicTaxonomy::class)->homeCategories():[]]);
         }
         $data=$request->validate(['q'=>'nullable|string|max:120']);
         $section=$request->route('section');$query=$content->query();

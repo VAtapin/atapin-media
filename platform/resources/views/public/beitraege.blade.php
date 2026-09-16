@@ -1,10 +1,12 @@
 @extends('public.layout',['title'=>__('public.section_beitraege')])
+@push('publicStyles')<link rel="stylesheet" href="/assets/public-book-shelf.css?v=1">@endpush
+@push('publicScripts')<script src="/assets/public-book-shelf.js?v=1" defer></script>@endpush
 
 @section('content')
 
 @include('public.hero')<div class="public-wide">
 @include('public.filters')
-@include('public.taxonomy-browser')
+@include('public.section-book-shelf')
 <div class="public-post-overview">
 <div>
 @include('public.cards',['heading'=>__('public.latest_articles'),'cards'=>$items,'paginator'=>$items,'style'=>'post','panelClass'=>'public-post-grid','listingUrl'=>'/beitraege','emptyUrl'=>'/beitraege/vorschau'])</div>

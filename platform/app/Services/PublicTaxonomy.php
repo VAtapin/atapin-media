@@ -107,6 +107,42 @@ class PublicTaxonomy
         }, $topics);
     }
 
+    public function homeCategories(): array
+    {
+        return TaxonomyTerm::where('active', true)->where('kind', 'category')->orderBy('name')
+            ->get(['id', 'name'])->map(fn (TaxonomyTerm $term) => [
+                'id' => (int) $term->id,
+                'name' => $term->name,
+            ])->sort(fn (array $left, array $right) => strnatcasecmp($left['name'], $right['name']))
+            ->values()->all();
+    }
+
+    public function directoryShelves(): array
+    {
+        $terms = $this->activeTerms();
+        $published = collect($this->homeTopics())->keyBy('id');
+        $shelves = [];
+        foreach ($terms->where('kind', 'category')->sort(fn (TaxonomyTerm $left, TaxonomyTerm $right) => strnatcasecmp($left->name, $right->name)) as $category) {
+            $shelves[(int) $category->id] = ['name' => $category->name, 'books' => []];
+        }
+        foreach ($terms->where('kind', 'topic') as $topic) {
+            $category = $this->categoryForTopic($terms, (int) $topic->id);
+            $key = $category?->id ?? 'uncategorized';
+            if (! isset($shelves[$key])) $shelves[$key] = ['name' => __('public.topics'), 'books' => []];
+            $links = $published->get((int) $topic->id)['sections'] ?? [];
+            $destination = collect(['beitraege', 'videos', 'buecher'])
+                ->map(fn (string $section) => $links[$section] ?? null)
+                ->filter(fn (?array $link) => ($link['count'] ?? 0) > 0)
+                ->sortByDesc('count')->first();
+            $shelves[$key]['books'][] = [
+                'name' => $topic->name,
+                'url' => $destination['url'] ?? route('public.beitraege', ['taxonomy' => $topic->slug]),
+            ];
+        }
+
+        return array_values($shelves);
+    }
+
     private function categoryForTopic(Collection $terms, int $topicId): ?TaxonomyTerm
     {
         $parentId = $terms->get($topicId)?->parent_id;

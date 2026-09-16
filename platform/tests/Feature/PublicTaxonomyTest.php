@@ -116,6 +116,8 @@ class PublicTaxonomyTest extends TestCase
         $this->assertSame(12, collect($topics)->firstWhere('slug', 'topic-1-1')['sections']['beitraege']['count']);
         $this->assertCount(12, app(PublicTaxonomy::class)->homeTopics(12));
         $this->get('/')->assertOk()->assertViewHas('homeTopics', fn (array $items) => count($items) === 50);
+        $this->get('/themen')->assertOk()->assertViewHas('directoryShelves', fn (array $shelves) =>
+            count($shelves) === 10 && collect($shelves)->sum(fn (array $shelf) => count($shelf['books'])) === 50);
     }
 
     private function tree(): array

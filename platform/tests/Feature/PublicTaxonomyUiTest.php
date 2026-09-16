@@ -28,16 +28,15 @@ class PublicTaxonomyUiTest extends TestCase
         $taxonomy->sync($article, [$topic->id]);
         $taxonomy->sync($book, [$topic->id]);
 
-        $home = $this->get('/')->assertOk()->assertSee('data-public-home-topics', false)
-            ->assertSee('public-taxonomy-crumbs', false)->assertSee('Medizin')->assertSee('Anatomie')
-            ->assertSee($cover->publicUrl(), false)
-            ->assertDontSee('public-home-topics-heading', false);
+        $home = $this->get('/')->assertOk()->assertSee('data-public-book-shelf', false)
+            ->assertSee('/assets/book-shelf/shelf.png', false)
+            ->assertSee('public-book-shelf-book', false)->assertSee('Medizin')->assertSee('Anatomie')
+            ->assertSee('href="'.route('public.beitraege', ['taxonomy'=>'anatomie']).'"', false)
+            ->assertDontSee('public-taxonomy-crumbs', false)
+            ->assertDontSee($cover->publicUrl(), false);
         $home->assertViewHas('homeTopics', fn (array $topics) => collect($topics)->firstWhere('id', $topic->id)['category_cover_url'] === $cover->publicUrl());
-        foreach (['videos','beitraege','buecher'] as $section) {
-            $home->assertSee(route('public.'.$section, ['taxonomy'=>'anatomie']), false);
-        }
 
-        foreach (['videos'=>'Anatomie Video','beitraege'=>'Anatomie Beitrag','buecher'=>'Anatomie Buch'] as $section=>$title) {
+        foreach (['videos'=>'Anatomie Video','buecher'=>'Anatomie Buch'] as $section=>$title) {
             $response = $this->get('/'.$section)->assertOk()->assertSee('data-public-taxonomy', false)
                 ->assertSee('public-taxonomy-crumbs', false)->assertSee('Medizin')->assertSee('Anatomie')
                 ->assertSee($cover->publicUrl(), false)
@@ -48,6 +47,11 @@ class PublicTaxonomyUiTest extends TestCase
             $this->get('/'.$section.'?taxonomy=medizin')->assertOk()->assertSee($title)
                 ->assertSee('aria-current="page"', false);
         }
+        $this->get('/beitraege')->assertOk()->assertSee('data-public-book-shelf', false)
+            ->assertSee('Medizin')->assertSee('Anatomie')
+            ->assertSee('href="'.route('public.beitraege', ['taxonomy'=>'anatomie']).'"', false)
+            ->assertDontSee('public-taxonomy-crumbs', false);
+        $this->get('/beitraege?taxonomy=medizin')->assertOk()->assertSee('Anatomie Beitrag');
     }
 
     public function test_home_never_uses_protected_media_preview_for_a_category_cover(): void
@@ -66,6 +70,35 @@ class PublicTaxonomyUiTest extends TestCase
             ->assertViewHas('homeTopics', fn (array $topics) => collect($topics)->firstWhere('id', $topic->id)['category_cover_url'] === null);
         $this->get('/beitraege')->assertOk()->assertDontSee(route('media.preview', $private), false)
             ->assertViewHas('taxonomyFilters', fn (array $filters) => collect($filters)->firstWhere('id', $category->id)['cover_url'] === null);
+    }
+
+    public function test_empty_category_still_has_a_shelf_and_its_own_plant(): void
+    {
+        $category = TaxonomyTerm::create(['kind'=>'category','name'=>'Empty category',
+            'slug'=>'empty-category','active'=>true]);
+
+        $this->assertSame([['id'=>$category->id,'name'=>'Empty category']], app(\App\Services\PublicTaxonomy::class)->homeCategories());
+        $this->get('/')->assertOk()->assertSee('Empty category')
+            ->assertSee('data-shelf-plant-left', false)
+            ->assertSee('data-shelf-category="0"', false)
+            ->assertDontSee('public-book-shelf-book-1', false);
+    }
+
+    public function test_category_directory_keeps_unpublished_topics_on_separate_shelves(): void
+    {
+        $medicine = TaxonomyTerm::create(['kind'=>'category','name'=>'Medizin','slug'=>'medizin','active'=>true]);
+        $faith = TaxonomyTerm::create(['kind'=>'category','name'=>'Glaube','slug'=>'glaube','active'=>true]);
+        $topic = TaxonomyTerm::create(['kind'=>'topic','name'=>'Anatomie und Bibelwissen',
+            'slug'=>'anatomie-bibelwissen','parent_id'=>$medicine->id,'active'=>true]);
+        TaxonomyTerm::create(['kind'=>'topic','name'=>'Gebet','slug'=>'gebet','parent_id'=>$faith->id,'active'=>true]);
+        app(Taxonomy::class)->sync($this->record('post', 'Published anatomy'), [$topic->id]);
+
+        $this->get('/themen')->assertOk()->assertSee('data-book-cabinet', false)
+            ->assertSee('Anatomie und Bibelwissen')->assertSee('Gebet')
+            ->assertSee('href="'.route('public.beitraege', ['taxonomy'=>'anatomie-bibelwissen']).'"', false)
+            ->assertSee('href="'.route('public.beitraege', ['taxonomy'=>'gebet']).'"', false)
+            ->assertSee('public-overview-hero', false);
+        $this->assertCount(2, app(\App\Services\PublicTaxonomy::class)->directoryShelves());
     }
 
     private function record(string $kind, string $title): SourceRecord

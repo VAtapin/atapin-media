@@ -83,8 +83,7 @@
 .public-topic-list>a{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #edf0f4;font-size:13px}
 .public-topic-list small{margin-left:auto}
 .public-gold{color:#ad7621}
-.public-taxonomy-browser,.public-home-topics{position:relative;z-index:10;margin:0 0 12px;padding:3px 8px;background:#fffdfb;border:1px solid #dce3e9;border-radius:6px;min-width:0}
-.public-home-topics{max-width:1590px;margin:0 auto 11px}
+.public-taxonomy-browser{position:relative;z-index:10;margin:0 0 12px;padding:3px 8px;background:#fffdfb;border:1px solid #dce3e9;border-radius:6px;min-width:0}
 .public-taxonomy-crumbs{display:flex;align-items:center;gap:5px;min-height:30px;white-space:nowrap;font:12px Inter,Arial,sans-serif;color:#17324d}
 .public-taxonomy-crumbs>a{padding:4px 5px;color:#17324d}
 .public-taxonomy-crumbs>a[aria-current="page"]{font-weight:700}
@@ -323,7 +322,7 @@
  .public-category-hero-buecher .public-category-copy blockquote{display:none}
 }
 @media(max-width:1550px){
- .public-wide{margin-left:24px;margin-right:24px}.public-home-topics{margin-left:24px;margin-right:24px}.public-category-hero-inner{padding-left:24px;padding-right:24px;grid-template-columns:1fr 1fr}
+ .public-wide{margin-left:24px;margin-right:24px}.public-category-hero-inner{padding-left:24px;padding-right:24px;grid-template-columns:1fr 1fr}
  .public-detail-layout,.public-live-top{margin-left:24px;margin-right:24px}.public-filters{flex-wrap:wrap}
  .public-post-overview{grid-template-columns:minmax(0,2.5fr) minmax(0,1fr)}.public-post-overview>.public-right-sidebar{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr}
  .public-content-card-book{display:block}.public-content-card-book .public-photo{max-height:155px}.public-book-intro{grid-template-columns:240px 1fr}
@@ -344,7 +343,7 @@
  .public-category-hero-inner{grid-template-columns:1fr;gap:25px;padding:25px 20px 0}.public-category-copy h1,.public-category-hero-buecher h1{font-size:37px;white-space:normal}
  .public-category-copy>p:not(.public-eyebrow){font-size:14px}.public-category-feature{height:245px}.public-category-hero-community .public-feature{height:auto;min-height:255px}
  .public-filters nav{gap:8px}.public-filters nav>a{padding:8px 10px}.public-filters .public-catalog-search{width:100%;margin:5px 0 0;flex-wrap:wrap}.public-catalog-search input{flex:1;min-width:130px}
- .public-taxonomy-browser{margin-bottom:10px}.public-home-topics{margin:0 16px 12px}.public-taxonomy-crumb summary span{max-width:86px}
+ .public-taxonomy-browser{margin-bottom:10px}.public-taxonomy-crumb summary span{max-width:86px}
  .public-video-overview,.public-post-overview,.public-detail-layout,.public-live-top,.public-books-top,.public-podcast-grid,.public-community-grid,.public-live-bottom{display:grid;grid-template-columns:1fr}
  .public-video-overview>.public-right-sidebar,.public-post-overview>.public-right-sidebar,.public-books-overview>.public-right-sidebar{grid-template-columns:1fr}.public-overview-series{grid-column:1}
  .public-detail-layout,.public-live-top{width:auto;margin-left:16px;margin-right:16px;margin-top:20px}.public-detail-layout>*{min-width:0}.public-empty-player{min-height:220px;aspect-ratio:16/9}.public-main-player{aspect-ratio:16/9}

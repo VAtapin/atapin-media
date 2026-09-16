@@ -1,0 +1,10 @@
+.public-directory-hero .public-overview-copy h1{max-width:530px}
+.public-directory-feature>.public-photo{filter:brightness(.45);object-fit:cover}
+.public-directory-feature .public-feature-content{background:linear-gradient(90deg,#0c234eea,#0c234e55)}
+.public-directory-feature .public-feature-content h2{font-size:clamp(28px,3vw,42px);margin-top:40px}
+.public-directory-feature .public-feature-content p{font-size:18px}
+.public-directory-content{padding-top:14px}
+.public-book-cabinet{display:flex;flex-direction:column;align-items:stretch;min-width:0;margin-bottom:20px}
+.public-book-cabinet>.public-book-shelf{width:100%;margin:0}
+.public-book-cabinet>.public-book-shelf+.public-book-shelf{margin-top:-18px}
+@media(max-width:800px){.public-book-cabinet>.public-book-shelf{margin:0}.public-book-cabinet>.public-book-shelf+.public-book-shelf{margin-top:-14px}.public-directory-feature .public-feature-content h2{margin-top:15px}}

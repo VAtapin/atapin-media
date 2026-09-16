@@ -9,7 +9,7 @@ const server=spawn(process.env.PHP_BINARY||'php',['-S','127.0.0.1:8795','-t','.'
 let output='',browser;
 server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>output+=data);
 const detail=JSON.parse(process.env.PUBLIC_DETAIL_ROUTES||'{}');
-const routes=process.env.PUBLIC_ROUTES?JSON.parse(process.env.PUBLIC_ROUTES):['/','/videos',detail.videos||'/videos/vorschau','/beitraege',detail.beitraege||'/beitraege/vorschau','/buecher',detail.buecher||'/buecher/vorschau','/live','/podcast','/community'];
+const routes=process.env.PUBLIC_ROUTES?JSON.parse(process.env.PUBLIC_ROUTES):['/','/themen','/videos',detail.videos||'/videos/vorschau','/beitraege',detail.beitraege||'/beitraege/vorschau','/buecher',detail.buecher||'/buecher/vorschau','/live','/podcast','/community'];
 try {
   let ready=false;
   for(let i=0;i<60;i++){
@@ -38,24 +38,69 @@ try {
       assert.equal(overflow.ok,true,`${route}: overflow at ${width}: ${JSON.stringify(overflow.offenders)}`);
       assert(await page.locator('.public-header').isVisible(),route);
       assert.equal(await page.locator('main').count(),1,route);
-      if(route==='/'&&await page.locator('[data-public-home-topics]').count()){
-        const bar=page.locator('[data-public-home-topics]'),categories=bar.locator('[data-home-category]');
+      if(route==='/'&&await page.locator('[data-public-book-shelf]').count()){
+        const bar=page.locator('[data-public-book-shelf]'),categories=bar.locator('[data-shelf-category]');
         await bar.scrollIntoViewIfNeeded();
         const dimensions=await bar.evaluate(element=>({height:element.getBoundingClientRect().height,border:parseFloat(getComputedStyle(element).borderTopWidth)}));
-        assert(dimensions.height<=42&&dimensions.border<=2,`Home taxonomy is not a thin strip: ${JSON.stringify(dimensions)}`);
-        assert.equal(await categories.count(),10,'Home keeps all ten categories');
-        await bar.locator('[data-home-category-image]').scrollIntoViewIfNeeded();
-        await page.waitForFunction(()=>{const image=document.querySelector('[data-home-category-image]');return image?.complete&&image.naturalWidth>0;});
-        await bar.locator('[data-home-categories-menu] summary').click();
-        await categories.nth(1).click();
-        assert.equal(await categories.nth(1).getAttribute('aria-pressed'),'true','Selected category updates');
-        assert.equal(await bar.locator('[data-home-topic-group]:visible .public-taxonomy-menu-topic').count(),5,'Selected category shows only its five topics');
-        for(const link of await bar.locator('[data-home-topic-group]:visible a').evaluateAll(nodes=>nodes.map(node=>new URL(node.href).pathname+new URL(node.href).search))){
-          assert.match(link,/^\/(videos|beitraege|buecher)\?taxonomy=/,'Home topic links must open one explicit content section');
+        assert(dimensions.height>=200&&dimensions.border===0,`Home shelf has the wrong size or an extra frame: ${JSON.stringify(dimensions)}`);
+        assert.equal(await bar.locator('.public-taxonomy-crumbs').count(),0,'Old home taxonomy strip is gone');
+        const emptyShelf=process.env.PUBLIC_EXPECT_EMPTY_SHELF==='1';
+        assert.equal(await categories.count(),emptyShelf?1:10,'Home keeps all active categories in the data');
+        await page.waitForFunction(()=>{const image=document.querySelector('.public-book-shelf-background');return image?.complete&&image.naturalWidth>0;});
+        const visible=bar.locator('[data-shelf-category]:visible'),hidden=bar.locator('[data-shelf-category][hidden]');
+        assert(await visible.count()>0,'At least one category fits on the shelf');
+        assert.equal(await bar.locator('[data-shelf-all]').isVisible(),await hidden.count()>0,'See all appears only when categories overflow');
+        if(await hidden.count()>0)assert.equal(new URL(await bar.locator('[data-shelf-all]').getAttribute('href'),'http://127.0.0.1:8795').pathname,'/themen');
+        if(emptyShelf){
+          assert.equal(await bar.locator('.public-book-shelf-book').count(),0,'Empty category has no fake books');
+          for(const item of ['[data-shelf-plant-left]','[data-shelf-globe]','[data-shelf-plant-right]']){
+            assert(await bar.locator(item).isVisible(),`Empty category should show ${item}`);
+          }
+        } else {
+          assert.equal(await visible.first().locator('.public-book-shelf-book').count(),2,'Initial category has two dynamic books');
+          for(const link of await visible.locator('a').evaluateAll(nodes=>nodes.map(node=>new URL(node.href).pathname+new URL(node.href).search))){
+            assert.match(link,/^\/(videos|beitraege|buecher)\?taxonomy=/,'Topic books must use existing section-specific routes');
+          }
+          const book=visible.locator('.public-book-shelf-book').first();
+          await book.hover();
+          assert.notEqual(await book.evaluate(element=>getComputedStyle(element).transform),'none','Book does not move on hover');
+          const spacing=await bar.evaluate(element=>{
+            const books=element.querySelector('[data-shelf-categories]');
+            const decor=element.querySelector('[data-shelf-decor]');
+            return {booksRight:books.getBoundingClientRect().right,decorLeft:decor.getBoundingClientRect().left,decorVisible:[...decor.children].some(item=>!item.hidden)};
+          });
+          assert(!spacing.decorVisible||spacing.decorLeft>=spacing.booksRight-1,`Books overlap decorations: ${JSON.stringify(spacing)}`);
+          const expected=new URL(await book.getAttribute('href'),'http://127.0.0.1:8795');
+          await book.click();
+          await page.waitForURL(expected.href);
+          assert.equal(new URL(page.url()).searchParams.has('taxonomy'),true,'Clicking a book opens its topic');
+          await page.goto('http://127.0.0.1:8795/');
         }
-        await bar.locator('.public-taxonomy-crumb').last().locator('summary').click();
       }
-      if(['/videos','/beitraege','/buecher'].includes(route)&&await page.locator('[data-public-taxonomy]').count()){
+      if(route==='/themen'){
+        const shelves=page.locator('[data-book-cabinet] [data-public-book-shelf]');
+        assert.equal(await shelves.count(),10,'The cabinet shows one shelf for every category');
+        assert.equal(await page.locator('[data-book-cabinet] [data-shelf-category]').count(),10,'Each cabinet shelf has exactly one category');
+        assert.equal(await page.locator('[data-book-cabinet] .public-book-shelf-book').count(),47,'The cabinet keeps all published topic books');
+        assert.equal(await shelves.first().locator('[data-shelf-all]').isVisible(),false,'A one-category shelf never needs See all');
+        const decorations=await page.locator('[data-book-cabinet] [data-public-book-shelf]').evaluateAll(nodes=>nodes.map(node=>({
+          shown:[...node.querySelectorAll('[data-shelf-globe],[data-shelf-plant-right],[data-shelf-plant-left]')].filter(item=>!item.hidden).length,
+          booksRight:node.querySelector('[data-shelf-categories]').getBoundingClientRect().right,
+          decorLeft:node.querySelector('[data-shelf-decor]').getBoundingClientRect().left,
+        })));
+        assert(decorations.every(item=>item.shown<=1),'Cabinet decorations must be distributed across different shelves');
+        assert(decorations.every(item=>!item.shown||item.decorLeft>=item.booksRight-1),`Cabinet books overlap decoration: ${JSON.stringify(decorations)}`);
+      }
+      if(route==='/beitraege'&&await page.locator('[data-public-book-shelf]').count()){
+        const shelf=page.locator('[data-public-book-shelf]');
+        assert.equal(await shelf.locator('[data-shelf-category]').count(),10,'Beiträge shelf uses all categories');
+        assert.equal(await page.locator('[data-public-taxonomy]').count(),0,'Beiträge does not duplicate taxonomy navigation');
+        await page.goto('http://127.0.0.1:8795/beitraege?taxonomy=kategorie-2');
+        assert.equal(await page.locator('[data-public-book-shelf] [data-shelf-category]:visible').first().locator('.public-book-shelf-category-name').textContent(),'Kategorie 2');
+        assert.equal(await page.locator('[data-public-book-shelf] [data-shelf-category]:visible').first().locator('.public-book-shelf-book').count(),5,'Filtered category keeps its five topic books');
+        await page.goto('http://127.0.0.1:8795/beitraege');
+      }
+      if(['/videos','/buecher'].includes(route)&&await page.locator('[data-public-taxonomy]').count()){
         const bar=page.locator('[data-public-taxonomy]');
         await bar.scrollIntoViewIfNeeded();
         const dimensions=await bar.evaluate(element=>({height:element.getBoundingClientRect().height,border:parseFloat(getComputedStyle(element).borderTopWidth)}));
@@ -63,15 +108,7 @@ try {
         const crumbs=bar.locator('.public-taxonomy-crumb');
         await crumbs.first().locator('summary').click();
         assert(await crumbs.first().locator('.public-taxonomy-menu').isVisible(),`${route}: categories menu opens`);
-        if(route==='/beitraege'&&await crumbs.first().locator('.public-taxonomy-menu a').count()>=10){
-          await crumbs.first().locator('.public-taxonomy-menu a').filter({hasText:'Kategorie 2'}).click();
-          await page.waitForURL('**/beitraege?taxonomy=kategorie-2');
-          const filtered=page.locator('[data-public-taxonomy] .public-taxonomy-crumb').last();
-          await filtered.locator('summary').click();
-          assert.equal(await filtered.locator('.public-taxonomy-menu a').count(),5,'Selected catalog category shows only its five topics');
-          await page.goto('http://127.0.0.1:8795'+route);
-          await page.evaluate(()=>document.fonts.ready);
-        } else await crumbs.first().locator('summary').click();
+        await crumbs.first().locator('summary').click();
         await crumbs.last().locator('summary').click();
         assert(await crumbs.last().locator('.public-taxonomy-menu').isVisible(),`${route}: topics menu opens`);
         for(const link of await bar.locator('.public-taxonomy-menu a').evaluateAll(nodes=>nodes.map(node=>new URL(node.href).pathname+new URL(node.href).search))){
