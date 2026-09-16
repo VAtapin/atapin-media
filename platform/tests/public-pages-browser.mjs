@@ -71,12 +71,14 @@ try {
           const floor=await bar.evaluate(element=>{
             const image=element.querySelector('.public-book-shelf-background').getBoundingClientRect();
             const book=element.querySelector('.public-book-shelf-book').getBoundingClientRect();
-            return {shelfFloor:image.top+image.height*292/374,bookBottom:book.bottom};
+            return {shelfFloor:image.top+image.height*315/374,bookBottom:book.bottom};
           });
           assert(Math.abs(floor.shelfFloor-floor.bookBottom)<=16,`Book slides away from the shelf floor at ${width}: ${JSON.stringify(floor)}`);
           await book.hover();
           await page.waitForTimeout(250);
           assert.match(await book.evaluate(element=>getComputedStyle(element).transform),/^matrix3d\(/,'Book does not pull forward with perspective on hover');
+          const rotation=await book.evaluate(element=>{const matrix=new DOMMatrixReadOnly(getComputedStyle(element).transform);return [matrix.m12,matrix.m13,matrix.m21,matrix.m23,matrix.m31,matrix.m32];});
+          assert(rotation.every(value=>Math.abs(value)<0.001),`Book must pull forward without rotating: ${rotation}`);
           assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Pulled-forward book causes horizontal overflow');
           await bar.screenshot({path:`tests/artifacts/public-shelf-hover-${width}.png`});
           const spacing=await bar.evaluate(element=>{
@@ -105,7 +107,7 @@ try {
             shown:visible.length,
             booksRight:node.querySelector('[data-shelf-categories]').getBoundingClientRect().right,
             decorLeft:node.querySelector('[data-shelf-decor]').getBoundingClientRect().left,
-            floor:image.top+image.height*292/374,
+            floor:image.top+image.height*315/374,
             visibleBottom:visible[0]?.getBoundingClientRect().bottom,
           };
         }));
@@ -121,6 +123,8 @@ try {
         await categoryLink.click();
         await page.waitForURL(category.href);
         assert.equal(await page.locator('[data-book-cabinet] [data-public-book-shelf]').count(),1,'Category link does not open its own shelf');
+        assert.equal(await page.locator('[data-book-cabinet] [data-shelf-category]').count(),10,'Category detail keeps all category navigation plaques');
+        assert.equal(await page.locator('[data-book-cabinet] .public-book-shelf-book').count(),2,'Category detail shows only its topic books');
         await page.goto(base+'/themen');
       }
       if(route==='/beitraege'&&await page.locator('[data-public-book-shelf]').count()){
@@ -131,6 +135,12 @@ try {
         await page.goto('http://127.0.0.1:8795/beitraege?taxonomy=kategorie-2');
         assert.equal(await page.locator('[data-public-book-shelf] [data-shelf-category]:visible').first().locator('.public-book-shelf-category-name').textContent(),'Kategorie 2');
         assert.equal(await page.locator('[data-public-book-shelf] [data-shelf-category]:visible').first().locator('.public-book-shelf-book').count(),5,'Filtered category keeps its five topic books');
+        const openBook=page.locator('[data-public-book-shelf] .public-book-shelf-book').first();
+        const openLink=await openBook.getAttribute('href');
+        await page.goto(new URL(openLink,base).href);
+        assert.equal(await page.locator(`[data-public-book-shelf] .public-book-shelf-book[href="${openLink}"]`).count(),0,'Opened topic book must not remain on the shelf');
+        assert(await page.locator('[data-public-book-shelf] .public-book-shelf-book').count()>0,'Other topic books remain on the shelf');
+        assert.equal(await page.locator('[data-public-book-shelf] [data-shelf-category]').count(),10,'Other categories remain available from a topic');
         await page.goto('http://127.0.0.1:8795/beitraege');
       }
       if(['/videos','/buecher'].includes(route)&&await page.locator('[data-public-taxonomy]').count()){

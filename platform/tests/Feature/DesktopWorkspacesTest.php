@@ -35,6 +35,19 @@ class DesktopWorkspacesTest extends TestCase
         foreach(['/desktop/projects','/desktop/tasks','/desktop/books','/desktop/taxonomy','/desktop/assistant','/desktop/subscribers','/desktop/sales','/desktop/integrations/data','/desktop/community/inbox','/desktop/analytics/data?start=2026-01-01&end=2026-01-02'] as $url)$this->getJson($url)->assertForbidden();
         $this->actingAs($this->user('Editor'));$this->get('/desktop/workspaces/projects')->assertOk();$this->get('/desktop/workspaces/books-pdf')->assertForbidden();$this->getJson('/desktop/lookups?kind=users')->assertOk()->assertDontSee('password');
     }
+    public function test_topic_parent_lookup_offers_active_categories_only(): void
+    {
+        $category = TaxonomyTerm::create(['kind'=>'category','name'=>'Medizin','slug'=>'medizin','active'=>true]);
+        $topic = TaxonomyTerm::create(['kind'=>'topic','name'=>'Anatomie','slug'=>'anatomie','parent_id'=>$category->id,'active'=>true]);
+        TaxonomyTerm::create(['kind'=>'category','name'=>'Unpublished category','slug'=>'unpublished-category','active'=>false]);
+
+        $this->getJson('/desktop/lookups?kind=categories')->assertOk()->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $category->id);
+        $this->getJson('/desktop/lookups?kind=terms')->assertOk()->assertJsonCount(2, 'data')
+            ->assertJsonFragment(['id'=>$topic->id, 'title'=>'Anatomie']);
+        $this->actingAs($this->user());
+        $this->getJson('/desktop/lookups?kind=categories')->assertForbidden();
+    }
     public function test_projects_tasks_and_content_are_linked_and_paginated(): void
     {
         $id=$this->postJson('/desktop/projects',['title'=>'Serie','status'=>'idea','due_date'=>'2026-10-10'])->assertOk()->json('project_id');

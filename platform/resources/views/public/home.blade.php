@@ -10,11 +10,11 @@
 <link rel="stylesheet" href="/assets/public.css">
 <link rel="stylesheet" href="/assets/public-rich-content.css?v=1">
 <link rel="stylesheet" href="/assets/public-pages.css?v=26">
-<link rel="stylesheet" href="/assets/public-book-shelf.css?v=2">
+<link rel="stylesheet" href="/assets/public-book-shelf.css?v=4">
 <link rel="icon" href="/favicon.png">
 <script src="/assets/public.js?v=13" defer>
 </script>
-<script src="/assets/public-book-shelf.js?v=2" defer></script>
+<script src="/assets/public-book-shelf.js?v=3" defer></script>
 </head>
 <body class="public-site public-editorial public-home public-layout-overview public-section-start">
 

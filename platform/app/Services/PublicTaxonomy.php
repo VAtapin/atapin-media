@@ -126,6 +126,7 @@ class PublicTaxonomy
         $shelves = [];
         foreach ($terms->where('kind', 'category')->sort(fn (TaxonomyTerm $left, TaxonomyTerm $right) => strnatcasecmp($left->name, $right->name)) as $category) {
             $shelves[(int) $category->id] = [
+                'id' => (int) $category->id,
                 'name' => $category->name,
                 'slug' => $category->slug,
                 'url' => route('public.categories', ['category' => $category->slug]),
@@ -133,15 +134,18 @@ class PublicTaxonomy
             ];
         }
         foreach ($terms->where('kind', 'topic') as $topic) {
+            if ($topic->parent_id && ! $terms->has((int) $topic->parent_id)) continue;
             $category = $this->categoryForTopic($terms, (int) $topic->id);
             $key = $category?->id ?? 'uncategorized';
-            if (! isset($shelves[$key])) $shelves[$key] = ['name' => __('public.topics'), 'books' => []];
+            if (! isset($shelves[$key])) $shelves[$key] = ['id' => null, 'name' => __('public.topics'), 'books' => []];
             $links = $published->get((int) $topic->id)['sections'] ?? [];
             $destination = collect(['beitraege', 'videos', 'buecher'])
                 ->map(fn (string $section) => $links[$section] ?? null)
                 ->filter(fn (?array $link) => ($link['count'] ?? 0) > 0)
                 ->sortByDesc('count')->first();
             $shelves[$key]['books'][] = [
+                'id' => (int) $topic->id,
+                'slug' => $topic->slug,
                 'name' => $topic->name,
                 'url' => $destination['url'] ?? route('public.beitraege', ['taxonomy' => $topic->slug]),
             ];

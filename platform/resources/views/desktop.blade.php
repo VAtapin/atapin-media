@@ -64,11 +64,11 @@ $workspaceLabels = array_replace(__('workspaces'), [
     <script>window.desktopWorkspaceLabels=@json($workspaceLabels); window.desktopBookReviewLabels=@json(__('book-reviews')); window.desktopAiLabels=@json(__('ai_dashboard'));</script>
     <script src="/vendor/jodit/4.13.9/jodit.min.js?v=4.13.9" defer></script>
     <script src="/assets/desktop-rich-text.js?v=1" defer></script>
-    <script src="/assets/desktop-workspaces.js?v=13" defer></script>
+    <script src="/assets/desktop-workspaces.js?v=14" defer></script>
     <script src="/assets/public-pwa.js?v=1" defer></script>
-    <script src="/assets/desktop-workspace-content.js?v=8" defer></script>
+    <script src="/assets/desktop-workspace-content.js?v=9" defer></script>
     <script src="/assets/desktop-ai-dashboard.js?v=2" defer></script>
-    <script src="/assets/desktop-catalogs.js?v=9" defer></script>
+    <script src="/assets/desktop-catalogs.js?v=10" defer></script>
     <script src="/assets/desktop-subscriber-import.js?v=1" defer></script>
     <script src="/assets/desktop-ai-proposal.js?v=1" defer></script>
     <script src="/assets/desktop-migration-wizard.js?v=1" defer></script>

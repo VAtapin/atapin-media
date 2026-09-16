@@ -24,7 +24,7 @@ class PublicWebsiteController extends Controller
         return view('public.home',[...$this->shared(),'videos'=>$videos,'articles'=>$articles,
             'featured'=>$featuredRecord?$content->card($featuredRecord):null,'book'=>$book?$books->card($book):null,
             'live'=>$live?$content->card($live):null,'homeTopics'=>$taxonomy->homeTopics(),
-            'homeCategories'=>$taxonomy->homeCategories()]);
+            'homeCategories'=>$taxonomy->homeCategories(), 'homeShelves'=>$taxonomy->directoryShelves()]);
     }
     public function categories(Request $request, PublicTaxonomy $taxonomy)
     {
@@ -32,7 +32,7 @@ class PublicWebsiteController extends Controller
         $selected = $request->filled('category')
             ? collect($shelves)->firstWhere('slug', $request->query('category')) : null;
         return view('public.categories', [...$this->shared(), 'section'=>'categories',
-            'directoryShelves'=>$selected ? [$selected] : $shelves, 'selectedShelf'=>$selected]);
+            'directoryShelves'=>$selected ? [$selected] : $shelves, 'categoryShelves'=>$shelves, 'selectedShelf'=>$selected]);
     }
     public function recordView(Request $request, SourceRecord $record, PublicContent $content, PublicViewCounter $counter)
     {
@@ -46,7 +46,8 @@ class PublicWebsiteController extends Controller
             $data=app(PublicCatalog::class)->listing($request,$section);
             return view('public.'.($section==='search'?'section':$section),[...$this->shared(),'section'=>$section,
                 'layoutMode'=>$section==='live'&&$request->filled('event')?'detail':'overview',...$data,
-                'shelfCategories'=>$section==='beitraege'?app(PublicTaxonomy::class)->homeCategories():[]]);
+                'shelfCategories'=>$section==='beitraege'?app(PublicTaxonomy::class)->homeCategories():[],
+                'directoryShelfGroups'=>$section==='beitraege'?app(PublicTaxonomy::class)->directoryShelves():[]]);
         }
         $data=$request->validate(['q'=>'nullable|string|max:120']);
         $section=$request->route('section');$query=$content->query();

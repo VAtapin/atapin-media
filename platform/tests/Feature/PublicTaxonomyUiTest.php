@@ -107,10 +107,39 @@ class PublicTaxonomyUiTest extends TestCase
         $this->get('/themen?category=medizin')->assertOk()
             ->assertSee('<title>Medizin', false)
             ->assertSee('Anatomie und Bibelwissen')
+            ->assertSee('href="'.route('public.categories', ['category'=>'glaube']).'"', false)
             ->assertDontSee('href="'.route('public.beitraege', ['taxonomy'=>'gebet']).'"', false)
             ->assertViewHas('directoryShelves', fn (array $shelves) => count($shelves) === 1 && $shelves[0]['slug'] === 'medizin')
             ->assertSee(__('public.category_directory_all'));
         $this->assertCount(2, app(\App\Services\PublicTaxonomy::class)->directoryShelves());
+    }
+
+    public function test_active_unpublished_categories_and_topics_appear_on_home_and_beitrage_shelves(): void
+    {
+        $category = TaxonomyTerm::create(['kind'=>'category','name'=>'Neue Kategorie','slug'=>'neue-kategorie','active'=>true]);
+        TaxonomyTerm::create(['kind'=>'topic','name'=>'Neues Thema','slug'=>'neues-thema','parent_id'=>$category->id,'active'=>true]);
+        $hidden = TaxonomyTerm::create(['kind'=>'category','name'=>'Inaktiv','slug'=>'inaktiv','active'=>false]);
+        TaxonomyTerm::create(['kind'=>'topic','name'=>'Versteckt','slug'=>'versteckt','parent_id'=>$hidden->id,'active'=>true]);
+
+        $this->get('/')->assertOk()->assertSee('Neues Thema')
+            ->assertSee('href="'.route('public.beitraege', ['taxonomy'=>'neues-thema']).'"', false)
+            ->assertDontSee('Versteckt');
+        $this->get('/beitraege')->assertOk()->assertSee('Neue Kategorie')->assertSee('Neues Thema')
+            ->assertSee('href="'.route('public.beitraege', ['taxonomy'=>'neues-thema']).'"', false)
+            ->assertDontSee('Versteckt');
+    }
+
+    public function test_selected_topic_book_is_removed_but_other_books_and_categories_remain(): void
+    {
+        $medicine = TaxonomyTerm::create(['kind'=>'category','name'=>'Medizin','slug'=>'medizin','active'=>true]);
+        TaxonomyTerm::create(['kind'=>'category','name'=>'Glaube','slug'=>'glaube','active'=>true]);
+        TaxonomyTerm::create(['kind'=>'topic','name'=>'Anatomie','slug'=>'anatomie','parent_id'=>$medicine->id,'active'=>true]);
+        TaxonomyTerm::create(['kind'=>'topic','name'=>'Körper','slug'=>'koerper','parent_id'=>$medicine->id,'active'=>true]);
+
+        $response = $this->get('/beitraege?taxonomy=anatomie')->assertOk();
+        $response->assertDontSee('href="'.route('public.beitraege', ['taxonomy'=>'anatomie']).'"', false)
+            ->assertSee('href="'.route('public.beitraege', ['taxonomy'=>'koerper']).'"', false)
+            ->assertSee('href="'.route('public.beitraege', ['taxonomy'=>'glaube']).'"', false);
     }
 
     private function record(string $kind, string $title): SourceRecord

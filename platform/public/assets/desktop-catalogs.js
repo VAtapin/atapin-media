@@ -278,7 +278,7 @@
   };
   const topicConfig = {
     url:'/desktop/taxonomy', filters:[['kind','select','',[['',t('all')],'topic','category']]], fields:[['name'],['kind','select',['topic','category'],'topic'],['description','textarea'],['slug'],['parent_id','select'],['active','checkbox',[],true]],
-    lookups:{parent_id:'terms'}, extra:topicExtra,
+    lookups:{parent_id:'categories'}, extra:topicExtra,
   };
   const bookConfig = {
     url:'/desktop/books', newLabel:'new_book', inlineEdit:true, statuses:['draft','active','archived'],

@@ -34,12 +34,13 @@
       for (const row of data.data || data) retained.set(String(row.id), row.title || row.name);
       const selected = new Set([...chosen, ...[...select.selectedOptions].map(o => o.value)].filter(Boolean)); const rows = data.data || data; select.replaceChildren(); if (!multiple) select.add(new Option('—', ''));
       const listed = new Set(); for (const row of rows) { const id = String(row.id); listed.add(id); const option = new Option(row.title || row.name, id); option.selected = selected.has(id); select.add(option); }
-      for (const id of selected) if (!listed.has(id)) { const option = new Option(retained.get(id) || id, id); option.selected = true; select.add(option); }
+      if (kind === 'categories' && !search.value && chosen.size === 1 && !listed.has([...chosen][0])) select.dataset.unlistedCurrent = [...chosen][0];
+      for (const id of selected) if (!listed.has(id) && kind !== 'categories') { const option = new Option(retained.get(id) || id, id); option.selected = true; select.add(option); }
     };
-    select.addEventListener('change', () => { chosen.clear(); for (const option of select.selectedOptions) if (option.value) chosen.add(option.value); });
+    select.addEventListener('change', () => { delete select.dataset.unlistedCurrent; chosen.clear(); for (const option of select.selectedOptions) if (option.value) chosen.add(option.value); });
     search.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => load().catch(() => {}), 250); }); await load(); select.disabled = false; return select;
   };
-  const formData = form => { window.DesktopRichText?.sync(form); const data = {}; for (const input of form.elements) { if (!input.name || input.disabled) continue; data[input.name] = input.type === 'checkbox' ? input.checked : input.multiple ? [...input.selectedOptions].map(o => o.value) : input.type === 'datetime-local' && input.value ? new Date(input.value).toISOString() : input.value || null; } return data; };
+  const formData = form => { window.DesktopRichText?.sync(form); const data = {}; for (const input of form.elements) { if (!input.name || input.disabled) continue; data[input.name] = input.type === 'checkbox' ? input.checked : input.multiple ? [...input.selectedOptions].map(o => o.value) : input.type === 'datetime-local' && input.value ? new Date(input.value).toISOString() : input.value || input.dataset.unlistedCurrent || null; } return data; };
   const open = (app, row) => { if (row) pending.set(app, row); document.querySelector(`.os-start-menu [data-open-app="${CSS.escape(app)}"]`)?.click(); const api = controllers.get(app); if (row && api?.root.isConnected) { pending.delete(app); run(api.root, () => api.edit(row)); } };
   const openQuick = (app, initial = {}) => { const api = controllers.get(app); if (api?.root.isConnected) { run(api.root, () => api.quickCreate(initial)); return; } pendingQuick.set(app, initial); document.querySelector(`.os-start-menu [data-open-app="${CSS.escape(app)}"]`)?.click(); };
   const openSeparate = (app, row = {}) => { pending.set(app, row); const win = window.openDesktopProgram?.(app, {forceNew:true}); if (!win) document.querySelector(`.os-start-menu [data-open-app="${CSS.escape(app)}"]`)?.click(); return win; };

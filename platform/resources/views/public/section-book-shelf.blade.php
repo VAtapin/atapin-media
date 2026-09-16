@@ -1,24 +1,20 @@
 @php
-    $filters = collect($taxonomyFilters ?? []);
-    $selected = ($selectedTaxonomy ?? null)?->id;
-    $selectedTerm = $filters->firstWhere('id', $selected);
-    $selectedCategory = $selectedTerm['category_id'] ?? null;
-    $groups = collect($shelfCategories ?? [])->map(fn (array $category) => [
-        'id' => $category['id'],
-        'name' => $category['name'],
-        'url' => route('public.beitraege', ['taxonomy' => $category['slug']]),
-        'selected' => $category['id'] === $selected,
-        'books' => $filters->where('kind', 'topic')->where('category_id', $category['id'])
-            ->map(fn (array $topic) => [
-                'name' => $topic['name'], 'url' => $topic['url'],
-                'selected' => $topic['id'] === $selected,
-            ])->values()->all(),
-    ]);
-    $uncategorized = $filters->where('kind', 'topic')->whereNull('category_id')
-        ->map(fn (array $topic) => ['name'=>$topic['name'], 'url'=>$topic['url'],
-            'selected'=>$topic['id'] === $selected])->values()->all();
-    if ($uncategorized !== []) $groups->push(['id'=>null,'name'=>__('public.topics'),'books'=>$uncategorized]);
-    if ($selectedCategory) $groups = $groups->sortBy(fn (array $group) => $group['id'] === $selectedCategory ? 0 : 1)->values();
-    if ($groups->isEmpty()) $groups->push(['name'=>__('public.categories'),'books'=>[]]);
+    $selectedId = (int) (($selectedTaxonomy ?? null)?->id ?? 0);
+    $selectedKind = ($selectedTaxonomy ?? null)?->kind;
+    $selectedCategoryId = $selectedKind === 'topic'
+        ? (collect($directoryShelfGroups ?? [])->first(fn (array $group) => collect($group['books'])->contains('id', $selectedId))['id'] ?? null)
+        : $selectedId;
+    $groups = collect($directoryShelfGroups ?? [])->map(function (array $group) use ($selectedId, $selectedKind) {
+        $group['url'] = isset($group['slug']) ? route('public.beitraege', ['taxonomy' => $group['slug']]) : null;
+        $group['selected'] = $selectedKind === 'category' && $group['id'] === $selectedId;
+        $group['books'] = collect($group['books'])->reject(fn (array $book) => $selectedKind === 'topic' && $book['id'] === $selectedId)
+            ->map(fn (array $book) => [...$book, 'url' => route('public.beitraege', ['taxonomy' => $book['slug']])])->values()->all();
+        return $group;
+    });
+    if ($selectedCategoryId) {
+        $selectedGroup = $groups->first(fn (array $group) => $group['id'] === $selectedCategoryId);
+        if ($selectedGroup) $groups = $groups->sortBy(fn (array $group) => $group['id'] === $selectedGroup['id'] ? 0 : 1)->values();
+    }
+    if ($groups->isEmpty()) $groups->push(['name' => __('public.categories'), 'books' => []]);
 @endphp
 @include('public.book-shelf', ['shelfGroups'=>$groups->all()])

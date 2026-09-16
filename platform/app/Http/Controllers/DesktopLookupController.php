@@ -10,15 +10,16 @@ class DesktopLookupController extends Controller
 {
     public function __invoke(Request $request)
     {
-        $data = $request->validate(['kind'=>'required|in:projects,users,terms,series,records,books,media', 'q'=>'nullable|string|max:120']);
+        $data = $request->validate(['kind'=>'required|in:projects,users,terms,categories,series,records,books,media', 'q'=>'nullable|string|max:120']);
         $kind = $data['kind'];
-        Gate::authorize(match ($kind) { 'books'=>'shop.manage','projects','users'=>'projects.manage', 'terms','series','records'=>'content.edit', 'media'=>'media.view' });
+        Gate::authorize(match ($kind) { 'books'=>'shop.manage','projects','users'=>'projects.manage', 'terms','categories','series','records'=>'content.edit', 'media'=>'media.view' });
         $query = match ($kind) {
             'books'=>\App\Models\Product::query(),'projects'=>Project::query(), 'users'=>User::query(), 'terms'=>TaxonomyTerm::where('active',true),
+            'categories'=>TaxonomyTerm::where('active',true)->where('kind','category'),
             'series'=>Collection::where('metadata->workspace_series',true), 'records'=>SourceRecord::whereIn('kind',['video','short','post']),
             'media'=>Media::visibleLibrary(),
         };
-        $column = in_array($kind, ['users','terms'], true) ? 'name' : 'title';
+        $column = in_array($kind, ['users','terms','categories'], true) ? 'name' : 'title';
         if ($data['q'] ?? '') $query->where($column,'like','%'.$data['q'].'%');
         $columns = match ($kind) {
             'media'=>['id','title','kind','mime','disk','path'], 'terms'=>['id','name','kind','parent_id'],

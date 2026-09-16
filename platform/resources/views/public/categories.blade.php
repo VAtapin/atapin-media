@@ -1,6 +1,6 @@
 @extends('public.layout', ['title'=>$selectedShelf['name'] ?? __('public.category_directory_title')])
 @push('publicStyles')
-<link rel="stylesheet" href="/assets/public-book-shelf.css?v=2">
+<link rel="stylesheet" href="/assets/public-book-shelf.css?v=4">
 <link rel="stylesheet" href="/assets/public-category-directory.css?v=1">
 @endpush
 @push('publicScripts')<script src="/assets/public-book-shelf.js?v=2" defer></script>@endpush
@@ -32,11 +32,22 @@
 </section>
 <div class="public-wide public-directory-content">
     <div class="public-book-cabinet" id="cabinet" data-book-cabinet>
+        @if($selectedShelf)
+            @php
+                $navigationGroups = collect($categoryShelves)->map(function (array $shelf) use ($selectedShelf) {
+                    $shelf['books'] = $shelf['slug'] === $selectedShelf['slug'] ? $shelf['books'] : [];
+                    $shelf['selected'] = $shelf['slug'] === $selectedShelf['slug'];
+                    return $shelf;
+                })->sortBy(fn (array $shelf) => $shelf['selected'] ? 0 : 1)->values()->all();
+            @endphp
+            @include('public.book-shelf', ['shelfGroups'=>$navigationGroups, 'shelfLabel'=>__('public.categories').' / '.$selectedShelf['name']])
+        @else
         @forelse($directoryShelves as $shelf)
             @include('public.book-shelf', ['shelfGroups'=>[$shelf], 'shelfDecor'=>'cabinet', 'shelfLabel'=>$shelf['name']])
         @empty
             <p class="public-empty-slot">{{ __('public.no_data') }}</p>
         @endforelse
+        @endif
     </div>
     @include('public.newsletter')
 </div>
