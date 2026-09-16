@@ -1,7 +1,7 @@
 const W=window.DesktopWorkspaces;
 const endpoint='/desktop/live-studio';
 const studios=new WeakMap();
-const css=document.createElement('link');css.rel='stylesheet';css.href='/assets/desktop-browser-studio.css?v=4';document.head.append(css);
+const css=document.createElement('link');css.rel='stylesheet';css.href='/assets/desktop-browser-studio.css?v=5';document.head.append(css);
 const request=async(url,options={})=>{
   const response=await fetch(url,{credentials:'same-origin',headers:{Accept:'application/json','Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content},...options});
   const data=response.status===204?{}:await response.json().catch(()=>({}));
@@ -16,9 +16,9 @@ export async function initialize(root,event,configured=false){
   let disposed=false,labels={},pc=null,session=null,context=null,mic=null,camera=null,screen=null,canvasStream=null,audioDestination=null;
   let micGain=null,screenGain=null,recorder=null,recording=false,pcm=[],pcmBytes=0,wav=null,drawTimer=null,beatTimer=null,preparing=false,uploadedMediaId=null,statsTimer=null;
   let scene='camera',pip=false,imageIndex=0,images=[],imageUrls=[],sources=[],observer=null,operation=0;
-  let previewWindow=null,previewWindowStream=null,previewPanel=null,previewLayout=null,previewButton=null;
+  let previewWindow=null,previewWindowStream=null,previewPanel=null,previewLayout=null,previewButton=null,previewHead=null,previewHeading=null;
   const t=key=>labels[key]||key;
-  const detachPreview=detached=>{if(previewPanel)previewPanel.hidden=detached;previewLayout?.classList.toggle('is-detached',detached);if(previewButton)previewButton.textContent=t(detached?'show_preview':'open_preview');};
+  const detachPreview=detached=>{if(previewPanel)previewPanel.hidden=detached;previewLayout?.classList.toggle('is-detached',detached);if(previewButton){previewButton.textContent=t(detached?'show_preview':'open_preview');(detached?previewHeading:previewHead)?.append(previewButton);}};
   const closePreviewWindow=()=>{previewWindowStream?.getTracks().forEach(track=>track.stop());previewWindowStream=null;if(previewWindow&&!previewWindow.closed)previewWindow.close();previewWindow=null;detachPreview(false);};
   const status=W.el('p');status.setAttribute('role','status');
   const video=()=>{const node=document.createElement('video');node.muted=true;node.playsInline=true;node.autoplay=true;return node;};
@@ -49,7 +49,7 @@ export async function initialize(root,event,configured=false){
     const mode=value=>{root.dataset.studioMode=value;panel.hidden=value!=='browser';grid.hidden=value==='browser';if(value==='browser')for(const frame of root.querySelectorAll('[data-live-console] iframe')){frame.removeAttribute('src');frame.hidden=true;}else closePreviewWindow();for(const button of tabs.children)button.setAttribute('aria-pressed',String(button.dataset.mode===value));};
     for(const [value,label]of [['obs',t('obs_mode')],['browser',t('browser_mode')]]){const button=W.el('button',label,'desktop-button');button.type='button';button.dataset.mode=value;button.onclick=()=>mode(value);tabs.append(button);}mode(root.dataset.studioMode||'obs');
     const telemetry=W.el('p');telemetry.dataset.studioTelemetry='';
-    const layout=W.el('div',undefined,'desktop-browser-layout'),preview=W.el('aside',undefined,'desktop-browser-preview'),previewHead=W.el('div',undefined,'desktop-browser-preview-head');previewPanel=preview;previewLayout=layout;
+    const layout=W.el('div',undefined,'desktop-browser-layout'),preview=W.el('aside',undefined,'desktop-browser-preview');previewHead=W.el('div',undefined,'desktop-browser-preview-head');previewPanel=preview;previewLayout=layout;
     const openPreview=action('open_preview',()=>{
       if(previewWindow&&!previewWindow.closed){previewWindow.focus();return;}
       const popup=window.open('','_blank','popup,width=720,height=470,resizable=yes');
@@ -67,8 +67,8 @@ export async function initialize(root,event,configured=false){
         detachPreview(true);
       }catch(error){closePreviewWindow();throw error;}
     });
-    previewButton=openPreview;previewHead.append(W.el('strong',t('preview')));preview.append(previewHead,canvas);layout.append(preview,controls);
-    const heading=W.el('div',undefined,'desktop-browser-heading');heading.append(W.el('h3',t('title')+' · '+event.title),openPreview);
+    previewButton=openPreview;previewHead.append(W.el('strong',t('preview')),openPreview);preview.append(previewHead,canvas);layout.append(preview,controls);
+    const heading=W.el('div',undefined,'desktop-browser-heading');previewHeading=heading;heading.append(W.el('h3',t('title')+' · '+event.title));
     panel.append(heading,W.el('p',t('intro')),layout);
     const devices=group('devices','is-devices',leftControls);fieldGroup=devices;
     const cameraChoice=select('camera'),micChoice=select('microphone');cameraChoice.append(new Option(t('none'),'none'));micChoice.append(new Option(t('microphone'),''));

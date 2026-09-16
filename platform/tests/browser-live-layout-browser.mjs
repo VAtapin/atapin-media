@@ -16,7 +16,7 @@ const assets = new Map([
   ['/assets/desktop-browser-studio.css', 'public/assets/desktop-browser-studio.css'],
   ['/assets/desktop-browser-studio.js', 'public/assets/desktop-browser-studio.js'],
 ]);
-const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="layout-test"><link rel="stylesheet" href="/assets/desktop-app.css"><link rel="stylesheet" href="/assets/desktop-live-studio.css"><link rel="stylesheet" href="/assets/desktop-publishing.css"><style>html,body{margin:0;height:100%;background:#edf3f8}.os-window{height:100%}.os-titlebar{box-sizing:border-box;height:44px;padding:12px;background:#102f52;color:white;font:600 14px Inter,Arial,sans-serif}.desktop-live-studio{box-sizing:border-box;height:calc(100% - 44px)}</style></head><body><div class="os-window"><div class="os-titlebar">Live Studio</div><section class="desktop-live-studio" data-live-studio><div class="desktop-live-studio-grid"></div></section></div><script>window.DesktopWorkspaces={el:(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;}};import('/assets/desktop-browser-studio.js?v=5').then(module=>module.initialize(document.querySelector('[data-live-studio]'),{id:'layout-test',title:'Ein neues Zuhause für Manna Vom Himmel'}));</script></body></html>`;
+const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="layout-test"><link rel="stylesheet" href="/assets/desktop-app.css"><link rel="stylesheet" href="/assets/desktop-live-studio.css"><link rel="stylesheet" href="/assets/desktop-publishing.css"><style>html,body{margin:0;height:100%;background:#edf3f8}.os-window{height:100%}.os-titlebar{box-sizing:border-box;height:44px;padding:12px;background:#102f52;color:white;font:600 14px Inter,Arial,sans-serif}.desktop-live-studio{box-sizing:border-box;height:calc(100% - 44px)}</style></head><body><div class="os-window"><div class="os-titlebar">Live Studio</div><section class="desktop-live-studio" data-live-studio><div class="desktop-live-studio-grid"></div></section></div><script>window.DesktopWorkspaces={el:(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;}};import('/assets/desktop-browser-studio.js?v=6').then(module=>module.initialize(document.querySelector('[data-live-studio]'),{id:'layout-test',title:'Ein neues Zuhause für Manna Vom Himmel'}));</script></body></html>`;
 const configuration = { available: false, browser_enabled: false, host: '' };
 let rejectFirstConfig = true;
 const server = createServer(async (request, response) => {
@@ -55,6 +55,12 @@ try {
   }
   const canvas = await studio.locator('[data-studio-canvas]').boundingBox();
   assert(canvas && canvas.width <= 320 && canvas.height <= 190, `Preview is too large: ${JSON.stringify(canvas)}`);
+  const preview = studio.locator('.desktop-browser-preview');
+  const previewAction = studio.locator('[data-studio-action=open_preview]');
+  assert(await preview.locator('[data-studio-action=open_preview]').isVisible(), 'Open action should belong to the local preview');
+  const previewBox = await preview.boundingBox(), previewActionBox = await previewAction.boundingBox();
+  assert(previewBox && previewActionBox && previewActionBox.x + previewActionBox.width <= previewBox.x + previewBox.width + 1,
+    `Open action should stay inside the preview card: ${JSON.stringify({ previewBox, previewActionBox })}`);
   const start = studio.locator('[data-studio-action=start]');
   assert.equal(await start.evaluate(button => getComputedStyle(button).backgroundColor), 'rgb(185, 54, 50)');
   const startBox = await start.boundingBox();
@@ -78,6 +84,7 @@ try {
   assert.equal(await popup.locator('video').evaluate(video => video.srcObject?.getVideoTracks().length), 1);
   assert.match(await popup.title(), /Lokale Vorschau/);
   assert(await studio.locator('.desktop-browser-preview').isHidden(), 'Inline preview should disappear after pop-out');
+  assert(await studio.locator('.desktop-browser-heading [data-studio-action=open_preview]').isVisible(), 'Reopen action should remain at the studio heading');
   assert(await studio.locator('.desktop-browser-layout').evaluate(layout => layout.classList.contains('is-detached')));
   assert.match(await studio.locator('[data-studio-action=open_preview]').textContent(), /Vorschaufenster zeigen/);
   const controlsAfter = await studio.locator('.desktop-browser-controls').boundingBox();
@@ -86,22 +93,26 @@ try {
   await popup.close();
   await studio.locator('.desktop-browser-preview').waitFor({ state: 'visible' });
   assert(await studio.locator('[data-studio-canvas]').isVisible());
+  assert(await preview.locator('[data-studio-action=open_preview]').isVisible(), 'Open action should return to the local preview');
 
   await page.screenshot({ path: 'tests/artifacts/browser-live-layout-desktop.png' });
   await page.setViewportSize({ width: 390, height: 844 });
   await studio.locator('[data-studio-canvas]').scrollIntoViewIfNeeded();
   const mobileCanvas = await studio.locator('[data-studio-canvas]').boundingBox();
   assert(mobileCanvas && mobileCanvas.width <= 390, `Mobile preview overflows: ${JSON.stringify(mobileCanvas)}`);
+  assert(await preview.locator('[data-studio-action=open_preview]').isVisible(), 'Mobile open action should belong to the local preview');
   assert(await studio.evaluate(panel => panel.scrollWidth <= panel.clientWidth + 1), 'Studio has horizontal overflow');
   await page.screenshot({ path: 'tests/artifacts/browser-live-layout-mobile.png' });
   const mobilePopupPromise = page.waitForEvent('popup');
   await studio.locator('[data-studio-action=open_preview]').click();
   const mobilePopup = await mobilePopupPromise;
   assert(await studio.locator('.desktop-browser-preview').isHidden(), 'Mobile inline preview should disappear after pop-out');
+  assert(await studio.locator('.desktop-browser-heading [data-studio-action=open_preview]').isVisible(), 'Mobile reopen action should remain accessible');
   assert(await studio.evaluate(panel => panel.scrollWidth <= panel.clientWidth + 1), 'Detached mobile studio has horizontal overflow');
   await page.screenshot({ path: 'tests/artifacts/browser-live-layout-detached-mobile.png' });
   await mobilePopup.close();
   await studio.locator('.desktop-browser-preview').waitFor({ state: 'visible' });
+  assert(await preview.locator('[data-studio-action=open_preview]').isVisible(), 'Mobile open action should return to the preview');
   await page.setViewportSize({ width: 1672, height: 941 });
   await studio.locator('summary').click();
   await studio.locator('[name=live_browser_host]').fill('mannavomhimmel.de');
@@ -130,7 +141,7 @@ try {
   assert.equal(await studio.locator('[name=live_browser_host]').inputValue(), 'mannavomhimmel.de');
   assert.match(await studio.textContent(), /Server-API erreichbar/);
   await page.evaluate(async () => {
-    const module = await import('/assets/desktop-browser-studio.js?v=5');
+    const module = await import('/assets/desktop-browser-studio.js?v=6');
     await module.initialize(document.querySelector('[data-live-studio]'), { id: 'next-live', title: 'Nächster Livestream' });
   });
   await studio.locator('summary').click();
