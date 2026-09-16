@@ -69,7 +69,7 @@ class LiveServer
                 if(file_put_contents($candidate,$content,LOCK_EX)===false)throw new \RuntimeException();
                 chmod($candidate,0600);
                 $stage='validation';
-                $validation=new Process([$binary,'--validate-conf',$candidate]);$validation->setTimeout(10);$validation->disableOutput();$validation->mustRun();
+                $this->runServerCommand([$binary,'--validate-conf',$candidate],10);
                 $stage='backup';
                 if(is_file($current)){$backedUp=copy($current,$root.'/mediamtx.backup.yml');if(!$backedUp)throw new \RuntimeException();}
                 if(is_file($root.'/mediamtx.backup.yml'))chmod($root.'/mediamtx.backup.yml',0600);
@@ -78,7 +78,7 @@ class LiveServer
                 $applied=true;
                 // MediaMTX reloads changed configuration; start is idempotent when already running.
                 $stage='start';
-                $start=new Process(['/bin/bash',base_path('bin/live-server.sh'),'start']);$start->setTimeout(10);$start->disableOutput();$start->mustRun();
+                $this->runServerCommand(['/bin/bash',base_path('bin/live-server.sh'),'start'],10);
                 $stage='audit';
                 app(Audit::class)->record('live.server_configured',null,['browser_enabled'=>$values['live_browser_enabled']]);
                 $this->logConfigurationAttempt('applied','complete',(bool)$values['live_browser_enabled']);
@@ -97,11 +97,19 @@ class LiveServer
             }
         });
     }
+    private function runServerCommand(array $command,int $timeout): void
+    {
+        // Keep output pipes: disabling them opens /dev/null, which Plesk PHP open_basedir can forbid.
+        $process=new Process($command);$process->setTimeout($timeout);$process->mustRun();
+    }
     private function logConfigurationAttempt(string $outcome,string $stage,bool $browserEnabled,?\Throwable $error=null): void
     {
         $context=['outcome'=>$outcome,'stage'=>$stage,'browser_enabled'=>$browserEnabled];
         if($error){
             $context['error_type']=$error::class;
+            $context['error_source']=basename($error->getFile()).':'.$error->getLine();
+            if($error instanceof \ErrorException && str_contains($error->getMessage(),'/dev/null'))
+                $context['warning_code']='dev_null_unavailable';
             if($error instanceof \Symfony\Component\Process\Exception\ProcessFailedException)
                 $context['process_exit_code']=$error->getProcess()->getExitCode();
         }

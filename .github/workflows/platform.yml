@@ -151,6 +151,7 @@ jobs:
           curl --fail --location --proto '=https' --tlsv1.2 https://github.com/bluenviron/mediamtx/releases/download/v1.21.0/mediamtx_v1.21.0_linux_amd64.tar.gz -o ../.local/mediamtx/release.tar.gz
           echo 'e02e34c3337a35f20ac9e5aa31524566108964e6e37dbc46cf8292169f6c792b  ../.local/mediamtx/release.tar.gz' | sha256sum --check --status
           tar -xzf ../.local/mediamtx/release.tar.gz -C ../.local/mediamtx mediamtx
+          php -d open_basedir="$PWD:/tmp:/usr/bin:/bin" tests/live-server-process-open-basedir.php
           php artisan optimize:clear
           touch /tmp/desktop-workspaces-live-ci.sqlite
           php artisan migrate --force
