@@ -14,7 +14,7 @@
         @can('content.edit')<button type="button" class="media-library-primary" data-classify-batch="media">{{ __('imports.ai_batch') }}</button>@endcan
         </div></details>
         @can('media.upload')
-        <button type="button" class="media-library-primary" data-media-upload data-media-upload-label>{{ __('imports.upload_files') }}</button>
+        <div class="desktop-file-drop desktop-file-drop-compact" data-media-upload data-media-upload-label role="button" tabindex="0"><span class="desktop-file-drop-icon" aria-hidden="true">⇧</span><span><strong>{{ __('imports.uploader_drop') }}</strong><small>{{ __('imports.uploader_choose') }}</small></span></div>
         <input type="file" data-media-upload-input multiple hidden><input type="file" data-media-upload-folder-input webkitdirectory multiple hidden>
         @endcan
         <p data-media-upload-message class="media-library-upload-message" aria-live="polite" role="status" hidden></p>

@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\UserProfile;
+use App\Models\Media;
 use App\Services\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -53,6 +54,7 @@ class UserController extends Controller
             'name'=>'required|string|max:255', 'email'=>['required','email','max:255',Rule::unique('users','email')->ignore($user)],
             'current_password'=>'required_with:password|string|max:72', 'password'=>'nullable|string|min:5|max:72|confirmed',
             'avatar'=>'nullable|image|mimes:jpg,jpeg,png,webp|max:512|dimensions:min_width=64,min_height=64,max_width=800,max_height=800',
+            'avatar_media_id'=>'nullable|uuid|exists:media,id',
             'phone'=>'nullable|string|max:80', 'location'=>'nullable|string|max:120', 'website'=>'nullable|url|max:1000', 'bio'=>'nullable|string|max:3000',
             'personal_youtube'=>'nullable|url|max:1000', 'personal_facebook'=>'nullable|url|max:1000', 'personal_instagram'=>'nullable|url|max:1000',
             'personal_tiktok'=>'nullable|url|max:1000', 'personal_telegram'=>'nullable|url|max:1000', 'personal_linkedin'=>'nullable|url|max:1000',
@@ -81,10 +83,19 @@ class UserController extends Controller
                 'linkedin'=>array_key_exists('personal_linkedin', $data) ? $data['personal_linkedin'] : ($existingLinks['linkedin'] ?? null),
             ]),
         ];
-        if ($request->hasFile('avatar')) $profileValues['avatar_path'] = $request->file('avatar')->store('profiles/avatars', 'local');
+        if (!empty($data['avatar_media_id'])) {
+            $media=Media::visibleLibrary()->findOrFail($data['avatar_media_id']);
+            abort_unless($media->kind==='image',422);
+            $location=app(\App\Services\MediaOriginalLocator::class)->find($media);abort_unless($location,422);
+            $extension=match($media->mime){'image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp','image/gif'=>'gif',default=>abort(422)};
+            $path='profiles/avatars/'.\Illuminate\Support\Str::uuid().'.'.$extension;
+            $stream=Storage::disk($location['disk'])->readStream($location['path']);abort_unless(is_resource($stream),422);
+            try { Storage::disk('local')->writeStream($path,$stream); } finally { fclose($stream); }
+            $profileValues['avatar_path']=$path;
+        } elseif ($request->hasFile('avatar')) $profileValues['avatar_path'] = $request->file('avatar')->store('profiles/avatars', 'local');
         $profile->fill($profileValues); $profile->save();
         $user->setRelation('profile', $profile);
-        $audit->record('user.profile_updated',(string) $user->id,['password_changed'=>!empty($data['password']),'avatar_changed'=>$request->hasFile('avatar')]);
+        $audit->record('user.profile_updated',(string) $user->id,['password_changed'=>!empty($data['password']),'avatar_changed'=>$request->hasFile('avatar')||!empty($data['avatar_media_id'])]);
         if ($request->expectsJson()) return response()->json(['status'=>'saved','user_id'=>$user->id,'name'=>$user->name,'email'=>$user->email,'avatar_url'=>$profile->avatar_path ? route('profile.avatar').'?v='.$profile->updated_at->timestamp : null]);
         return back()->with('status', __('ui.saved'));
     }

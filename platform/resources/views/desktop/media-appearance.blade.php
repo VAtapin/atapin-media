@@ -2,7 +2,7 @@
     <header class="desktop-settings-heading"><div><span>Website</span><h2>{{ __('ui.settings_website_author') }}</h2><p>{{ __('ui.settings_website_author_hint') }}</p></div></header>
     <form class="desktop-settings-form" method="post" enctype="multipart/form-data" action="{{ route('settings') }}">@csrf @method('PUT')<input type="hidden" name="section" value="media_appearance">
         <label>{{ __('imports.project_author') }}<input name="public_author_name" maxlength="120" value="{{ $settings['public_author_name']??'' }}"></label>
-        <label>{{ __('imports.author_photo') }}<input type="file" name="public_author_photo" accept="image/jpeg,image/png,image/webp"></label>
+        <label>{{ __('imports.author_photo') }}<input type="file" name="public_author_photo" accept="image/jpeg,image/png,image/webp" data-auto-media-upload data-upload-profile="avatar" data-upload-target="public_author_photo_media_id"></label>
         @if($settings['public_author_image']??null)<img src="{{ $settings['public_author_image'] }}" alt="" width="64" height="64">@endif
         <details><summary>{{ __('imports.hero_sayings') }}</summary>
             @foreach(config('platform.locales') as $locale)

@@ -94,7 +94,14 @@
     folderButton.addEventListener('click', () => {selection = {source:'local-folder', path:folder || '.'}; selected();});
     form.querySelectorAll('[name="method"]').forEach(input => input.addEventListener('change', () => setMethod(input.value)));
     link.addEventListener('input', () => {const source = sourceFromLink(link.value.trim()); root.querySelector('[data-import-detected]').textContent = !link.value ? '' : source ? t.detected_service + ': ' + t['source_' + source] : t.supported_links;});
-    fileInput?.addEventListener('change', () => setMethod('computer'));
+    let uploadedArchiveId=null;
+    const uploadArchive=async file=>{
+      if(!file)return;if(!/\.(zip|tar|tar\.gz|tgz)$/i.test(file.name)){showMessage(t.archive_required,true);return;}
+      setMethod('computer');start.disabled=true;uploadControl=window.createDesktopUploadControl();uploadPaused=false;pause.textContent=t.upload_pause;uploadControls.hidden=false;fileInput.disabled=true;
+      try{uploadedArchiveId=await window.uploadDesktopMedia(file,root.dataset.userId,(done,total)=>showMessage(file.name+': '+Math.floor(done/total*100)+' %'),uploadControl,{profile:'archive'});showMessage((t.uploader_ready||'Bereit zum Speichern'));}
+      catch(error){uploadedArchiveId=null;showMessage(error.message,true);}finally{fileInput.disabled=false;start.disabled=false;uploadControls.hidden=true;uploadControl=null;}
+    };
+    fileInput?.addEventListener('change', () => uploadArchive(fileInput.files?.[0]));
     const zone = root.querySelector('[data-import-drop]');
     zone?.addEventListener('dragover', event => {event.preventDefault(); zone.classList.add('is-dragging');});
     zone?.addEventListener('dragleave', () => zone.classList.remove('is-dragging'));
@@ -102,7 +109,7 @@
       event.preventDefault(); zone.classList.remove('is-dragging');
       if (start.disabled) return;
       if (event.dataTransfer.files.length !== 1) {showMessage(t.one_archive, true); return;}
-      fileInput.files = event.dataTransfer.files; setMethod('computer');
+      fileInput.files = event.dataTransfer.files; uploadArchive(fileInput.files[0]);
     });
     const date = value => value ? new Intl.DateTimeFormat(document.documentElement.lang, {dateStyle:'medium',timeStyle:'short'}).format(new Date(value)) : '—';
     const bytes = value => {
@@ -158,13 +165,9 @@
       form.querySelectorAll('[name="method"]').forEach(input => {input.disabled = true;});
       try {
         if (activeMethod === 'computer') {
-          const file = fileInput?.files[0];
-          if (!file || !/\.(zip|tar|tar\.gz|tgz)$/i.test(file.name)) throw new Error(t.archive_required);
-          start.disabled = true;
-          uploadControl = window.createDesktopUploadControl(); uploadPaused = false; pause.textContent = t.upload_pause; uploadControls.hidden = false; fileInput.disabled = true;
+          if (!uploadedArchiveId) throw new Error(t.archive_required);
           payload.source = 'local-archive';
-          payload.media_id = await window.uploadDesktopMedia(file, root.dataset.userId, (bytes, total) => showMessage(file.name + ': ' + Math.floor(bytes / total * 100) + ' %'), uploadControl, {profile:'archive'});
-          await uploadControl.checkpoint(); uploadControls.hidden = true;
+          payload.media_id = uploadedArchiveId;
         } else if (activeMethod === 'link') {
           payload.source_ref = link.value.trim(); payload.source = sourceFromLink(payload.source_ref);
           if(payload.source==='web-document')payload.target_profile='posts';
@@ -174,7 +177,7 @@
         else {if (!selection) throw new Error(t.select_folder_hint); Object.assign(payload, selection);}
         start.disabled = true; showMessage(t.starting);
         await request(root.dataset.importsUrl, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-        showMessage(t.started); if (fileInput) fileInput.value = '';
+        showMessage(t.started); if (fileInput) fileInput.value = '';uploadedArchiveId=null;
         await loadRuns(1);
         if(root.isConnected && !history.open)history.showModal();
       } catch (error) {showMessage(uploadControl?.signal.aborted ? t.upload_stopped : error.message, true);}

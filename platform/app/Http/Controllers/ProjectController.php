@@ -78,9 +78,10 @@ class ProjectController extends Controller
 
     public function cover(Request $request, Project $project, MediaLibrary $library)
     {
-        Gate::authorize('media.upload');
-        $request->validate(['file'=>'required|image|mimes:jpg,jpeg,png,webp,gif|max:10240']);
-        $media = $library->upload($request->file('file'), $request->user()->id);
+        $data=$request->validate(['media_id'=>'required_without:file|nullable|uuid|exists:media,id','file'=>'required_without:media_id|nullable|image|mimes:jpg,jpeg,png,webp,gif|max:10240']);
+        if($request->hasFile('file')) { Gate::authorize('media.upload'); $media=$library->upload($request->file('file'),$request->user()->id); }
+        else $media=\App\Models\Media::visibleLibrary()->findOrFail($data['media_id']);
+        abort_unless($media->kind==='image',422);
         $project->update(['cover_media_id'=>$media->id]);
         return response()->json(['status'=>'saved','media_id'=>$media->id,'cover_url'=>$media->previewUrl()]);
     }

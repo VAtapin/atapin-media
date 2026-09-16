@@ -99,6 +99,14 @@ class DesktopWorkspacesTest extends TestCase
         $this->assertNotNull(TaxonomyTerm::findOrFail($term)->cover_media_id);
         $book=$this->post('/desktop/books/intake',['file'=>UploadedFile::fake()->create('book.pdf',10,'application/pdf')],['Accept'=>'application/json'])->assertAccepted()->json('id');
         $this->assertSame('queued',Product::findOrFail($book)->metadata['book_pdf_ai']['status']);
+        $image=Media::create(['title'=>'Uploaded cover','original_name'=>'cover.webp','mime'=>'image/webp','kind'=>'image','bytes'=>5,'disk'=>'local','path'=>'cover.webp','sha256'=>hash('sha256','cover'),'status'=>'ready']);
+        Storage::disk('local')->put('cover.webp','cover');
+        $this->postJson('/desktop/projects/'.$project.'/cover',['media_id'=>$image->id])->assertOk();
+        $this->postJson('/desktop/taxonomy/'.$term.'/cover',['media_id'=>$image->id])->assertOk();
+        $pdf=Media::create(['title'=>'Uploaded PDF','original_name'=>'second-book.pdf','mime'=>'application/pdf','kind'=>'pdf','bytes'=>8,'disk'=>'local','path'=>'second-book.pdf','sha256'=>hash('sha256','pdf'),'status'=>'ready']);
+        Storage::disk('local')->put('second-book.pdf','pdf');
+        $second=$this->postJson('/desktop/books/intake',['media_id'=>$pdf->id,'original_name'=>'second-book.pdf'])->assertAccepted()->json('id');
+        $this->assertSame('second-book',Product::findOrFail($second)->title);
         Queue::assertPushed(\App\Jobs\AnalyzeBookPdf::class);
     }
     public function test_pdf_analysis_failure_keeps_file_and_records_reason(): void

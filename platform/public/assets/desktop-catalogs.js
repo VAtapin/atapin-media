@@ -53,10 +53,9 @@
     const section = el('section', undefined, 'workspace-asset-panel');
     section.append(el('h3', t('image')),
       el('p', row.cover_url ? t('image_replace_hint') : t('image_upload_hint'), 'workspace-muted'));
-    const form = el('form', undefined, 'workspace-asset-form');
-    const file = field('file', 'file'); file.querySelector('input').accept = 'image/jpeg,image/png,image/webp,image/gif';
-    const submit = el('button', t('upload_image'), 'desktop-button'); submit.type = 'submit'; form.append(file, submit);
-    form.addEventListener('submit', event => { event.preventDefault(); run(editor.closest('[data-workspace]'), async () => { submit.disabled = true; try { await request(endpoint, new FormData(form), 'POST'); const mainForm = editor.querySelector('form'); if (mainForm) delete mainForm.dataset.dirty; const root = editor.closest('[data-workspace]'); if (root._workspaceEdit) await root._workspaceEdit({id:row.id}); else await load(); } finally { submit.disabled = false; } }); });
+    const form = el('div', undefined, 'workspace-asset-form');
+    const file = field('file', 'file'),input=file.querySelector('input'); input.accept = 'image/jpeg,image/png,image/webp,image/gif'; form.append(file);
+    window.enhanceDesktopFileInput(input,{profile:'cover',onUploaded:id=>run(editor.closest('[data-workspace]'),async()=>{await request(endpoint,{media_id:id},'POST');const mainForm=editor.querySelector('form');if(mainForm)delete mainForm.dataset.dirty;const root=editor.closest('[data-workspace]');if(root._workspaceEdit)await root._workspaceEdit({id:row.id});else await load();})});
     section.append(form); editor.append(section);
   };
   const projectExtra = (editor, row, load) => {
@@ -264,11 +263,10 @@
       if (asset.preview_url) { const link = el('a', t('open'), 'workspace-link'); link.href = asset.preview_url; link.target = '_blank'; link.rel = 'noreferrer'; line.append(link); }
       panel.append(line);
     }
-    const form = el('form', undefined, 'workspace-asset-form');
+    const form = el('div', undefined, 'workspace-asset-form');
     const slot = field('slot', 'select', 'full', [['full', t('full')], ['cover', t('cover')], ['sample', t('sample')]]);
-    const file = field('file', 'file'); file.querySelector('input').accept = '.pdf,image/jpeg,image/png,image/webp,image/gif';
-    const submit = el('button', t('upload'), 'desktop-button'); submit.type = 'submit'; form.append(slot, file, submit); panel.append(form);
-    form.addEventListener('submit', event => { event.preventDefault(); run(host, async () => { submit.disabled = true; try { const data = new FormData(form); if (!file.querySelector('input').files.length) throw new Error(t('book_pdf_required')); await request(`/desktop/books/${row.id}/assets`, data, 'POST'); if (host._workspaceEdit) await host._workspaceEdit({id:row.id}); else await load(); } finally { submit.disabled = false; } }); });
+    const file = field('file', 'file'),input=file.querySelector('input'); input.accept = '.pdf,image/jpeg,image/png,image/webp,image/gif';form.append(slot,file);panel.append(form);
+    window.enhanceDesktopFileInput(input,{profile:'attachment',onUploaded:id=>run(host,async()=>{await request(`/desktop/books/${row.id}/assets`,{slot:slot.querySelector('select').value,media_id:id},'POST');if(host._workspaceEdit)await host._workspaceEdit({id:row.id});else await load();})});
   };
   const projectConfig = {
     url:'/desktop/projects', newLabel:'new_project', inlineEdit:true, quickCreate:{fields:[['title'],['type','select',[['','—'],'mixed','video','post','book','podcast','live']]]}, detail:async row => { const data = await request('/desktop/projects/' + row.id); return {...data.project, tasks:data.tasks, records:data.records, products:data.products, publications:data.publications}; }, updateMethod:'PUT', statuses:['idea','script','production','review','published'],
@@ -289,9 +287,10 @@
     intake:async (editor, row, root, load, edit) => {
       const section = el('section', undefined, 'workspace-pdf-intake'); section.append(el('h2', t('new_book')),
         el('p', t('book_upload_ai_hint'), 'workspace-muted'));
-      const form = el('form', undefined, 'workspace-pdf-drop'); const file = field('file', 'file'); file.querySelector('input').accept = 'application/pdf'; file.querySelector('input').required = true;
+      const form = el('form', undefined, 'workspace-pdf-drop'); const file = field('file', 'file'),input=file.querySelector('input'); input.accept = 'application/pdf'; input.required = true;let mediaId=null,originalName='';
       const submit = el('button', t('book_analyze'), 'desktop-button is-primary'); submit.type = 'submit'; form.append(file, submit); section.append(form); editor.append(section);
-      form.addEventListener('submit', event => { event.preventDefault(); run(root, async () => { submit.disabled = true; try { const data = await request('/desktop/books/intake', new FormData(form), 'POST'); trackBook(data.id, file.querySelector('input').files[0]?.name || ''); window.desktopNotify?.(t('book_ai_background_title'), t('book_ai_background_message'), 'info'); document.dispatchEvent(new Event('desktop-media-changed')); await edit({id:data.id}); } finally { submit.disabled = false; } }); });
+      window.enhanceDesktopFileInput(input,{profile:'attachment',onUploaded:(id,selected)=>{mediaId=id;originalName=selected.name;}});
+      form.addEventListener('submit', event => { event.preventDefault(); run(root, async () => { submit.disabled = true; try { if(!mediaId)throw new Error(t('book_pdf_required'));const data = await request('/desktop/books/intake',{media_id:mediaId,original_name:originalName},'POST'); trackBook(data.id, originalName); window.desktopNotify?.(t('book_ai_background_title'), t('book_ai_background_message'), 'info'); document.dispatchEvent(new Event('desktop-media-changed')); await edit({id:data.id}); } finally { submit.disabled = false; } }); });
       return true;
     },
   };

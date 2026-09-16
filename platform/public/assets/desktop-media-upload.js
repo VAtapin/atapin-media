@@ -75,6 +75,7 @@
   window.prepareDesktopMediaFile = prepareFile;
   window.initializeDesktopImageInputs = () => {
     document.querySelectorAll('[data-image-upload-profile]').forEach(input => {
+      if (input.hasAttribute('data-auto-media-upload')) return;
       if (input.dataset.imageUploadInitialized === 'true') return;
       input.dataset.imageUploadInitialized = 'true';
       input.addEventListener('change', async () => {
@@ -166,5 +167,70 @@
     document.dispatchEvent(new Event('desktop-media-changed'));
     return result.media_id;
   };
+  const uploadLabel = (key, fallback) => labels()[key] || fallback;
+  const userIdFor = input => input.closest('[data-user-id]')?.dataset.userId
+    || document.querySelector('[data-user-id]')?.dataset.userId || 'current';
+  window.enhanceDesktopFileInput = (input, options = {}) => {
+    if (!input || input.dataset.unifiedUploadInitialized === 'true') return input?._desktopUploader || null;
+    input.dataset.unifiedUploadInitialized = 'true';
+    const multiple = options.multiple ?? input.multiple;
+    const zone = document.createElement('div');
+    zone.className = 'desktop-file-drop'; zone.tabIndex = 0; zone.setAttribute('role', 'button');
+    zone.innerHTML = `<span class="desktop-file-drop-icon" aria-hidden="true">⇧</span><span><strong>${uploadLabel('uploader_drop', 'Datei hierher ziehen')}</strong><small>${uploadLabel('uploader_choose', 'oder Datei auswählen')}</small></span><span class="desktop-file-drop-state" role="status"></span><span class="desktop-file-drop-list"></span>`;
+    input.classList.add('desktop-file-native'); input.hidden = true;
+    input.insertAdjacentElement('afterend', zone);
+    const state = zone.querySelector('.desktop-file-drop-state');
+    const list = zone.querySelector('.desktop-file-drop-list');
+    let generation = 0;
+    const api = { element:zone, input, mediaIds:[], files:[], uploading:false, clear:() => {generation++;api.uploading=false;api.mediaIds=[];api.files=[];input.value='';list.replaceChildren();state.textContent='';zone.classList.remove('is-complete','is-error','is-uploading');} };
+    input._desktopUploader = api;
+    const render = (file, text) => {
+      const row=document.createElement('span');row.className='desktop-file-drop-item';
+      const name=document.createElement('span');name.textContent=file.name;
+      const status=document.createElement('small');status.textContent=text;
+      row.append(name,status);list.append(row);return status;
+    };
+    const select = async rawFiles => {
+      const files = [...rawFiles].filter(Boolean).slice(0, multiple ? undefined : 1);
+      if (!files.length) return;
+      const own=++generation;api.uploading=true;api.mediaIds=[];api.files=files;list.replaceChildren();zone.classList.remove('is-complete','is-error');zone.classList.add('is-uploading');
+      const submitters=[...(input.form?.querySelectorAll('button[type="submit"],input[type="submit"]')||[])];const prior=submitters.map(button=>button.disabled);submitters.forEach(button=>{button.disabled=true;});
+      state.textContent=uploadLabel('uploader_uploading','Wird hochgeladen …');
+      try {
+        for (const file of files) {
+          const row=render(file,uploadLabel('upload_waiting','Warteschlange'));
+          const id=await window.uploadDesktopMedia(file,options.userId||userIdFor(input),(done,total)=>{row.textContent=`${total?Math.floor(done/total*100):0} %`;},null,{profile:options.profile||input.dataset.imageUploadProfile||'media_library'});
+          if(own!==generation)return;api.mediaIds.push(id);row.textContent=uploadLabel('uploader_uploaded','Hochgeladen');
+          await options.onUploaded?.(id,file,api);
+        }
+        if(own!==generation)return;input.value='';zone.classList.remove('is-uploading');zone.classList.add('is-complete');
+        state.textContent=files.length>1?`${files.length} ${uploadLabel('uploader_files_uploaded','Dateien hochgeladen')}`:uploadLabel('uploader_ready','Bereit zum Speichern');
+        zone.dispatchEvent(new CustomEvent('desktop-upload-complete',{bubbles:true,detail:{mediaIds:[...api.mediaIds],files}}));
+      } catch(error) {
+        if(own!==generation)return;zone.classList.remove('is-uploading');zone.classList.add('is-error');state.textContent=error.message||uploadLabel('uploader_failed','Upload fehlgeschlagen.');
+        options.onError?.(error,api);
+      } finally {if(own===generation){api.uploading=false;submitters.forEach((button,index)=>{button.disabled=prior[index];});}}
+    };
+    api.select=select;
+    zone.addEventListener('click',event=>{if(!event.target.closest('a,button')){event.preventDefault();event.stopPropagation();input.click();}});
+    zone.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();input.click();}});
+    for(const name of ['dragenter','dragover'])zone.addEventListener(name,event=>{event.preventDefault();zone.classList.add('is-dragging');});
+    for(const name of ['dragleave','drop'])zone.addEventListener(name,event=>{event.preventDefault();zone.classList.remove('is-dragging');});
+    zone.addEventListener('drop',event=>select(event.dataTransfer?.files||[]));
+    input.addEventListener('change',()=>select(input.files||[]));
+    return api;
+  };
+  window.initializeDesktopFileInputs = root => {
+    const scope=root||document,nodes=[...(scope.matches?.('input[type="file"][data-auto-media-upload]')?[scope]:[]),...scope.querySelectorAll('input[type="file"][data-auto-media-upload]')];nodes.forEach(input => {
+      const target=input.dataset.uploadTarget;
+      window.enhanceDesktopFileInput(input,{profile:input.dataset.uploadProfile||input.dataset.imageUploadProfile,multiple:input.multiple,onUploaded:id=>{
+        if(!target)return;let hidden=input.form?.querySelector(`input[name="${CSS.escape(target)}"]`);
+        if(!hidden){hidden=document.createElement('input');hidden.type='hidden';hidden.name=target;input.form?.append(hidden);}hidden.value=id;
+      }});
+    });
+  };
   window.initializeDesktopImageInputs();
+  window.initializeDesktopFileInputs();
+  document.addEventListener?.('desktop-file-inputs-added',event=>window.initializeDesktopFileInputs(event.detail?.root));
+  if(window.MutationObserver&&document.documentElement)new MutationObserver(changes=>{for(const change of changes)for(const node of change.addedNodes)if(node.nodeType===1)window.initializeDesktopFileInputs(node);}).observe(document.documentElement,{childList:true,subtree:true});
 })();

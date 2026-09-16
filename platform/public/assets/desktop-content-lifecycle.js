@@ -31,11 +31,7 @@
       mode={action:role==='attachment'&&!old?'attach':'replace',role,...old?{old_media_id:old.id}:{},kind};choice.hidden=false;
       choice.innerHTML=`<p>${esc(t().replacement_hint)}</p>${root.dataset.canUpload==='true'?`<label>${esc(t().replacement_upload)}<input type="file" data-replacement-upload ${kind==='image'?'accept="image/*"':kind==='video'?'accept="video/*"':''}></label>`:''}<form><label>${esc(t().replacement_existing)}<input type="search" name="q" maxlength="120"></label><button class="desktop-button" type="submit">${esc(t().cover_find)}</button></form><div data-results></div>`;
       choice.querySelector('form').onsubmit=e=>{e.preventDefault();search();};
-      choice.querySelector('[data-replacement-upload]')?.addEventListener('change',async e=>{
-        const file=e.target.files[0];if(!file||dirty())return;tools.inert=true;
-        try{const id=await window.uploadDesktopMedia(file,root.dataset.userId,(n,total)=>message.textContent=t().upload_running+' '+Math.floor(n/total*100)+' %',null,{profile:kind==='image'?'cover':kind==='video'?'video':'attachment'});await apply(id);}
-        catch(error){message.textContent=error.message;}finally{tools.inert=false;}
-      });choice.querySelector('[data-results]').textContent=t().replacement_search_first;
+      const upload=choice.querySelector('[data-replacement-upload]');if(upload)window.enhanceDesktopFileInput(upload,{userId:root.dataset.userId,profile:kind==='image'?'cover':kind==='video'?'video':'attachment',onUploaded:async id=>{if(dirty())return;tools.inert=true;try{await apply(id);}finally{tools.inert=false;}} ,onError:error=>{message.textContent=error.message;}});choice.querySelector('[data-results]').textContent=t().replacement_search_first;
     };
     tools.addEventListener('click',async event=>{
       const button=event.target.closest('button');if(!button)return;

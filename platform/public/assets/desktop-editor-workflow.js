@@ -31,7 +31,10 @@
     const mediaBlock=el('div',undefined,'podcast-media-block');mediaBlock.append(podcastMedia(mediaAsset,podcastText('podcast_media')),fileLabel);
     const coverBlock=el('div',undefined,'podcast-media-block');coverBlock.append(podcastMedia(coverAsset,podcastText('podcast_cover')),coverLabel);
     primary.append(title,description,mediaBlock,coverBlock,date,statusField,formatField);form.append(primary);const bodyFormat=el('input');bodyFormat.type='hidden';bodyFormat.name='body_format';bodyFormat.value='html';form.append(bodyFormat);
-    formatField.querySelector('select').addEventListener('change',event=>{fileInput.accept=event.target.value==='audio'?'audio/*':'video/*';fileInput.value='';});
+    let mediaId=null,coverId=null;
+    const mediaUploader=window.enhanceDesktopFileInput(fileInput,{profile:format==='video'?'video':'attachment',userId:root.dataset.userId,onUploaded:id=>{mediaId=id;}});
+    window.enhanceDesktopFileInput(coverInput,{profile:'cover',userId:root.dataset.userId,onUploaded:id=>{coverId=id;}});
+    formatField.querySelector('select').addEventListener('change',event=>{fileInput.accept=event.target.value==='audio'?'audio/*':'video/*';mediaId=null;mediaUploader?.clear();});
 
     const more=el('details',undefined,'podcast-more-settings');more.dataset.podcastMore='';more.append(el('summary',podcastText('podcast_more')));const moreContent=el('div',undefined,'podcast-more-content');more.append(moreContent);form.append(more);
     const website=el('section',undefined,'podcast-settings-group');website.append(el('h3',podcastText('podcast_website')));
@@ -56,10 +59,8 @@
     close.addEventListener('click',()=>{if(details.dataset.dirty==='true'&&!window.confirm(podcastText('discard_edits')))return;closeEditor();});
     form.addEventListener('input',()=>{details.dataset.dirty='true';});form.addEventListener('change',()=>{details.dataset.dirty='true';});
     form.addEventListener('submit',async event=>{event.preventDefault();save.disabled=true;message.textContent='';try{
-      const selectedFormat=formatField.querySelector('select').value;let mediaId=null,coverId=null;
-      if(mediaAsset&&selectedFormat!==format&&!fileInput.files[0])throw new Error(podcastText('podcast_format_requires_file'));
-      if(fileInput.files[0]){if(typeof window.uploadDesktopMedia!=='function')throw new Error(podcastText('podcast_upload_unavailable'));mediaId=await window.uploadDesktopMedia(fileInput.files[0],root.dataset.userId,(offset,total)=>{message.textContent=`${podcastText('podcast_uploading')} ${total?Math.floor(offset/total*100):0} %`;},null,{profile:selectedFormat==='video'?'video':'attachment'});}
-      if(coverInput.files[0]){if(typeof window.uploadDesktopMedia!=='function')throw new Error(podcastText('podcast_upload_unavailable'));coverId=await window.uploadDesktopMedia(coverInput.files[0],root.dataset.userId,(offset,total)=>{message.textContent=`${podcastText('podcast_cover_uploading')} ${total?Math.floor(offset/total*100):0} %`;},null,{profile:'cover'});}
+      const selectedFormat=formatField.querySelector('select').value;
+      if(mediaAsset&&selectedFormat!==format&&!mediaId)throw new Error(podcastText('podcast_format_requires_file'));
       window.DesktopRichText?.sync(form);const data=Object.fromEntries(new FormData(form));delete data.podcast_file;delete data.cover_file;data.kind='video';data.status=data.status||'unsorted';data.podcast_format=selectedFormat;data.target_profile='podcast';data.tags=(data.tags||'').split(',').map(value=>value.trim()).filter(Boolean);data.project_id=data.project_id||null;data.public_published_at=data.public_published_at||null;data.taxonomy_term_ids=[...terms.querySelector('select').selectedOptions].map(option=>option.value);if(publication)data.public_published=publication.checked;
       let id=item.id;if(id){await request('/desktop/content/'+id,{...data,...mediaId?{podcast_media_id:mediaId}:{},...coverId?{cover_media_id:coverId}:{}},'PATCH');}
       else{const created=await request('/desktop/content',{...data,public_section:'podcast',podcast_media_id:mediaId,cover_media_id:coverId},'POST');id=created.id;}

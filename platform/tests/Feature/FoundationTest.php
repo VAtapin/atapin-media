@@ -105,6 +105,21 @@ class FoundationTest extends TestCase
             ->assertSee('/desktop/wallpaper', false)
             ->assertSee('/assets/brand/owner/desktop/sol/Videos.png', false);
     }
+    public function test_preuploaded_image_can_be_saved_as_wallpaper_and_author_photo(): void
+    {
+        Storage::fake('local');Storage::fake('media-canonical');
+        $path=hash('sha256','image').'.webp';
+        $media=Media::create(['title'=>'Uploaded image','original_name'=>'image.webp','kind'=>'image','mime'=>'image/webp','bytes'=>5,'disk'=>'media-canonical','path'=>$path,'source'=>'upload','source_id'=>'settings-image','status'=>'ready']);
+        Storage::disk('media-canonical')->put($path,'image');
+        $owner=$this->user('Owner');$this->actingAs($owner)->put('/desktop/settings',[
+            'section'=>'desktop_design','desktop_icon_set'=>'manna','desktop_wallpaper'=>'custom','desktop_accent'=>'gold','desktop_density'=>'comfortable','desktop_shortcut_layout'=>'free','desktop_custom_wallpaper_media_id'=>$media->id,
+        ])->assertRedirect();
+        Storage::disk('local')->assertExists(app(Settings::class)->get('desktop_custom_wallpaper'));
+        $this->put('/desktop/settings',['section'=>'media_appearance','public_author_name'=>'Oleg','public_author_photo_media_id'=>$media->id])->assertRedirect();
+        $this->assertStringContainsString($path,app(Settings::class)->get('public_author_image'));
+        $this->patch('/desktop/profile',['name'=>$owner->name,'email'=>$owner->email,'avatar_media_id'=>$media->id])->assertRedirect();
+        Storage::disk('local')->assertExists($owner->fresh()->profile->avatar_path);
+    }
     public function test_desktop_is_the_only_internal_application_shell(): void
     {
         $this->get('/login')->assertOk()->assertSee('Anmelden')->assertDontSee('ui.login');

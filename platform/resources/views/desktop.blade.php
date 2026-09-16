@@ -57,7 +57,7 @@ $workspaceLabels = array_replace(__('workspaces'), [
     <title>Desktop · {{ config('platform.brand') }}</title>
     <link rel="icon" href="/favicon.png"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/brand/owner/app-icon.png"><meta name="theme-color" content="#8b6a3d"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=4"><link rel="stylesheet" href="/assets/desktop-windows.css?v=6"><link rel="stylesheet" href="/assets/desktop-settings.css?v=6">
     <link rel="stylesheet" href="/assets/desktop-app.css?v=3"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=13"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=3"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=4"><link rel="stylesheet" href="/assets/desktop-community.css?v=3"><link rel="stylesheet" href="/assets/desktop-publishing.css?v=4">
-    <link rel="stylesheet" href="/assets/desktop-workspaces.css?v=16">
+    <link rel="stylesheet" href="/assets/desktop-workspaces.css?v=16"><link rel="stylesheet" href="/assets/desktop-media-upload.css?v=1">
     <link rel="stylesheet" href="/vendor/jodit/4.13.9/jodit.min.css?v=4.13.9">
     <link rel="stylesheet" href="/assets/desktop-rich-text.css?v=1">
     <link rel="stylesheet" href="/assets/desktop-overview.css?v=2">
@@ -68,7 +68,7 @@ $workspaceLabels = array_replace(__('workspaces'), [
     <script src="/assets/public-pwa.js?v=1" defer></script>
     <script src="/assets/desktop-workspace-content.js?v=9" defer></script>
     <script src="/assets/desktop-ai-dashboard.js?v=3" defer></script>
-    <script src="/assets/desktop-catalogs.js?v=10" defer></script>
+    <script src="/assets/desktop-catalogs.js?v=11" defer></script>
     <script src="/assets/desktop-subscriber-import.js?v=1" defer></script>
     <script src="/assets/desktop-ai-proposal.js?v=1" defer></script>
     <script src="/assets/desktop-migration-wizard.js?v=1" defer></script>
@@ -82,10 +82,10 @@ $workspaceLabels = array_replace(__('workspaces'), [
     <script src="/assets/desktop-publishing-preview.js?v=2" defer></script>
     <script src="/assets/desktop-community-sync.js?v=1" defer></script>
     <script src="/assets/desktop-workspace-operations.js?v=7" defer></script>
-    <script src="/assets/desktop-editor-workflow.js?v=8" defer></script>
+    <script src="/assets/desktop-editor-workflow.js?v=9" defer></script>
     <script src="/assets/desktop-shortcuts.js?v=3" defer></script>
     <link rel="stylesheet" href="/assets/desktop-import-workflow.css?v=3">
-    <script src="/assets/desktop-os.js?v=20" defer></script><script src="/assets/settings-tabs.js?v=11" defer></script><script src="/assets/desktop-media-library.js?v=16" defer></script><script src="/assets/desktop-import-center.js?v=12" defer></script><script src="/assets/desktop-live-studio.js?v=18" defer></script><script src="/assets/desktop-publishing.js?v=6" defer></script>
+    <script src="/assets/desktop-os.js?v=20" defer></script><script src="/assets/settings-tabs.js?v=11" defer></script><script src="/assets/desktop-media-library.js?v=17" defer></script><script src="/assets/desktop-import-center.js?v=13" defer></script><script src="/assets/desktop-live-studio.js?v=19" defer></script><script src="/assets/desktop-publishing.js?v=6" defer></script>
 </head>
 <body class="os-body">
 <main class="os-desktop" data-desktop data-storage-key="atapin.desktop.{{ auth()->id() }}.v1"
@@ -185,7 +185,7 @@ $workspaceLabels = array_replace(__('workspaces'), [
     @endif
     <script>window.desktopImportLabels = @json(__('imports')); window.desktopLiveLabels = @json(__('desktop-live')); window.desktopPublishingLabels = @json(__('publishing'));</script>
     <script src="/assets/desktop-import-workflow.js?v=2" defer></script>
-    <script src="/assets/desktop-content-lifecycle.js?v=4" defer></script>
+    <script src="/assets/desktop-content-lifecycle.js?v=5" defer></script>
     <script src="/assets/desktop-content-composite.js?v=2" defer></script>
     <script src="/assets/desktop-content-library.js?v=16" defer></script>
     <script src="/assets/desktop-content-organization.js?v=3" defer></script>
@@ -198,7 +198,7 @@ $workspaceLabels = array_replace(__('workspaces'), [
     <script src="/assets/desktop-import-versions.js?v=2" defer></script>
     <script src="/assets/desktop-record-classifications.js?v=1" defer></script>
 
-    <script src="/assets/desktop-media-upload.js?v=3" defer></script>
+    <script src="/assets/desktop-media-upload.js?v=4" defer></script>
     @foreach($programs as $program)
     <template data-help-template="{{ $program['id'] }}">
         <section class="desktop-help">

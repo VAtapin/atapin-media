@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\Media;
 use Illuminate\Support\Facades\Gate;
 class SettingsController extends Controller
 {
@@ -30,14 +31,14 @@ class SettingsController extends Controller
         if (in_array($section, ['social', 'integrations'], true)) Gate::authorize('integrations.manage');
         if ($section === 'publishing') Gate::authorize('content.publish');
         $rules = match ($section) {
-            'media_appearance'=>['public_author_name'=>'nullable|string|max:120','public_author_photo'=>'nullable|image|mimes:jpg,jpeg,png,webp|max:3072',
+            'media_appearance'=>['public_author_name'=>'nullable|string|max:120','public_author_photo'=>'nullable|image|mimes:jpg,jpeg,png,webp|max:3072','public_author_photo_media_id'=>'nullable|uuid|exists:media,id',
                 'cover_style_prompt'=>'sometimes|required|string|max:4000','ai_image_model'=>'sometimes|required|string|max:120','hero_sayings'=>'sometimes|array:de,en',
                 'hero_sayings.*'=>'array:start,videos,beitraege,buecher,podcast,live,community,ueber-uns,unsere-mission','hero_sayings.*.*'=>'nullable|string|max:500'],
             'imports' => ['import_duration_rule'=>'required|array:enabled,min_seconds,max_seconds,target_profile', 'import_duration_rule.enabled'=>'required|boolean',
                 'import_duration_rule.min_seconds'=>'required|numeric|min:0.001|max:86400', 'import_duration_rule.max_seconds'=>'required|numeric|gte:import_duration_rule.min_seconds|max:86400',
                 'import_duration_rule.target_profile'=>['required',Rule::in(['posts','videos','shorts'])]],
             'legacy' => ['site_name' => 'required|string|max:120', 'site_description' => 'nullable|string|max:500', 'contact_email' => 'nullable|email|max:255', 'desktop_icon_set' => ['required', Rule::in(array_keys(config('desktop.icon_sets')))], 'desktop_wallpaper' => ['required', Rule::in($wallpapers)], 'desktop_accent' => ['required', Rule::in(array_keys(config('desktop.accents')))], 'desktop_custom_wallpaper' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072', 'dimensions:min_width=320,min_height=180,max_width=2560,max_height=1440']],
-            'desktop_design' => ['desktop_icon_set' => ['required', Rule::in(array_keys(config('desktop.icon_sets')))], 'desktop_wallpaper' => ['required', Rule::in($wallpapers)], 'desktop_accent' => ['required', Rule::in(array_keys(config('desktop.accents')))], 'desktop_density' => ['required', Rule::in(['comfortable','compact'])], 'desktop_shortcut_layout' => ['required', Rule::in(['free','grid'])], 'desktop_effects' => 'nullable|boolean', 'desktop_custom_wallpaper' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072', 'dimensions:min_width=320,min_height=180,max_width=2560,max_height=1440']],
+            'desktop_design' => ['desktop_icon_set' => ['required', Rule::in(array_keys(config('desktop.icon_sets')))], 'desktop_wallpaper' => ['required', Rule::in($wallpapers)], 'desktop_accent' => ['required', Rule::in(array_keys(config('desktop.accents')))], 'desktop_density' => ['required', Rule::in(['comfortable','compact'])], 'desktop_shortcut_layout' => ['required', Rule::in(['free','grid'])], 'desktop_effects' => 'nullable|boolean', 'desktop_custom_wallpaper' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072', 'dimensions:min_width=320,min_height=180,max_width=2560,max_height=1440'], 'desktop_custom_wallpaper_media_id'=>'nullable|uuid|exists:media,id'],
             'ai' => ['ai_provider' => ['required', Rule::in(['none','openai','anthropic','azure'])], 'ai_model' => 'nullable|string|max:120', 'ai_api_key' => 'nullable|string|max:2000', 'ai_enabled' => 'nullable|boolean', 'ai_auto_classify' => 'nullable|boolean','ai_chat_enabled'=>'nullable|boolean',
                 'cover_style_prompt'=>'sometimes|required|string|max:4000','ai_image_model'=>'sometimes|required|string|max:120'],
             'social' => app(\App\Services\Publishing\SocialConnections::class)->rules($request),
@@ -75,7 +76,13 @@ class SettingsController extends Controller
             return back()->with('status', __('ui.saved'))->with('saved_section', $section);
         }
         if($section==='media_appearance') {
-            unset($values['public_author_photo']);
+            $mediaId=$values['public_author_photo_media_id']??null;
+            unset($values['public_author_photo'],$values['public_author_photo_media_id']);
+            if($mediaId) {
+                $media=Media::visibleLibrary()->findOrFail($mediaId);
+                abort_unless($media->kind==='image' && $media->publicUrl(),422);
+                $values['public_author_image']=$media->publicUrl();
+            }
             if($request->hasFile('public_author_photo')) {
                 $stored=app(\App\Services\CanonicalMediaStorage::class)->storeUploaded($request->file('public_author_photo'));
                 $values['public_author_image']=Storage::disk($stored['disk'])->url($stored['path']);
@@ -83,7 +90,7 @@ class SettingsController extends Controller
         }
         if($section==='system')$values=[...$values,...$request->validate(['about_text'=>'nullable|string|max:50000','mission_text'=>'nullable|string|max:50000','community_guidelines'=>'nullable|string|max:10000'])];
         if ($request->boolean('reset_wallpaper')) $values['desktop_wallpaper'] = 'mountains';
-        if (in_array($section, ['desktop_design', 'legacy'], true) && $values['desktop_wallpaper'] === 'custom' && !$request->hasFile('desktop_custom_wallpaper') && !$settings->get('desktop_custom_wallpaper')) {
+        if (in_array($section, ['desktop_design', 'legacy'], true) && $values['desktop_wallpaper'] === 'custom' && !$request->hasFile('desktop_custom_wallpaper') && empty($values['desktop_custom_wallpaper_media_id']) && !$settings->get('desktop_custom_wallpaper')) {
             return back()->withErrors(['desktop_custom_wallpaper' => __('ui.desktop_custom_wallpaper_required')])->withInput();
         }
         if ($section === 'integrations') {
@@ -124,7 +131,9 @@ class SettingsController extends Controller
         $secrets = array_intersect_key($values, array_flip($secretKeys));
         $values = array_diff_key($values, array_flip($secretKeys));
         foreach (['desktop_effects','ai_enabled','ai_auto_classify','ai_chat_enabled','publishing_approval_required','publishing_automation_enabled'] as $boolean) if (array_key_exists($boolean, $rules)) $values[$boolean] = $request->boolean($boolean);
-        unset($values['desktop_custom_wallpaper']);
+        $wallpaperMediaId=$values['desktop_custom_wallpaper_media_id']??null;
+        unset($values['desktop_custom_wallpaper'],$values['desktop_custom_wallpaper_media_id']);
+        if ($wallpaperMediaId) $values['desktop_custom_wallpaper']=$this->copyMediaToLocal($wallpaperMediaId,'desktop/wallpapers');
         if ($request->hasFile('desktop_custom_wallpaper')) {
             $values['desktop_custom_wallpaper'] = $request->file('desktop_custom_wallpaper')->store('desktop/wallpapers', 'local');
         }
@@ -132,6 +141,19 @@ class SettingsController extends Controller
         $settings->updateSecrets($secrets);
         if ($request->expectsJson()) return response()->json(['status' => 'saved', 'section' => $section]);
         return back()->with('status', __('ui.saved'))->with('saved_section', $section);
+    }
+    private function copyMediaToLocal(string $mediaId,string $directory): string
+    {
+        $media=Media::visibleLibrary()->findOrFail($mediaId);
+        abort_unless($media->kind==='image',422);
+        $location=app(\App\Services\MediaOriginalLocator::class)->find($media);
+        abort_unless($location,422);
+        $extension=match($media->mime){'image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp','image/gif'=>'gif',default=>abort(422)};
+        $path=$directory.'/'.\Illuminate\Support\Str::uuid().'.'.$extension;
+        $stream=Storage::disk($location['disk'])->readStream($location['path']);
+        abort_unless(is_resource($stream),422);
+        try { Storage::disk('local')->writeStream($path,$stream); } finally { fclose($stream); }
+        return $path;
     }
     public function testStripe(StripePayments $payments)
     {

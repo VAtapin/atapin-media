@@ -15,7 +15,7 @@
     if (!root || root.dataset.initialized === 'true') return;
     root.dataset.initialized = 'true';
     let browserStudio=null;
-    const studioModule=import('/assets/desktop-browser-studio.js?v=12').then(module=>{browserStudio=module;return module;});
+    const studioModule=import('/assets/desktop-browser-studio.js?v=13').then(module=>{browserStudio=module;return module;});
     const form = root.querySelector('[data-live-form]');
     const empty = root.querySelector('[data-live-editor-empty]');
     const events = root.querySelector('[data-live-events]');
@@ -44,7 +44,7 @@
     const saveButton = form.querySelector('button[type="submit"]');
     let current = null;
     let selectionGeneration = 0;
-    let selectedPosterFile = null;
+    let selectedPosterFile = null, selectedPosterMediaId = null, posterUploadGeneration = 0;
     const view = {mode:'day', date:today(), page:1};
     dateFilter.value = view.date;
 
@@ -127,6 +127,7 @@
       setPosterProgress(null);
       posterFile.value = '';
       selectedPosterFile = null;
+      selectedPosterMediaId = data.cover_media_id || null;
     };
     const fillForm = data => {
       current = data;
@@ -196,7 +197,7 @@
       try { await navigator.clipboard.writeText(url); event.currentTarget.textContent = labels().copied; setTimeout(() => { event.currentTarget.textContent = labels().copy; }, 1800); }
       catch { setFeedback(labels().copy, true); }
     });
-    const selectPosterFile = file => {
+    const selectPosterFile = async file => {
       if (!file) return;
       if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
         posterFile.value = '';
@@ -213,11 +214,14 @@
         return;
       }
       selectedPosterFile = file;
+      selectedPosterMediaId = null;
       posterImage.src = URL.createObjectURL(file);
       posterPreview.hidden = false;
       posterEmpty.hidden = true;
-      setPosterStatus(labels().poster_selected, 'selected');
-      setPosterProgress(null);
+      const own=++posterUploadGeneration;setPosterStatus(labels().poster_uploading, 'loading');setPosterProgress(0);saveButton.disabled=true;
+      try{selectedPosterMediaId=await window.uploadDesktopMedia(file,root.dataset.userId,(offset,total)=>{const percent=total?Math.floor(offset/total*100):0;setPosterStatus(`${labels().poster_uploading} ${percent} %`,'loading');setPosterProgress(percent);},null,{profile:'poster'});if(own!==posterUploadGeneration)return;setPosterStatus(labels().poster_saved,'success');setPosterProgress(100);}
+      catch(error){if(own===posterUploadGeneration){selectedPosterMediaId=null;setPosterStatus(error.message||labels().poster_upload_error,'error');setPosterProgress(null);}}
+      finally{if(own===posterUploadGeneration)saveButton.disabled=false;}
     };
     posterFile.addEventListener('change', () => selectPosterFile(posterFile.files?.[0]));
     posterDrop?.addEventListener('click', event => { if (event.target !== posterFile) posterFile.click(); });
@@ -247,39 +251,17 @@
       const id = payload.id;
       delete payload.id;
       const method = id ? 'PATCH' : 'POST';
-      const file = selectedPosterFile || posterFile.files?.[0];
-      let posterUploadStarted = false;
       saveButton.disabled = true;
       try {
-        delete payload.cover_media_id;
+        if(selectedPosterMediaId)payload.cover_media_id=selectedPosterMediaId;else delete payload.cover_media_id;
         delete payload.poster_file;
-        if (file) setPosterStatus(labels().poster_preparing, 'loading');
         let data = await requestData(id ? `${root.dataset.apiBase}/${id}` : root.dataset.apiBase, {method, body:JSON.stringify(payload)});
-        if (file) {
-          if (typeof window.uploadDesktopMedia !== 'function') throw new Error(labels().poster_upload_error);
-          posterUploadStarted = true;
-          setPosterStatus(labels().poster_uploading, 'loading');
-          setPosterProgress(0);
-          const mediaId = await window.uploadDesktopMedia(file, root.dataset.userId, (offset, total) => {
-            const percent = total ? Math.floor(offset / total * 100) : 0;
-            setPosterStatus(`${labels().poster_uploading} ${percent} %`, 'loading');
-            setPosterProgress(percent);
-          }, null, {profile:'poster'});
-          setPosterStatus(labels().poster_linking, 'loading');
-          setPosterProgress(100);
-          data = await requestData(`${root.dataset.apiBase}/${data.id}`, {method:'PATCH', body:JSON.stringify({
-            title:data.title, body:data.body, starts_at:data.starts_at, published:data.published, enabled:data.enabled, cover_media_id:mediaId,
-          })});
-        }
         const index = await loadIndex(false);
         fillForm(data);
         if (index) applyIndex(index);
-        if (file) setPosterStatus(labels().poster_saved, 'success');
         setFeedback(labels().saved);
       } catch (error) {
-        if (posterUploadStarted || file) setPosterStatus(labels().poster_upload_error, 'error');
-        setPosterProgress(null);
-        setFeedback(posterUploadStarted || file ? labels().poster_upload_error : (error.message || labels().save_error), true);
+        setFeedback(error.message || labels().save_error, true);
       } finally {
         saveButton.disabled = false;
       }

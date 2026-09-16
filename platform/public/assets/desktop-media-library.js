@@ -321,6 +321,7 @@
         if (uploading) return;
         uploadInput.click();
       });
+      uploadButton.addEventListener('keydown', event => {if(event.key==='Enter'||event.key===' '){event.preventDefault();uploadButton.click();}});
       uploadInput.addEventListener('change', () => {
         if (uploading) return;
         uploadSelectedFiles(Array.from(uploadInput.files || []));

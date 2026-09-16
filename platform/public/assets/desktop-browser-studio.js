@@ -1,5 +1,5 @@
 import {createInset,mountInsetEditor} from '/assets/desktop-browser-pip.js?v=1';
-import {mountBrowserEvents} from '/assets/desktop-browser-events.js?v=1';
+import {mountBrowserEvents} from '/assets/desktop-browser-events.js?v=2';
 const W=window.DesktopWorkspaces;
 const endpoint='/desktop/live-studio';
 const studios=new WeakMap();

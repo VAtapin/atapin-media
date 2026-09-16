@@ -23,6 +23,7 @@ export function mountBrowserEvents({root,panel,t,request,onSelect}){
     if(!['image/jpeg','image/png','image/webp','image/gif'].includes(file.type)||file.size>50*1024*1024){poster.value='';hint.textContent=t('quick_poster_invalid');return;}
     hint.textContent='';previewUrl=URL.createObjectURL(file);preview.src=previewUrl;preview.hidden=false;
   };
+  window.enhanceDesktopFileInput(poster,{profile:'poster',userId:root.dataset.userId,onUploaded:id=>{uploadedCover=id;hint.textContent=t('quick_saved');},onError:error=>{hint.textContent=error.message;}});
   const select=async()=>{
     const own=++generation;quick.hidden=choice.value!=='new';hint.textContent='';
     if(choice.value==='new'){current=null;onSelect(null);return;}
@@ -53,18 +54,13 @@ export function mountBrowserEvents({root,panel,t,request,onSelect}){
   };
   const ensureEvent=async()=>{
     validate();
+    if(poster._desktopUploader?.uploading)throw new Error(t('quick_poster_uploading'));
     if(choice.value!=='new'){
       if(!current||String(current.id)!==choice.value)throw new Error(t('choose_required'));
       return current;
     }
     const name=title.value.trim();if(!name){title.focus();throw new Error(t('quick_title_required'));}
-    const file=poster.files?.[0];let cover=uploadedCover||draft?.cover_media_id||null;
-    if(file){
-      if(typeof window.uploadDesktopMedia!=='function')throw new Error(t('quick_poster_upload_failed'));
-      hint.textContent=t('quick_poster_uploading');
-      cover=await window.uploadDesktopMedia(file,root.dataset.userId,()=>{},null,{profile:'poster'});
-      uploadedCover=cover;poster.value='';
-    }
+    const cover=uploadedCover||draft?.cover_media_id||null;
     const payload={title:name,body:body.value.trim(),starts_at:null,published:false,enabled:false};
     if(cover)payload.cover_media_id=cover;
     const result=await request(draft?api+'/'+encodeURIComponent(draft.id):api,{method:draft?'PATCH':'POST',body:JSON.stringify(payload)});

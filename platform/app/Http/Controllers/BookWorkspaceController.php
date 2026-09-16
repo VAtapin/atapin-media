@@ -43,9 +43,11 @@ class BookWorkspaceController extends Controller
     public function intake(Request $request, BookCatalog $catalog)
     {
         Gate::authorize('media.upload');
-        $request->validate(['file'=>'required|file|mimes:pdf|max:51200']);
-        $media = app(MediaLibrary::class)->upload($request->file('file'), $request->user()->id);
-        $title = Str::limit(trim(pathinfo($request->file('file')->getClientOriginalName(), PATHINFO_FILENAME)) ?: __('workspaces.new_book'), 255, '');
+        $data=$request->validate(['media_id'=>'required_without:file|nullable|uuid|exists:media,id','file'=>'required_without:media_id|nullable|file|mimes:pdf|max:51200','original_name'=>'nullable|string|max:255']);
+        $media=$request->hasFile('file')?app(MediaLibrary::class)->upload($request->file('file'),$request->user()->id):Media::visibleLibrary()->findOrFail($data['media_id']);
+        abort_unless(in_array($media->mime,['application/pdf','application/x-pdf'],true),422);
+        $originalName=$request->hasFile('file')?$request->file('file')->getClientOriginalName():($data['original_name']??$media->title);
+        $title = Str::limit(trim(pathinfo($originalName, PATHINFO_FILENAME)) ?: __('workspaces.new_book'), 255, '');
         $product = $catalog->save(['title'=>$title,'currency'=>'EUR','price_cents'=>0,'status'=>'draft',
             'metadata'=>['book_pdf_ai'=>['status'=>'queued','seed_title'=>$title]]]);
         $catalog->attach($product, $media, 'full');
