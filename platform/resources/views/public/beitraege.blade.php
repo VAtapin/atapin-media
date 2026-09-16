@@ -1,6 +1,6 @@
 @extends('public.layout',['title'=>__('public.section_beitraege')])
-@push('publicStyles')<link rel="stylesheet" href="/assets/public-book-shelf.css?v=6">@endpush
-@push('publicScripts')<script src="/assets/public-book-shelf.js?v=5" defer></script>@endpush
+@push('publicStyles')<link rel="stylesheet" href="/assets/public-book-shelf.css?v=7">@endpush
+@push('publicScripts')<script src="/assets/public-book-shelf.js?v=6" defer></script>@endpush
 
 @section('content')
 

@@ -6,6 +6,12 @@
             <div class="public-book-shelf-categories" data-shelf-categories>
                 @foreach($groups as $group)
                 <div class="public-book-shelf-category" data-shelf-category="{{ $loop->index }}">
+                    @if(($group['url'] ?? null) && count($group['books'] ?? []) > 0)
+                    <a class="public-book-shelf-mobile-category public-book-shelf-mobile-category-{{ ($loop->index % 5) + 1 }}" href="{{ $group['url'] }}" aria-label="{{ $group['name'] }}" title="{{ $group['name'] }}" @if($group['selected'] ?? false) aria-current="page" @endif>
+                        <span class="public-book-shelf-mobile-category-title">{{ $group['name'] }}</span>
+                        <span class="public-book-shelf-book-mark" aria-hidden="true">◇</span>
+                    </a>
+                    @endif
                     <div class="public-book-shelf-category-books">
                         @foreach($group['books'] as $book)
                         <a class="public-book-shelf-book public-book-shelf-book-{{ ($loop->index % 5) + 1 }}" href="{{ $book['url'] }}" aria-label="{{ $book['name'] }}" title="{{ $book['name'] }}" @if($book['selected'] ?? false) aria-current="page" @endif>

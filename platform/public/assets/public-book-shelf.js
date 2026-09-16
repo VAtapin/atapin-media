@@ -46,7 +46,8 @@
     }
 
     const free = Math.max(0, stage.clientWidth - used - (overflow ? widthOf(all) + gap : 0));
-    const empty = groups.every(group => group.querySelectorAll('.public-book-shelf-book').length === 0);
+    const categoryBooks = shelf.dataset.shelfContext === 'home' && matchMedia('(max-width: 800px)').matches;
+    const empty = groups.every(group => group.querySelectorAll(categoryBooks ? '.public-book-shelf-mobile-category' : '.public-book-shelf-book').length === 0);
     return {free, overflow, empty};
   }
 
@@ -55,9 +56,10 @@
     const context = shelf.dataset.shelfContext;
     const index = Number(shelf.dataset.shelfIndex || 0);
     const roomForObject = !state.overflow && state.free >= Math.max(110, shelf.clientWidth * .2);
+    const roomForHomeComposition = !state.overflow && state.free >= shelf.clientWidth * .5;
     let variant = 'blank';
     if (state.empty) variant = context === 'home' ? 'empty-home' : 'empty-cabinet';
-    else if (roomForObject && context === 'home') variant = 'globe';
+    else if (roomForHomeComposition && context === 'home') variant = 'globe-plant';
     else if (roomForObject && (context === 'overview' || context === 'cabinet-detail' || index === 0)) variant = 'plant';
     else if (roomForObject && context === 'cabinet' && index === 2) variant = 'globe';
     shelf.dataset.shelfVariant = variant;

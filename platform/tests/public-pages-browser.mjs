@@ -61,11 +61,13 @@ try {
           const geometry=await bar.evaluate(node=>({shelf:node.getBoundingClientRect().height,background:node.querySelector('.public-book-shelf-background').getBoundingClientRect().height}));
           assert(geometry.background>geometry.shelf*1.4,'Hanging plants do not extend beyond the shelf');
           await bar.screenshot({path:`tests/artifacts/public-shelf-empty-home-${width}.png`});
-          await visible.first().locator('.public-book-shelf-category-books').evaluate(node=>{const book=document.createElement('a');book.className='public-book-shelf-book';book.href='/beitraege?taxonomy=probe';book.textContent='Probe';node.append(book);});
+          await visible.first().evaluate(node=>{const book=document.createElement('a');book.className='public-book-shelf-book';book.href='/beitraege?taxonomy=probe';book.textContent='Probe';node.querySelector('.public-book-shelf-category-books').append(book);const category=document.createElement('a');category.className='public-book-shelf-mobile-category';category.href='/themen?category=probe';category.textContent='Probe';node.prepend(category);});
           await page.setViewportSize({width:width>1550?1500:width-1,height:width===1672?941:844});
-          await page.waitForFunction(()=>document.querySelector('[data-public-book-shelf]')?.dataset.shelfVariant==='globe');
-          assert.match(await bar.locator('.public-book-shelf-background').evaluate(node=>getComputedStyle(node).backgroundImage),/shelf-globe\.png/,'A sparsely occupied Start shelf uses the globe background');
-          await bar.screenshot({path:`tests/artifacts/public-shelf-home-globe-${width}.png`});
+          await page.waitForFunction(()=>document.querySelector('[data-public-book-shelf]')?.dataset.shelfVariant==='globe-plant');
+          const sparseBackground=await bar.locator('.public-book-shelf-background').evaluate(node=>getComputedStyle(node).backgroundImage);
+          if(width>800)assert.match(sparseBackground,/shelf-globe-plant\.png/,'A less-than-half occupied desktop Start shelf uses the globe and plant background');
+          else assert.match(sparseBackground,/shelf\.png/,'Mobile category books use the uncluttered shelf background');
+          await bar.screenshot({path:`tests/artifacts/public-shelf-home-globe-plant-${width}.png`});
           await page.setViewportSize({width,height:width===1672?941:844});
         } else {
           if(await hidden.count()>0)assert.equal(await bar.getAttribute('data-shelf-variant'),'blank','Full shelf must not place a plant over books');
@@ -76,16 +78,25 @@ try {
           for(const link of await visible.locator('.public-book-shelf-book').evaluateAll(nodes=>nodes.map(node=>new URL(node.href).pathname+new URL(node.href).search))){
             assert.match(link,/^\/(videos|beitraege|buecher)\?taxonomy=/,'Topic books must use existing section-specific routes');
           }
-          const book=visible.locator('.public-book-shelf-book').first();
-          const labelPlacement=await visible.evaluateAll(groups=>groups.filter(group=>group.querySelector('.public-book-shelf-book')).map(group=>{
-            const books=[...group.querySelectorAll('.public-book-shelf-book')].map(book=>book.getBoundingClientRect().bottom);
-            const label=group.querySelector('.public-book-shelf-category-name').getBoundingClientRect();
-            return {bookBottom:Math.max(...books),labelTop:label.top};
-          }));
-          assert(labelPlacement.every(item=>item.labelTop>=item.bookBottom+2),`Category labels overlap book spines: ${JSON.stringify(labelPlacement)}`);
+          const mobile=width<=800;
+          const book=mobile?visible.locator('.public-book-shelf-mobile-category').first():visible.locator('.public-book-shelf-book').first();
+          if(mobile){
+            assert.equal(await visible.locator('.public-book-shelf-book:visible').count(),0,'Mobile Start does not show individual topic books');
+            assert(await visible.locator('.public-book-shelf-mobile-category:visible').count()>0,'Mobile Start shows categories as books');
+            for(const link of await visible.locator('.public-book-shelf-mobile-category:visible').evaluateAll(nodes=>nodes.map(node=>new URL(node.href).pathname+new URL(node.href).search))){
+              assert.match(link,/^\/themen\?category=/,'Mobile category books open the category directory');
+            }
+          } else {
+            const labelPlacement=await visible.evaluateAll(groups=>groups.filter(group=>group.querySelector('.public-book-shelf-book')).map(group=>{
+              const books=[...group.querySelectorAll('.public-book-shelf-book')].map(book=>book.getBoundingClientRect().bottom);
+              const label=group.querySelector('.public-book-shelf-category-name').getBoundingClientRect();
+              return {bookBottom:Math.max(...books),labelTop:label.top};
+            }));
+            assert(labelPlacement.every(item=>item.labelTop>=item.bookBottom+2),`Category labels overlap book spines: ${JSON.stringify(labelPlacement)}`);
+          }
           const floor=await bar.evaluate(element=>{
             const shelf=element.getBoundingClientRect();
-            const book=element.querySelector('.public-book-shelf-book').getBoundingClientRect();
+            const book=element.querySelector(innerWidth<=800?'.public-book-shelf-mobile-category':'.public-book-shelf-book').getBoundingClientRect();
             return {shelfFloor:shelf.top+shelf.height*.84,bookBottom:book.bottom};
           });
           assert(Math.abs(floor.shelfFloor-floor.bookBottom)<=16,`Book slides away from the shelf floor at ${width}: ${JSON.stringify(floor)}`);
@@ -99,7 +110,7 @@ try {
           const expected=new URL(await book.getAttribute('href'),'http://127.0.0.1:8795');
           await book.click();
           await page.waitForURL(expected.href);
-          assert.equal(new URL(page.url()).searchParams.has('taxonomy'),true,'Clicking a book opens its topic');
+          assert.equal(new URL(page.url()).searchParams.has(mobile?'category':'taxonomy'),true,`Clicking a book opens its ${mobile?'category':'topic'}`);
           await page.goto('http://127.0.0.1:8795/');
         }
       }
