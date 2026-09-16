@@ -35,8 +35,10 @@ class BrowserLiveTest extends TestCase
         $session=$this->browserSession($this->event());
         $process=(new \ReflectionMethod(BrowserLiveRelay::class,'process'))->invoke(new BrowserLiveRelay(),$session);
         $this->assertFalse($process->isOutputDisabled(),'Plesk open_basedir may exclude /dev/null');
-        $this->assertStringContainsString('rtsp',$process->getCommandLine());
-        $this->assertStringContainsString('127.0.0.1:8554/live-'.$session->source_record_id,$process->getCommandLine());
+        $this->assertStringContainsString('127.0.0.1:8554/browser-'.$session->id,$process->getCommandLine());
+        $this->assertStringContainsString('-f flv',$process->getCommandLine());
+        $this->assertStringContainsString('rtmp://127.0.0.1:1935/live-'.$session->source_record_id.'?user=browser&pass=',$process->getCommandLine());
+        $this->assertStringNotContainsString('127.0.0.1:8554/live-'.$session->source_record_id,$process->getCommandLine());
         $this->assertStringContainsString('0:a:0?',$process->getCommandLine());
         $this->assertStringNotContainsString('libx264',$process->getCommandLine());
         $errorCode=new \ReflectionMethod(BrowserLiveRelay::class,'errorCode');

@@ -85,11 +85,13 @@ class BrowserLiveRelay
     {
         // The browser is constrained to H264; keep that video bitstream and normalize available Opus audio to AAC.
         $input='rtsp://control:'.rawurlencode(app(LiveServer::class)->credentials()).'@127.0.0.1:8554/browser-'.$session->id;
-        $output='rtsp://browser:'.rawurlencode(app(BrowserBroadcast::class)->token($session)).'@127.0.0.1:8554/live-'.$session->source_record_id;
+        // Publish the normalized stream through MediaMTX's proven RTMP ingest path (the same path family as OBS).
+        // Query authentication is MediaMTX's RTMP credential transport; RTSP remains only on the browser-source side.
+        $output='rtmp://127.0.0.1:1935/live-'.$session->source_record_id.'?user=browser&pass='.rawurlencode(app(BrowserBroadcast::class)->token($session));
         $process=new Process([(string)config('platform.media_ffmpeg_binary','ffmpeg'),'-nostdin','-hide_banner','-loglevel','error',
             '-rtsp_transport','tcp','-rw_timeout','15000000','-i',$input,'-map','0:v:0','-map','0:a:0?',
             '-c:v','copy',
-            '-c:a','aac','-b:a','128k','-ar','48000','-f','rtsp','-rtsp_transport','tcp',$output]);
+            '-c:a','aac','-b:a','128k','-ar','48000','-f','flv','-flvflags','no_duration_filesize',$output]);
         $process->setTimeout(null);return $process;
     }
 }
