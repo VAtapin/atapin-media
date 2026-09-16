@@ -35,6 +35,13 @@ class BrowserLiveTest extends TestCase
         $session=$this->browserSession($this->event());
         $process=(new \ReflectionMethod(BrowserLiveRelay::class,'process'))->invoke(new BrowserLiveRelay(),$session);
         $this->assertFalse($process->isOutputDisabled(),'Plesk open_basedir may exclude /dev/null');
+        $this->assertStringContainsString('rtsp',$process->getCommandLine());
+        $this->assertStringContainsString('127.0.0.1:8554/live-'.$session->source_record_id,$process->getCommandLine());
+        $this->assertStringContainsString('0:a:0?',$process->getCommandLine());
+        $this->assertStringNotContainsString('libx264',$process->getCommandLine());
+        $errorCode=new \ReflectionMethod(BrowserLiveRelay::class,'errorCode');
+        $this->assertSame('encoder_unavailable',$errorCode->invoke(new BrowserLiveRelay(),"Unknown encoder 'aac'"));
+        $this->assertSame('media_track_missing',$errorCode->invoke(new BrowserLiveRelay(),"Stream map '0:a:0' matches no streams"));
         $file=tempnam(sys_get_temp_dir(),'live-relay-');config(['logging.channels.live_browser_transport.path'=>$file]);
         $relay=new class extends BrowserLiveRelay {
             protected function process(LiveBrowserSession $session): \Symfony\Component\Process\Process
@@ -54,6 +61,31 @@ class BrowserLiveTest extends TestCase
             $this->postJson('/desktop/live-studio/sessions/'.$session->id.'/heartbeat')->assertStatus(503)
                 ->assertJsonPath('message',__('live-browser.browser_relay_failed'));
         } finally { @unlink($file); }
+    }
+    public function test_relay_failure_restores_the_event_state_that_existed_before_browser_start(): void
+    {
+        $record=$this->event(['public_published'=>false,'live_stream_enabled'=>false,'live_browser_enabled'=>false,'live_status'=>'draft']);
+        $secret=(string)\Illuminate\Support\Str::uuid();
+        $this->whipHandler=fn($request)=>Http::response('v=0',201,['Location'=>parse_url($request->url(),PHP_URL_PATH).'/'.$secret]);
+        $started=$this->postJson('/desktop/live-studio/events/'.$record->id.'/browser',[
+            'sdp'=>"v=0\nm=video\nm=audio",'confirm'=>true,
+        ])->assertCreated()->json();
+        $session=LiveBrowserSession::findOrFail($started['id']);
+        $relay=new class extends BrowserLiveRelay {
+            protected function process(LiveBrowserSession $session): \Symfony\Component\Process\Process
+            {
+                return new \Symfony\Component\Process\Process([PHP_BINARY,'-r','exit(1);']);
+            }
+        };
+        $relay->run('browser-'.$session->id);
+        $metadata=$record->fresh()->metadata;
+        $this->assertSame('failed',$session->fresh()->status);
+        $this->assertFalse($metadata['public_published']);
+        $this->assertFalse($metadata['live_browser_enabled']);
+        $this->assertFalse($metadata['live_stream_enabled']);
+        $this->assertSame('draft',$metadata['live_status']);
+        $this->assertArrayNotHasKey('live_browser_start_session_id',$metadata);
+        $this->assertArrayNotHasKey('live_browser_start_previous',$metadata);
     }
     public function test_config_is_loopback_authenticated_and_preserves_obs_recording(): void
     {
@@ -84,6 +116,7 @@ class BrowserLiveTest extends TestCase
         $record=$this->event();$session=$this->browserSession($record);$token=app(BrowserBroadcast::class)->token($session);
         $auth=['path'=>'browser-'.$session->id,'action'=>'publish','protocol'=>'webrtc','user'=>'browser','password'=>$token];
         $this->postJson('/live/server-auth',$auth)->assertNoContent();
+        $this->postJson('/live/server-auth',[...$auth,'path'=>'live-'.$record->id,'protocol'=>'rtsp'])->assertNoContent();
         $this->postJson('/live/server-auth',[...$auth,'path'=>'live-'.$record->id,'protocol'=>'rtmp'])->assertNoContent();
         $this->postJson('/live/server-auth',[...$auth,'path'=>'live-'.$this->event()->id,'protocol'=>'rtmp'])->assertUnauthorized();
         $this->postJson('/live/server-auth',[...$auth,'password'=>'wrong'])->assertUnauthorized();
@@ -131,14 +164,21 @@ class BrowserLiveTest extends TestCase
         $start=$this->postJson('/desktop/live-studio/events/'.$record->id.'/browser',[
             'sdp'=>"v=0\nm=video\nm=audio",'confirm'=>true,
         ])->assertCreated();
+        $start->assertJsonPath('status','starting');
         $this->assertNotEmpty($start->json('starts_at'));
         $metadata=$record->fresh()->metadata;
         $this->assertTrue($metadata['public_published']);$this->assertTrue($metadata['live_browser_enabled']);
         $this->assertTrue($metadata['live_stream_enabled']);$this->assertFalse($metadata['live_obs_enabled']);
+        $this->assertSame('starting',$metadata['live_status']);
         $this->assertTrue(app(BrowserBroadcast::class)->eligible($record->fresh()));
         $this->assertSame($record->id,app(PublicBroadcast::class)->record('live-'.$record->id)?->id);
         $this->assertNull(app(PublicBroadcast::class)->record('live'));
         $this->assertNotEmpty($metadata['starts_at']);
+        app(PublicBroadcast::class)->signal('live-'.$record->id,true);
+        $metadata=$record->fresh()->metadata;
+        $this->assertSame('live',$metadata['live_status']);
+        $this->assertArrayNotHasKey('live_browser_start_session_id',$metadata);
+        $this->assertArrayNotHasKey('live_browser_start_previous',$metadata);
         $this->getJson('/api/desktop/live')->assertOk()->assertJsonPath('data.0.id',$record->id);
         $this->patchJson('/api/desktop/live/'.$record->id,[
             'title'=>$record->title,'published'=>true,'enabled'=>false,
@@ -165,7 +205,9 @@ class BrowserLiveTest extends TestCase
         $this->assertFalse($metadata['live_browser_enabled']);
         $this->assertFalse($metadata['live_stream_enabled']);
         $this->assertNull($metadata['starts_at']??null);
+        $this->assertArrayNotHasKey('live_status',$metadata);
         $this->assertArrayNotHasKey('live_browser_start_session_id',$metadata);
+        $this->assertArrayNotHasKey('live_browser_start_previous',$metadata);
     }
     public function test_browser_start_keeps_a_bounded_ten_attempt_per_minute_limit(): void
     {

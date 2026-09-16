@@ -176,7 +176,7 @@ export async function initialize(root,event,configured=false){
         await new Promise((resolve,reject)=>{if(pc.iceGatheringState==='complete'){resolve();return;}const timeout=setTimeout(()=>reject(new Error(t('browser_connection_failed'))),12000);pc.onicegatheringstatechange=()=>{if(pc?.iceGatheringState==='complete'){clearTimeout(timeout);resolve();}};});
         const data=await request(endpoint+'/events/'+event.id+'/browser',{method:'POST',body:JSON.stringify({confirm:true,sdp:pc.localDescription.sdp})});
         if(disposed||operation!==generation){await request(endpoint+'/sessions/'+data.id,{method:'DELETE'});throw new Error(t('ended'));}session=data.id;
-        event.published=true;event.browser_enabled=true;event.starts_at=data.starts_at||event.starts_at;eventPicker.complete(event);eventPicker.lock(true);
+        event.published=true;event.browser_enabled=true;event.starts_at=data.starts_at||event.starts_at;event.status=data.status||'starting';eventPicker.complete(event);eventPicker.lock(true);
         root.dispatchEvent(new CustomEvent('desktop-live-event-started',{detail:{...event}}));
         await pc.setRemoteDescription({type:'answer',sdp:data.sdp});
         const beat=async()=>{try{const data=await request(endpoint+'/sessions/'+session+'/heartbeat',{method:'POST'});status.textContent=t(data.status==='live'?'live':'connecting');}catch(error){await stop().catch(()=>{});status.textContent=error.message;}};

@@ -56,7 +56,7 @@ return [
     'current_poll'=>'AKTUELLE UMFRAGE','vote'=>'Jetzt abstimmen','votes'=>'Stimmen','poll_closed'=>'Diese Umfrage ist geschlossen.','poll_login'=>'Zum Abstimmen anmelden','poll_subscriber_required'=>'Diese Umfrage ist für bestätigte Newsletter-Abonnenten freigegeben.',
     'author'=>'Autor','pdf'=>'PDF','ebook'=>'E-Book','purchase_hint'=>'Verfügbare Formate und Preise stammen aus dem Katalog. Kein automatischer Zahlungsabschluss.',
     'purchase_request'=>'Kauf anfragen','read_sample'=>'Leseprobe öffnen','mark_read'=>'Als gelesen markieren',
-    'live_chat'=>'Live-Chat','online'=>'Online','live_status'=>'Live-Status','live_draft'=>'Entwurf','live_live'=>'Live','live_scheduled'=>'Geplant','live_ended'=>'Beendet',
+    'live_chat'=>'Live-Chat','online'=>'Online','live_status'=>'Live-Status','live_draft'=>'Entwurf','live_starting'=>'Verbindung läuft','live_live'=>'Live','live_scheduled'=>'Geplant','live_ended'=>'Beendet',
     'reminder'=>'Vormerken','like'=>'Gefällt mir','schedule'=>'Sendeplan','recordings'=>'Aufzeichnungen','community_feedback'=>'Das sagt unsere Community',
     'latest_episodes'=>'Neueste Podcast-Episoden','topic_categories'=>'Themen-Kategorien','continue_listening'=>'Weiterhören','continue'=>'Fortsetzen','recommendation'=>'Unsere Empfehlung',
     'listen_everywhere'=>'Überall, wo du Podcasts hörst','local_audio_hint'=>'Verfügbare Episoden werden direkt von unserem Server abgespielt.',

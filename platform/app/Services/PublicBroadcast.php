@@ -67,7 +67,7 @@ class PublicBroadcast
             if ($ready && ($record->metadata['live_status'] ?? null) === 'ended') return;
             $metadata=[...$record->metadata,'live_status'=>$ready?'live':'ended','live_signal_at'=>now()->toIso8601String()];
             unset($metadata['live_ingest_reserved_until']);
-            if ($ready) unset($metadata['live_recording_pending']);
+            if ($ready) unset($metadata['live_recording_pending'],$metadata['live_browser_start_session_id'],$metadata['live_browser_start_previous']);
             else {
                 unset($metadata['live_ingest_active']);
                 $metadata['live_recording_pending']=true;

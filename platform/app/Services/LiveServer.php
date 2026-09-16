@@ -50,7 +50,7 @@ class LiveServer
             abort_unless(is_executable($binary),503,__('live-browser.server_setup_required'));
             if($values['live_browser_enabled']){
                 $encoder=new Process([(string)config('platform.media_ffmpeg_binary','ffmpeg'),'-hide_banner','-encoders']);$encoder->setTimeout(5);
-                try{$encoder->mustRun();abort_unless(str_contains($encoder->getOutput(),'libx264')&&preg_match('/\baac\b/',$encoder->getOutput()),503,__('live-browser.encoder_required'));}
+                try{$encoder->mustRun();abort_unless(preg_match('/\baac\b/',$encoder->getOutput()),503,__('live-browser.encoder_required'));}
                 catch(\Symfony\Component\Process\Exception\ExceptionInterface){abort(503,__('live-browser.encoder_required'));}
             }
             abort_if(\App\Models\LiveBrowserSession::whereIn('status',['starting','connected'])->where('expires_at','>',now())->exists(),409,__('live-browser.server_busy'));

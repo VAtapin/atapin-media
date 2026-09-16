@@ -55,5 +55,6 @@ return [
     'status_live' => 'Live',
     'status_scheduled' => 'Scheduled',
     'status_draft' => 'Draft',
+    'status_starting' => 'Connecting',
     'status_ended' => 'Ended',
 ];

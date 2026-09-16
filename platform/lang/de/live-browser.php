@@ -17,7 +17,7 @@ return [
     'preview'=>'Lokale Vorschau', 'open_preview'=>'Im Fenster öffnen', 'show_preview'=>'Vorschaufenster zeigen', 'popup_blocked'=>'Das Vorschaufenster wurde vom Browser blockiert. Pop-ups für diese Website erlauben.', 'audio_level'=>'Mikrofonpegel',
     'podcast_draft'=>'Podcast-Entwurf aus gespeichertem Audio erstellen', 'podcast_created'=>'Podcast-Entwurf erstellt — nicht veröffentlicht.', 'audio_unavailable'=>'Eigene Audio-Aufnahme zuerst in Media Library speichern.',
     'screen_stop'=>'Bildschirmfreigabe beenden',
-    'encoder_required'=>'Der Hosting-Administrator muss zuerst FFmpeg mit H264/AAC-Encodern installieren.',
+    'encoder_required'=>'Der Hosting-Administrator muss zuerst FFmpeg mit AAC-Encoder und RTSP-Unterstützung installieren.',
     'podcast_trashed'=>'Diese Aufnahme hat bereits einen gelöschten Podcast-Entwurf. Diesen ausdrücklich wiederherstellen, statt erneut zu importieren.',
     'server_rollback_failed'=>'Konfiguration fehlgeschlagen; automatische Dateiwiederherstellung nicht bestätigt. Vor Übertragungen die private Sicherung vom Hosting-Administrator wiederherstellen lassen.',
     'telemetry'=>'Browser-Ausgang', 'bitrate'=>'Bitrate', 'frames'=>'Kodierte Frames',

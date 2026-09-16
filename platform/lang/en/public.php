@@ -56,7 +56,7 @@ return [
     'current_poll'=>'CURRENT POLL','vote'=>'Vote now','votes'=>'votes','poll_closed'=>'This poll is closed.','poll_login'=>'Sign in to vote','poll_subscriber_required'=>'This poll is available to confirmed newsletter subscribers.',
     'author'=>'Author','pdf'=>'PDF','ebook'=>'E-book','purchase_hint'=>'Available formats and prices come from the catalog. No automatic checkout.',
     'purchase_request'=>'Request purchase','read_sample'=>'Open sample','mark_read'=>'Mark as read',
-    'live_chat'=>'Live chat','online'=>'Online','live_status'=>'Live status','live_draft'=>'Draft','live_live'=>'Live','live_scheduled'=>'Scheduled','live_ended'=>'Ended',
+    'live_chat'=>'Live chat','online'=>'Online','live_status'=>'Live status','live_draft'=>'Draft','live_starting'=>'Connecting','live_live'=>'Live','live_scheduled'=>'Scheduled','live_ended'=>'Ended',
     'reminder'=>'Save reminder','like'=>'Like','schedule'=>'Schedule','recordings'=>'Recordings','community_feedback'=>'Community feedback',
     'latest_episodes'=>'Latest podcast episodes','topic_categories'=>'Topic categories','continue_listening'=>'Continue listening','continue'=>'Continue','recommendation'=>'Our recommendation',
     'listen_everywhere'=>'Wherever you listen to podcasts','local_audio_hint'=>'Available episodes play directly from our server.',
