@@ -54,6 +54,20 @@ class PublicTaxonomyUiTest extends TestCase
             ->assertSee('href="'.route('public.beitraege', ['taxonomy'=>'anatomie']).'"', false)
             ->assertDontSee('public-taxonomy-crumbs', false);
         $this->get('/beitraege?taxonomy=medizin')->assertOk()->assertSee('Anatomie Beitrag');
+        $categoryPage = $this->get('/themen?category=medizin')->assertOk()
+            ->assertSee('<img class="public-photo" src="'.$cover->publicUrl().'"', false)
+            ->assertSee('Anatomie Beitrag')->assertSee('Anatomie Video')->assertSee('Anatomie Buch')
+            ->assertSee(route('public.categories', ['category'=>'medizin', 'taxonomy'=>'anatomie']))
+            ->assertSee('href="'.route('public.beitraege', ['taxonomy'=>'medizin']).'"', false)
+            ->assertSee('href="'.route('public.videos', ['taxonomy'=>'medizin']).'"', false)
+            ->assertSee('href="'.route('public.buecher', ['taxonomy'=>'medizin']).'"', false);
+        $categoryPage->assertViewHas('categoryContent', fn (array $content) => count($content['beitraege']) === 1
+            && count($content['videos']) === 1 && count($content['buecher']) === 1);
+
+        $this->get('/themen?category=medizin&taxonomy=anatomie')->assertOk()
+            ->assertSee('Neues zu Anatomie')->assertSee('Anatomie Beitrag')->assertSee('Anatomie Video')->assertSee('Anatomie Buch')
+            ->assertDontSee(route('public.categories', ['category'=>'medizin', 'taxonomy'=>'anatomie']))
+            ->assertViewHas('selectedTopic', fn (TaxonomyTerm $selected) => $selected->is($topic));
     }
 
     public function test_home_never_uses_protected_media_preview_for_a_category_cover(): void
@@ -72,6 +86,9 @@ class PublicTaxonomyUiTest extends TestCase
             ->assertViewHas('homeTopics', fn (array $topics) => collect($topics)->firstWhere('id', $topic->id)['category_cover_url'] === null);
         $this->get('/beitraege')->assertOk()->assertDontSee(route('media.preview', $private), false)
             ->assertViewHas('taxonomyFilters', fn (array $filters) => collect($filters)->firstWhere('id', $category->id)['cover_url'] === null);
+        $this->get('/themen?category=private-category')->assertOk()
+            ->assertDontSee(route('media.preview', $private), false)
+            ->assertViewHas('selectedShelf', fn (array $shelf) => $shelf['cover_url'] === null);
     }
 
     public function test_empty_category_still_has_a_shelf_and_its_own_plant(): void

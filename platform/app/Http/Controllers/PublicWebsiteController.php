@@ -31,8 +31,17 @@ class PublicWebsiteController extends Controller
         $shelves = $taxonomy->directoryShelves();
         $selected = $request->filled('category')
             ? collect($shelves)->firstWhere('slug', $request->query('category')) : null;
+        $selectedCategory = $selected ? $taxonomy->resolve($selected['id']) : null;
+        $selectedTopic = $selectedCategory && $request->filled('taxonomy')
+            ? $taxonomy->resolve($request->query('taxonomy')) : null;
+        if ($selectedTopic && ($selectedTopic->kind !== 'topic'
+            || ! in_array((int) $selectedTopic->id, $taxonomy->descendantIds($selectedCategory), true))) {
+            $selectedTopic = null;
+        }
+        $contentTerm = $selectedTopic ?? $selectedCategory;
         return view('public.categories', [...$this->shared(), 'section'=>'categories',
-            'directoryShelves'=>$selected ? [$selected] : $shelves, 'categoryShelves'=>$shelves, 'selectedShelf'=>$selected]);
+            'directoryShelves'=>$selected ? [$selected] : $shelves, 'categoryShelves'=>$shelves, 'selectedShelf'=>$selected,
+            'selectedTopic'=>$selectedTopic, 'categoryContent'=>$contentTerm ? $taxonomy->contentFor($contentTerm) : []]);
     }
     public function recordView(Request $request, SourceRecord $record, PublicContent $content, PublicViewCounter $counter)
     {

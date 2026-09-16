@@ -123,6 +123,8 @@ class PublicTaxonomy
     {
         $terms = $this->activeTerms();
         $published = collect($this->homeTopics())->keyBy('id');
+        $coverIds = $terms->where('kind', 'category')->pluck('cover_media_id')->filter()->unique()->all();
+        $covers = Media::visibleLibrary()->where('kind', 'image')->whereIn('id', $coverIds)->get()->keyBy('id');
         $shelves = [];
         foreach ($terms->where('kind', 'category')->sort(fn (TaxonomyTerm $left, TaxonomyTerm $right) => strnatcasecmp($left->name, $right->name)) as $category) {
             $shelves[(int) $category->id] = [
@@ -130,6 +132,7 @@ class PublicTaxonomy
                 'name' => $category->name,
                 'slug' => $category->slug,
                 'url' => route('public.categories', ['category' => $category->slug]),
+                'cover_url' => $category->cover_media_id ? $covers->get($category->cover_media_id)?->publicUrl() : null,
                 'books' => [],
             ];
         }
@@ -152,6 +155,25 @@ class PublicTaxonomy
         }
 
         return array_values($shelves);
+    }
+
+    public function contentFor(TaxonomyTerm $term, int $limit = 10): array
+    {
+        $limit = max(1, min(20, $limit));
+        $records = function (string $section) use ($term, $limit): array {
+            $query = $this->constrain($this->content->forSection($section), $section, $term);
+
+            return $this->content->withViewCounts($query)->latest()->limit($limit)->get()
+                ->map($this->content->card(...))->values()->all();
+        };
+        $books = $this->constrain($this->books->query(), 'buecher', $term)->latest()->limit($limit)->get()
+            ->map($this->books->card(...))->values()->all();
+
+        return [
+            'beitraege' => $records('beitraege'),
+            'videos' => $records('videos'),
+            'buecher' => $books,
+        ];
     }
 
     private function categoryForTopic(Collection $terms, int $topicId): ?TaxonomyTerm
