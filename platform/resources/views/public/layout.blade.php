@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="/assets/public-rich-content.css?v=1">
 <link rel="stylesheet" href="/assets/public-pages.css?v=27">
 @stack('publicStyles')
-<script src="/assets/public.js?v=15" defer>
+<script src="/assets/public.js?v=16" defer>
 </script>
 <script src="/assets/public-pwa.js?v=1" defer></script>
 <script src="/assets/public-push.js?v=1" defer></script>

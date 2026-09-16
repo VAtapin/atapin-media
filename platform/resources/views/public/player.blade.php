@@ -9,7 +9,7 @@
 @php($videoPoster=$card['image']??($heroImage??config('public_ui.hero_image')))
 
 @if($record && ($record->metadata['live_stream_enabled']??false)&&($record->metadata['live_status']??'')==='live')
-<div class="public-live-player-shell" data-live-player data-hls-url="/_live/live/index.m3u8?cookieCheck=1">
+<div class="public-live-player-shell" data-live-player data-hls-url="/_live/live/index.m3u8?cookieCheck=1" data-live-current-url="{{ route('public.live-current') }}">
 <iframe class="public-main-player" data-src="/_live/live/?cookieCheck=1" title="{{ $record->title }}" allow="autoplay; fullscreen" allowfullscreen hidden></iframe>
 <div class="public-live-player-fallback" data-live-player-fallback><img src="{{ $liveFallbackImage }}" alt="{{ $record->title }}">@include('public.live-poster')</div>
 </div>

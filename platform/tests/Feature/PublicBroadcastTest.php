@@ -129,6 +129,9 @@ class PublicBroadcastTest extends TestCase
         app(PublicBroadcast::class)->signal('live',false);
         $this->assertSame('ended',$first->fresh()->metadata['live_status']);
         $this->assertArrayNotHasKey('live_ingest_active',$first->fresh()->metadata);
+        $this->postJson('/live/server-auth',['path'=>'live','action'=>'read','protocol'=>'hls'])->assertNoContent();
+        $first->update(['metadata'=>[...$first->fresh()->metadata,'public_published'=>false]]);
+        $this->postJson('/live/server-auth',['path'=>'live','action'=>'read','protocol'=>'hls'])->assertUnauthorized();
         $this->assertFalse(app(Settings::class)->hasSecret('live_publish_'.$first->id));
         $this->assertFalse(app(Settings::class)->hasSecret('live_publish_'.$second->id));
     }

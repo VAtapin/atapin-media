@@ -93,8 +93,11 @@ class PublicPagesTest extends TestCase
     public function test_live_player_starts_mediamtx_cookie_check_inside_proxy_prefix(): void
     {
         $live=$this->record('video',['public_section'=>'live','live_stream_enabled'=>true,'live_status'=>'live']);
-        $response=$this->get('/live?event='.$live->id)->assertOk()->assertSee('data-src="/_live/live/?cookieCheck=1"',false)->assertSee('/_live/live/?cookieCheck=1',false)->assertSee('data-live-status-line',false)->assertSee('Real database body')->assertSee('name="body"',false)->assertSee('data-public-ajax="message"',false)->assertSee('class="public-chat-compose"',false);
+        $response=$this->get('/live?event='.$live->id)->assertOk()->assertSee('data-src="/_live/live/?cookieCheck=1"',false)->assertSee('data-live-current-url="'.route('public.live-current').'"',false)->assertSee('/_live/live/?cookieCheck=1',false)->assertSee('data-live-status-line',false)->assertSee('Real database body')->assertSee('name="body"',false)->assertSee('data-public-ajax="message"',false)->assertSee('class="public-chat-compose"',false);
         $this->assertStringNotContainsString('<iframe class="public-main-player" src="/_live/live/?cookieCheck=1"',$response->getContent());
+        $script=file_get_contents(public_path('assets/public.js'));
+        $this->assertStringContainsString('statusUrl=shell.dataset.liveCurrentUrl',$script);
+        $this->assertStringContainsString('setTimeout(check,2000)',$script);
         $dom=new \DOMDocument();@$dom->loadHTML($response->getContent());$this->assertStringNotContainsString('Der Livestream wird vorbereitet',$dom->getElementsByTagName('main')->item(0)->textContent);
         $response->assertDontSee('data-community-action',false);
     }

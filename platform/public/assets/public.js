@@ -144,7 +144,7 @@ for(const badge of document.querySelectorAll('[data-current-live]')){
   check();
 }
 for(const shell of document.querySelectorAll('[data-live-player]')){
-  const frame=shell.querySelector('iframe'),fallback=shell.querySelector('[data-live-player-fallback]'),url=shell.dataset.hlsUrl,frameSrc=frame?.dataset.src||frame?.getAttribute('src');
+  const frame=shell.querySelector('iframe'),fallback=shell.querySelector('[data-live-player-fallback]'),url=shell.dataset.hlsUrl,statusUrl=shell.dataset.liveCurrentUrl,frameSrc=frame?.dataset.src||frame?.getAttribute('src');
   if(!frame||!fallback||!url)continue;
   let active=true,timer,failures=0;
   const showFallback=()=>{
@@ -156,7 +156,9 @@ for(const shell of document.querySelectorAll('[data-live-player]')){
   const check=async()=>{
     if(!active)return;
     try{
-      const response=await fetch(url,{cache:'no-store',credentials:'same-origin'}),text=await response.text();
+      const [response,statusResponse]=await Promise.all([fetch(url,{cache:'no-store',credentials:'same-origin'}),statusUrl?fetch(statusUrl,{cache:'no-store',credentials:'same-origin'}):Promise.resolve(null)]);
+      if(statusResponse?.ok&&(await statusResponse.json()).live===false){document.dispatchEvent(new CustomEvent('public-live-status',{detail:{status:'ended'}}));stop();return;}
+      const text=await response.text();
       if(!active)return;
       const ready=response.ok&&text.includes('#EXTM3U')&&(text.includes('#EXTINF')||text.includes('#EXT-X-STREAM-INF'));
       failures=ready?0:failures+1;
@@ -166,7 +168,7 @@ for(const shell of document.querySelectorAll('[data-live-player]')){
       }else if(response.status===401)stop();
       else if(failures>=2)showFallback();
     }catch{failures++;if(failures>=2)showFallback();}
-    if(active)timer=setTimeout(check,5000);
+    if(active)timer=setTimeout(check,2000);
   };
   document.addEventListener('public-live-status',event=>{if(event.detail?.status==='ended')stop();});
   check();
