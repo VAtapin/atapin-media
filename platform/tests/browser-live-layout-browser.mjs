@@ -15,13 +15,21 @@ const assets = new Map([
   ['/assets/desktop-publishing.css', 'public/assets/desktop-publishing.css'],
   ['/assets/desktop-browser-studio.css', 'public/assets/desktop-browser-studio.css'],
   ['/assets/desktop-browser-studio.js', 'public/assets/desktop-browser-studio.js'],
+  ['/assets/desktop-browser-pip.js', 'public/assets/desktop-browser-pip.js'],
 ]);
-const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="layout-test"><link rel="stylesheet" href="/assets/desktop-app.css"><link rel="stylesheet" href="/assets/desktop-live-studio.css"><link rel="stylesheet" href="/assets/desktop-publishing.css"><style>html,body{margin:0;height:100%;background:#edf3f8}.os-window{height:100%}.os-titlebar{box-sizing:border-box;height:44px;padding:12px;background:#102f52;color:white;font:600 14px Inter,Arial,sans-serif}.desktop-live-studio{box-sizing:border-box;height:calc(100% - 44px)}</style></head><body><div class="os-window"><div class="os-titlebar">Live Studio</div><section class="desktop-live-studio" data-live-studio><div class="desktop-live-studio-grid"></div></section></div><script>window.DesktopWorkspaces={el:(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;}};import('/assets/desktop-browser-studio.js?v=6').then(module=>module.initialize(document.querySelector('[data-live-studio]'),{id:'layout-test',title:'Ein neues Zuhause für Manna Vom Himmel'}));</script></body></html>`;
+const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="layout-test"><link rel="stylesheet" href="/assets/desktop-app.css"><link rel="stylesheet" href="/assets/desktop-live-studio.css"><link rel="stylesheet" href="/assets/desktop-publishing.css"><style>html,body{margin:0;height:100%;background:#edf3f8}.os-window{height:100%}.os-titlebar{box-sizing:border-box;height:44px;padding:12px;background:#102f52;color:white;font:600 14px Inter,Arial,sans-serif}.desktop-live-studio{box-sizing:border-box;height:calc(100% - 44px)}</style></head><body><div class="os-window"><div class="os-titlebar">Live Studio</div><section class="desktop-live-studio" data-live-studio data-api-base="/api/desktop/live"><div class="desktop-live-studio-grid"></div></section></div><script>window.DesktopWorkspaces={el:(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;}};import('/assets/desktop-browser-studio.js?v=7').then(module=>module.initialize(document.querySelector('[data-live-studio]'),{id:'layout-test',title:'Ein neues Zuhause für Manna Vom Himmel',published:true,enabled:true}));</script></body></html>`;
 const configuration = { available: false, browser_enabled: false, host: '' };
 let rejectFirstConfig = true;
+let eventSaveCount = 0, browserStartCount = 0;
 const server = createServer(async (request, response) => {
   const path = new URL(request.url, base).pathname;
   if (path === '/') { response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); response.end(html); return; }
+  if (path === '/api/desktop/live/next-live' && request.method === 'PATCH') {
+    let body = ''; for await (const chunk of request) body += chunk;
+    const saved = JSON.parse(body);eventSaveCount++;
+    response.writeHead(200, { 'Content-Type': 'application/json' });response.end(JSON.stringify({ data: { id:'next-live', ...saved } }));return;
+  }
+  if (path.endsWith('/browser') && request.method === 'POST') browserStartCount++;
   if (path === '/desktop/live-studio/server') {
     if (request.method === 'POST') {
       let body = ''; for await (const chunk of request) body += chunk;
@@ -50,6 +58,7 @@ try {
   const studioBox = await studio.boundingBox();
   assert(studioBox && studioBox.width >= 1672 * .9, `Studio should use the maximized window: ${JSON.stringify(studioBox)}`);
   assert.equal(await studio.locator('.desktop-browser-group').count(), 4);
+  assert.match(await studio.locator('[data-event-ready]').textContent(), /aktiviert und veröffentlicht/);
   for (const name of ['Kamera & Mikrofon', 'Bild & Bildschirm', 'Audio-Aufnahme', 'Übertragung']) {
     assert(await studio.locator('legend', { hasText: name }).isVisible(), name);
   }
@@ -61,6 +70,18 @@ try {
   const previewBox = await preview.boundingBox(), previewActionBox = await previewAction.boundingBox();
   assert(previewBox && previewActionBox && previewActionBox.x + previewActionBox.width <= previewBox.x + previewBox.width + 1,
     `Open action should stay inside the preview card: ${JSON.stringify({ previewBox, previewActionBox })}`);
+  await studio.locator('[data-studio-field=scene]').selectOption('screen');
+  await studio.locator('[data-studio-field=pip]').check();
+  const cameraInset = preview.locator('[data-pip-handle]');
+  await cameraInset.waitFor({ state: 'visible' });
+  const initialInset = await cameraInset.boundingBox();
+  assert(initialInset, 'Camera inset editor should be visible in local preview');
+  await page.mouse.move(initialInset.x + initialInset.width / 2, initialInset.y + initialInset.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(initialInset.x + initialInset.width / 2 - 45, initialInset.y + initialInset.height / 2 - 15, { steps: 5 });
+  await page.mouse.up();
+  const movedInset = await cameraInset.boundingBox();
+  assert(movedInset && movedInset.x < initialInset.x - 25, `Camera inset should move inside the preview: ${JSON.stringify({ initialInset, movedInset })}`);
   const start = studio.locator('[data-studio-action=start]');
   assert.equal(await start.evaluate(button => getComputedStyle(button).backgroundColor), 'rgb(185, 54, 50)');
   const startBox = await start.boundingBox();
@@ -83,6 +104,31 @@ try {
   await popup.waitForFunction(() => document.querySelector('video')?.readyState >= 2);
   assert.equal(await popup.locator('video').evaluate(video => video.srcObject?.getVideoTracks().length), 1);
   assert.match(await popup.title(), /Lokale Vorschau/);
+  const popupInset = popup.locator('[data-pip-handle]');
+  await popupInset.waitFor({ state: 'visible' });
+  const popupBefore = await popupInset.boundingBox(), resizeGrip = await popupInset.locator('[data-pip-resize]').boundingBox();
+  assert(popupBefore && resizeGrip, 'The separate preview should retain the camera inset editor');
+  await popup.mouse.move(resizeGrip.x + resizeGrip.width / 2, resizeGrip.y + resizeGrip.height / 2);
+  await popup.mouse.down();
+  await popup.mouse.move(resizeGrip.x + resizeGrip.width / 2 + 35, resizeGrip.y + resizeGrip.height / 2 + 20, { steps: 5 });
+  await popup.mouse.up();
+  const popupResized = await popupInset.boundingBox();
+  assert(popupResized && popupResized.width > popupBefore.width + 12, `Camera inset should resize in the separate preview: ${JSON.stringify({ popupBefore, popupResized })}`);
+  const smallerGrip = await popupInset.locator('[data-pip-resize]').boundingBox();
+  assert(smallerGrip);
+  await popup.mouse.move(smallerGrip.x + smallerGrip.width / 2, smallerGrip.y + smallerGrip.height / 2);
+  await popup.mouse.down();
+  await popup.mouse.move(smallerGrip.x + smallerGrip.width / 2 - 12, smallerGrip.y + smallerGrip.height / 2 - 8, { steps: 5 });
+  await popup.mouse.up();
+  const popupReduced = await popupInset.boundingBox();
+  assert(popupReduced && popupReduced.width < popupResized.width - 5 && popupReduced.width > popupBefore.width,
+    `Camera inset should also shrink in the separate preview: ${JSON.stringify({ popupBefore, popupResized, popupReduced })}`);
+  await popup.mouse.move(popupReduced.x + popupReduced.width / 2, popupReduced.y + popupReduced.height / 2);
+  await popup.mouse.down();
+  await popup.mouse.move(popupReduced.x + popupReduced.width / 2 + 40, popupReduced.y + popupReduced.height / 2 - 10, { steps: 5 });
+  await popup.mouse.up();
+  const popupMoved = await popupInset.boundingBox();
+  assert(popupMoved && popupMoved.x > popupReduced.x + 18, `Camera inset should move in the separate preview: ${JSON.stringify({ popupReduced, popupMoved })}`);
   assert(await studio.locator('.desktop-browser-preview').isHidden(), 'Inline preview should disappear after pop-out');
   assert(await studio.locator('.desktop-browser-heading [data-studio-action=open_preview]').isVisible(), 'Reopen action should remain at the studio heading');
   assert(await studio.locator('.desktop-browser-layout').evaluate(layout => layout.classList.contains('is-detached')));
@@ -94,6 +140,9 @@ try {
   await studio.locator('.desktop-browser-preview').waitFor({ state: 'visible' });
   assert(await studio.locator('[data-studio-canvas]').isVisible());
   assert(await preview.locator('[data-studio-action=open_preview]').isVisible(), 'Open action should return to the local preview');
+  const restoredInset = await cameraInset.boundingBox();
+  assert(restoredInset && restoredInset.width > movedInset.width && restoredInset.x > movedInset.x,
+    `Camera inset geometry should persist when the separate preview closes: ${JSON.stringify({ movedInset, restoredInset })}`);
 
   await page.screenshot({ path: 'tests/artifacts/browser-live-layout-desktop.png' });
   await page.setViewportSize({ width: 390, height: 844 });
@@ -118,7 +167,7 @@ try {
   await studio.locator('[name=live_browser_host]').fill('mannavomhimmel.de');
   await studio.locator('[name=live_browser_enabled]').check();
   page.on('dialog', dialog => dialog.accept());
-  const apply = studio.locator('form .desktop-button');
+  const apply = studio.locator('details form .desktop-button');
   await apply.click();
   const feedback = studio.locator('[data-server-config-feedback]');
   await page.waitForFunction(() => document.querySelector('[data-server-config-feedback]')?.textContent.includes('Nicht gespeichert:'));
@@ -141,9 +190,21 @@ try {
   assert.equal(await studio.locator('[name=live_browser_host]').inputValue(), 'mannavomhimmel.de');
   assert.match(await studio.textContent(), /Server-API erreichbar/);
   await page.evaluate(async () => {
-    const module = await import('/assets/desktop-browser-studio.js?v=6');
+    const module = await import('/assets/desktop-browser-studio.js?v=7');
     await module.initialize(document.querySelector('[data-live-studio]'), { id: 'next-live', title: 'Nächster Livestream' });
   });
+  const eventForm=studio.locator('[data-browser-event-form]');
+  assert(await eventForm.isVisible(), 'Event activation should be on the Browser Studio screen');
+  await studio.locator('[data-studio-action=start]').click();
+  assert.match(await studio.locator('.is-broadcast [role=status]').last().textContent(), /beide Häkchen setzen/);
+  assert.equal(browserStartCount,0,'No broadcast request should be made for an inactive event');
+  await eventForm.locator('[data-event-field=event_publish]').check();
+  await eventForm.locator('[data-event-field=event_enable]').check();
+  assert.match(await studio.locator('[data-event-ready]').textContent(), /Änderungen zuerst/);
+  await eventForm.locator('[data-event-save]').click();
+  assert.equal(eventSaveCount,1,'Both event flags should be saved in one action');
+  await studio.locator('[data-event-ready][data-state=ready]').waitFor();
+  assert.match(await studio.locator('[data-event-ready]').textContent(), /aktiviert und veröffentlicht/);
   await studio.locator('summary').click();
   assert(await studio.locator('[name=live_browser_enabled]').isChecked(), 'Saved server setting should apply to a different livestream');
   assert.deepEqual(errors, []);

@@ -1,7 +1,8 @@
+import {createInset,mountInsetEditor} from '/assets/desktop-browser-pip.js?v=1';
 const W=window.DesktopWorkspaces;
 const endpoint='/desktop/live-studio';
 const studios=new WeakMap();
-const css=document.createElement('link');css.rel='stylesheet';css.href='/assets/desktop-browser-studio.css?v=5';document.head.append(css);
+const css=document.createElement('link');css.rel='stylesheet';css.href='/assets/desktop-browser-studio.css?v=6';document.head.append(css);
 const request=async(url,options={})=>{
   const response=await fetch(url,{credentials:'same-origin',headers:{Accept:'application/json','Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content},...options});
   const data=response.status===204?{}:await response.json().catch(()=>({}));
@@ -17,9 +18,11 @@ export async function initialize(root,event,configured=false){
   let micGain=null,screenGain=null,recorder=null,recording=false,pcm=[],pcmBytes=0,wav=null,drawTimer=null,beatTimer=null,preparing=false,uploadedMediaId=null,statsTimer=null;
   let scene='camera',pip=false,imageIndex=0,images=[],imageUrls=[],sources=[],observer=null,operation=0;
   let previewWindow=null,previewWindowStream=null,previewPanel=null,previewLayout=null,previewButton=null,previewHead=null,previewHeading=null;
+  const inset=createInset();let inlineInsetEditor=null,popupInsetEditor=null,popupInsetHint=null;
+  const syncInsetEditors=()=>{inlineInsetEditor?.update();popupInsetEditor?.update();if(popupInsetHint)popupInsetHint.hidden=!pip||scene==='camera';};
   const t=key=>labels[key]||key;
   const detachPreview=detached=>{if(previewPanel)previewPanel.hidden=detached;previewLayout?.classList.toggle('is-detached',detached);if(previewButton){previewButton.textContent=t(detached?'show_preview':'open_preview');(detached?previewHeading:previewHead)?.append(previewButton);}};
-  const closePreviewWindow=()=>{previewWindowStream?.getTracks().forEach(track=>track.stop());previewWindowStream=null;if(previewWindow&&!previewWindow.closed)previewWindow.close();previewWindow=null;detachPreview(false);};
+  const closePreviewWindow=()=>{previewWindowStream?.getTracks().forEach(track=>track.stop());previewWindowStream=null;if(previewWindow&&!previewWindow.closed)previewWindow.close();previewWindow=null;popupInsetEditor=null;popupInsetHint=null;detachPreview(false);};
   const status=W.el('p');status.setAttribute('role','status');
   const video=()=>{const node=document.createElement('video');node.muted=true;node.playsInline=true;node.autoplay=true;return node;};
   const cameraVideo=video(),screenVideo=video();
@@ -58,16 +61,22 @@ export async function initialize(root,event,configured=false){
       try{
         popup.document.title=t('preview')+' · '+event.title;popup.document.documentElement.lang=document.documentElement.lang||'de';
         const viewport=popup.document.createElement('meta');viewport.name='viewport';viewport.content='width=device-width,initial-scale=1';
-        const style=popup.document.createElement('style');style.textContent='*{box-sizing:border-box}body{margin:0;padding:16px;background:#102238;color:#fff;font:14px Inter,Arial,sans-serif}header{margin-bottom:12px;overflow-wrap:anywhere}video{display:block;width:100%;aspect-ratio:16/9;object-fit:contain;background:#071526;border-radius:10px}';
+        const style=popup.document.createElement('style');style.textContent='*{box-sizing:border-box}body{margin:0;padding:16px;background:#102238;color:#fff;font:14px Inter,Arial,sans-serif}header{margin-bottom:12px;overflow-wrap:anywhere}header small{display:block;margin-top:4px;color:#cbd9e6}header small[hidden]{display:none}video{display:block;width:100%;aspect-ratio:16/9;object-fit:contain;background:#071526;border-radius:10px}.desktop-browser-pip-surface{position:relative;width:100%}.desktop-browser-pip-handle{position:absolute;z-index:2;border:2px solid #fff;box-shadow:0 0 0 1px #102238,0 0 8px #102238;cursor:move;touch-action:none}.desktop-browser-pip-handle[hidden]{display:none}.desktop-browser-pip-handle [data-pip-resize]{position:absolute;right:-2px;bottom:-2px;width:20px;height:20px;border:2px solid #102238;background:#fff;cursor:nwse-resize}.desktop-browser-pip-handle:focus-visible{outline:3px solid #ffce65;outline-offset:3px}';
         popup.document.head.append(viewport,style);
         const heading=popup.document.createElement('header'),video=popup.document.createElement('video');heading.textContent=event.title;video.muted=true;video.playsInline=true;video.autoplay=true;
-        popup.document.body.replaceChildren(heading,video);
+        popupInsetHint=popup.document.createElement('small');popupInsetHint.textContent=t('pip_hint');heading.append(popupInsetHint);
+        const surface=popup.document.createElement('div');surface.className='desktop-browser-pip-surface';surface.append(video);
+        popupInsetEditor=mountInsetEditor(surface,inset,{label:t('pip_adjust'),visible:()=>pip&&scene!=='camera',onChange:syncInsetEditors});
+        popup.document.body.replaceChildren(heading,surface);syncInsetEditors();
         previewWindowStream=canvas.captureStream(30);video.srcObject=previewWindowStream;video.play().catch(()=>{});
-        popup.addEventListener('beforeunload',()=>{previewWindowStream?.getTracks().forEach(track=>track.stop());previewWindowStream=null;previewWindow=null;detachPreview(false);},{once:true});
+        popup.addEventListener('beforeunload',()=>{previewWindowStream?.getTracks().forEach(track=>track.stop());previewWindowStream=null;previewWindow=null;popupInsetEditor=null;popupInsetHint=null;detachPreview(false);},{once:true});
         detachPreview(true);
       }catch(error){closePreviewWindow();throw error;}
     });
-    previewButton=openPreview;previewHead.append(W.el('strong',t('preview')),openPreview);preview.append(previewHead,canvas);layout.append(preview,controls);
+    previewButton=openPreview;previewHead.append(W.el('strong',t('preview')),openPreview);
+    const inlineSurface=W.el('div',undefined,'desktop-browser-pip-surface');inlineSurface.append(canvas);
+    inlineInsetEditor=mountInsetEditor(inlineSurface,inset,{label:t('pip_adjust'),visible:()=>pip&&scene!=='camera',onChange:syncInsetEditors});
+    preview.append(previewHead,inlineSurface);layout.append(preview,controls);
     const heading=W.el('div',undefined,'desktop-browser-heading');previewHeading=heading;heading.append(W.el('h3',t('title')+' · '+event.title));
     panel.append(heading,W.el('p',t('intro')),layout);
     const devices=group('devices','is-devices',leftControls);fieldGroup=devices;
@@ -75,13 +84,38 @@ export async function initialize(root,event,configured=false){
     const micVolume=input('mic_volume','range');micVolume.min=0;micVolume.max=1;micVolume.step=.01;micVolume.value=.8;micVolume.oninput=()=>{if(micGain)micGain.gain.value=Number(micVolume.value);};
     const meter=document.createElement('meter');meter.min=0;meter.max=1;meter.setAttribute('aria-label',t('microphone'));const meterLabel=W.el('label',t('audio_level'));meterLabel.append(meter);devices.append(meterLabel);
     const visuals=group('visuals','is-visuals',rightControls);fieldGroup=visuals;
-    const scenes=select('scene');for(const key of ['camera','screen','image'])scenes.append(new Option(t(key+'_scene'),key));scenes.onchange=()=>{scene=scenes.value;};
-    const pictureInPicture=input('pip','checkbox');pictureInPicture.onchange=()=>pip=pictureInPicture.checked;
+    const scenes=select('scene');for(const key of ['camera','screen','image'])scenes.append(new Option(t(key+'_scene'),key));scenes.onchange=()=>{scene=scenes.value;syncInsetEditors();};
+    const pictureInPicture=input('pip','checkbox');pictureInPicture.parentElement.append(W.el('small',t('pip_hint')));pictureInPicture.onchange=()=>{pip=pictureInPicture.checked;syncInsetEditors();};
     const overlay=input('overlay');overlay.maxLength=100;
     const sharedVolume=input('screen_volume','range');sharedVolume.min=0;sharedVolume.max=1;sharedVolume.step=.01;sharedVolume.value=.5;sharedVolume.oninput=()=>{if(screenGain)screenGain.gain.value=Number(sharedVolume.value);};
     const imageInput=input('image','file');imageInput.accept='image/png,image/jpeg,image/webp';imageInput.multiple=true;
     const imageChoice=select('active_image');imageChoice.onchange=()=>{imageIndex=Number(imageChoice.value);scene='image';scenes.value=scene;};
     const audio=group('audio_group','is-audio',leftControls),broadcast=group('broadcast','is-broadcast',controls);
+    const eventForm=W.el('form',undefined,'desktop-browser-event-form');eventForm.dataset.browserEventForm='';
+    const published=document.createElement('input'),enabled=document.createElement('input');
+    for(const [field,key] of [[published,'event_publish'],[enabled,'event_enable']]){
+      field.type='checkbox';field.checked=Boolean(event[key==='event_publish'?'published':'enabled']);field.dataset.eventField=key;
+      const label=W.el('label',t(key));label.prepend(field);eventForm.append(label);
+    }
+    const eventSave=W.el('button',t('event_save'),'desktop-button');eventSave.type='submit';eventSave.dataset.eventSave='';
+    const eventFeedback=W.el('p',undefined,'desktop-browser-event-feedback');eventFeedback.setAttribute('role','status');
+    eventForm.append(eventSave,eventFeedback);broadcast.append(eventForm);
+    const eventReady=W.el('p',undefined,'desktop-browser-event-ready');eventReady.dataset.eventReady='';
+    const eventChanged=()=>published.checked!==Boolean(event.published)||enabled.checked!==Boolean(event.enabled);
+    const updateEventReady=()=>{const ready=event.published&&event.enabled&&!eventChanged();eventReady.textContent=t(eventChanged()?'event_unsaved':ready?'event_ready':'event_not_ready');eventReady.dataset.state=ready?'ready':'warning';};
+    updateEventReady();eventForm.onchange=updateEventReady;broadcast.append(eventReady);
+    eventForm.onsubmit=async ev=>{
+      ev.preventDefault();if(state.busy()){eventFeedback.textContent=t('close_warning');return;}
+      eventSave.disabled=true;eventFeedback.textContent=t('event_saving');
+      try{
+        const payload={title:event.title,body:event.body||'',starts_at:event.starts_at||null,published:published.checked,enabled:enabled.checked};
+        const saved=await request(root.dataset.apiBase+'/'+encodeURIComponent(event.id),{method:'PATCH',body:JSON.stringify(payload)});
+        Object.assign(event,saved.data);published.checked=event.published;enabled.checked=event.enabled;
+        updateEventReady();eventFeedback.textContent=t('event_saved');
+        root.dispatchEvent(new CustomEvent('desktop-live-event-saved',{detail:saved.data}));
+      }catch(error){eventFeedback.textContent=error.message||t('error');}
+      finally{if(!disposed)eventSave.disabled=false;}
+    };
     imageInput.onchange=async()=>{
       try{
         const files=[...imageInput.files];if(files.length>20||files.some(f=>f.size>20*1024*1024||!['image/png','image/jpeg','image/webp'].includes(f.type)))throw new Error(t('error'));
@@ -96,8 +130,9 @@ export async function initialize(root,event,configured=false){
     drawTimer=setInterval(()=>{
       if(disposed)return;ctx.fillStyle='#102238';ctx.fillRect(0,0,1280,720);
       if(previewWindow?.closed)closePreviewWindow();
+      syncInsetEditors();
       if(scene==='screen')fit(screenVideo);else if(scene==='image'&&images[imageIndex])fit(images[imageIndex].image);else if(scene==='camera')fit(cameraVideo);
-      if(pip&&scene!=='camera'&&cameraVideo.videoWidth){ctx.fillStyle='#102238';ctx.fillRect(966,522,294,178);fit(cameraVideo,974,530,278,162);}
+      if(pip&&scene!=='camera'&&cameraVideo.videoWidth){ctx.fillStyle='#102238';ctx.fillRect(inset.x,inset.y,inset.w,inset.h);fit(cameraVideo,inset.x+8,inset.y+8,inset.w-16,inset.h-16);}
       if(overlay.value){ctx.fillStyle='rgba(16,34,56,.8)';ctx.fillRect(0,650,1280,70);ctx.font='32px sans-serif';ctx.fillStyle='#fff';ctx.fillText(overlay.value,24,697,1232);}
       if(analyser){const values=new Float32Array(analyser.fftSize);analyser.getFloatTimeDomainData(values);meter.value=Math.sqrt(values.reduce((sum,n)=>sum+n*n,0)/values.length);}
     },1000/30);
@@ -143,6 +178,8 @@ export async function initialize(root,event,configured=false){
     audioActions.append(action('podcast_draft',async()=>{if(!uploadedMediaId)throw new Error(t('audio_unavailable'));await request(endpoint+'/events/'+event.id+'/podcast',{method:'POST',body:JSON.stringify({confirm:true,media_id:uploadedMediaId})});status.textContent=t('podcast_created');}));
     const stop=async()=>{operation++;const id=session;clearInterval(beatTimer);clearInterval(statsTimer);pc?.close();pc=null;canvasStream?.getTracks().forEach(track=>track.stop());canvasStream=null;if(id)await request(endpoint+'/sessions/'+id,{method:'DELETE'});session=null;status.textContent=t('ended');};
     actionRow(broadcast,action('start',async()=>{
+      if(eventChanged())throw new Error(t('event_unsaved'));
+      if(!event.published||!event.enabled)throw new Error(t('event_not_ready'));
       if(session||pc||!mic||(scene==='camera'&&!camera)||(scene==='screen'&&!screen)||(scene==='image'&&!images.length))throw new Error(t('choose_source'));
       if(!server.available||!server.browser_enabled)throw new Error(t('browser_disabled'));if(!confirm(t('confirm_start')))return;
       status.textContent=t('connecting');pc=new RTCPeerConnection();

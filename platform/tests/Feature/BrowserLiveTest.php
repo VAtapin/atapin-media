@@ -97,6 +97,17 @@ class BrowserLiveTest extends TestCase
         $this->postJson('/desktop/live-studio/server',['confirm'=>true,'live_browser_enabled'=>true,'live_browser_host'=>'example.test'])->assertForbidden();
         $this->actingAs(User::factory()->create())->getJson('/desktop/live-studio/server')->assertForbidden();
     }
+    public function test_selected_live_event_can_be_enabled_and_published_together_before_browser_start(): void
+    {
+        $record=$this->event(['public_published'=>false,'live_stream_enabled'=>false]);
+        $this->assertFalse(app(BrowserBroadcast::class)->eligible($record));
+        $this->patchJson('/api/desktop/live/'.$record->id,[
+            'title'=>$record->title,'body'=>'Event description','starts_at'=>now()->addHour()->toIso8601String(),
+            'published'=>true,'enabled'=>true,
+        ])->assertOk()->assertJsonPath('data.published',true)->assertJsonPath('data.enabled',true);
+        $this->assertTrue(app(BrowserBroadcast::class)->eligible($record->fresh()));
+        $this->assertSame('Event description',$record->fresh()->body);
+    }
     public function test_active_obs_prevents_browser_start_and_unsafe_whip_location_is_rejected(): void
     {
         $record=$this->event();$payload=['sdp'=>"v=0\nm=video\nm=audio",'confirm'=>true];
