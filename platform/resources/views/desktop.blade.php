@@ -68,7 +68,7 @@ $workspaceLabels = array_replace(__('workspaces'), [
     <script src="/assets/public-pwa.js?v=1" defer></script>
     <script src="/assets/desktop-workspace-content.js?v=9" defer></script>
     <script src="/assets/desktop-ai-dashboard.js?v=3" defer></script>
-    <script src="/assets/desktop-catalogs.js?v=12" defer></script>
+    <script src="/assets/desktop-catalogs.js?v=13" defer></script>
     <script src="/assets/desktop-subscriber-import.js?v=1" defer></script>
     <script src="/assets/desktop-ai-proposal.js?v=1" defer></script>
     <script src="/assets/desktop-migration-wizard.js?v=1" defer></script>

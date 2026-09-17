@@ -210,7 +210,7 @@
       const files = [...rawFiles].filter(Boolean).slice(0, multiple ? undefined : 1);
       if (!files.length) return;
       const own=++generation;api.uploading=true;api.mediaIds=[];api.files=files;clearPreviews();files.forEach(preview);list.replaceChildren();zone.classList.remove('is-complete','is-error');zone.classList.add('is-uploading');
-      const submitters=[...(input.form?.querySelectorAll('button[type="submit"],input[type="submit"]')||[])];const prior=submitters.map(button=>button.disabled);submitters.forEach(button=>{button.disabled=true;});
+      const submitters=[...new Set([...(input.form?.querySelectorAll('button[type="submit"],input[type="submit"]')||[]),...(options.submitters||[])])];const prior=submitters.map(button=>button.disabled);submitters.forEach(button=>{button.disabled=true;});
       state.textContent=uploadLabel('uploader_uploading','Wird hochgeladen …');
       try {
         for (const file of files) {

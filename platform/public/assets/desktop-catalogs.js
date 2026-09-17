@@ -3,6 +3,7 @@
   if (!W) return;
   const {t, el, button, request, run, field, lookup, formData, crud} = W;
   const bookJobsKey = 'atapin.desktop.book-ai-jobs.v1';
+  let editorFormSequence = 0;
   const readBookJobs = () => { try { return JSON.parse(localStorage.getItem(bookJobsKey) || '{}') || {}; } catch (_) { return {}; } };
   const writeBookJobs = jobs => { try { localStorage.setItem(bookJobsKey, JSON.stringify(jobs)); } catch (_) {} };
   let bookMonitorTimer;
@@ -53,16 +54,18 @@
     const section = el('section', undefined, 'workspace-asset-panel');
     section.append(el('h3', t('image')),
       el('p', row.cover_url ? t('image_replace_hint') : t('image_upload_hint'), 'workspace-muted'));
-    const form = el('div', undefined, 'workspace-asset-form');
-    const file = field('file', 'file'),input=file.querySelector('input'); input.accept = 'image/jpeg,image/png,image/webp,image/gif'; form.append(file);
+    const upload = el('div', undefined, 'workspace-asset-form');
+    const file = field('file', 'file'),input=file.querySelector('input'); input.accept = 'image/jpeg,image/png,image/webp,image/gif'; upload.append(file);
     const mainForm = editor.querySelector(':scope > form') || editor.querySelector('form');
-    window.enhanceDesktopFileInput(input,{profile:'cover',onUploaded:id=>{
+    const save = mainForm?.querySelector('button[type="submit"]');
+    if (mainForm && save) { mainForm.id ||= `workspace-editor-form-${++editorFormSequence}`; save.setAttribute('form', mainForm.id); }
+    window.enhanceDesktopFileInput(input,{profile:'cover',submitters:save?[save]:[],onUploaded:id=>{
       if (!mainForm) return;
       let mediaId = mainForm.querySelector('input[name="cover_media_id"]');
       if (!mediaId) { mediaId = el('input'); mediaId.type = 'hidden'; mediaId.name = 'cover_media_id'; mainForm.append(mediaId); }
       mediaId.value = id; mainForm.dataset.dirty = 'true'; mediaId.dispatchEvent(new Event('change', {bubbles:true}));
     }});
-    section.append(form); editor.append(section);
+    section.append(upload); if (save) section.append(save); editor.append(section);
   };
   const projectExtra = (editor, row, load) => {
     if (row.id) {

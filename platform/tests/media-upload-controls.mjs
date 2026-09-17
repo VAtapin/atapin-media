@@ -37,6 +37,7 @@ assert.equal(finishes,1); assert.equal(stored.size,0); assert.equal(sessions.siz
 assert.match(uploaderSource, /desktop-file-drop-previews/);
 for (const tag of ['img','video','audio','object']) assert.match(uploaderSource, new RegExp(`createElement\\('${tag}'\\)`));
 assert.match(uploaderSource, /options\.preview===false/);
+assert.match(uploaderSource, /\.\.\.\(options\.submitters\|\|\[\]\)/);
 const uploadStyles = await fs.readFile('public/assets/desktop-media-upload.css', 'utf8');
 assert.match(uploadStyles, /\.desktop-file-preview img,.desktop-file-preview video,.desktop-file-preview object/);
 const first = new File(['one'], 'same.txt', {lastModified:2}), second = new File(['two'], 'same.txt', {lastModified:2});
@@ -48,6 +49,8 @@ const catalogsSource = await fs.readFile('public/assets/desktop-catalogs.js', 'u
 assert.match(catalogsSource, /mediaId\.value = id; mainForm\.dataset\.dirty = 'true'/);
 assert.doesNotMatch(catalogsSource, /onUploaded:id=>run\(/);
 assert.match(catalogsSource, /uploadedMediaId=id;attach\.disabled=false/);
+assert.match(catalogsSource, /save\.setAttribute\('form', mainForm\.id\)/);
+assert.match(catalogsSource, /section\.append\(upload\); if \(save\) section\.append\(save\)/);
 const lifecycleSource = await fs.readFile('public/assets/desktop-content-lifecycle.js', 'utf8');
 assert.match(lifecycleSource, /data-use-uploaded disabled/);
 assert.match(lifecycleSource, /uploadedMediaId=id;choice\.querySelector\('\[data-use-uploaded\]'\)\.disabled=false/);
