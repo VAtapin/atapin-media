@@ -54,7 +54,7 @@ return [
     'remove_attachment'=>'Verbindung entfernen',
     'remove_attachment_confirm'=>'Nur diese Dateiverbindung entfernen? Das Original und andere Inhalte bleiben unverändert.',
     'replacement_hint'=>'Neue Datei hochladen oder eine vorhandene auswählen. Nur dieser Inhalt wird geändert; Originaldateien werden nicht überschrieben.',
-    'replacement_upload'=>'Neue Datei hochladen', 'replacement_existing'=>'Vorhandene Datei suchen',
+    'replacement_upload'=>'Neue Datei hochladen', 'replacement_apply'=>'Datei übernehmen', 'replacement_existing'=>'Vorhandene Datei suchen',
     'replacement_search_first'=>'Mindestens 2 Zeichen eingeben und gezielt suchen. Es wird keine komplette Dateiliste geladen.',
     'replacement_confirm'=>'Diese Datei mit dem ausgewählten Inhalt verbinden bzw. die bisherige Dateiverbindung ändern?',
     'asset_not_linked'=>'Diese Datei gehört nicht zum gewählten Inhalt.', 'asset_unavailable'=>'Die Originaldatei ist nicht verfügbar.',

@@ -101,6 +101,10 @@ class DesktopWorkspacesTest extends TestCase
         $this->assertSame('queued',Product::findOrFail($book)->metadata['book_pdf_ai']['status']);
         $image=Media::create(['title'=>'Uploaded cover','original_name'=>'cover.webp','mime'=>'image/webp','kind'=>'image','bytes'=>5,'disk'=>'local','path'=>'cover.webp','sha256'=>hash('sha256','cover'),'status'=>'ready']);
         Storage::disk('local')->put('cover.webp','cover');
+        $this->putJson('/desktop/projects/'.$project,['title'=>'Projektbild','status'=>'idea','cover_media_id'=>$image->id])->assertOk();
+        $this->assertSame($image->id, \App\Models\Project::findOrFail($project)->cover_media_id);
+        $this->patchJson('/desktop/taxonomy/'.$term,['name'=>'Bildthema','kind'=>'topic','active'=>true,'cover_media_id'=>$image->id])->assertOk();
+        $this->assertSame($image->id, TaxonomyTerm::findOrFail($term)->cover_media_id);
         $this->postJson('/desktop/projects/'.$project.'/cover',['media_id'=>$image->id])->assertOk();
         $this->postJson('/desktop/taxonomy/'.$term.'/cover',['media_id'=>$image->id])->assertOk();
         $pdf=Media::create(['title'=>'Uploaded PDF','original_name'=>'second-book.pdf','mime'=>'application/pdf','kind'=>'pdf','bytes'=>8,'disk'=>'local','path'=>'second-book.pdf','sha256'=>hash('sha256','pdf'),'status'=>'ready']);

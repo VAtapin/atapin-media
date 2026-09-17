@@ -53,7 +53,7 @@ return [
     'remove_attachment'=>'Remove link',
     'remove_attachment_confirm'=>'Remove only this file link? Its original and other content remain unchanged.',
     'replacement_hint'=>'Upload a new file or select an existing one. Only this content changes; original files are not overwritten.',
-    'replacement_upload'=>'Upload new file', 'replacement_existing'=>'Find existing file',
+    'replacement_upload'=>'Upload new file', 'replacement_apply'=>'Apply file', 'replacement_existing'=>'Find existing file',
     'replacement_search_first'=>'Enter at least 2 characters to find a matching file. The entire library is not loaded here.',
     'replacement_confirm'=>'Attach this file to the selected content or change its previous file link?',
     'asset_not_linked'=>'This file is not linked to the selected content.', 'asset_unavailable'=>'The original file is unavailable.',

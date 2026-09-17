@@ -149,7 +149,8 @@ class TaxonomyController extends Controller
     {
         $data = $request->validate(['name'=>'required|string|max:100','kind'=>'required|in:topic,category',
             'slug'=>['nullable','string','max:180',Rule::unique('taxonomy_terms')->ignore($term->id)],
-            'description'=>'nullable|string|max:10000','parent_id'=>'nullable|integer|exists:taxonomy_terms,id','active'=>'required|boolean']);
+            'description'=>'nullable|string|max:10000','parent_id'=>'nullable|integer|exists:taxonomy_terms,id','active'=>'required|boolean',
+            'cover_media_id'=>['nullable','uuid',Rule::exists('media','id')->whereNull('archived_at')->where('kind','image')]]);
         $parent = $data['parent_id'] ?? null;
         $seen = [];
         while ($parent) {

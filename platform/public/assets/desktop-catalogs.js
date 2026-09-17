@@ -48,14 +48,20 @@
     }
     editor.append(section);
   };
-  const imageUpload = (editor, row, endpoint, load) => {
+  const imageUpload = (editor, row) => {
     if (!row.id) return;
     const section = el('section', undefined, 'workspace-asset-panel');
     section.append(el('h3', t('image')),
       el('p', row.cover_url ? t('image_replace_hint') : t('image_upload_hint'), 'workspace-muted'));
     const form = el('div', undefined, 'workspace-asset-form');
     const file = field('file', 'file'),input=file.querySelector('input'); input.accept = 'image/jpeg,image/png,image/webp,image/gif'; form.append(file);
-    window.enhanceDesktopFileInput(input,{profile:'cover',onUploaded:id=>run(editor.closest('[data-workspace]'),async()=>{await request(endpoint,{media_id:id},'POST');const mainForm=editor.querySelector('form');if(mainForm)delete mainForm.dataset.dirty;const root=editor.closest('[data-workspace]');if(root._workspaceEdit)await root._workspaceEdit({id:row.id});else await load();})});
+    const mainForm = editor.querySelector(':scope > form') || editor.querySelector('form');
+    window.enhanceDesktopFileInput(input,{profile:'cover',onUploaded:id=>{
+      if (!mainForm) return;
+      let mediaId = mainForm.querySelector('input[name="cover_media_id"]');
+      if (!mediaId) { mediaId = el('input'); mediaId.type = 'hidden'; mediaId.name = 'cover_media_id'; mainForm.append(mediaId); }
+      mediaId.value = id; mainForm.dataset.dirty = 'true'; mediaId.dispatchEvent(new Event('change', {bubbles:true}));
+    }});
     section.append(form); editor.append(section);
   };
   const projectExtra = (editor, row, load) => {
@@ -70,7 +76,7 @@
       linked(editor, t('publication'), row.publications?.data, 'content');
       window.appendProjectTimeline?.(editor, row.id);
     }
-    imageUpload(editor, row, row.id ? `/desktop/projects/${row.id}/cover` : '', load);
+    imageUpload(editor, row);
   };
   const taxonomyAssignments = (editor, row, host) => {
     if (!row.id) return;
@@ -133,7 +139,7 @@
     load();
   };
   const topicExtra = (editor, row, load, host) => {
-    imageUpload(editor, row, row.id ? `/desktop/taxonomy/${row.id}/cover` : '', load);
+    imageUpload(editor, row);
     taxonomyAssignments(editor, row, host);
   };
   const organizeBookForm = editor => {
@@ -265,8 +271,11 @@
     }
     const form = el('div', undefined, 'workspace-asset-form');
     const slot = field('slot', 'select', 'full', [['full', t('full')], ['cover', t('cover')], ['sample', t('sample')]]);
-    const file = field('file', 'file'),input=file.querySelector('input'); input.accept = '.pdf,image/jpeg,image/png,image/webp,image/gif';form.append(slot,file);panel.append(form);
-    window.enhanceDesktopFileInput(input,{profile:'attachment',onUploaded:id=>run(host,async()=>{await request(`/desktop/books/${row.id}/assets`,{slot:slot.querySelector('select').value,media_id:id},'POST');if(host._workspaceEdit)await host._workspaceEdit({id:row.id});else await load();})});
+    const file = field('file', 'file'),input=file.querySelector('input'); input.accept = '.pdf,image/jpeg,image/png,image/webp,image/gif';
+    const attach = el('button', t('save'), 'desktop-button'); attach.type = 'button'; attach.disabled = true; let uploadedMediaId = null;
+    form.append(slot,file,attach);panel.append(form);
+    window.enhanceDesktopFileInput(input,{profile:'attachment',onUploaded:id=>{uploadedMediaId=id;attach.disabled=false;}});
+    attach.addEventListener('click',()=>run(host,async()=>{if(!uploadedMediaId)return;attach.disabled=true;try{await request(`/desktop/books/${row.id}/assets`,{slot:slot.querySelector('select').value,media_id:uploadedMediaId},'POST');if(host._workspaceEdit)await host._workspaceEdit({id:row.id});else await load();}finally{attach.disabled=false;}}));
   };
   const projectConfig = {
     url:'/desktop/projects', newLabel:'new_project', inlineEdit:true, quickCreate:{fields:[['title'],['type','select',[['','—'],'mixed','video','post','book','podcast','live']]]}, detail:async row => { const data = await request('/desktop/projects/' + row.id); return {...data.project, tasks:data.tasks, records:data.records, products:data.products, publications:data.publications}; }, updateMethod:'PUT', statuses:['idea','script','production','review','published'],

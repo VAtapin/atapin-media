@@ -11,7 +11,7 @@
     if(!root||root.dataset.canEdit!=='true'||item.kind==='playlist')return;
     const tools=document.createElement('section');tools.className='media-inspector';tools.dataset.contentLifecycle='';
     tools.innerHTML=`<div class="media-library-toolbar-row"><button class="desktop-button" type="button" data-trash>${esc(item.trashed?t().trash_restore:t().delete_content)}</button>${!item.trashed&&root.dataset.canMediaEdit==='true'?`${item.public_section==='podcast'?'':`<button class="desktop-button" type="button" data-choose-role="cover">${esc(t().replace_cover)}</button>${['video','short'].includes(item.kind)?`<button class="desktop-button" type="button" data-choose-role="video">${esc(t().replace_video)}</button>`:''}`}<button class="desktop-button" type="button" data-choose-role="attachment">${esc(t().add_attachment)}</button>`:''}</div><p role="status"></p><div data-choice hidden></div>${!item.trashed&&root.dataset.canMediaEdit==='true'&&item.public_section!=='podcast'?`<div>${item.assets.map(asset=>`<p>${esc(asset.title)} <button class="desktop-button" type="button" data-detach-asset="${asset.id}">${esc(t().remove_attachment)}</button></p>`).join('')}</div>`:''}`;
-    details.append(tools);const message=tools.querySelector('[role=status]'),choice=tools.querySelector('[data-choice]');let mode,generation=0;
+    details.append(tools);const message=tools.querySelector('[role=status]'),choice=tools.querySelector('[data-choice]');let mode,generation=0,uploadedMediaId=null;
     const dirty=()=>{if(details.dataset.dirty==='true'){message.textContent=t().save_before_ai;return true;}return false;};
     const reload=()=>{root.dispatchEvent(new CustomEvent('local-content-open',{detail:{url:'/desktop/content/'+item.id}}));changed();};
     const apply=async id=>{if(dirty())return;await send('/desktop/content/'+item.id+'/assets',{...mode,media_id:id});reload();};
@@ -27,11 +27,11 @@
       }catch(e){message.textContent=e.message;}
     };
     const choose=(role,old=null)=>{
-      if(dirty())return;const kind=role==='cover'?'image':role==='video'?'video':old?.kind;
+      if(dirty())return;const kind=role==='cover'?'image':role==='video'?'video':old?.kind;uploadedMediaId=null;
       mode={action:role==='attachment'&&!old?'attach':'replace',role,...old?{old_media_id:old.id}:{},kind};choice.hidden=false;
-      choice.innerHTML=`<p>${esc(t().replacement_hint)}</p>${root.dataset.canUpload==='true'?`<label>${esc(t().replacement_upload)}<input type="file" data-replacement-upload ${kind==='image'?'accept="image/*"':kind==='video'?'accept="video/*"':''}></label>`:''}<form><label>${esc(t().replacement_existing)}<input type="search" name="q" maxlength="120"></label><button class="desktop-button" type="submit">${esc(t().cover_find)}</button></form><div data-results></div>`;
+      choice.innerHTML=`<p>${esc(t().replacement_hint)}</p>${root.dataset.canUpload==='true'?`<label>${esc(t().replacement_upload)}<input type="file" data-replacement-upload ${kind==='image'?'accept="image/*"':kind==='video'?'accept="video/*"':''}></label><button class="desktop-button" type="button" data-use-uploaded disabled>${esc(t().replacement_apply)}</button>`:''}<form><label>${esc(t().replacement_existing)}<input type="search" name="q" maxlength="120"></label><button class="desktop-button" type="submit">${esc(t().cover_find)}</button></form><div data-results></div>`;
       choice.querySelector('form').onsubmit=e=>{e.preventDefault();search();};
-      const upload=choice.querySelector('[data-replacement-upload]');if(upload)window.enhanceDesktopFileInput(upload,{userId:root.dataset.userId,profile:kind==='image'?'cover':kind==='video'?'video':'attachment',onUploaded:async id=>{if(dirty())return;tools.inert=true;try{await apply(id);}finally{tools.inert=false;}} ,onError:error=>{message.textContent=error.message;}});choice.querySelector('[data-results]').textContent=t().replacement_search_first;
+      const upload=choice.querySelector('[data-replacement-upload]');if(upload)window.enhanceDesktopFileInput(upload,{userId:root.dataset.userId,profile:kind==='image'?'cover':kind==='video'?'video':'attachment',onUploaded:id=>{uploadedMediaId=id;choice.querySelector('[data-use-uploaded]').disabled=false;},onError:error=>{message.textContent=error.message;}});choice.querySelector('[data-results]').textContent=t().replacement_search_first;
     };
     tools.addEventListener('click',async event=>{
       const button=event.target.closest('button');if(!button)return;
@@ -43,6 +43,7 @@
         if(button.dataset.chooseRole)return choose(button.dataset.chooseRole);
         if(button.dataset.detachAsset){if(dirty()||!confirm(t().remove_attachment_confirm))return;await send('/desktop/content/'+item.id+'/assets',{action:'detach',role:'attachment',old_media_id:button.dataset.detachAsset});return reload();}
         if(button.dataset.choicePage)return search(Number(button.dataset.choicePage));
+        if(button.hasAttribute('data-use-uploaded')){if(!uploadedMediaId||dirty())return;button.disabled=true;await apply(uploadedMediaId);}
         if(button.dataset.useMedia){if(dirty()||!confirm(t().replacement_confirm))return;button.disabled=true;await apply(button.dataset.useMedia);}
       }catch(e){message.textContent=e.message;button.disabled=false;}
     });
