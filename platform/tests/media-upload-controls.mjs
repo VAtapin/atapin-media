@@ -20,7 +20,8 @@ const context = vm.createContext({crypto, AbortController, Error, Uint8Array, St
     finishes++; return response({media_id:id});
   },
 });
-vm.runInContext(await fs.readFile('public/assets/desktop-media-upload.js', 'utf8'), context);
+const uploaderSource = await fs.readFile('public/assets/desktop-media-upload.js', 'utf8');
+vm.runInContext(uploaderSource, context);
 const control = context.window.createDesktopUploadControl(); control.pause();
 let resumed = 0;
 const waiting = [control.checkpoint().then(() => resumed++), control.checkpoint().then(() => resumed++)];
@@ -33,6 +34,11 @@ assert.equal(finishes,0); assert.equal(stored.size,1);
 stopDuringChunk = null;
 await context.window.uploadDesktopMedia(file, 'test-user', () => {}, context.window.createDesktopUploadControl());
 assert.equal(finishes,1); assert.equal(stored.size,0); assert.equal(sessions.size,1);
+assert.match(uploaderSource, /desktop-file-drop-previews/);
+for (const tag of ['img','video','audio','object']) assert.match(uploaderSource, new RegExp(`createElement\\('${tag}'\\)`));
+assert.match(uploaderSource, /options\.preview===false/);
+const uploadStyles = await fs.readFile('public/assets/desktop-media-upload.css', 'utf8');
+assert.match(uploadStyles, /\.desktop-file-preview img,.desktop-file-preview video,.desktop-file-preview object/);
 const first = new File(['one'], 'same.txt', {lastModified:2}), second = new File(['two'], 'same.txt', {lastModified:2});
 Object.defineProperty(first, 'webkitRelativePath', {value:'first/same.txt'});
 Object.defineProperty(second, 'webkitRelativePath', {value:'second/same.txt'});
@@ -60,3 +66,4 @@ delete context.window.__libraryPresentationTest;
 console.log('Video file uses a decorative filmstrip, not Play; real video preview controls are preserved.');
 console.log('Pause/resume for parallel workers, stop without finish, and resume the same session passed.');
 console.log('Automatic uploads only prepare media IDs; saving or applying them still requires an explicit action.');
+console.log('Unified forms preview selected images, video, audio and PDF files when the browser supports them.');

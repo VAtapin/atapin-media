@@ -176,13 +176,29 @@
     const multiple = options.multiple ?? input.multiple;
     const zone = document.createElement('div');
     zone.className = 'desktop-file-drop'; zone.tabIndex = 0; zone.setAttribute('role', 'button');
-    zone.innerHTML = `<span class="desktop-file-drop-icon" aria-hidden="true">⇧</span><span><strong>${uploadLabel('uploader_drop', 'Datei hierher ziehen')}</strong><small>${uploadLabel('uploader_choose', 'oder Datei auswählen')}</small></span><span class="desktop-file-drop-state" role="status"></span><span class="desktop-file-drop-list"></span>`;
+    zone.innerHTML = `<span class="desktop-file-drop-icon" aria-hidden="true">⇧</span><span><strong>${uploadLabel('uploader_drop', 'Datei hierher ziehen')}</strong><small>${uploadLabel('uploader_choose', 'oder Datei auswählen')}</small></span><span class="desktop-file-drop-state" role="status"></span><span class="desktop-file-drop-previews" data-upload-preview></span><span class="desktop-file-drop-list"></span>`;
     input.classList.add('desktop-file-native'); input.hidden = true;
     input.insertAdjacentElement('afterend', zone);
     const state = zone.querySelector('.desktop-file-drop-state');
+    const previews = zone.querySelector('.desktop-file-drop-previews');
     const list = zone.querySelector('.desktop-file-drop-list');
-    let generation = 0;
-    const api = { element:zone, input, mediaIds:[], files:[], uploading:false, clear:() => {generation++;api.uploading=false;api.mediaIds=[];api.files=[];input.value='';list.replaceChildren();state.textContent='';zone.classList.remove('is-complete','is-error','is-uploading');} };
+    let generation = 0, previewUrls = [];
+    const clearPreviews = () => {for(const url of previewUrls)URL.revokeObjectURL(url);previewUrls=[];previews.replaceChildren();};
+    const preview = file => {
+      if(options.preview===false)return;
+      const type=String(file.type||'').toLowerCase(),pdf=type==='application/pdf'||/\.pdf$/i.test(file.name||'');
+      if(!type.startsWith('image/')&&!type.startsWith('video/')&&!type.startsWith('audio/')&&!pdf)return;
+      const url=URL.createObjectURL(file);previewUrls.push(url);
+      const figure=document.createElement('figure');figure.className='desktop-file-preview';
+      let media;
+      if(type.startsWith('image/')){media=document.createElement('img');media.alt=file.name;}
+      else if(type.startsWith('video/')){media=document.createElement('video');media.controls=true;media.preload='metadata';}
+      else if(type.startsWith('audio/')){media=document.createElement('audio');media.controls=true;media.preload='metadata';}
+      else{media=document.createElement('object');media.type='application/pdf';media.setAttribute('aria-label',file.name);}
+      if(media.tagName==='OBJECT')media.data=url;else media.src=url;
+      const caption=document.createElement('figcaption');caption.textContent=file.name;figure.append(media,caption);previews.append(figure);
+    };
+    const api = { element:zone, input, mediaIds:[], files:[], uploading:false, clear:() => {generation++;api.uploading=false;api.mediaIds=[];api.files=[];input.value='';clearPreviews();list.replaceChildren();state.textContent='';zone.classList.remove('is-complete','is-error','is-uploading');} };
     input._desktopUploader = api;
     const render = (file, text) => {
       const row=document.createElement('span');row.className='desktop-file-drop-item';
@@ -193,7 +209,7 @@
     const select = async rawFiles => {
       const files = [...rawFiles].filter(Boolean).slice(0, multiple ? undefined : 1);
       if (!files.length) return;
-      const own=++generation;api.uploading=true;api.mediaIds=[];api.files=files;list.replaceChildren();zone.classList.remove('is-complete','is-error');zone.classList.add('is-uploading');
+      const own=++generation;api.uploading=true;api.mediaIds=[];api.files=files;clearPreviews();files.forEach(preview);list.replaceChildren();zone.classList.remove('is-complete','is-error');zone.classList.add('is-uploading');
       const submitters=[...(input.form?.querySelectorAll('button[type="submit"],input[type="submit"]')||[])];const prior=submitters.map(button=>button.disabled);submitters.forEach(button=>{button.disabled=true;});
       state.textContent=uploadLabel('uploader_uploading','Wird hochgeladen …');
       try {
@@ -212,7 +228,7 @@
       } finally {if(own===generation){api.uploading=false;submitters.forEach((button,index)=>{button.disabled=prior[index];});}}
     };
     api.select=select;
-    zone.addEventListener('click',event=>{if(!event.target.closest('a,button')){event.preventDefault();event.stopPropagation();input.click();}});
+    zone.addEventListener('click',event=>{if(!event.target.closest('a,button,audio,video,object,[data-upload-preview]')){event.preventDefault();event.stopPropagation();input.click();}});
     zone.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();input.click();}});
     for(const name of ['dragenter','dragover'])zone.addEventListener(name,event=>{event.preventDefault();zone.classList.add('is-dragging');});
     for(const name of ['dragleave','drop'])zone.addEventListener(name,event=>{event.preventDefault();zone.classList.remove('is-dragging');});

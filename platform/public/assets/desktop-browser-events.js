@@ -23,7 +23,7 @@ export function mountBrowserEvents({root,panel,t,request,onSelect}){
     if(!['image/jpeg','image/png','image/webp','image/gif'].includes(file.type)||file.size>50*1024*1024){poster.value='';hint.textContent=t('quick_poster_invalid');return;}
     hint.textContent='';previewUrl=URL.createObjectURL(file);preview.src=previewUrl;preview.hidden=false;
   };
-  window.enhanceDesktopFileInput(poster,{profile:'poster',userId:root.dataset.userId,onUploaded:id=>{uploadedCover=id;hint.textContent=t('quick_saved');},onError:error=>{hint.textContent=error.message;}});
+  window.enhanceDesktopFileInput(poster,{profile:'poster',preview:false,userId:root.dataset.userId,onUploaded:id=>{uploadedCover=id;hint.textContent=t('quick_saved');},onError:error=>{hint.textContent=error.message;}});
   const select=async()=>{
     const own=++generation;quick.hidden=choice.value!=='new';hint.textContent='';
     if(choice.value==='new'){current=null;onSelect(null);return;}

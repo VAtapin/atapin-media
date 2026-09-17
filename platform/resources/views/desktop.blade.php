@@ -57,7 +57,7 @@ $workspaceLabels = array_replace(__('workspaces'), [
     <title>Desktop · {{ config('platform.brand') }}</title>
     <link rel="icon" href="/favicon.png"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/brand/owner/app-icon.png"><meta name="theme-color" content="#8b6a3d"><link rel="stylesheet" href="/assets/fonts/fonts.css"><link rel="stylesheet" href="/assets/brand/ui-kit.css?v=owner-1"><link rel="stylesheet" href="/assets/desktop-os.css?v=4"><link rel="stylesheet" href="/assets/desktop-windows.css?v=6"><link rel="stylesheet" href="/assets/desktop-settings.css?v=6">
     <link rel="stylesheet" href="/assets/desktop-app.css?v=3"><link rel="stylesheet" href="/assets/desktop-shortcuts.css?v=3"><link rel="stylesheet" href="/assets/desktop-media-library.css?v=13"><link rel="stylesheet" href="/assets/desktop-import-center.css?v=3"><link rel="stylesheet" href="/assets/desktop-live-studio.css?v=4"><link rel="stylesheet" href="/assets/desktop-community.css?v=3"><link rel="stylesheet" href="/assets/desktop-publishing.css?v=4">
-    <link rel="stylesheet" href="/assets/desktop-workspaces.css?v=16"><link rel="stylesheet" href="/assets/desktop-media-upload.css?v=1">
+    <link rel="stylesheet" href="/assets/desktop-workspaces.css?v=16"><link rel="stylesheet" href="/assets/desktop-media-upload.css?v=2">
     <link rel="stylesheet" href="/vendor/jodit/4.13.9/jodit.min.css?v=4.13.9">
     <link rel="stylesheet" href="/assets/desktop-rich-text.css?v=1">
     <link rel="stylesheet" href="/assets/desktop-overview.css?v=2">
@@ -198,7 +198,7 @@ $workspaceLabels = array_replace(__('workspaces'), [
     <script src="/assets/desktop-import-versions.js?v=2" defer></script>
     <script src="/assets/desktop-record-classifications.js?v=1" defer></script>
 
-    <script src="/assets/desktop-media-upload.js?v=4" defer></script>
+    <script src="/assets/desktop-media-upload.js?v=5" defer></script>
     @foreach($programs as $program)
     <template data-help-template="{{ $program['id'] }}">
         <section class="desktop-help">
