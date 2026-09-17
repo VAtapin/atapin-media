@@ -55,6 +55,7 @@ class PublicTaxonomyUiTest extends TestCase
             ->assertDontSee('public-taxonomy-crumbs', false);
         $this->get('/beitraege?taxonomy=medizin')->assertOk()->assertSee('Anatomie Beitrag');
         $categoryPage = $this->get('/themen?category=medizin')->assertOk()
+            ->assertSee('/assets/public-category-directory.css?v=4', false)
             ->assertSee('<img class="public-photo" src="'.$cover->publicUrl().'"', false)
             ->assertSee('public-directory-feature-selected', false)
             ->assertDontSee('<span class="public-feature-label">', false)
