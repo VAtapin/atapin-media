@@ -1,4 +1,11 @@
 const publicMenu = document.querySelector('.public-menu-button');
+for(const player of document.querySelectorAll('video[data-hls-src]')){
+  const hls=player.dataset.hlsSrc,mp4=player.dataset.mp4Src;
+  if(!hls)continue;
+  if(player.canPlayType('application/vnd.apple.mpegurl'))player.src=hls;
+  else if(mp4)player.src=mp4;
+  player.load();
+}
 publicMenu?.addEventListener('click', () => {
   const opened = publicMenu.getAttribute('aria-expanded') !== 'true';
   publicMenu.setAttribute('aria-expanded', String(opened));

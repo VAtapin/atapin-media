@@ -25,6 +25,27 @@ class MediaDerivativesTest extends TestCase
         $record->refresh();$cover=Media::findOrFail($record->metadata['cover_media_id']);$this->assertSame('media-canonical',$cover->disk);$this->assertMatchesRegularExpression('/^[a-f0-9]{64}\.jpg$/',$cover->path);
         $this->assertSame('original',Storage::disk('media-canonical')->get('video.mp4'));$id=$cover->id;$job->handle($media);$this->assertSame($id,$record->fresh()->metadata['cover_media_id']);
     }
+    public function test_public_video_queues_hls_and_publishes_complete_renditions_without_rewriting_original(): void
+    {
+        $record=$this->record(['public_published'=>true]);Queue::assertPushed(PrepareContentMedia::class,fn($job)=>$job->operation==='hls');
+        Process::fake(function($process){
+            if(in_array('-show_entries',$process->command,true))return Process::result(output:json_encode(['streams'=>[['codec_type'=>'video','width'=>640,'height'=>360],['codec_type'=>'audio']]]));
+            if(in_array('-hls_segment_filename',$process->command,true)){
+                $segmentTemplate=$process->command[array_search('-hls_segment_filename',$process->command,true)+1];$root=dirname(dirname($segmentTemplate));
+                file_put_contents($root.'/index.m3u8',"#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=930000,RESOLUTION=640x360\n360p/index.m3u8\n");
+                mkdir($root.'/360p',0700,true);file_put_contents($root.'/360p/index.m3u8',"#EXTM3U\n#EXTINF:6.0,\nsegment_00000.ts\n");file_put_contents($root.'/360p/segment_00000.ts','segment');
+            }else{$output=end($process->command);file_put_contents($output,'compressed');}
+            return Process::result();
+        });
+        (new PrepareContentMedia($record->id,'hls'))->handle(app(MediaDerivatives::class));$record->refresh();
+        $playback=$record->metadata['hls_playback'];$this->assertSame('ready',$playback['state']);$hash=basename(dirname($playback['url']));
+        $this->assertFileExists(Storage::disk('media-canonical')->path('hls/'.$hash.'/index.m3u8'));
+        $this->assertFileExists(Storage::disk('media-canonical')->path('hls/'.$hash.'/360p/segment_00000.ts'));
+        $this->assertFileExists(Storage::disk('media-canonical')->path('hls/'.$hash.'/playback.mp4'));
+        $page=$this->get(app(PublicContent::class)->card($record->fresh())['url'])->assertOk()->assertSee('data-hls-src="/media/hls/'.$hash.'/index.m3u8"',false)->assertSee('data-mp4-src="/media/hls/'.$hash.'/playback.mp4"',false);
+        $this->assertSame('original',Storage::disk('media-canonical')->get('video.mp4'));
+        Process::assertRan(fn($process)=>in_array('libx264',$process->command,true)&&in_array('independent_segments',$process->command,true));
+    }
     public function test_podcast_copies_aac_audio_and_public_page_never_loads_video(): void
     {
         $record=$this->record(['public_section'=>'podcast','public_published'=>true]);$media=app(MediaDerivatives::class);

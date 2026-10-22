@@ -1,4 +1,6 @@
 Require all granted
+AddType application/vnd.apple.mpegurl .m3u8
+AddType video/mp2t .ts
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
