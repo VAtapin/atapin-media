@@ -12,8 +12,8 @@ class PrepareContentMedia implements ShouldQueue,ShouldBeUnique
     public int $tries=1;
     public int $timeout=3400;
     public int $uniqueFor=3600;
-    public function __construct(public int $id,public string $operation='frame',public bool $bypassHlsPause=false) {}
-    public function uniqueId(): string { return $this->id.':'.$this->operation.($this->operation==='hls'?':v'.MediaDerivatives::HLS_PROFILE_VERSION:'').($this->bypassHlsPause?':targeted':''); }
+    public function __construct(public int $id,public string $operation='frame',public bool $bypassHlsPause=false,public ?bool $publicHlsTarget=null) {}
+    public function uniqueId(): string { return $this->id.':'.$this->operation.($this->operation==='hls'?':v'.MediaDerivatives::HLS_PROFILE_VERSION.($this->publicHlsTarget===null?'':($this->publicHlsTarget?':public':':private')):'').($this->bypassHlsPause?':targeted':''); }
     public function handle(MediaDerivatives $media): void
     {
         $record=SourceRecord::find($this->id);if(!$record)return;
@@ -22,7 +22,7 @@ class PrepareContentMedia implements ShouldQueue,ShouldBeUnique
         $this->state('running');
         try {
             if($this->operation==='podcast')$media->podcast($record);
-            elseif($this->operation==='hls'){$url=$media->hls($record);$this->hlsReady($record,$url);}
+            elseif($this->operation==='hls'){$result=$media->hls($record);$this->hlsReady($record,$result);}
             else $media->frame($record);
             $this->state('completed');
         } catch (\Throwable $error) {
@@ -46,13 +46,17 @@ class PrepareContentMedia implements ShouldQueue,ShouldBeUnique
             $record->updateQuietly(['metadata'=>$meta]);
         });
     }
-    private function hlsReady(SourceRecord $record,string $url): void
+    private function hlsReady(SourceRecord $record,array $result): void
     {
-        \Illuminate\Support\Facades\DB::transaction(function()use($record,$url){
+        $promote=\Illuminate\Support\Facades\DB::transaction(function()use($record,$result){
             $current=SourceRecord::lockForUpdate()->find($record->id);if(!$current)return;
+            if($result['state']==='prepared'&&($current->metadata['public_published']??false))return true;
             $video=app(MediaDerivatives::class)->video($current);if(!$video)return;
-            $meta=$current->metadata;$meta['hls_playback']=['state'=>'ready','profile_version'=>MediaDerivatives::HLS_PROFILE_VERSION,'url'=>$url,'fallback_url'=>str_replace('/index.m3u8','/playback.mp4',$url),'source_media_id'=>$video->id,'updated_at'=>now()->toIso8601String()];
+            $meta=$current->metadata;$meta['hls_playback']=['state'=>$result['state'],'profile_version'=>MediaDerivatives::HLS_PROFILE_VERSION,'source_media_id'=>$video->id,'updated_at'=>now()->toIso8601String()];
+            if($result['state']==='ready'){$meta['hls_playback']['url']=$result['url'];$meta['hls_playback']['fallback_url']=$result['fallback_url'];}
             $current->updateQuietly(['metadata'=>$meta]);
+            return false;
         });
+        if($promote){$current=SourceRecord::find($record->id);if($current){$result=app(MediaDerivatives::class)->hls($current);$this->hlsReady($current,$result);}}
     }
 }

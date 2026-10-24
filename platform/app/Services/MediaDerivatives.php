@@ -29,19 +29,33 @@ class MediaDerivatives
         $disk=Storage::disk('local');$disk->makeDirectory('media-work');
         return $disk->path('media-work/'.bin2hex(random_bytes(16)).'.'.$extension);
     }
-    public function hls(SourceRecord $record): string
+    public function hls(SourceRecord $record): array
     {
         $video=$this->video($record);if(!$video)throw new \RuntimeException('Local video is unavailable.');
         $location=app(MediaOriginalLocator::class)->find($video);if(!$location)throw new \RuntimeException('Local video is unavailable.');
         $source=app(MediaOriginalLocator::class)->path($location);$sha=hash_file('sha256',$source);if(!$sha)throw new \RuntimeException('Cannot verify source video.');
+        $published=(bool)($record->metadata['public_published']??false);
         $relative='hls/'.$sha;$playlist=Storage::disk(CanonicalMediaStorage::DISK)->path($relative.'/index.m3u8');
         $fallback=Storage::disk(CanonicalMediaStorage::DISK)->path($relative.'/playback.mp4');
-        if($this->hasCurrentHlsPackage($record,$playlist,$fallback)){if(!chmod(dirname(dirname($playlist)),0755))throw new \RuntimeException('Cannot make public HLS directory readable.');$this->makeHlsTreePublic(dirname($playlist));return '/media/'.$relative.'/index.m3u8';}
+        $preparedRoot=Storage::disk('local')->path('media-hls-prepared/'.$sha);
+        if($published&&$this->hasCurrentHlsPackage($record,$playlist,$fallback)){if(!chmod(dirname(dirname($playlist)),0755))throw new \RuntimeException('Cannot make public HLS directory readable.');$this->makeHlsTreePublic(dirname($playlist));return $this->publicHlsResult($relative);}
+        if(!$published&&$this->hasPreparedHlsPackage($preparedRoot))return ['state'=>'prepared'];
         $root=Storage::disk('local')->path('media-work/hls');if(!is_dir($root)&&!mkdir($root,0700,true)&&!is_dir($root))throw new \RuntimeException('HLS work directory is unavailable.');
         $lock=fopen($root.'/'.$sha.'.lock','c');if(!$lock||!flock($lock,LOCK_EX))throw new \RuntimeException('Cannot lock HLS conversion.');
         $work=$root.'/'.$sha.'-'.bin2hex(random_bytes(8));$stage=Storage::disk(CanonicalMediaStorage::DISK)->path('.hls-'.$sha.'-'.bin2hex(random_bytes(8)));$final=Storage::disk(CanonicalMediaStorage::DISK)->path($relative);
         try{
-            if($this->hasCurrentHlsPackage($record,$playlist,$fallback)){if(!chmod(dirname(dirname($playlist)),0755))throw new \RuntimeException('Cannot make public HLS directory readable.');$this->makeHlsTreePublic(dirname($playlist));return '/media/'.$relative.'/index.m3u8';}
+            if($published&&$this->hasCurrentHlsPackage($record,$playlist,$fallback)){if(!chmod(dirname(dirname($playlist)),0755))throw new \RuntimeException('Cannot make public HLS directory readable.');$this->makeHlsTreePublic(dirname($playlist));return $this->publicHlsResult($relative);}
+            if(!$published&&$this->hasPreparedHlsPackage($preparedRoot))return ['state'=>'prepared'];
+            if($published&&$this->hasPreparedHlsPackage($preparedRoot)){
+                if(!is_dir(dirname($final))&&!mkdir(dirname($final),0755,true)&&!is_dir(dirname($final)))throw new \RuntimeException('Public HLS directory is unavailable.');
+                if(!chmod(dirname($final),0755))throw new \RuntimeException('Cannot make public HLS directory readable.');
+                if(!\Illuminate\Support\Facades\File::copyDirectory($preparedRoot,$stage))throw new \RuntimeException('Cannot stage prepared HLS output.');
+                @unlink($stage.'/.profile-version');$this->makeHlsTreePublic($stage);
+                if(is_dir($final)&&!\Illuminate\Support\Facades\File::deleteDirectory($final))throw new \RuntimeException('Cannot replace incomplete HLS output.');
+                if(!rename($stage,$final))throw new \RuntimeException('Cannot publish prepared HLS output.');
+                \Illuminate\Support\Facades\File::deleteDirectory($preparedRoot);
+                return $this->publicHlsResult($relative);
+            }
             if(!mkdir($work,0700,true))throw new \RuntimeException('HLS work directory is unavailable.');
             $probe=Process::timeout(45)->run([config('platform.media_ffprobe_binary','ffprobe'),'-v','error','-show_entries','stream=codec_type,width,height','-of','json',$source]);
             if(!$probe->successful())throw new \RuntimeException('Cannot inspect source video.');
@@ -58,14 +72,42 @@ class MediaDerivatives
             foreach($profiles as $profile){$variant=$work.'/'.$profile['height'].'p/index.m3u8';if(!is_file($variant)||!glob($work.'/'.$profile['height'].'p/segment_*.ts'))throw new \RuntimeException('HLS output is incomplete.');}
             $fallbackResult=Process::timeout(1200)->run([config('platform.media_ffmpeg_binary','ffmpeg'),'-nostdin','-hide_banner','-loglevel','error','-y','-i',$source,'-map','0:v:0','-map','0:a:0?','-vf','scale=-2:min(720\\,ih)','-c:v','libx264','-preset','veryfast','-threads','2','-pix_fmt','yuv420p','-b:v','2800k','-maxrate','3200k','-bufsize','5600k','-c:a','aac','-b:a','128k','-movflags','+faststart',$work.'/playback.mp4']);
             if(!$fallbackResult->successful()||!is_file($work.'/playback.mp4')||filesize($work.'/playback.mp4')===0)throw new \RuntimeException('MP4 fallback encoding failed: '.mb_substr(trim($fallbackResult->errorOutput()),0,500));
+            $latest=SourceRecord::find($record->id);$published=(bool)($latest?->metadata['public_published']??false);
+            if(!$published){
+                if(!is_dir(dirname($preparedRoot))&&!mkdir(dirname($preparedRoot),0700,true)&&!is_dir(dirname($preparedRoot)))throw new \RuntimeException('Private HLS directory is unavailable.');
+                file_put_contents($work.'/.profile-version',(string)self::HLS_PROFILE_VERSION,LOCK_EX);
+                if(is_dir($preparedRoot)&&!\Illuminate\Support\Facades\File::deleteDirectory($preparedRoot))throw new \RuntimeException('Cannot replace prepared HLS output.');
+                if(!rename($work,$preparedRoot))throw new \RuntimeException('Cannot save prepared HLS output privately.');
+                $this->makeHlsTreePrivate($preparedRoot);
+                return ['state'=>'prepared'];
+            }
             if(!is_dir(dirname($final))&&!mkdir(dirname($final),0755,true)&&!is_dir(dirname($final)))throw new \RuntimeException('Public HLS directory is unavailable.');
             if(!chmod(dirname($final),0755))throw new \RuntimeException('Cannot make public HLS directory readable.');
             if(!\Illuminate\Support\Facades\File::copyDirectory($work,$stage))throw new \RuntimeException('Cannot stage HLS output.');
             $this->makeHlsTreePublic($stage);
             if(is_dir($final)){if(!\Illuminate\Support\Facades\File::deleteDirectory($final))throw new \RuntimeException('Cannot replace incomplete HLS output.');}
             if(!rename($stage,$final))throw new \RuntimeException('Cannot publish HLS output.');
-            return '/media/'.$relative.'/index.m3u8';
+            return $this->publicHlsResult($relative);
         }finally{if(is_dir($work))\Illuminate\Support\Facades\File::deleteDirectory($work);if(is_dir($stage))\Illuminate\Support\Facades\File::deleteDirectory($stage);flock($lock,LOCK_UN);fclose($lock);}
+    }
+    private function publicHlsResult(string $relative): array
+    {
+        $url='/media/'.$relative.'/index.m3u8';
+        return ['state'=>'ready','url'=>$url,'fallback_url'=>str_replace('/index.m3u8','/playback.mp4',$url)];
+    }
+    private function hasPreparedHlsPackage(string $root): bool
+    {
+        $marker=@file_get_contents($root.'/.profile-version');$master=@file_get_contents($root.'/index.m3u8');
+        if($marker!==(string)self::HLS_PROFILE_VERSION||!is_string($master)||!is_file($root.'/playback.mp4')||filesize($root.'/playback.mp4')===0||preg_match_all('/^#EXT-X-STREAM-INF:/m',$master)!==1)return false;
+        if(!preg_match('/^([^\r\n]+\/index\.m3u8)$/m',$master,$match))return false;
+        $variant=dirname($root.'/'.$match[1]);
+        return is_file($variant.'/index.m3u8')&&count(glob($variant.'/segment_*.ts')?:[])>0;
+    }
+    private function makeHlsTreePrivate(string $root): void
+    {
+        $items=new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root,\FilesystemIterator::SKIP_DOTS),\RecursiveIteratorIterator::SELF_FIRST);
+        foreach($items as $item){$mode=$item->isDir()?0700:0600;if(!chmod($item->getPathname(),$mode))throw new \RuntimeException('Cannot set private HLS file permissions.');}
+        if(!chmod($root,0700))throw new \RuntimeException('Cannot set private HLS directory permissions.');
     }
     private function makeHlsTreePublic(string $root): void
     {

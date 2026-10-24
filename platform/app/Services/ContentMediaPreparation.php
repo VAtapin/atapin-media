@@ -4,13 +4,15 @@ use App\Models\SourceRecord;
 use App\Jobs\PrepareContentMedia;
 class ContentMediaPreparation
 {
-    public function queueMissing(SourceRecord $record,bool $hlsOnly=false,bool $retryFailed=false): int
+    public function queueMissing(SourceRecord $record,bool $hlsOnly=false,bool $retryFailed=false,bool $includeUnpublishedHls=false): int
     {
         if(!in_array($record->kind,['video','short','post'],true)||($record->metadata['archive_data']??false)||$record->trashed())return 0;
         $media=app(MediaDerivatives::class);if(!$media->video($record))return 0;
         $operations=[];
         $hls=$record->metadata['hls_playback']??[];$video=$media->video($record);
-        if(($record->metadata['public_published']??false)&&(($hls['state']??null)!=='ready'||($hls['source_media_id']??null)!==$video->id||($hls['profile_version']??null)!==MediaDerivatives::HLS_PROFILE_VERSION))$operations[]='hls';
+        $isPublished=(bool)($record->metadata['public_published']??false);
+        $needsHls=($hls['state']??null)!=='ready'||($hls['source_media_id']??null)!==$video->id||($hls['profile_version']??null)!==MediaDerivatives::HLS_PROFILE_VERSION;
+        if(($isPublished||$includeUnpublishedHls)&&$needsHls&&($isPublished||($hls['state']??null)!=='prepared'))$operations[]='hls';
         if(!$hlsOnly){if(!$media->hasCover($record))$operations[]='frame';if(($record->metadata['public_section']??null)==='podcast'&&!($record->metadata['podcast_audio_id']??null))$operations[]='podcast';}
         $count=0;
         foreach($operations as $operation){
@@ -19,9 +21,10 @@ class ContentMediaPreparation
             if($operation==='hls'&&$state==='failed'&&!$retryFailed)continue;
             if($operation==='hls'&&\Illuminate\Support\Facades\Cache::get('media.hls.paused')&&!$retryFailed)continue;
             $activeRecent=in_array($state,['queued','running'],true)&&strtotime($job['updated_at']??'now')>time()-7200;
-            if(!$profileOutdated&&($state==='completed'||$activeRecent))continue;
+            $promotePrepared=$operation==='hls'&&$isPublished&&($hls['state']??null)==='prepared';
+            if(!$profileOutdated&&!$promotePrepared&&($state==='completed'||$activeRecent))continue;
             $meta=$record->metadata;$meta['media_jobs'][$operation]=['state'=>'queued','updated_at'=>now()->toIso8601String()];
-            $record->updateQuietly(['metadata'=>$meta]);dispatch((new PrepareContentMedia((int)$record->id,$operation))->afterCommit());$count++;
+            $record->updateQuietly(['metadata'=>$meta]);dispatch((new PrepareContentMedia((int)$record->id,$operation,false,$isPublished))->afterCommit());$count++;
         }
         return $count;
     }
