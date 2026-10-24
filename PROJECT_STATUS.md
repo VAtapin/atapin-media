@@ -99,7 +99,7 @@
 
 ## Последний связанный commit
 
-- Один HLS-профиль до 1080p: `Use a single HLS rendition` (текущая задача; production deployment ещё не выполнен).
+- Подготовка HLS неопубликованных видео в private runtime и promotion при публикации: `8696b4b` — `Prepare unpublished video HLS privately` (production deployment ещё не выполнен).`n- Один HLS-профиль до 1080p: `3f2cda1` — `Use a single HLS rendition` (production deployment ещё не выполнен).
 - Исправление прав HLS и адресной подготовки одного видео: `Fix public HLS permissions and targeted retry` — `8140917`.
 - Остановка HLS после ошибки и удаление abandoned work: этот commit.
 - Автоматическая HLS/MP4-подготовка видео и незакоммиченные переводы/дизайн: `Add automated video playback derivatives` — `main` → `origin/main`.
