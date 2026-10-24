@@ -23,7 +23,7 @@ class PrepareMissingContentMedia extends Command
         $video=app(\App\Services\MediaDerivatives::class)->video($record);
         if(!$video){$this->error('Record has no available local video.');return self::FAILURE;}
         $playback=$record->metadata['hls_playback']??[];
-        if(($playback['state']??null)==='ready'&&($playback['source_media_id']??null)===$video->id){$this->info('HLS is already ready for record '.$id.'.');return self::SUCCESS;}
+        if(($playback['state']??null)==='ready'&&($playback['source_media_id']??null)===$video->id&&($playback['profile_version']??null)===\App\Services\MediaDerivatives::HLS_PROFILE_VERSION){$this->info('HLS is already ready for record '.$id.'.');return self::SUCCESS;}
         $meta=$record->metadata;$meta['media_jobs']['hls']=['state'=>'queued','updated_at'=>now()->toIso8601String()];$record->updateQuietly(['metadata'=>$meta]);
         dispatch((new \App\Jobs\PrepareContentMedia($id,'hls',true))->afterCommit());
         $this->info('Queued HLS preparation for record '.$id.'; the global HLS pause remains active.');return self::SUCCESS;

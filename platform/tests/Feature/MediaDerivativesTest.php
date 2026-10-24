@@ -29,19 +29,22 @@ class MediaDerivativesTest extends TestCase
     {
         $record=$this->record(['public_published'=>true]);Queue::assertPushed(PrepareContentMedia::class,fn($job)=>$job->operation==='hls');
         Process::fake(function($process){
-            if(in_array('-show_entries',$process->command,true))return Process::result(output:json_encode(['streams'=>[['codec_type'=>'video','width'=>640,'height'=>360],['codec_type'=>'audio']]]));
+            if(in_array('-show_entries',$process->command,true))return Process::result(output:json_encode(['streams'=>[['codec_type'=>'video','width'=>1080,'height'=>1920],['codec_type'=>'audio']]]));
             if(in_array('-hls_segment_filename',$process->command,true)){
                 $segmentTemplate=$process->command[array_search('-hls_segment_filename',$process->command,true)+1];$root=dirname(dirname($segmentTemplate));
-                file_put_contents($root.'/index.m3u8',"#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=930000,RESOLUTION=640x360\n360p/index.m3u8\n");
-                mkdir($root.'/360p',0700,true);file_put_contents($root.'/360p/index.m3u8',"#EXTM3U\n#EXTINF:6.0,\nsegment_00000.ts\n");file_put_contents($root.'/360p/segment_00000.ts','segment');
-                mkdir($root.'/240p',0700,true);file_put_contents($root.'/240p/index.m3u8',"#EXTM3U\n#EXTINF:6.0,\nsegment_00000.ts\n");file_put_contents($root.'/240p/segment_00000.ts','segment');
+                file_put_contents($root.'/index.m3u8',"#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=5878000,RESOLUTION=606x1080\n1080p/index.m3u8\n");
+                mkdir($root.'/1080p',0700,true);file_put_contents($root.'/1080p/index.m3u8',"#EXTM3U\n#EXTINF:6.0,\nsegment_00000.ts\n");file_put_contents($root.'/1080p/segment_00000.ts','segment');
             }else{$output=end($process->command);file_put_contents($output,'compressed');}
             return Process::result();
         });
         (new PrepareContentMedia($record->id,'hls'))->handle(app(MediaDerivatives::class));$record->refresh();
-        $playback=$record->metadata['hls_playback'];$this->assertSame('ready',$playback['state'],json_encode($record->metadata['media_jobs']['hls']??[]));$hash=basename(dirname($playback['url']));
+        $playback=$record->metadata['hls_playback'];$this->assertSame('ready',$playback['state'],json_encode($record->metadata['media_jobs']['hls']??[]));$this->assertSame(MediaDerivatives::HLS_PROFILE_VERSION,$playback['profile_version']);$hash=basename(dirname($playback['url']));
         $this->assertFileExists(Storage::disk('media-canonical')->path('hls/'.$hash.'/index.m3u8'));
-        $this->assertFileExists(Storage::disk('media-canonical')->path('hls/'.$hash.'/360p/segment_00000.ts'));
+        $this->assertFileExists(Storage::disk('media-canonical')->path('hls/'.$hash.'/1080p/segment_00000.ts'));
+        $this->assertDirectoryDoesNotExist(Storage::disk('media-canonical')->path('hls/'.$hash.'/720p'));
+        $this->assertDirectoryDoesNotExist(Storage::disk('media-canonical')->path('hls/'.$hash.'/480p'));
+        $master=file_get_contents(Storage::disk('media-canonical')->path('hls/'.$hash.'/index.m3u8'));
+        $this->assertSame(1,preg_match_all('/^#EXT-X-STREAM-INF:/m',$master));
         $this->assertFileExists(Storage::disk('media-canonical')->path('hls/'.$hash.'/playback.mp4'));
         if(DIRECTORY_SEPARATOR==='/'){
             $this->assertSame(0755,fileperms(Storage::disk('media-canonical')->path('hls'))&0777);
@@ -50,7 +53,11 @@ class MediaDerivativesTest extends TestCase
         }
         $page=$this->get(app(PublicContent::class)->card($record->fresh())['url'])->assertOk()->assertSee('data-hls-src="/media/hls/'.$hash.'/index.m3u8"',false)->assertSee('data-mp4-src="/media/hls/'.$hash.'/playback.mp4"',false);
         $this->assertSame('original',Storage::disk('media-canonical')->get('video.mp4'));
-        Process::assertRan(fn($process)=>in_array('libx264',$process->command,true)&&in_array('independent_segments',$process->command,true));
+        Process::assertRan(fn($process)=>in_array('libx264',$process->command,true)&&in_array('independent_segments',$process->command,true)&&in_array('-var_stream_map',$process->command,true)&&$process->command[array_search('-var_stream_map',$process->command,true)+1]==='v:0,a:0,name:1080p');
+        file_put_contents(Storage::disk('media-canonical')->path('hls/'.$hash.'/index.m3u8'),"#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=900000,RESOLUTION=240x240\n240p/index.m3u8\n#EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=606x1080\n1080p/index.m3u8\n");
+        (new PrepareContentMedia($record->id,'hls'))->handle(app(MediaDerivatives::class));
+        $master=file_get_contents(Storage::disk('media-canonical')->path('hls/'.$hash.'/index.m3u8'));
+        $this->assertSame(1,preg_match_all('/^#EXT-X-STREAM-INF:/m',$master));
     }
     public function test_hls_failure_stops_the_pipeline_and_requires_explicit_retry(): void
     {
@@ -74,6 +81,14 @@ class MediaDerivativesTest extends TestCase
         $this->artisan('media:prepare-missing',['--record'=>$record->id])->assertSuccessful();
         Queue::assertPushed(PrepareContentMedia::class,fn($job)=>$job->id===$record->id&&$job->operation==='hls'&&$job->bypassHlsPause);
         $this->assertNotNull(Cache::get('media.hls.paused'));
+    }
+    public function test_ready_hls_with_old_profile_is_queued_for_replacement(): void
+    {
+        Cache::forget('media.hls.paused');
+        $record=$this->record(['public_published'=>true]);$video=app(MediaDerivatives::class)->video($record);
+        $record->update(['metadata'=>[...$record->metadata,'media_jobs'=>['hls'=>['state'=>'completed','updated_at'=>now()->toIso8601String()]],'hls_playback'=>['state'=>'ready','source_media_id'=>$video->id,'url'=>'/media/hls/old/index.m3u8']]]);
+        $this->assertSame(1,app(\App\Services\ContentMediaPreparation::class)->queueMissing($record,true));
+        Queue::assertPushed(PrepareContentMedia::class,fn($job)=>$job->id===$record->id&&$job->operation==='hls');
     }
     public function test_paused_queued_hls_job_does_not_clear_an_existing_ready_playback(): void
     {

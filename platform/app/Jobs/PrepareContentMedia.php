@@ -13,7 +13,7 @@ class PrepareContentMedia implements ShouldQueue,ShouldBeUnique
     public int $timeout=3400;
     public int $uniqueFor=3600;
     public function __construct(public int $id,public string $operation='frame',public bool $bypassHlsPause=false) {}
-    public function uniqueId(): string { return $this->id.':'.$this->operation.($this->bypassHlsPause?':targeted':''); }
+    public function uniqueId(): string { return $this->id.':'.$this->operation.($this->operation==='hls'?':v'.MediaDerivatives::HLS_PROFILE_VERSION:'').($this->bypassHlsPause?':targeted':''); }
     public function handle(MediaDerivatives $media): void
     {
         $record=SourceRecord::find($this->id);if(!$record)return;
@@ -51,7 +51,7 @@ class PrepareContentMedia implements ShouldQueue,ShouldBeUnique
         \Illuminate\Support\Facades\DB::transaction(function()use($record,$url){
             $current=SourceRecord::lockForUpdate()->find($record->id);if(!$current)return;
             $video=app(MediaDerivatives::class)->video($current);if(!$video)return;
-            $meta=$current->metadata;$meta['hls_playback']=['state'=>'ready','url'=>$url,'fallback_url'=>str_replace('/index.m3u8','/playback.mp4',$url),'source_media_id'=>$video->id,'updated_at'=>now()->toIso8601String()];
+            $meta=$current->metadata;$meta['hls_playback']=['state'=>'ready','profile_version'=>MediaDerivatives::HLS_PROFILE_VERSION,'url'=>$url,'fallback_url'=>str_replace('/index.m3u8','/playback.mp4',$url),'source_media_id'=>$video->id,'updated_at'=>now()->toIso8601String()];
             $current->updateQuietly(['metadata'=>$meta]);
         });
     }

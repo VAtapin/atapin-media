@@ -10,14 +10,16 @@ class ContentMediaPreparation
         $media=app(MediaDerivatives::class);if(!$media->video($record))return 0;
         $operations=[];
         $hls=$record->metadata['hls_playback']??[];$video=$media->video($record);
-        if(($record->metadata['public_published']??false)&&(($hls['state']??null)!=='ready'||($hls['source_media_id']??null)!==$video->id))$operations[]='hls';
+        if(($record->metadata['public_published']??false)&&(($hls['state']??null)!=='ready'||($hls['source_media_id']??null)!==$video->id||($hls['profile_version']??null)!==MediaDerivatives::HLS_PROFILE_VERSION))$operations[]='hls';
         if(!$hlsOnly){if(!$media->hasCover($record))$operations[]='frame';if(($record->metadata['public_section']??null)==='podcast'&&!($record->metadata['podcast_audio_id']??null))$operations[]='podcast';}
         $count=0;
         foreach($operations as $operation){
             $job=$record->metadata['media_jobs'][$operation]??[];$state=$job['state']??null;
+            $profileOutdated=$operation==='hls'&&($hls['profile_version']??null)!==MediaDerivatives::HLS_PROFILE_VERSION;
             if($operation==='hls'&&$state==='failed'&&!$retryFailed)continue;
             if($operation==='hls'&&\Illuminate\Support\Facades\Cache::get('media.hls.paused')&&!$retryFailed)continue;
-            if($state==='completed'||(in_array($state,['queued','running'],true)&&strtotime($job['updated_at']??'now')>time()-7200))continue;
+            $activeRecent=in_array($state,['queued','running'],true)&&strtotime($job['updated_at']??'now')>time()-7200;
+            if(!$profileOutdated&&($state==='completed'||$activeRecent))continue;
             $meta=$record->metadata;$meta['media_jobs'][$operation]=['state'=>'queued','updated_at'=>now()->toIso8601String()];
             $record->updateQuietly(['metadata'=>$meta]);dispatch((new PrepareContentMedia((int)$record->id,$operation))->afterCommit());$count++;
         }
