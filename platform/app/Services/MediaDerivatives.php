@@ -55,17 +55,17 @@ class MediaDerivatives
             $args=[...$args,'-filter_complex',implode(';',$filter)];$varMap=[];
             foreach($profiles as $i=>$profile){$args=[...$args,'-map','[v'.$i.']'];if($hasAudio)$args=[...$args,'-map','0:a:0'];$args=[...$args,'-c:v:'.$i,'libx264','-preset','veryfast','-threads','2','-profile:v:'.$i,'main','-pix_fmt','yuv420p','-b:v:'.$i,(string)$profile['bitrate'],'-maxrate:v:'.$i,(string)round($profile['bitrate']*1.15),'-bufsize:v:'.$i,(string)($profile['bitrate']*2)];if($hasAudio)$args=[...$args,'-c:a:'.$i,'aac','-b:a:'.$i,'128k'];$varMap[]='v:'.$i.($hasAudio?',a:'.$i:'').',name:'.$profile['height'].'p';}
             $args=[...$args,'-force_key_frames','expr:gte(t,n_forced*6)','-f','hls','-hls_time','6','-hls_playlist_type','vod','-hls_flags','independent_segments','-master_pl_name','index.m3u8','-var_stream_map',implode(' ',$varMap),'-hls_segment_filename',$work.'/%v/segment_%05d.ts',$work.'/%v/index.m3u8'];
-            $result=Process::timeout(2100)->run([config('platform.media_ffmpeg_binary','ffmpeg'),...$args]);
-            if(!$result->successful()||!is_file($work.'/index.m3u8'))throw new \RuntimeException('HLS encoding failed: '.mb_substr(trim($result->getErrorOutput()),0,500));
+            $result=Process::timeout(1800)->run([config('platform.media_ffmpeg_binary','ffmpeg'),...$args]);
+            if(!$result->successful()||!is_file($work.'/index.m3u8'))throw new \RuntimeException('HLS encoding failed: '.mb_substr(trim($result->errorOutput()),0,500));
             foreach($profiles as $profile){$variant=$work.'/'.$profile['height'].'p/index.m3u8';if(!is_file($variant)||!glob($work.'/'.$profile['height'].'p/segment_*.ts'))throw new \RuntimeException('HLS output is incomplete.');}
-            $fallbackResult=Process::timeout(1300)->run([config('platform.media_ffmpeg_binary','ffmpeg'),'-nostdin','-hide_banner','-loglevel','error','-y','-i',$source,'-map','0:v:0','-map','0:a:0?','-vf','scale=-2:min(720\\,ih)','-c:v','libx264','-preset','veryfast','-threads','2','-pix_fmt','yuv420p','-b:v','2800k','-maxrate','3200k','-bufsize','5600k','-c:a','aac','-b:a','128k','-movflags','+faststart',$work.'/playback.mp4']);
-            if(!$fallbackResult->successful()||!is_file($work.'/playback.mp4')||filesize($work.'/playback.mp4')===0)throw new \RuntimeException('MP4 fallback encoding failed: '.mb_substr(trim($fallbackResult->getErrorOutput()),0,500));
+            $fallbackResult=Process::timeout(1200)->run([config('platform.media_ffmpeg_binary','ffmpeg'),'-nostdin','-hide_banner','-loglevel','error','-y','-i',$source,'-map','0:v:0','-map','0:a:0?','-vf','scale=-2:min(720\\,ih)','-c:v','libx264','-preset','veryfast','-threads','2','-pix_fmt','yuv420p','-b:v','2800k','-maxrate','3200k','-bufsize','5600k','-c:a','aac','-b:a','128k','-movflags','+faststart',$work.'/playback.mp4']);
+            if(!$fallbackResult->successful()||!is_file($work.'/playback.mp4')||filesize($work.'/playback.mp4')===0)throw new \RuntimeException('MP4 fallback encoding failed: '.mb_substr(trim($fallbackResult->errorOutput()),0,500));
             if(!is_dir(dirname($final))&&!mkdir(dirname($final),0755,true)&&!is_dir(dirname($final)))throw new \RuntimeException('Public HLS directory is unavailable.');
-            if(!Illuminate\Support\Facades\File::copyDirectory($work,$stage))throw new \RuntimeException('Cannot stage HLS output.');
-            if(is_dir($final)){if(!Illuminate\Support\Facades\File::deleteDirectory($final))throw new \RuntimeException('Cannot replace incomplete HLS output.');}
+            if(!\Illuminate\Support\Facades\File::copyDirectory($work,$stage))throw new \RuntimeException('Cannot stage HLS output.');
+            if(is_dir($final)){if(!\Illuminate\Support\Facades\File::deleteDirectory($final))throw new \RuntimeException('Cannot replace incomplete HLS output.');}
             if(!rename($stage,$final))throw new \RuntimeException('Cannot publish HLS output.');
             return '/media/'.$relative.'/index.m3u8';
-        }finally{if(is_dir($work))Illuminate\Support\Facades\File::deleteDirectory($work);if(is_dir($stage))Illuminate\Support\Facades\File::deleteDirectory($stage);flock($lock,LOCK_UN);fclose($lock);}
+        }finally{if(is_dir($work))\Illuminate\Support\Facades\File::deleteDirectory($work);if(is_dir($stage))\Illuminate\Support\Facades\File::deleteDirectory($stage);flock($lock,LOCK_UN);fclose($lock);}
     }
     public function frame(SourceRecord $record): void
     {

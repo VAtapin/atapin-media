@@ -11,7 +11,7 @@ Artisan::command('kai:sync-knowledge', function () {
 });
 Schedule::command('kai:sync-knowledge')->everySixHours()->withoutOverlapping();
 Schedule::command('queue:prune-failed --hours=720')->daily();
-Schedule::command('media:prepare-missing --hls-only')->everyFifteenMinutes()->withoutOverlapping();
+Schedule::command('media:cleanup-abandoned-work')->hourly()->withoutOverlapping();
 Artisan::command('public:live-reminders',function(){
     $service=app(\App\Services\PublicLiveReminders::class);
     if(!$service->mailReady()){$this->warn('Email delivery is not configured; no reminders were dispatched.');return;}

@@ -10,7 +10,7 @@ class PrepareContentMedia implements ShouldQueue,ShouldBeUnique
 {
     use Queueable;
     public int $tries=1;
-    public int $timeout=3500;
+    public int $timeout=3400;
     public int $uniqueFor=3600;
     public function __construct(public int $id,public string $operation='frame') {}
     public function uniqueId(): string { return $this->id.':'.$this->operation; }
@@ -18,6 +18,7 @@ class PrepareContentMedia implements ShouldQueue,ShouldBeUnique
     {
         $record=SourceRecord::find($this->id);if(!$record)return;
         if($this->operation==='podcast' && ($record->metadata['public_section']??null)!=='podcast')return;
+        if($this->operation==='hls'&&\Illuminate\Support\Facades\Cache::get('media.hls.paused')){$this->state('paused');return;}
         $this->state('running');
         try {
             if($this->operation==='podcast')$media->podcast($record);
@@ -25,16 +26,22 @@ class PrepareContentMedia implements ShouldQueue,ShouldBeUnique
             else $media->frame($record);
             $this->state('completed');
         } catch (\Throwable $error) {
-            $this->state('failed');
-            app(\App\Services\Audit::class)->record('content.media.failed',(string)$this->id,['operation'=>$this->operation,'error_type'=>$error::class]);
+            $this->stopHlsAfterFailure($error);
+            $this->state('failed',$error);
+            app(\App\Services\Audit::class)->record('content.media.failed',(string)$this->id,['operation'=>$this->operation,'error_type'=>$error::class,'error'=>mb_substr($error->getMessage(),0,500)]);
         }
     }
-    public function failed(?\Throwable $error): void { $this->state('failed'); }
-    private function state(string $state): void
+    public function failed(?\Throwable $error): void { $this->state('failed',$error);$this->stopHlsAfterFailure($error); }
+    private function stopHlsAfterFailure(?\Throwable $error): void
     {
-        \Illuminate\Support\Facades\DB::transaction(function()use($state){
+        if($this->operation==='hls')\Illuminate\Support\Facades\Cache::forever('media.hls.paused',['source_record_id'=>$this->id,'error_type'=>$error?$error::class:null,'error'=>$error?mb_substr($error->getMessage(),0,500):null,'at'=>now()->toIso8601String()]);
+    }
+    private function state(string $state,?\Throwable $error=null): void
+    {
+        \Illuminate\Support\Facades\DB::transaction(function()use($state,$error){
             $record=SourceRecord::lockForUpdate()->find($this->id);if(!$record)return;
             $meta=$record->metadata; $meta['media_jobs'][$this->operation]=['state'=>$state,'updated_at'=>now()->toIso8601String()];
+            if($error)$meta['media_jobs'][$this->operation]['error']=mb_substr($error->getMessage(),0,500);
             if($this->operation==='hls'&&$state!=='completed')$meta['hls_playback']=['state'=>$state,'source_media_id'=>app(MediaDerivatives::class)->video($record)?->id,'updated_at'=>now()->toIso8601String()];
             $record->updateQuietly(['metadata'=>$meta]);
         });

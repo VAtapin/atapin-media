@@ -4,7 +4,7 @@ use App\Models\{Media,SourceRecord};
 use App\Services\{MediaDerivatives,CanonicalMediaStorage,PublicContent,AiCoverGenerator,Settings};
 use App\Jobs\{PrepareContentMedia,GenerateContentCover};
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\{Storage,Queue,Process,Http};
+use Illuminate\Support\Facades\{Storage,Queue,Process,Http,Cache};
 use Tests\TestCase;
 
 class MediaDerivativesTest extends TestCase
@@ -34,17 +34,44 @@ class MediaDerivativesTest extends TestCase
                 $segmentTemplate=$process->command[array_search('-hls_segment_filename',$process->command,true)+1];$root=dirname(dirname($segmentTemplate));
                 file_put_contents($root.'/index.m3u8',"#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=930000,RESOLUTION=640x360\n360p/index.m3u8\n");
                 mkdir($root.'/360p',0700,true);file_put_contents($root.'/360p/index.m3u8',"#EXTM3U\n#EXTINF:6.0,\nsegment_00000.ts\n");file_put_contents($root.'/360p/segment_00000.ts','segment');
+                mkdir($root.'/240p',0700,true);file_put_contents($root.'/240p/index.m3u8',"#EXTM3U\n#EXTINF:6.0,\nsegment_00000.ts\n");file_put_contents($root.'/240p/segment_00000.ts','segment');
             }else{$output=end($process->command);file_put_contents($output,'compressed');}
             return Process::result();
         });
         (new PrepareContentMedia($record->id,'hls'))->handle(app(MediaDerivatives::class));$record->refresh();
-        $playback=$record->metadata['hls_playback'];$this->assertSame('ready',$playback['state']);$hash=basename(dirname($playback['url']));
+        $playback=$record->metadata['hls_playback'];$this->assertSame('ready',$playback['state'],json_encode($record->metadata['media_jobs']['hls']??[]));$hash=basename(dirname($playback['url']));
         $this->assertFileExists(Storage::disk('media-canonical')->path('hls/'.$hash.'/index.m3u8'));
         $this->assertFileExists(Storage::disk('media-canonical')->path('hls/'.$hash.'/360p/segment_00000.ts'));
         $this->assertFileExists(Storage::disk('media-canonical')->path('hls/'.$hash.'/playback.mp4'));
         $page=$this->get(app(PublicContent::class)->card($record->fresh())['url'])->assertOk()->assertSee('data-hls-src="/media/hls/'.$hash.'/index.m3u8"',false)->assertSee('data-mp4-src="/media/hls/'.$hash.'/playback.mp4"',false);
         $this->assertSame('original',Storage::disk('media-canonical')->get('video.mp4'));
         Process::assertRan(fn($process)=>in_array('libx264',$process->command,true)&&in_array('independent_segments',$process->command,true));
+    }
+    public function test_hls_failure_stops_the_pipeline_and_requires_explicit_retry(): void
+    {
+        Cache::forget('media.hls.paused');$record=$this->record(['public_published'=>true]);Queue::fake();
+        Process::fake(function($process){
+            if(in_array('-show_entries',$process->command,true))return Process::result(output:json_encode(['streams'=>[['codec_type'=>'video','width'=>640,'height'=>360]]]));
+            return Process::result(exitCode:1,errorOutput:'encoder unavailable');
+        });
+        (new PrepareContentMedia($record->id,'hls'))->handle(app(MediaDerivatives::class));$record->refresh();
+        $this->assertSame('failed',$record->metadata['media_jobs']['hls']['state']);
+        $this->assertStringContainsString('encoder unavailable',$record->metadata['media_jobs']['hls']['error']);
+        $this->assertSame($record->id,Cache::get('media.hls.paused')['source_record_id']);
+        $this->assertSame(0,app(\App\Services\ContentMediaPreparation::class)->queueMissing($record,true));
+        Cache::forget('media.hls.paused');
+        $this->assertSame(1,app(\App\Services\ContentMediaPreparation::class)->queueMissing($record,true,true));
+        Queue::assertPushed(PrepareContentMedia::class,fn($job)=>$job->operation==='hls');
+    }
+    public function test_cleanup_removes_only_matching_abandoned_hls_work_directories(): void
+    {
+        $hash=str_repeat('a',64);$suffix=str_repeat('b',16);$work=Storage::disk('local')->path('media-work/hls/'.$hash.'-'.$suffix);
+        $stage=Storage::disk('media-canonical')->path('.hls-'.$hash.'-'.$suffix);$unrelated=Storage::disk('local')->path('media-work/hls/keep-me');
+        mkdir($work,0700,true);mkdir($stage,0700,true);mkdir($unrelated,0700,true);
+
+        $this->artisan('media:cleanup-abandoned-work')->assertSuccessful();
+
+        $this->assertDirectoryDoesNotExist($work);$this->assertDirectoryDoesNotExist($stage);$this->assertDirectoryExists($unrelated);
     }
     public function test_podcast_copies_aac_audio_and_public_page_never_loads_video(): void
     {

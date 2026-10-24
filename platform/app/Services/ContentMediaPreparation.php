@@ -4,7 +4,7 @@ use App\Models\SourceRecord;
 use App\Jobs\PrepareContentMedia;
 class ContentMediaPreparation
 {
-    public function queueMissing(SourceRecord $record,bool $hlsOnly=false): int
+    public function queueMissing(SourceRecord $record,bool $hlsOnly=false,bool $retryFailed=false): int
     {
         if(!in_array($record->kind,['video','short','post'],true)||($record->metadata['archive_data']??false)||$record->trashed())return 0;
         $media=app(MediaDerivatives::class);if(!$media->video($record))return 0;
@@ -15,6 +15,8 @@ class ContentMediaPreparation
         $count=0;
         foreach($operations as $operation){
             $job=$record->metadata['media_jobs'][$operation]??[];$state=$job['state']??null;
+            if($operation==='hls'&&$state==='failed'&&!$retryFailed)continue;
+            if($operation==='hls'&&\Illuminate\Support\Facades\Cache::get('media.hls.paused')&&!$retryFailed)continue;
             if($state==='completed'||(in_array($state,['queued','running'],true)&&strtotime($job['updated_at']??'now')>time()-7200))continue;
             $meta=$record->metadata;$meta['media_jobs'][$operation]=['state'=>'queued','updated_at'=>now()->toIso8601String()];
             $record->updateQuietly(['metadata'=>$meta]);dispatch((new PrepareContentMedia((int)$record->id,$operation))->afterCommit());$count++;

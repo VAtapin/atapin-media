@@ -4,7 +4,7 @@
 
 Физическая папка: `/var/www/vhosts/mannavomhimmel.de/httpdocs/platform/public/media`.
 
-Файл называется `<SHA-256 содержимого>.<расширение>`. Адрес MP4: `https://mannavomhimmel.de/media/<SHA-256>.mp4`. Это обычный файл в document root; nginx/Apache отдаёт его непосредственно, включая HTTP Range. Симлинки, PHP-передача видео, FFmpeg и очередь оптимизации не используются. Админка, фронтенд, обложки и готовые записи Live получают адрес из одной конфигурации `filesystems.disks.media-canonical`.
+Оригинал называется `<SHA-256 содержимого>.<расширение>`. Адрес исходного MP4: `https://mannavomhimmel.de/media/<SHA-256>.mp4`. Это обычный файл в document root; nginx/Apache отдаёт его непосредственно, включая HTTP Range. Публичный сайт отдельно может использовать сгенерированные FFmpeg HLS/MP4 варианты в `public/media/hls/<SHA-256>/`; они не заменяют и не удаляют оригинал.
 
 Новые обычные/resumable uploads, Takeout, локальные папки/архивы, intake/collector imports и завершённые MP4 Live используют это хранилище для поддерживаемых видео, изображений, аудио и субтитров. Переименование и копирование не меняют содержимое файла. Повторный файл использует тот же физический объект; отдельные источники/загрузки остаются связанными с ним.
 
@@ -16,6 +16,7 @@
 
 - `/var/www/vhosts/mannavomhimmel.de/private/atapin-platform/.env` — вся действующая конфигурация и секреты, без изменений.
 - `/var/www/vhosts/mannavomhimmel.de/private/atapin-platform/storage` — logs, cache, sessions, framework и приватные документы/staging. Приватный файловый disk: `/var/www/vhosts/mannavomhimmel.de/private/atapin-platform/storage/app/private`.
+- `/var/www/vhosts/mannavomhimmel.de/private/atapin-platform/storage/app/private/media-work/hls` — временные HLS-конвертации. Рабочие папки блокируются по hash исходника; `media:cleanup-abandoned-work` удаляет только папки без активного lock. При первой HLS-ошибке цепочка останавливается; автоматических повторов failed-видео нет. Повтор разрешён только явной командой `media:prepare-missing --hls-only --retry-failed` после устранения причины.
 - `/var/www/vhosts/mannavomhimmel.de/private/Takeout` — исходная полная распакованная выгрузка Google; не перемещается и не переименовывается.
 - `/var/www/vhosts/mannavomhimmel.de/private/youtube_zip_alle` — альтернативный вход multipart Takeout ZIP, если он существует.
 - `/var/www/vhosts/mannavomhimmel.de/private/import-inbox` — входы серверного импорта и распаковка архивов; не удалять весь каталог, пока другие импорты могут на него ссылаться.
