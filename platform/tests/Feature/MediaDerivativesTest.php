@@ -43,6 +43,11 @@ class MediaDerivativesTest extends TestCase
         $this->assertFileExists(Storage::disk('media-canonical')->path('hls/'.$hash.'/index.m3u8'));
         $this->assertFileExists(Storage::disk('media-canonical')->path('hls/'.$hash.'/360p/segment_00000.ts'));
         $this->assertFileExists(Storage::disk('media-canonical')->path('hls/'.$hash.'/playback.mp4'));
+        if(DIRECTORY_SEPARATOR==='/'){
+            $this->assertSame(0755,fileperms(Storage::disk('media-canonical')->path('hls'))&0777);
+            $this->assertSame(0755,fileperms(Storage::disk('media-canonical')->path('hls/'.$hash))&0777);
+            $this->assertSame(0644,fileperms(Storage::disk('media-canonical')->path('hls/'.$hash.'/index.m3u8'))&0777);
+        }
         $page=$this->get(app(PublicContent::class)->card($record->fresh())['url'])->assertOk()->assertSee('data-hls-src="/media/hls/'.$hash.'/index.m3u8"',false)->assertSee('data-mp4-src="/media/hls/'.$hash.'/playback.mp4"',false);
         $this->assertSame('original',Storage::disk('media-canonical')->get('video.mp4'));
         Process::assertRan(fn($process)=>in_array('libx264',$process->command,true)&&in_array('independent_segments',$process->command,true));
@@ -62,6 +67,20 @@ class MediaDerivativesTest extends TestCase
         Cache::forget('media.hls.paused');
         $this->assertSame(1,app(\App\Services\ContentMediaPreparation::class)->queueMissing($record,true,true));
         Queue::assertPushed(PrepareContentMedia::class,fn($job)=>$job->operation==='hls');
+    }
+    public function test_one_record_hls_can_be_queued_while_global_pause_remains_active(): void
+    {
+        Cache::forever('media.hls.paused',['source_record_id'=>999]);$record=$this->record(['public_published'=>true]);
+        $this->artisan('media:prepare-missing',['--record'=>$record->id])->assertSuccessful();
+        Queue::assertPushed(PrepareContentMedia::class,fn($job)=>$job->id===$record->id&&$job->operation==='hls'&&$job->bypassHlsPause);
+        $this->assertNotNull(Cache::get('media.hls.paused'));
+    }
+    public function test_paused_queued_hls_job_does_not_clear_an_existing_ready_playback(): void
+    {
+        Cache::forever('media.hls.paused',['source_record_id'=>999]);$record=$this->record(['public_published'=>true]);$video=app(MediaDerivatives::class)->video($record);
+        $record->update(['metadata'=>[...$record->metadata,'hls_playback'=>['state'=>'ready','url'=>'/media/hls/hash/index.m3u8','fallback_url'=>'/media/hls/hash/playback.mp4','source_media_id'=>$video->id]]]);
+        (new PrepareContentMedia($record->id,'hls'))->handle(app(MediaDerivatives::class));
+        $this->assertSame('ready',$record->fresh()->metadata['hls_playback']['state']);
     }
     public function test_cleanup_removes_only_matching_abandoned_hls_work_directories(): void
     {

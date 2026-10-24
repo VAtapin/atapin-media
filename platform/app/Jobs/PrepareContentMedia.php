@@ -12,13 +12,13 @@ class PrepareContentMedia implements ShouldQueue,ShouldBeUnique
     public int $tries=1;
     public int $timeout=3400;
     public int $uniqueFor=3600;
-    public function __construct(public int $id,public string $operation='frame') {}
-    public function uniqueId(): string { return $this->id.':'.$this->operation; }
+    public function __construct(public int $id,public string $operation='frame',public bool $bypassHlsPause=false) {}
+    public function uniqueId(): string { return $this->id.':'.$this->operation.($this->bypassHlsPause?':targeted':''); }
     public function handle(MediaDerivatives $media): void
     {
         $record=SourceRecord::find($this->id);if(!$record)return;
         if($this->operation==='podcast' && ($record->metadata['public_section']??null)!=='podcast')return;
-        if($this->operation==='hls'&&\Illuminate\Support\Facades\Cache::get('media.hls.paused')){$this->state('paused');return;}
+        if($this->operation==='hls'&&!$this->bypassHlsPause&&\Illuminate\Support\Facades\Cache::get('media.hls.paused')){$this->state('paused');return;}
         $this->state('running');
         try {
             if($this->operation==='podcast')$media->podcast($record);
@@ -42,7 +42,7 @@ class PrepareContentMedia implements ShouldQueue,ShouldBeUnique
             $record=SourceRecord::lockForUpdate()->find($this->id);if(!$record)return;
             $meta=$record->metadata; $meta['media_jobs'][$this->operation]=['state'=>$state,'updated_at'=>now()->toIso8601String()];
             if($error)$meta['media_jobs'][$this->operation]['error']=mb_substr($error->getMessage(),0,500);
-            if($this->operation==='hls'&&$state!=='completed')$meta['hls_playback']=['state'=>$state,'source_media_id'=>app(MediaDerivatives::class)->video($record)?->id,'updated_at'=>now()->toIso8601String()];
+            if($this->operation==='hls'&&$state!=='completed'&&($meta['hls_playback']['state']??null)!=='ready')$meta['hls_playback']=['state'=>$state,'source_media_id'=>app(MediaDerivatives::class)->video($record)?->id,'updated_at'=>now()->toIso8601String()];
             $record->updateQuietly(['metadata'=>$meta]);
         });
     }
